@@ -30,7 +30,7 @@ export default function HomePage() {
     <main>
       <ImageGenerator />
 
-      <section className="container mx-auto py-16 px-4">
+      <section id="features" className="container mx-auto py-16 px-4">
         <header className="text-center mb-12">
           <h2 className="text-4xl font-extrabold tracking-tight text-primary mb-3">
             Discover What Vision<span className="text-accent">Forge</span> AI Offers
