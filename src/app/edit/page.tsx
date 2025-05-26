@@ -2,7 +2,6 @@
 // src/app/edit/page.tsx
 "use client";
 
-import type { Metadata } from 'next';
 import Image from 'next/image';
 import { useState, ChangeEvent, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -10,42 +9,63 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { AlertTriangle, UploadCloud, Palette, Crop, RotateCcw, Wand2, Text, Sticker, Download, Save } from 'lucide-react';
+import { Slider } from "@/components/ui/slider";
+import { AlertTriangle, UploadCloud, Palette, Crop, RotateCcw, Wand2, Text, Sticker, Download, Save, Trash2, Sparkles } from 'lucide-react';
 import { FuturisticPanel } from '@/components/vision-forge/FuturisticPanel';
+import { cn } from '@/lib/utils';
 
-// Since metadata can't be dynamic in client components easily without specific Next.js patterns,
-// we'll set a static one. For dynamic metadata based on loaded image, further setup would be needed.
-// export const metadata: Metadata = {
-//   title: 'Image Editor | VisionForge AI',
-//   description: 'Edit your images with a powerful suite of tools on VisionForge AI.',
-// };
 
-// Placeholder for actual editing tool categories and features
-const editingToolCategories = [
+// Define types for filters to manage their state
+type AppliedFilter = "Grayscale" | "Sepia" | "Invert"; // Basic toggleable filters
+const basicAdjustmentFilters = ["Brightness", "Contrast", "Saturation", "Hue", "Sharpness", "Blur"];
+const transformFilters = ["Crop", "Rotate", "Flip", "Resize", "Aspect Ratio"];
+const annotationFilters = ["Add Text", "Draw", "Shapes"];
+const overlayFilters = ["Stickers", "Watermark", "Frames"];
+
+
+interface EditingTool {
+  name: string;
+  type: 'toggle' | 'slider' | 'placeholder';
+  category: string;
+}
+
+const initialEditingTools: EditingTool[] = [
+  // Basic Adjustments
+  { name: "Brightness", type: "slider", category: "Basic Adjustments" },
+  ...["Contrast", "Saturation", "Hue", "Sharpness", "Blur"].map(f => ({ name: f, type: "placeholder" as "placeholder", category: "Basic Adjustments" })),
+  // Transform
+  ...transformFilters.map(f => ({ name: f, type: "placeholder" as "placeholder", category: "Transform" })),
+  // Filters & Effects
+  { name: "Grayscale", type: "toggle" as "toggle", category: "Filters & Effects" },
+  { name: "Sepia", type: "toggle" as "toggle", category: "Filters & Effects" },
+  { name: "Invert", type: "toggle" as "toggle", category: "Filters & Effects" },
+  ...["Vintage", "Pixelate"].map(f => ({ name: f, type: "placeholder" as "placeholder", category: "Filters & Effects" })),
+  // Annotation
+  ...annotationFilters.map(f => ({ name: f, type: "placeholder" as "placeholder", category: "Annotation" })),
+  // Overlays
+  ...overlayFilters.map(f => ({ name: f, type: "placeholder" as "placeholder", category: "Overlays" })),
+];
+
+const editingToolCategoriesConfig = [
   { 
     name: "Basic Adjustments", 
     icon: <Palette size={20} className="mr-2 text-primary" />,
-    features: ["Brightness", "Contrast", "Saturation", "Hue", "Sharpness", "Blur"] 
   },
   { 
     name: "Transform", 
     icon: <Crop size={20} className="mr-2 text-primary" />,
-    features: ["Crop", "Rotate", "Flip", "Resize", "Aspect Ratio"] 
   },
   { 
     name: "Filters & Effects", 
     icon: <Wand2 size={20} className="mr-2 text-primary" />,
-    features: ["Grayscale", "Sepia", "Invert", "Vintage", "Pixelate"] 
   },
   { 
     name: "Annotation", 
     icon: <Text size={20} className="mr-2 text-primary" />,
-    features: ["Add Text", "Draw", "Shapes"] 
   },
   {
     name: "Overlays",
     icon: <Sticker size={20} className="mr-2 text-primary" />,
-    features: ["Stickers", "Watermark", "Frames"]
   }
 ];
 
@@ -56,55 +76,82 @@ export default function ImageEditorPage() {
   const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
 
-  // Effect to set page title (client-side alternative for simpler cases)
+  // State for CSS Filters
+  const [isGrayscale, setIsGrayscale] = useState(false);
+  const [isSepia, setIsSepia] = useState(false);
+  const [isInverted, setIsInverted] = useState(false);
+  const [brightness, setBrightness] = useState(100); // Percentage, 100 is normal
+  
+  const [imageStyles, setImageStyles] = useState<React.CSSProperties>({});
+
   useEffect(() => {
     document.title = 'Image Editor | VisionForge AI';
   }, []);
+
+  // Update image style when filter states change
+  useEffect(() => {
+    const filters: string[] = [];
+    if (isGrayscale) filters.push('grayscale(100%)');
+    if (isSepia) filters.push('sepia(100%)');
+    if (isInverted) filters.push('invert(100%)');
+    if (brightness !== 100) filters.push(`brightness(${brightness}%)`);
+    
+    setImageStyles({ filter: filters.join(' ') || 'none' });
+  }, [isGrayscale, isSepia, isInverted, brightness]);
 
   const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       if (!file.type.startsWith('image/')) {
         setError('Invalid file type. Please upload an image (PNG, JPG, GIF, WEBP).');
-        setUploadedImage(null);
-        setImageFile(null);
-        setFileName(null);
+        setUploadedImage(null); setImageFile(null); setFileName(null);
         return;
       }
-      // Max file size: 10MB
       if (file.size > 10 * 1024 * 1024) {
          setError('File is too large. Maximum size is 10MB.');
-         setUploadedImage(null);
-         setImageFile(null);
-         setFileName(null);
+         setUploadedImage(null); setImageFile(null); setFileName(null);
         return;
       }
-
-      setError(null);
-      setImageFile(file);
-      setFileName(file.name);
+      setError(null); setImageFile(file); setFileName(file.name);
       const reader = new FileReader();
       reader.onloadend = () => {
         setUploadedImage(reader.result as string);
+        resetFilters(); // Reset filters for new image
       };
       reader.readAsDataURL(file);
     }
   };
+  
+  const applyFilterToggle = (filter: AppliedFilter) => {
+    if (!uploadedImage) return;
+    switch (filter) {
+      case "Grayscale": setIsGrayscale(p => !p); break;
+      case "Sepia": setIsSepia(p => !p); break;
+      case "Invert": setIsInverted(p => !p); break;
+    }
+  };
 
-  // Placeholder function for applying an edit
-  const applyEdit = (feature: string) => {
-    console.log(`Applying edit: ${feature} to ${imageFile?.name}`);
-    // In a real editor, this would trigger image processing logic
-    alert(`Feature "${feature}" selected. Implementation pending.`);
+  const handleBrightnessChange = (value: number[]) => {
+    if (!uploadedImage) return;
+    setBrightness(value[0]);
+  };
+
+  const resetFilters = () => {
+    setIsGrayscale(false);
+    setIsSepia(false);
+    setIsInverted(false);
+    setBrightness(100);
+    setImageStyles({});
   };
   
-  // Placeholder function for saving image
   const handleSaveImage = () => {
     if (!uploadedImage) return;
-    alert("Save functionality would be implemented here. For now, you can right-click to save the displayed image if your browser allows.");
-    // For actual download, you'd convert canvas content to data URL / blob and trigger download
+    alert("Save functionality is a placeholder. Current visual changes are applied via CSS filters and won't be part of a direct image download. Advanced saving would require canvas manipulation.");
   };
 
+  const getToolsForCategory = (categoryName: string) => {
+    return initialEditingTools.filter(tool => tool.category === categoryName);
+  };
 
   return (
     <main className="container mx-auto py-8 px-4">
@@ -112,36 +159,71 @@ export default function ImageEditorPage() {
         <h1 className="text-5xl font-extrabold tracking-tight text-primary">
           Image <span className="text-accent">Editor</span>
         </h1>
-        <p className="mt-2 text-lg text-foreground/80">Refine your visuals with precision and creativity.</p>
+        <p className="mt-2 text-lg text-foreground/80">Refine your visuals. (Basic filters enabled, more features coming soon!)</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[70vh]">
-        {/* Editing Tools Panel (Left) */}
         <Card className="lg:col-span-4 xl:col-span-3 glassmorphism-panel flex flex-col">
           <CardHeader>
-            <CardTitle className="text-xl flex items-center"><Wand2 className="mr-2 text-accent" /> Editing Tools</CardTitle>
+            <CardTitle className="text-xl flex items-center"><Sparkles className="mr-2 text-accent" /> Editing Tools</CardTitle>
             <CardDescription className="text-sm">Select a tool to start editing.</CardDescription>
           </CardHeader>
           <CardContent className="flex-grow overflow-hidden p-0">
             <ScrollArea className="h-full p-4">
               {uploadedImage ? (
                 <div className="space-y-6">
-                  {editingToolCategories.map(category => (
+                  <Button onClick={resetFilters} variant="outline" className="w-full futuristic-glow-button">
+                    <Trash2 size={16} className="mr-2" /> Reset All Filters
+                  </Button>
+                  {editingToolCategoriesConfig.map(category => (
                     <div key={category.name}>
                       <h3 className="text-md font-semibold mb-2 flex items-center text-foreground/90">
                         {category.icon} {category.name}
                       </h3>
-                      <div className="grid grid-cols-2 gap-2">
-                        {category.features.map(feature => (
-                          <Button 
-                            key={feature} 
-                            variant="outline" 
-                            size="sm" 
-                            className="text-xs justify-start futuristic-glow-button"
-                            onClick={() => applyEdit(feature)}
-                          >
-                            {feature}
-                          </Button>
+                      <div className="space-y-3">
+                        {getToolsForCategory(category.name).map(tool => (
+                          <div key={tool.name}>
+                            {tool.type === 'toggle' && (
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className={cn(
+                                  "w-full text-xs justify-start futuristic-glow-button",
+                                  (tool.name === "Grayscale" && isGrayscale) && "bg-accent/20 border-accent text-accent",
+                                  (tool.name === "Sepia" && isSepia) && "bg-accent/20 border-accent text-accent",
+                                  (tool.name === "Invert" && isInverted) && "bg-accent/20 border-accent text-accent"
+                                )}
+                                onClick={() => applyFilterToggle(tool.name as AppliedFilter)}
+                              >
+                                {tool.name}
+                              </Button>
+                            )}
+                            {tool.name === "Brightness" && tool.type === 'slider' && (
+                              <div className="space-y-2">
+                                <Label htmlFor="brightness-slider" className="text-xs">Brightness: {brightness}%</Label>
+                                <Slider
+                                  id="brightness-slider"
+                                  min={0}
+                                  max={200}
+                                  step={1}
+                                  value={[brightness]}
+                                  onValueChange={handleBrightnessChange}
+                                  className="my-2"
+                                />
+                              </div>
+                            )}
+                            {tool.type === 'placeholder' && (
+                               <Button 
+                                key={tool.name} 
+                                variant="outline" 
+                                size="sm" 
+                                className="text-xs justify-start futuristic-glow-button w-full"
+                                onClick={() => alert(`Feature "${tool.name}" is a placeholder.`)}
+                              >
+                                {tool.name}
+                              </Button>
+                            )}
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -158,13 +240,12 @@ export default function ImageEditorPage() {
            {uploadedImage && (
              <div className="p-4 border-t border-border/30">
                 <Button onClick={handleSaveImage} className="w-full futuristic-glow-button-primary bg-primary hover:bg-primary/90" disabled={!uploadedImage}>
-                  <Save size={18} className="mr-2" /> Save Image
+                  <Save size={18} className="mr-2" /> Save Image (Placeholder)
                 </Button>
              </div>
            )}
         </Card>
 
-        {/* Image Display and Upload Area (Right) */}
         <div className="lg:col-span-8 xl:col-span-9 flex flex-col">
           <FuturisticPanel className="flex-grow flex flex-col items-center justify-center">
             {!uploadedImage && (
@@ -172,7 +253,7 @@ export default function ImageEditorPage() {
                 <UploadCloud size={64} className="mx-auto text-primary" />
                 <h2 className="text-2xl font-semibold text-foreground">Upload Your Image</h2>
                 <p className="text-muted-foreground max-w-md mx-auto">
-                  Drag and drop your image here, or click the button below to select a file. Max 10MB (PNG, JPG, GIF, WEBP).
+                  Drag and drop, or click to select. Max 10MB (PNG, JPG, GIF, WEBP).
                 </p>
                 <div className="relative mt-4">
                    <Button asChild variant="default" size="lg" className="futuristic-glow-button-primary bg-primary hover:bg-primary/90 cursor-pointer">
@@ -199,17 +280,19 @@ export default function ImageEditorPage() {
             {uploadedImage && (
               <div className="w-full h-full flex flex-col items-center justify-center p-4 space-y-4">
                  <p className="text-sm text-muted-foreground">Editing: <strong>{fileName || 'Uploaded Image'}</strong></p>
-                <div className="relative w-full max-w-3xl aspect-auto max-h-[calc(70vh-120px)]">
+                <div className="relative w-full max-w-3xl aspect-auto max-h-[calc(70vh-120px)] overflow-hidden">
                   <Image
                     src={uploadedImage}
                     alt={fileName || "Uploaded image"}
                     layout="fill"
                     objectFit="contain"
-                     data-ai-hint="user uploaded image"
+                    style={imageStyles} // Apply CSS filters here
+                    className="transition-all duration-300" // Smooth transition for filter changes
+                    data-ai-hint="user uploaded image"
                   />
                 </div>
                  <div className="flex gap-2 mt-2">
-                    <Button variant="outline" onClick={() => {setUploadedImage(null); setImageFile(null); setFileName(null); setError(null);}} className="futuristic-glow-button">
+                    <Button variant="outline" onClick={() => {setUploadedImage(null); setImageFile(null); setFileName(null); setError(null); resetFilters();}} className="futuristic-glow-button">
                       <RotateCcw size={18} className="mr-2"/> Upload New
                     </Button>
                   </div>
@@ -217,12 +300,10 @@ export default function ImageEditorPage() {
             )}
           </FuturisticPanel>
           <p className="text-xs text-center text-muted-foreground mt-4">
-            Note: This is a foundational image editor setup. Many editing features are placeholders and require further implementation or integration of an image editing library.
+            Note: This image editor applies basic visual filters using CSS. More advanced editing features and true image saving are under development.
           </p>
         </div>
       </div>
     </main>
   );
 }
-
-    
