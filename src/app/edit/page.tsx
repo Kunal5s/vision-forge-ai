@@ -280,7 +280,7 @@ export default function ImageEditorPage() {
             {uploadedImage && (
               <div className="w-full h-full flex flex-col items-center justify-center p-4 space-y-4">
                  <p className="text-sm text-muted-foreground">Editing: <strong>{fileName || 'Uploaded Image'}</strong></p>
-                <div className="relative w-full max-w-3xl aspect-auto max-h-[calc(70vh-120px)] overflow-hidden">
+                <div className="relative w-full max-w-3xl max-h-[calc(70vh-120px)] overflow-hidden"> {/* Removed aspect-auto */}
                   <Image
                     src={uploadedImage}
                     alt={fileName || "Uploaded image"}
