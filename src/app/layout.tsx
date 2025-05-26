@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { Footer } from '@/components/layout/Footer'; // Import Footer
+import { PreFooterCallToAction } from '@/components/layout/PreFooterCallToAction'; // Import PreFooterCallToAction
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -31,6 +32,7 @@ export default function RootLayout({
         <div className="flex-grow">
           {children}
         </div>
+        <PreFooterCallToAction /> {/* Add PreFooterCallToAction here */}
         <Footer />
         <Toaster />
       </body>
