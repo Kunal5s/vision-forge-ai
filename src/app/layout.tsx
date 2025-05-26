@@ -3,8 +3,9 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import { Footer } from '@/components/layout/Footer'; // Import Footer
-import { PreFooterCallToAction } from '@/components/layout/PreFooterCallToAction'; // Import PreFooterCallToAction
+import { Header } from '@/components/layout/Header'; // Import Header
+import { Footer } from '@/components/layout/Footer'; 
+import { PreFooterCallToAction } from '@/components/layout/PreFooterCallToAction'; 
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -29,10 +30,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-full bg-background`}>
+        <Header /> {/* Add Header here */}
         <div className="flex-grow">
           {children}
         </div>
-        <PreFooterCallToAction /> {/* Add PreFooterCallToAction here */}
+        <PreFooterCallToAction /> 
         <Footer />
         <Toaster />
       </body>
