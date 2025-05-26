@@ -1,0 +1,344 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useForm, type SubmitHandler } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
+import { generateImage, type GenerateImageInput } from '@/ai/flows/generate-image';
+import { improvePrompt, type ImprovePromptOutput } from '@/ai/flows/improve-prompt';
+import { ASPECT_RATIOS } from '@/lib/constants';
+import type { StyleType, MoodType, LightingType, ColorType } from '@/lib/constants';
+import type { GeneratedImageHistoryItem, GeneratedImageParams } from '@/types';
+import { ImageDisplay } from './ImageDisplay';
+import { StyleCustomizationPanel } from './StyleCustomizationPanel';
+import { UsageHistory } from './UsageHistory';
+import { FuturisticPanel } from './FuturisticPanel';
+import { Wand2, Copy as CopyIcon, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { LoadingSpinner } from './LoadingSpinner';
+
+const formSchema = z.object({
+  prompt: z.string().min(1, 'Prompt cannot be empty. Let your imagination flow!').max(1000, 'Prompt is too long.'),
+});
+type FormData = z.infer<typeof formSchema>;
+
+const aspectRatiosWithText = ASPECT_RATIOS.map(ar => ({
+  ...ar,
+  textHint: ar.label.split(' (')[1]?.replace(')', '')?.toLowerCase() || ar.value, // e.g. "square", "widescreen"
+}));
+
+export function ImageGenerator() {
+  const { toast } = useToast();
+  const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>(aspectRatiosWithText[0].value);
+  
+  const [selectedStyle, setSelectedStyle] = useState<StyleType | undefined>(undefined);
+  const [selectedMood, setSelectedMood] = useState<MoodType | undefined>(undefined);
+  const [selectedLighting, setSelectedLighting] = useState<LightingType | undefined>(undefined);
+  const [selectedColor, setSelectedColor] = useState<ColorType | undefined>(undefined);
+
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isImprovingPrompt, setIsImprovingPrompt] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  const [history, setHistory] = useState<GeneratedImageHistoryItem[]>([]);
+  const [improvedPromptSuggestion, setImprovedPromptSuggestion] = useState<ImprovePromptOutput | null>(null);
+  const [showImprovePromptDialog, setShowImprovePromptDialog] = useState(false);
+
+  const { register, handleSubmit, watch, setValue: setFormValue, formState: { errors } } = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: { prompt: '' },
+  });
+  const currentPrompt = watch('prompt');
+
+  useEffect(() => {
+    // Load history from localStorage on mount
+    const storedHistory = localStorage.getItem('visionForgeHistory');
+    if (storedHistory) {
+      setHistory(JSON.parse(storedHistory).map((item:GeneratedImageHistoryItem) => ({...item, timestamp: new Date(item.timestamp)})));
+    }
+  }, []);
+
+  useEffect(() => {
+    // Save history to localStorage whenever it changes
+    if (history.length > 0) {
+      localStorage.setItem('visionForgeHistory', JSON.stringify(history));
+    } else {
+      localStorage.removeItem('visionForgeHistory');
+    }
+  }, [history]);
+
+  const onSubmit: SubmitHandler<FormData> = async (data) => {
+    setIsLoading(true);
+    setError(null);
+    setGeneratedImageUrl(null);
+
+    const aspectRatioTextHint = aspectRatiosWithText.find(ar => ar.value === selectedAspectRatio)?.textHint || '';
+    const fullPrompt = `${data.prompt}${aspectRatioTextHint ? `, ${aspectRatioTextHint}` : ''}`;
+
+    const generationParams: GenerateImageInput = {
+      prompt: fullPrompt,
+      style: selectedStyle,
+      mood: selectedMood,
+      lighting: selectedLighting,
+      color: selectedColor,
+    };
+    
+    try {
+      const result = await generateImage(generationParams);
+      setGeneratedImageUrl(result.imageUrl);
+      
+      const historyItem: GeneratedImageHistoryItem = {
+        id: new Date().toISOString() + Math.random().toString(36).substring(2,9),
+        prompt: data.prompt, // Store original prompt for clarity
+        aspectRatio: selectedAspectRatio,
+        style: selectedStyle,
+        mood: selectedMood,
+        lighting: selectedLighting,
+        color: selectedColor,
+        imageUrl: result.imageUrl,
+        timestamp: new Date(),
+      };
+      setHistory(prev => [historyItem, ...prev.slice(0, 19)]); // Keep last 20 items
+      toast({ title: 'Vision Forged!', description: 'Your image has been successfully generated.' });
+    } catch (e: any) {
+      console.error('Image generation error:', e);
+      const errorMessage = e.message || 'An unexpected error occurred during image generation.';
+      setError(errorMessage);
+      toast({ title: 'Generation Failed', description: errorMessage, variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleImprovePrompt = async () => {
+    if (!currentPrompt) {
+      toast({ title: 'Empty Prompt', description: 'Please enter a prompt to improve.', variant: 'destructive' });
+      return;
+    }
+    setIsImprovingPrompt(true);
+    setImprovedPromptSuggestion(null);
+    try {
+      const suggestion = await improvePrompt({ prompt: currentPrompt });
+      setImprovedPromptSuggestion(suggestion);
+      setShowImprovePromptDialog(true);
+    } catch (e: any) {
+      console.error('Improve prompt error:', e);
+      toast({ title: 'Suggestion Failed', description: e.message || 'Could not get prompt suggestion.', variant: 'destructive' });
+    } finally {
+      setIsImprovingPrompt(false);
+    }
+  };
+
+  const applyImprovedPrompt = () => {
+    if (improvedPromptSuggestion) {
+      setFormValue('prompt', improvedPromptSuggestion.improvedPrompt);
+      setShowImprovePromptDialog(false);
+      toast({ title: 'Prompt Updated!', description: 'The improved prompt has been applied.' });
+    }
+  };
+
+  const handleDownloadImage = () => {
+    if (!generatedImageUrl) return;
+    const link = document.createElement('a');
+    link.href = generatedImageUrl;
+    // Guess extension from data URI, default to png
+    const extension = generatedImageUrl.split(';')[0].split('/')[1] || 'png';
+    link.download = `visionforge_${Date.now()}.${extension}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast({ title: 'Download Started', description: 'Your image is downloading.' });
+  };
+
+  const handleRegenerate = () => {
+     if(currentPrompt) {
+        handleSubmit(onSubmit)();
+     } else if (history.length > 0) {
+        handleSelectHistoryItem(history[0]); // Regenerate last item if current prompt is empty
+     } else {
+        toast({ title: 'Nothing to Regenerate', description: 'Enter a prompt or select from history.', variant: 'destructive' });
+     }
+  };
+
+  const handleCopyPrompt = () => {
+    if (!currentPrompt) return;
+    navigator.clipboard.writeText(currentPrompt);
+    toast({ title: 'Prompt Copied!', description: 'The current prompt is copied to your clipboard.' });
+  };
+
+  const handleSelectHistoryItem = (item: GeneratedImageHistoryItem) => {
+    setFormValue('prompt', item.prompt);
+    setSelectedAspectRatio(item.aspectRatio);
+    setSelectedStyle(item.style);
+    setSelectedMood(item.mood);
+    setSelectedLighting(item.lighting);
+    setSelectedColor(item.color);
+    setGeneratedImageUrl(item.imageUrl); // Show selected image
+    setError(null);
+    // Optional: Scroll to top or trigger generation
+    // handleSubmit(onSubmit)(); // Uncomment to auto-regenerate on selection
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+     toast({ title: 'History Item Loaded', description: 'Parameters and image loaded from history.' });
+  };
+
+  const handleDeleteHistoryItem = (id: string) => {
+    setHistory(prev => prev.filter(item => item.id !== id));
+    toast({ title: 'History Item Deleted', description: 'The item was removed from your history.' });
+  };
+
+  const handleClearHistory = () => {
+    setHistory([]);
+    localStorage.removeItem('visionForgeHistory');
+    toast({ title: 'History Cleared', description: 'All generated image history has been cleared.' });
+  };
+
+
+  return (
+    <div className="container mx-auto py-8 px-4">
+      <header className="text-center mb-10">
+        <h1 className="text-5xl font-extrabold tracking-tight text-primary">
+          Vision<span className="text-accent">Forge</span> AI
+        </h1>
+        <p className="mt-2 text-lg text-foreground/80">Craft stunning visuals with the power of AI.</p>
+      </header>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Controls Panel */}
+        <div className="lg:col-span-5 space-y-6">
+          <FuturisticPanel>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <div>
+                <Label htmlFor="prompt" className="text-lg font-semibold mb-2 block text-foreground/90">
+                  Enter Your Vision
+                </Label>
+                <div className="relative">
+                  <Textarea
+                    id="prompt"
+                    {...register('prompt')}
+                    placeholder="e.g., A futuristic cityscape at sunset, neon lights reflecting on wet streets..."
+                    rows={4}
+                    className="bg-input border-border/70 focus:border-primary focus:ring-primary text-base resize-none pr-12"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-accent hover:text-accent/80 futuristic-glow-button"
+                    onClick={handleImprovePrompt}
+                    disabled={isImprovingPrompt || !currentPrompt}
+                    title="Improve Prompt with AI"
+                  >
+                    {isImprovingPrompt ? <LoadingSpinner size={18} /> : <Wand2 size={18} />}
+                  </Button>
+                </div>
+                {errors.prompt && <p className="text-sm text-destructive mt-1">{errors.prompt.message}</p>}
+              </div>
+
+              <div>
+                <Label htmlFor="aspect-ratio" className="text-sm font-medium mb-1 block text-foreground/80">Aspect Ratio</Label>
+                <Select value={selectedAspectRatio} onValueChange={setSelectedAspectRatio}>
+                  <SelectTrigger id="aspect-ratio" className="w-full futuristic-glow-button bg-input hover:bg-input/80">
+                    <SelectValue placeholder="Select aspect ratio" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border">
+                    {aspectRatiosWithText.map((ratio) => (
+                      <SelectItem key={ratio.value} value={ratio.value}>
+                        {ratio.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <StyleCustomizationPanel
+                selectedStyle={selectedStyle} setSelectedStyle={setSelectedStyle}
+                selectedMood={selectedMood} setSelectedMood={setSelectedMood}
+                selectedLighting={selectedLighting} setSelectedLighting={setSelectedLighting}
+                selectedColor={selectedColor} setSelectedColor={setSelectedColor}
+              />
+              
+              <Button type="submit" disabled={isLoading} className="w-full text-lg py-3 futuristic-glow-button-primary bg-primary hover:bg-primary/90 text-primary-foreground">
+                {isLoading ? <LoadingSpinner size={24} className="mr-2"/> : null}
+                Forge Vision
+              </Button>
+            </form>
+          </FuturisticPanel>
+          
+        </div>
+
+        {/* Image Display Panel */}
+        <div className="lg:col-span-7">
+          <ImageDisplay
+            imageUrl={generatedImageUrl}
+            prompt={currentPrompt}
+            aspectRatio={selectedAspectRatio}
+            isLoading={isLoading}
+            error={error}
+            onDownload={handleDownloadImage}
+            onRegenerate={handleRegenerate}
+            onCopyPrompt={handleCopyPrompt}
+          />
+        </div>
+      </div>
+      
+      {/* Usage History */}
+      <div className="mt-12">
+         <UsageHistory 
+            history={history} 
+            onSelectHistoryItem={handleSelectHistoryItem}
+            onDeleteHistoryItem={handleDeleteHistoryItem}
+            onClearHistory={handleClearHistory}
+          />
+      </div>
+
+
+      {/* Improve Prompt Dialog */}
+      {improvedPromptSuggestion && (
+        <Dialog open={showImprovePromptDialog} onOpenChange={setShowImprovePromptDialog}>
+          <DialogContent className="sm:max-w-lg glassmorphism-panel">
+            <DialogHeader>
+              <DialogTitle className="text-2xl text-primary flex items-center gap-2"><Wand2 /> AI Prompt Enhancement</DialogTitle>
+              <DialogDescription className="text-foreground/80 pt-2">
+                Our AI has analyzed your prompt and suggests the following improvements for potentially better results.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="my-4 space-y-4">
+              <div>
+                <h4 className="font-semibold text-foreground/90">Original Prompt:</h4>
+                <p className="text-sm p-3 bg-muted/50 rounded-md border border-border/30">{currentPrompt}</p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-accent">Suggested Prompt:</h4>
+                <p className="text-sm p-3 bg-accent/10 rounded-md border border-accent/30 text-accent-foreground">{improvedPromptSuggestion.improvedPrompt}</p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-foreground/90">Reasoning:</h4>
+                <p className="text-sm p-3 bg-muted/50 rounded-md border border-border/30">{improvedPromptSuggestion.reasoning}</p>
+              </div>
+            </div>
+            <DialogFooter className="sm:justify-between gap-2">
+              <Button variant="outline" onClick={() => setShowImprovePromptDialog(false)} className="futuristic-glow-button">
+                 <ThumbsDown size={18} className="mr-2"/> Keep Original
+              </Button>
+              <Button onClick={applyImprovedPrompt} className="futuristic-glow-button-primary bg-primary hover:bg-primary/90 text-primary-foreground">
+                <ThumbsUp size={18} className="mr-2"/> Apply Suggestion
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  );
+}
