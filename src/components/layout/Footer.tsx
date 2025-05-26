@@ -1,6 +1,6 @@
 
 import Link from 'next/link';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, PencilRuler } from 'lucide-react'; // Added PencilRuler for editor
 
 export function Footer() {
   return (
@@ -13,7 +13,7 @@ export function Footer() {
               <span className="text-xl font-bold text-foreground">VisionForge AI</span>
             </Link>
             <p className="text-sm text-muted-foreground">
-              Empowering your creativity with cutting-edge AI image generation. Bring your most ambitious visions to life with ease and precision.
+              Empowering your creativity with cutting-edge AI image generation and editing tools. Bring your visions to life.
             </p>
           </div>
           
@@ -21,6 +21,7 @@ export function Footer() {
             <h3 className="text-md font-semibold text-foreground mb-4">Our Services</h3>
             <ul className="space-y-2 text-sm">
               <li><Link href="/" className="text-muted-foreground hover:text-primary transition-colors">AI Image Generation</Link></li>
+              <li><Link href="/edit" className="text-muted-foreground hover:text-primary transition-colors flex items-center"><PencilRuler size={14} className="mr-1.5" /> Image Editor</Link></li>
               <li><Link href="/#features" className="text-muted-foreground hover:text-primary transition-colors">Prompt Enhancement</Link></li>
               <li><Link href="/#features" className="text-muted-foreground hover:text-primary transition-colors">Style Customization</Link></li>
               <li><Link href="/#features" className="text-muted-foreground hover:text-primary transition-colors">Aspect Ratio Control</Link></li>
@@ -55,3 +56,5 @@ export function Footer() {
     </footer>
   );
 }
+
+    
