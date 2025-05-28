@@ -10,7 +10,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z, type FinishReason} from 'genkit';
 
 const GenerateImageInputSchema = z.object({
   prompt: z.string().describe('The prompt for generating the image. Aspect ratio hints should be included here if desired.'),
@@ -76,8 +76,6 @@ const generateImageFlow = ai.defineFlow(
     outputSchema: GenerateImageOutputSchema,
   },
   async (input) => {
-    // Construct the base prompt with all details, emphasizing aspect ratio if hinted.
-    // The input.prompt from ImageGenerator.tsx already contains the aspect ratio textual hint.
     const basePrompt = `Generate an image based on the following specifications. Pay close attention to any aspect ratio hints (e.g., 'widescreen', 'square', 'portrait') that might be included in the main prompt text.
 
 Prompt: ${input.prompt}
@@ -92,11 +90,10 @@ ${input.color ? `Color: ${input.color}` : ''}`;
     for (let i = 0; i < numImagesToGenerate; i++) {
       generationPromises.push(
         ai.generate({
-          model: 'googleai/gemini-2.0-flash-exp', // Ensure this model is used for image generation
-          // Add a slight variation hint for subsequent images if desired, model might ignore it.
+          model: 'googleai/gemini-2.0-flash-exp', 
           prompt: `${basePrompt}${numImagesToGenerate > 1 && i > 0 ? ` (Variation ${i + 1} of ${numImagesToGenerate})` : ''}`,
           config: {
-            responseModalities: ['TEXT', 'IMAGE'], // MUST provide both TEXT and IMAGE
+            responseModalities: ['TEXT', 'IMAGE'], 
           },
         })
       );
@@ -104,28 +101,61 @@ ${input.color ? `Color: ${input.color}` : ''}`;
 
     try {
       const results = await Promise.all(generationPromises);
-      const imageUrls = results.map(result => {
-        if (!result.media?.url) {
-          console.warn('A generation result was missing a media URL:', result);
-          // Fallback or error handling for a missing URL for one of the images
-          // For now, let's filter out undefined URLs, though this might result in fewer than 5 images.
-          // Ideally, each should succeed or the whole batch fails more gracefully.
-          return null; 
+      const imageUrls: string[] = [];
+      const detailedFailures: { reason: FinishReason | 'MISSING_MEDIA_URL_OR_CANDIDATE'; message?: string; index: number }[] = [];
+
+      results.forEach((result, index) => {
+        if (result.media?.url) {
+          imageUrls.push(result.media.url);
+        } else {
+          // Log detailed information for server-side debugging
+          console.warn(`Generation attempt ${index + 1} missing media URL. Full result:`, JSON.stringify(result, null, 2));
+          const candidate = result.candidates && result.candidates[0];
+          if (candidate) {
+            detailedFailures.push({
+              index: index + 1,
+              reason: candidate.finishReason,
+              message: candidate.finishMessage || 'No specific message provided by the model.',
+            });
+          } else {
+            detailedFailures.push({
+              index: index + 1,
+              reason: 'MISSING_MEDIA_URL_OR_CANDIDATE',
+              message: 'Response did not contain a media URL or any content candidates.',
+            });
+          }
         }
-        return result.media.url;
-      }).filter(url => url !== null) as string[];
+      });
       
-      if (imageUrls.length < numImagesToGenerate && imageUrls.length === 0) {
-        // If all failed to produce a URL (which is unlikely if one worked), throw an error.
-         throw new Error('Failed to generate any image URLs.');
+      if (imageUrls.length === 0) {
+        let reasonSummary = 'All image generation attempts failed.';
+        if (detailedFailures.length > 0) {
+          reasonSummary += ' Reasons:';
+          detailedFailures.forEach(failure => {
+            reasonSummary += `\n- Attempt ${failure.index}: ${failure.reason} (${failure.message})`;
+          });
+
+          const uniqueFailureReasons = [...new Set(detailedFailures.map(f => f.reason))];
+          if (uniqueFailureReasons.includes('SAFETY') || uniqueFailureReasons.includes('BLOCKED')) {
+            reasonSummary += '\n\nOne or more attempts were blocked due to "SAFETY" or "BLOCKED" reasons. This often indicates the prompt might have violated content policies or contained sensitive terms.';
+          }
+        }
+        reasonSummary += '\n\nPlease verify the following and try again:\n1. Your prompt is clear and adheres to content policies.\n2. Your API key (`GOOGLE_API_KEY` in .env) is correct, active, and has the necessary permissions.\n3. The "Generative Language API" or "Vertex AI API" is enabled in your Google Cloud project.\n4. Billing is enabled and active for your Google Cloud project.\nReview server logs for more detailed technical information on each failed attempt.';
+        
+        // This error will be caught by the outer catch and prefixed
+        throw new Error(reasonSummary);
       } else if (imageUrls.length < numImagesToGenerate) {
-        console.warn(`Generated ${imageUrls.length} images instead of the requested ${numImagesToGenerate}. Some generations might have failed internally.`);
+         let failedReasonsInfo = '';
+        detailedFailures.forEach(failure => {
+            failedReasonsInfo += ` Attempt ${failure.index} failed - Reason: ${failure.reason} (${failure.message}). `;
+        });
+        console.warn(`Generated ${imageUrls.length} images instead of the requested ${numImagesToGenerate}. Some generations might have failed internally. ${failedReasonsInfo}Review server logs for full details.`);
       }
 
       return { imageUrls };
     } catch (error) {
-      console.error("Error during parallel image generation:", error);
-      // Re-throw or handle as appropriate for your application
+      console.error("Error during image generation batch processing:", error);
+      // This re-throws the error, potentially the one constructed above or another error from Promise.all
       throw new Error(`Failed to generate image batch: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
