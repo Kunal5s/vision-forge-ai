@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { GeneratedImageHistoryItem } from '@/types';
-import { Eye, Trash2, Images } from 'lucide-react'; // Added Images icon for multiple
+import { Eye, Trash2, Image as ImageIcon } from 'lucide-react'; // Corrected import
 import { FuturisticPanel } from './FuturisticPanel';
 import {
   AlertDialog,
@@ -69,15 +69,10 @@ export function UsageHistory({ history, onSelectHistoryItem, onDeleteHistoryItem
           {history.map((item) => (
             <div key={item.id} className="flex items-center gap-4 p-3 rounded-lg border border-border/50 bg-background/30 hover:bg-accent/10 transition-colors duration-200">
               <div className="relative w-16 h-16 rounded-md overflow-hidden shrink-0 bg-muted/20 flex items-center justify-center">
-                {item.imageUrls && item.imageUrls.length > 0 ? (
-                  <Image src={item.imageUrls[0]} alt={item.prompt.substring(0,30)} layout="fill" objectFit="cover" data-ai-hint="history thumbnail" />
+                {item.imageUrl ? (
+                  <Image src={item.imageUrl} alt={item.prompt.substring(0,30)} layout="fill" objectFit="cover" data-ai-hint="history thumbnail" />
                 ) : (
-                  <Images size={24} className="text-muted-foreground" />
-                )}
-                 {item.imageUrls && item.imageUrls.length > 1 && (
-                  <span className="absolute bottom-1 right-1 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded-sm font-bold">
-                    +{item.imageUrls.length -1}
-                  </span>
+                  <ImageIcon size={24} className="text-muted-foreground" /> 
                 )}
               </div>
               <div className="flex-grow overflow-hidden">
@@ -103,7 +98,7 @@ export function UsageHistory({ history, onSelectHistoryItem, onDeleteHistoryItem
                       <AlertDialogHeader>
                         <AlertDialogTitle>Delete this item?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This will remove the set of images and its details from your history. This action cannot be undone.
+                          This will remove the image and its details from your history. This action cannot be undone.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>

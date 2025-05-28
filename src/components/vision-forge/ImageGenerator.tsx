@@ -48,7 +48,7 @@ export function ImageGenerator() {
   const [selectedLighting, setSelectedLighting] = useState<LightingType | undefined>(undefined);
   const [selectedColor, setSelectedColor] = useState<ColorType | undefined>(undefined);
 
-  const [generatedImageUrls, setGeneratedImageUrls] = useState<string[]>([]); // Changed from string | null
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null); // Changed from array
   const [isLoading, setIsLoading] = useState(false);
   const [isImprovingPrompt, setIsImprovingPrompt] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,14 +81,13 @@ export function ImageGenerator() {
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     setIsLoading(true);
     setError(null);
-    setGeneratedImageUrls([]);
+    setGeneratedImageUrl(null); // Changed from empty array
 
     const aspectRatioTextHint = aspectRatiosWithText.find(ar => ar.value === selectedAspectRatio)?.textHint || '';
-    // The aspect ratio hint is part of the prompt sent to the Genkit flow
     const fullPrompt = `${data.prompt}${aspectRatioTextHint ? `, ${aspectRatioTextHint}` : ''}`;
 
     const generationParams: GenerateImageInput = {
-      prompt: fullPrompt, // This now includes the aspect ratio hint
+      prompt: fullPrompt,
       style: selectedStyle,
       mood: selectedMood,
       lighting: selectedLighting,
@@ -97,24 +96,25 @@ export function ImageGenerator() {
     
     try {
       const result = await generateImage(generationParams);
-      if (result.imageUrls && result.imageUrls.length > 0) {
-        setGeneratedImageUrls(result.imageUrls);
+      if (result.imageUrl) {
+        setGeneratedImageUrl(result.imageUrl);
         const historyItem: GeneratedImageHistoryItem = {
           id: new Date().toISOString() + Math.random().toString(36).substring(2,9),
-          prompt: data.prompt, // Store original prompt
+          prompt: data.prompt,
           aspectRatio: selectedAspectRatio,
           style: selectedStyle,
           mood: selectedMood,
           lighting: selectedLighting,
           color: selectedColor,
-          imageUrls: result.imageUrls,
+          imageUrl: result.imageUrl, // Changed from imageUrls
           timestamp: new Date(),
         };
         setHistory(prev => [historyItem, ...prev.slice(0, 19)]);
-        toast({ title: 'Visions Forged!', description: `${result.imageUrls.length} image(s) have been successfully generated.` });
+        toast({ title: 'Vision Forged!', description: `Your image has been successfully generated.` });
       } else {
-        setError('No images were generated. The AI might be busy or the prompt too restrictive.');
-        toast({ title: 'Generation Issue', description: 'No images were returned by the AI.', variant: 'destructive' });
+        // This case should ideally be handled by the error thrown from the flow
+        setError('No image was generated. The AI might be busy or the prompt too restrictive.');
+        toast({ title: 'Generation Issue', description: 'No image was returned by the AI.', variant: 'destructive' });
       }
     } catch (e: any) {
       console.error('Image generation error:', e);
@@ -176,10 +176,10 @@ export function ImageGenerator() {
     setSelectedMood(item.mood);
     setSelectedLighting(item.lighting);
     setSelectedColor(item.color);
-    setGeneratedImageUrls(item.imageUrls); 
+    setGeneratedImageUrl(item.imageUrl); // Changed from imageUrls
     setError(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    toast({ title: 'History Item Loaded', description: 'Parameters and images loaded from history.' });
+    toast({ title: 'History Item Loaded', description: 'Parameters and image loaded from history.' });
   };
 
   const handleDeleteHistoryItem = (id: string) => {
@@ -199,7 +199,7 @@ export function ImageGenerator() {
         <h1 className="text-5xl font-extrabold tracking-tight text-primary">
           Vision<span className="text-accent">Forge</span> AI
         </h1>
-        <p className="mt-2 text-lg text-foreground/80">Craft stunning visuals with the power of AI. Now generating 5 variations!</p>
+        <p className="mt-2 text-lg text-foreground/80">Craft stunning visuals with the power of AI.</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -266,9 +266,9 @@ export function ImageGenerator() {
 
         <div className="lg:col-span-7">
           <ImageDisplay
-            imageUrls={generatedImageUrls}
+            imageUrl={generatedImageUrl} // Changed from imageUrls
             prompt={currentPrompt}
-            aspectRatio={selectedAspectRatio} // This will apply to the container of the grid
+            aspectRatio={selectedAspectRatio}
             isLoading={isLoading}
             error={error}
             onRegenerate={handleRegenerate}
