@@ -1,3 +1,4 @@
+
 import type { StyleType, MoodType, LightingType, ColorType } from '@/lib/constants';
 
 export interface GeneratedImageParams {
@@ -11,6 +12,6 @@ export interface GeneratedImageParams {
 
 export interface GeneratedImageHistoryItem extends GeneratedImageParams {
   id: string;
-  imageUrl: string;
+  imageUrls: string[]; // Changed from imageUrl: string to imageUrls: string[]
   timestamp: Date;
 }

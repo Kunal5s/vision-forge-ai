@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -100,6 +101,23 @@ body {
     min-height: 100vh;
   }
 }
+
+@layer utilities {
+  @keyframes subtle-glow-pulse {
+    0%, 100% {
+      box-shadow: 0 0 3px hsl(var(--primary) / 0.4), 0 0 5px hsl(var(--primary) / 0.3) inset;
+      transform: scale(1);
+    }
+    50% {
+      box-shadow: 0 0 10px hsl(var(--primary) / 0.7), 0 0 10px hsl(var(--primary) / 0.5) inset;
+      transform: scale(1.01);
+    }
+  }
+  .newly-generated-image-animate {
+    animation: subtle-glow-pulse 1s ease-in-out 5; /* 1s per pulse, 5 iterations = 5s */
+  }
+}
+
 
 @layer components {
   .glassmorphism-panel {

@@ -1,10 +1,11 @@
+
 'use client';
 
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { GeneratedImageHistoryItem } from '@/types';
-import { Eye, Trash2 } from 'lucide-react';
+import { Eye, Trash2, Images } from 'lucide-react'; // Added Images icon for multiple
 import { FuturisticPanel } from './FuturisticPanel';
 import {
   AlertDialog,
@@ -67,15 +68,29 @@ export function UsageHistory({ history, onSelectHistoryItem, onDeleteHistoryItem
         <div className="space-y-4">
           {history.map((item) => (
             <div key={item.id} className="flex items-center gap-4 p-3 rounded-lg border border-border/50 bg-background/30 hover:bg-accent/10 transition-colors duration-200">
-              <div className="relative w-16 h-16 rounded-md overflow-hidden shrink-0">
-                <Image src={item.imageUrl} alt={item.prompt.substring(0,30)} layout="fill" objectFit="cover" data-ai-hint="thumbnail art" />
+              <div className="relative w-16 h-16 rounded-md overflow-hidden shrink-0 bg-muted/20 flex items-center justify-center">
+                {item.imageUrls && item.imageUrls.length > 0 ? (
+                  <Image src={item.imageUrls[0]} alt={item.prompt.substring(0,30)} layout="fill" objectFit="cover" data-ai-hint="history thumbnail" />
+                ) : (
+                  <Images size={24} className="text-muted-foreground" />
+                )}
+                 {item.imageUrls && item.imageUrls.length > 1 && (
+                  <span className="absolute bottom-1 right-1 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded-sm font-bold">
+                    +{item.imageUrls.length -1}
+                  </span>
+                )}
               </div>
               <div className="flex-grow overflow-hidden">
                 <p className="text-sm font-medium truncate text-foreground" title={item.prompt}>{item.prompt}</p>
-                <p className="text-xs text-muted-foreground">{item.timestamp.toLocaleDateString()} {item.timestamp.toLocaleTimeString()}</p>
+                <p className="text-xs text-muted-foreground">{new Date(item.timestamp).toLocaleDateString()} {new Date(item.timestamp).toLocaleTimeString()}</p>
+                <p className="text-xs text-muted-foreground">
+                  {item.aspectRatio}
+                  {item.style ? `, ${item.style}` : ''}
+                  {item.mood ? `, ${item.mood}` : ''}
+                </p>
               </div>
               <div className="flex gap-2 shrink-0">
-                <Button variant="ghost" size="icon" onClick={() => onSelectHistoryItem(item)} title="View & Re-generate" className="hover:text-primary">
+                <Button variant="ghost" size="icon" onClick={() => onSelectHistoryItem(item)} title="View & Re-use Parameters" className="hover:text-primary">
                   <Eye size={18} />
                 </Button>
                  <AlertDialog>
@@ -88,7 +103,7 @@ export function UsageHistory({ history, onSelectHistoryItem, onDeleteHistoryItem
                       <AlertDialogHeader>
                         <AlertDialogTitle>Delete this item?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This will remove the image and its details from your history. This action cannot be undone.
+                          This will remove the set of images and its details from your history. This action cannot be undone.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>

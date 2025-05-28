@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -14,18 +15,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { generateImage, type GenerateImageInput } from '@/ai/flows/generate-image';
 import { improvePrompt, type ImprovePromptOutput } from '@/ai/flows/improve-prompt';
 import { ASPECT_RATIOS } from '@/lib/constants';
 import type { StyleType, MoodType, LightingType, ColorType } from '@/lib/constants';
-import type { GeneratedImageHistoryItem, GeneratedImageParams } from '@/types';
+import type { GeneratedImageHistoryItem } from '@/types';
 import { ImageDisplay } from './ImageDisplay';
 import { StyleCustomizationPanel } from './StyleCustomizationPanel';
 import { UsageHistory } from './UsageHistory';
 import { FuturisticPanel } from './FuturisticPanel';
-import { Wand2, Copy as CopyIcon, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Wand2, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { LoadingSpinner } from './LoadingSpinner';
 
 const formSchema = z.object({
@@ -35,7 +36,7 @@ type FormData = z.infer<typeof formSchema>;
 
 const aspectRatiosWithText = ASPECT_RATIOS.map(ar => ({
   ...ar,
-  textHint: ar.label.split(' (')[1]?.replace(')', '')?.toLowerCase() || ar.value, // e.g. "square", "widescreen"
+  textHint: ar.label.split(' (')[1]?.replace(')', '')?.toLowerCase() || ar.value,
 }));
 
 export function ImageGenerator() {
@@ -47,7 +48,7 @@ export function ImageGenerator() {
   const [selectedLighting, setSelectedLighting] = useState<LightingType | undefined>(undefined);
   const [selectedColor, setSelectedColor] = useState<ColorType | undefined>(undefined);
 
-  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  const [generatedImageUrls, setGeneratedImageUrls] = useState<string[]>([]); // Changed from string | null
   const [isLoading, setIsLoading] = useState(false);
   const [isImprovingPrompt, setIsImprovingPrompt] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,7 +64,6 @@ export function ImageGenerator() {
   const currentPrompt = watch('prompt');
 
   useEffect(() => {
-    // Load history from localStorage on mount
     const storedHistory = localStorage.getItem('visionForgeHistory');
     if (storedHistory) {
       setHistory(JSON.parse(storedHistory).map((item:GeneratedImageHistoryItem) => ({...item, timestamp: new Date(item.timestamp)})));
@@ -71,7 +71,6 @@ export function ImageGenerator() {
   }, []);
 
   useEffect(() => {
-    // Save history to localStorage whenever it changes
     if (history.length > 0) {
       localStorage.setItem('visionForgeHistory', JSON.stringify(history));
     } else {
@@ -82,13 +81,14 @@ export function ImageGenerator() {
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     setIsLoading(true);
     setError(null);
-    setGeneratedImageUrl(null);
+    setGeneratedImageUrls([]);
 
     const aspectRatioTextHint = aspectRatiosWithText.find(ar => ar.value === selectedAspectRatio)?.textHint || '';
+    // The aspect ratio hint is part of the prompt sent to the Genkit flow
     const fullPrompt = `${data.prompt}${aspectRatioTextHint ? `, ${aspectRatioTextHint}` : ''}`;
 
     const generationParams: GenerateImageInput = {
-      prompt: fullPrompt,
+      prompt: fullPrompt, // This now includes the aspect ratio hint
       style: selectedStyle,
       mood: selectedMood,
       lighting: selectedLighting,
@@ -97,21 +97,25 @@ export function ImageGenerator() {
     
     try {
       const result = await generateImage(generationParams);
-      setGeneratedImageUrl(result.imageUrl);
-      
-      const historyItem: GeneratedImageHistoryItem = {
-        id: new Date().toISOString() + Math.random().toString(36).substring(2,9),
-        prompt: data.prompt, // Store original prompt for clarity
-        aspectRatio: selectedAspectRatio,
-        style: selectedStyle,
-        mood: selectedMood,
-        lighting: selectedLighting,
-        color: selectedColor,
-        imageUrl: result.imageUrl,
-        timestamp: new Date(),
-      };
-      setHistory(prev => [historyItem, ...prev.slice(0, 19)]); // Keep last 20 items
-      toast({ title: 'Vision Forged!', description: 'Your image has been successfully generated.' });
+      if (result.imageUrls && result.imageUrls.length > 0) {
+        setGeneratedImageUrls(result.imageUrls);
+        const historyItem: GeneratedImageHistoryItem = {
+          id: new Date().toISOString() + Math.random().toString(36).substring(2,9),
+          prompt: data.prompt, // Store original prompt
+          aspectRatio: selectedAspectRatio,
+          style: selectedStyle,
+          mood: selectedMood,
+          lighting: selectedLighting,
+          color: selectedColor,
+          imageUrls: result.imageUrls,
+          timestamp: new Date(),
+        };
+        setHistory(prev => [historyItem, ...prev.slice(0, 19)]);
+        toast({ title: 'Visions Forged!', description: `${result.imageUrls.length} image(s) have been successfully generated.` });
+      } else {
+        setError('No images were generated. The AI might be busy or the prompt too restrictive.');
+        toast({ title: 'Generation Issue', description: 'No images were returned by the AI.', variant: 'destructive' });
+      }
     } catch (e: any) {
       console.error('Image generation error:', e);
       const errorMessage = e.message || 'An unexpected error occurred during image generation.';
@@ -149,24 +153,11 @@ export function ImageGenerator() {
     }
   };
 
-  const handleDownloadImage = () => {
-    if (!generatedImageUrl) return;
-    const link = document.createElement('a');
-    link.href = generatedImageUrl;
-    // Guess extension from data URI, default to png
-    const extension = generatedImageUrl.split(';')[0].split('/')[1] || 'png';
-    link.download = `visionforge_${Date.now()}.${extension}`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast({ title: 'Download Started', description: 'Your image is downloading.' });
-  };
-
   const handleRegenerate = () => {
      if(currentPrompt) {
         handleSubmit(onSubmit)();
      } else if (history.length > 0) {
-        handleSelectHistoryItem(history[0]); // Regenerate last item if current prompt is empty
+        handleSelectHistoryItem(history[0]); 
      } else {
         toast({ title: 'Nothing to Regenerate', description: 'Enter a prompt or select from history.', variant: 'destructive' });
      }
@@ -185,12 +176,10 @@ export function ImageGenerator() {
     setSelectedMood(item.mood);
     setSelectedLighting(item.lighting);
     setSelectedColor(item.color);
-    setGeneratedImageUrl(item.imageUrl); // Show selected image
+    setGeneratedImageUrls(item.imageUrls); 
     setError(null);
-    // Optional: Scroll to top or trigger generation
-    // handleSubmit(onSubmit)(); // Uncomment to auto-regenerate on selection
     window.scrollTo({ top: 0, behavior: 'smooth' });
-     toast({ title: 'History Item Loaded', description: 'Parameters and image loaded from history.' });
+    toast({ title: 'History Item Loaded', description: 'Parameters and images loaded from history.' });
   };
 
   const handleDeleteHistoryItem = (id: string) => {
@@ -204,18 +193,16 @@ export function ImageGenerator() {
     toast({ title: 'History Cleared', description: 'All generated image history has been cleared.' });
   };
 
-
   return (
     <div className="container mx-auto py-8 px-4">
       <header className="text-center mb-10">
         <h1 className="text-5xl font-extrabold tracking-tight text-primary">
           Vision<span className="text-accent">Forge</span> AI
         </h1>
-        <p className="mt-2 text-lg text-foreground/80">Craft stunning visuals with the power of AI.</p>
+        <p className="mt-2 text-lg text-foreground/80">Craft stunning visuals with the power of AI. Now generating 5 variations!</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Controls Panel */}
         <div className="lg:col-span-5 space-y-6">
           <FuturisticPanel>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -275,25 +262,21 @@ export function ImageGenerator() {
               </Button>
             </form>
           </FuturisticPanel>
-          
         </div>
 
-        {/* Image Display Panel */}
         <div className="lg:col-span-7">
           <ImageDisplay
-            imageUrl={generatedImageUrl}
+            imageUrls={generatedImageUrls}
             prompt={currentPrompt}
-            aspectRatio={selectedAspectRatio}
+            aspectRatio={selectedAspectRatio} // This will apply to the container of the grid
             isLoading={isLoading}
             error={error}
-            onDownload={handleDownloadImage}
             onRegenerate={handleRegenerate}
             onCopyPrompt={handleCopyPrompt}
           />
         </div>
       </div>
       
-      {/* Usage History */}
       <div className="mt-12">
          <UsageHistory 
             history={history} 
@@ -303,8 +286,6 @@ export function ImageGenerator() {
           />
       </div>
 
-
-      {/* Improve Prompt Dialog */}
       {improvedPromptSuggestion && (
         <Dialog open={showImprovePromptDialog} onOpenChange={setShowImprovePromptDialog}>
           <DialogContent className="sm:max-w-lg glassmorphism-panel">
