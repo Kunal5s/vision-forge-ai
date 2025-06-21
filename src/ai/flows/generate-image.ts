@@ -94,11 +94,11 @@ const generateImageFlow = ai.defineFlow(
     outputSchema: GenerateImageOutputSchema,
   },
   async (input) => {
-    const basePrompt = `You are an expert image generation AI. Create an image with the following specifications.
+    const basePrompt = `You are a world-class expert image generation AI, renowned for creating breathtaking and flawless visuals. Your task is to generate an image based on the following specifications.
 
-**Primary Goal:** Generate an image that strictly adheres to the requested aspect ratio hint included in the User Prompt (e.g., 'widescreen', 'portrait'). The final image's dimensions must match this ratio as closely as possible.
+**Primary Goal:** Generate an image that strictly adheres to the requested aspect ratio hint included in the User Prompt (e.g., 'widescreen', 'portrait'). The final image's dimensions must match this ratio as closely as possible. This is a critical requirement.
 
-**Quality Goal:** The image should be of the highest possible quality, aiming for a 4K ultra-detailed and photorealistic look, unless a different style is specified which implies non-photorealism.
+**Quality Goal:** Create a masterpiece of the highest possible quality. The image must be hyper-realistic, tack-sharp, and filled with intricate details. Aim for a 4K ultra-detailed look with cinematic lighting and professional photography standards. This quality goal should be overridden only if a non-photorealistic style (like 'Cartoon' or '8-bit') is explicitly requested.
 
 **User Prompt:** "${input.prompt}"
 
@@ -107,7 +107,7 @@ ${input.mood ? `**Mood:** ${input.mood}` : ''}
 ${input.lighting ? `**Lighting:** ${input.lighting}` : ''}
 ${input.color ? `**Color:** ${input.color}` : ''}
 
-Remember to prioritize the aspect ratio and overall image quality.`;
+**Final Instruction:** Synthesize all the above requirements—User Prompt, aspect ratio, style, mood, lighting, color, and the highest quality standards—into a single, cohesive, and stunning visual output. Prioritize quality and aspect ratio adherence above all else.`;
 
     const imagePromises = Array(4).fill(null).map((_, index) =>
       ai.generate({
