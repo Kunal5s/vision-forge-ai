@@ -132,7 +132,7 @@ export function ImageDisplay({
   return (
     <FuturisticPanel className="flex flex-col gap-4 h-full">
       <div className={cn(
-          "w-full rounded-lg border border-border/50 bg-muted/30 flex items-center justify-center min-h-[300px] md:min-h-[400px] overflow-hidden p-2",
+          "w-full rounded-lg border border-border/50 bg-black/20 shadow-inner flex items-center justify-center min-h-[300px] md:min-h-[400px] overflow-hidden p-1",
           {'newly-generated-image-animate': animateImages}
         )}
       >
@@ -152,10 +152,10 @@ export function ImageDisplay({
         {!isLoading && !error && imageUrls.length > 0 && (
           <div className={cn(
             "w-full h-full",
-             imageUrls.length > 1 ? "grid grid-cols-2 gap-2" : ""
+             imageUrls.length > 1 ? "grid grid-cols-2 gap-1" : ""
             )}>
             {imageUrls.map((url, index) => (
-              <div key={url.slice(-20) + index} className={cn("relative group rounded-md overflow-hidden bg-muted/10", getAspectRatioClass(aspectRatio))}>
+              <div key={url.slice(-20) + index} className={cn("relative group rounded-md overflow-hidden bg-muted/10 transition-transform duration-300 ease-in-out hover:scale-105 hover:z-10", getAspectRatioClass(aspectRatio))}>
                  <Image
                     src={url}
                     alt={`${prompt || 'Generated AI image'} - variation ${index + 1}`}
@@ -168,9 +168,9 @@ export function ImageDisplay({
                   />
                   <Button 
                     onClick={() => handleDownloadImage(url)} 
-                    variant="ghost" 
+                    variant="default" 
                     size="icon" 
-                    className="absolute bottom-2 right-2 bg-black/50 hover:bg-black/70 text-white hover:text-white opacity-0 group-hover:opacity-100 transition-opacity futuristic-glow-button"
+                    className="absolute bottom-2 right-2 bg-primary/70 backdrop-blur-sm text-primary-foreground hover:bg-primary opacity-80 group-hover:opacity-100 scale-90 group-hover:scale-100 transition-all futuristic-glow-button"
                     title="Download Image"
                   >
                     <Download size={18} />
