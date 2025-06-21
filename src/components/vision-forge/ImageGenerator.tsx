@@ -66,13 +66,27 @@ export function ImageGenerator() {
   useEffect(() => {
     const storedHistory = localStorage.getItem('visionForgeHistory');
     if (storedHistory) {
-      setHistory(JSON.parse(storedHistory).map((item:GeneratedImageHistoryItem) => ({...item, timestamp: new Date(item.timestamp)})));
+      try {
+        setHistory(JSON.parse(storedHistory).map((item:GeneratedImageHistoryItem) => ({...item, timestamp: new Date(item.timestamp)})));
+      } catch (e) {
+        console.error("Failed to parse history from localStorage", e);
+        localStorage.removeItem('visionForgeHistory');
+      }
     }
   }, []);
 
   useEffect(() => {
     if (history.length > 0) {
-      localStorage.setItem('visionForgeHistory', JSON.stringify(history));
+      try {
+        localStorage.setItem('visionForgeHistory', JSON.stringify(history));
+      } catch (e) {
+        console.error("Failed to save history to localStorage:", e);
+        toast({
+          title: "Could not save history",
+          description: "Browser storage might be full. Older history items may not be saved.",
+          variant: "destructive"
+        });
+      }
     } else {
       localStorage.removeItem('visionForgeHistory');
     }
@@ -106,10 +120,10 @@ export function ImageGenerator() {
           mood: selectedMood,
           lighting: selectedLighting,
           color: selectedColor,
-          imageUrls: result.imageUrls,
+          imageUrl: result.imageUrls[0], // Only save the first image to history
           timestamp: new Date(),
         };
-        setHistory(prev => [historyItem, ...prev.slice(0, 19)]);
+        setHistory(prev => [historyItem, ...prev.slice(0, 4)]); // Keep history size small
         toast({ title: 'Vision Forged!', description: `Your image has been successfully generated.` });
       } else {
         setError('The AI returned no images. Please try a different prompt or check the logs.');
@@ -175,7 +189,7 @@ export function ImageGenerator() {
     setSelectedMood(item.mood);
     setSelectedLighting(item.lighting);
     setSelectedColor(item.color);
-    setGeneratedImageUrls(item.imageUrls);
+    setGeneratedImageUrls([item.imageUrl]); // Display the single saved image
     setError(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
     toast({ title: 'History Item Loaded', description: 'Parameters and image loaded from history.' });
