@@ -49,13 +49,81 @@ export function ImageDisplay({
 
   const handleDownloadImage = (imageUrl: string) => {
     if (!imageUrl) return;
-    const link = document.createElement('a');
-    link.href = imageUrl;
-    const extension = imageUrl.split(';')[0].split('/')[1] || 'png';
-    link.download = `visionforge_${prompt.substring(0,20).replace(/\s+/g, '_')}_${Date.now()}.${extension}`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+
+    const image = new window.Image();
+    image.crossOrigin = 'anonymous'; // This can help with tainted canvas issues, though not always with data URIs.
+    image.src = imageUrl;
+
+    image.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            console.error('Could not get canvas context.');
+            return;
+        }
+
+        const originalWidth = image.naturalWidth;
+        const originalHeight = image.naturalHeight;
+        
+        const [targetRatioW, targetRatioH] = aspectRatio.split(':').map(Number);
+        const targetAspectRatio = targetRatioW / targetRatioH;
+        
+        let sourceX = 0;
+        let sourceY = 0;
+        let sourceWidth = originalWidth;
+        let sourceHeight = originalHeight;
+
+        // Determine how to crop by comparing the original aspect ratio to the target.
+        const originalAspectRatioValue = originalWidth / originalHeight;
+
+        if (originalAspectRatioValue > targetAspectRatio) {
+            // Original is wider than target: crop the width (sourceX will change).
+            sourceWidth = originalHeight * targetAspectRatio;
+            sourceX = (originalWidth - sourceWidth) / 2;
+        } else if (originalAspectRatioValue < targetAspectRatio) {
+            // Original is taller than target: crop the height (sourceY will change).
+            sourceHeight = originalWidth / targetAspectRatio;
+            sourceY = (originalHeight - sourceHeight) / 2;
+        }
+        // If aspect ratios are the same, no cropping is needed (source values remain as is).
+
+        canvas.width = sourceWidth;
+        canvas.height = sourceHeight;
+
+        // Draw the cropped portion of the original image onto the canvas.
+        ctx.drawImage(
+            image,
+            sourceX,
+            sourceY,
+            sourceWidth,
+            sourceHeight,
+            0,
+            0,
+            sourceWidth, // The destination width on the canvas
+            sourceHeight // The destination height on the canvas
+        );
+
+        // Trigger download of the cropped image from the canvas.
+        const croppedImageUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = croppedImageUrl;
+        link.download = `visionforge_${prompt.substring(0, 20).replace(/\s+/g, '_')}_${Date.now()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    image.onerror = () => {
+        console.error("Failed to load image for cropping. Falling back to direct download of original image.");
+        // Fallback to direct download if the canvas method fails for any reason.
+        const link = document.createElement('a');
+        link.href = imageUrl;
+        const extension = imageUrl.split(';')[0].split('/')[1] || 'png';
+        link.download = `visionforge_fallback_${prompt.substring(0, 20).replace(/\s+/g, '_')}_${Date.now()}.${extension}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
   };
 
   useEffect(() => {
