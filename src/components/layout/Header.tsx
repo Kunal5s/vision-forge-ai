@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 const navLinks = [
   { href: '/', label: 'Generate' },
   { href: '/edit', label: 'Edit' },
+  { href: '/blog', label: 'Blog' },
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },
 ];
@@ -39,7 +40,7 @@ export function Header() {
               href={link.href}
               className={cn(
                 "text-sm font-medium transition-colors hover:text-primary futuristic-glow-button !p-1",
-                pathname === link.href ? "text-primary" : "text-muted-foreground"
+                pathname.startsWith(link.href) && link.href !== '/' || pathname === link.href ? "text-primary" : "text-muted-foreground"
               )}
             >
               {link.label}
@@ -78,7 +79,7 @@ export function Header() {
                       href={link.href}
                       className={cn(
                         "block rounded-md px-3 py-2 text-base font-medium transition-colors hover:bg-accent/10 hover:text-primary",
-                        pathname === link.href ? "bg-primary/10 text-primary" : "text-foreground/80"
+                        pathname.startsWith(link.href) && link.href !== '/' || pathname === link.href ? "bg-primary/10 text-primary" : "text-foreground/80"
                       )}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >

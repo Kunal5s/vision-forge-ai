@@ -1,6 +1,6 @@
 
 import Link from 'next/link';
-import { Sparkles, PencilRuler } from 'lucide-react'; // Added PencilRuler for editor
+import { Sparkles, PencilRuler, Rss } from 'lucide-react'; // Added Rss for blog
 
 export function Footer() {
   return (
@@ -24,7 +24,6 @@ export function Footer() {
               <li><Link href="/edit" className="text-muted-foreground hover:text-primary transition-colors flex items-center"><PencilRuler size={14} className="mr-1.5" /> Image Editor</Link></li>
               <li><Link href="/#features" className="text-muted-foreground hover:text-primary transition-colors">Prompt Enhancement</Link></li>
               <li><Link href="/#features" className="text-muted-foreground hover:text-primary transition-colors">Style Customization</Link></li>
-              <li><Link href="/#features" className="text-muted-foreground hover:text-primary transition-colors">Aspect Ratio Control</Link></li>
             </ul>
           </div>
 
@@ -33,8 +32,7 @@ export function Footer() {
             <ul className="space-y-2 text-sm">
               <li><Link href="/about" className="text-muted-foreground hover:text-primary transition-colors">About Us</Link></li>
               <li><Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact Us</Link></li>
-              {/* <li><Link href="/blog" className="text-muted-foreground hover:text-primary transition-colors">Blog</Link></li> */}
-              {/* <li><Link href="/careers" className="text-muted-foreground hover:text-primary transition-colors">Careers</Link></li> */}
+              <li><Link href="/blog" className="text-muted-foreground hover:text-primary transition-colors flex items-center"><Rss size={14} className="mr-1.5" /> Blog</Link></li>
             </ul>
           </div>
 
@@ -56,5 +54,3 @@ export function Footer() {
     </footer>
   );
 }
-
-    
