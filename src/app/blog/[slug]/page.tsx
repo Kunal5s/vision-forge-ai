@@ -92,10 +92,3 @@ export default async function ArticlePage({ params }: Props) {
     </main>
   );
 }
-
-// This function allows Next.js to pre-render all blog posts at build time
-export async function generateStaticParams() {
-  return allArticles.map((article) => ({
-    slug: article.slug,
-  }));
-}
