@@ -1,68 +1,68 @@
 
-import { notFound } from 'next/navigation';
-import { articles, Article } from '@/lib/blog-data';
-import type { Metadata, ResolvingMetadata } from 'next';
-import { ArrowLeft } from 'lucide-react';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { notFound, useParams } from 'next/navigation';
+import { articles, type Article } from '@/lib/blog-data';
+import { ArrowLeft, Terminal } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { generateBlogArticle } from '@/ai/flows/generate-blog-article';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Terminal } from 'lucide-react';
-
-type Props = {
-  params: { slug: string };
-};
+import { LoadingSpinner } from '@/components/vision-forge/LoadingSpinner';
 
 // Find the article across all categories
 const allArticles = Object.values(articles).flat();
 const getArticleData = (slug: string): Article | undefined => allArticles.find((article) => article.slug === slug);
 
-export async function generateMetadata(
-  { params }: Props,
-  parent: ResolvingMetadata
-): Promise<Metadata> {
-  const article = getArticleData(params.slug);
+export default function ArticlePage() {
+  const params = useParams();
+  const slug = typeof params.slug === 'string' ? params.slug : '';
 
-  if (!article) {
-    return {
-      title: 'Article Not Found | VisionForge AI',
-    };
+  const [articleContent, setArticleContent] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [articleData, setArticleData] = useState<Article | null>(null);
+  
+  useEffect(() => {
+    if (slug) {
+      const data = getArticleData(slug);
+      if (data) {
+        setArticleData(data);
+        document.title = `${data.title} | VisionForge AI Blog`;
+      } else {
+        notFound();
+      }
+    }
+  }, [slug]);
+
+  useEffect(() => {
+    if (articleData) {
+      const fetchArticle = async () => {
+        setIsLoading(true);
+        try {
+          const result = await generateBlogArticle({ 
+            topic: articleData.title, 
+            category: articleData.category 
+          });
+          setArticleContent(result.articleContent);
+        } catch (error) {
+          console.error("Failed to generate blog article from page:", error);
+          const errorHtml = `<h1>Oops! Something Went Wrong</h1><p>We encountered an unexpected server error while trying to generate this article. This might be a temporary issue. Please try refreshing the page.</p><p>If the problem continues, it could be due to a deployment configuration issue, such as a server timeout on Netlify.</p>`;
+          setArticleContent(errorHtml);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      fetchArticle();
+    }
+  }, [articleData]);
+
+  if (!articleData && !isLoading) {
+    // This will be handled by the notFound() in useEffect, but as a fallback.
+    return null;
   }
-
-  const description = `Live AI-generated article on: ${article.title}. Explore the latest trends and techniques in AI image generation with VisionForge AI.`;
-
-  return {
-    title: `${article.title} | VisionForge AI Blog`,
-    description: description,
-    openGraph: {
-      title: article.title,
-      description: description,
-    },
-  };
-}
-
-export default async function ArticlePage({ params }: Props) {
-  const articleData = getArticleData(params.slug);
-
-  if (!articleData) {
-    notFound();
-  }
-
-  let articleResult: { articleContent: string };
-  try {
-    // Generate the article content in real-time using the AI flow
-    articleResult = await generateBlogArticle({ 
-      topic: articleData.title, 
-      category: articleData.category 
-    });
-  } catch (error) {
-    console.error("Failed to generate blog article from page:", error);
-    articleResult = {
-      articleContent: `<h1>Oops! Something Went Wrong</h1><p>We encountered an unexpected server error while trying to generate this article. This might be a temporary issue. Please try refreshing the page.</p><p>If the problem continues, it could be due to a deployment configuration issue, such as a server timeout on Netlify.</p>`
-    };
-  }
-
-
+  
   return (
     <main className="container mx-auto py-12 px-4">
       <div className="max-w-4xl mx-auto">
@@ -79,24 +79,32 @@ export default async function ArticlePage({ params }: Props) {
           <Terminal className="h-4 w-4" />
           <AlertTitle className="text-primary">Live AI-Generated Content!</AlertTitle>
           <AlertDescription>
-            This article was generated in real-time by VisionForge AI, just for you. Enjoy the latest insights on this topic.
+            {isLoading ? 'Your article is being generated in real-time by VisionForge AI...' : 'This article was generated in real-time by VisionForge AI, just for you.'}
           </AlertDescription>
         </Alert>
 
-        <article className="prose prose-invert prose-xl max-w-none 
-          prose-p:leading-relaxed prose-p:text-foreground/80
-          prose-h1:text-primary prose-h1:text-4xl prose-h1:md:text-5xl prose-h1:font-extrabold prose-h1:tracking-tight prose-h1:mb-8
-          prose-h2:text-accent prose-h2:border-b prose-h2:border-accent/40 prose-h2:pb-3 prose-h2:mt-16 prose-h2:mb-6 prose-h2:font-bold
-          prose-h3:text-primary/90 prose-h3:mt-10 prose-h3:mb-4 prose-h3:font-semibold
-          prose-h4:text-accent/90 prose-h4:mt-8 prose-h4:mb-2 prose-h4:font-semibold
-          prose-a:text-primary hover:prose-a:text-accent prose-a:transition-colors
-          prose-strong:text-foreground
-          prose-blockquote:border-accent prose-blockquote:text-muted-foreground prose-blockquote:text-lg
-          prose-code:text-accent-foreground prose-code:bg-accent/10 prose-code:p-1 prose-code:rounded-sm
-          prose-ul:list-disc prose-ul:pl-6 prose-li:marker:text-primary
-          prose-ol:list-decimal prose-ol:pl-6 prose-li:marker:text-primary">
-          <div dangerouslySetInnerHTML={{ __html: articleResult.articleContent }} />
-        </article>
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+            <LoadingSpinner size={64} />
+            <p className="text-lg font-semibold text-foreground animate-pulse">Forging Knowledge...</p>
+            <p className="text-muted-foreground text-center">The AI is writing a unique article for you. This may take up to a minute.</p>
+          </div>
+        ) : (
+          <article className="prose prose-invert prose-xl max-w-none 
+            prose-p:leading-relaxed prose-p:text-foreground/80
+            prose-h1:text-primary prose-h1:text-4xl prose-h1:md:text-5xl prose-h1:font-extrabold prose-h1:tracking-tight prose-h1:mb-8
+            prose-h2:text-accent prose-h2:border-b prose-h2:border-accent/40 prose-h2:pb-3 prose-h2:mt-16 prose-h2:mb-6 prose-h2:font-bold
+            prose-h3:text-primary/90 prose-h3:mt-10 prose-h3:mb-4 prose-h3:font-semibold
+            prose-h4:text-accent/90 prose-h4:mt-8 prose-h4:mb-2 prose-h4:font-semibold
+            prose-a:text-primary hover:prose-a:text-accent prose-a:transition-colors
+            prose-strong:text-foreground
+            prose-blockquote:border-accent prose-blockquote:text-muted-foreground prose-blockquote:text-lg
+            prose-code:text-accent-foreground prose-code:bg-accent/10 prose-code:p-1 prose-code:rounded-sm
+            prose-ul:list-disc prose-ul:pl-6 prose-li:marker:text-primary
+            prose-ol:list-decimal prose-ol:pl-6 prose-li:marker:text-primary">
+            <div dangerouslySetInnerHTML={{ __html: articleContent }} />
+          </article>
+        )}
       </div>
     </main>
   );
