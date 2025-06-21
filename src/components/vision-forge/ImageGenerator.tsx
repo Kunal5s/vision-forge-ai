@@ -48,7 +48,7 @@ export function ImageGenerator() {
   const [selectedLighting, setSelectedLighting] = useState<LightingType | undefined>(undefined);
   const [selectedColor, setSelectedColor] = useState<ColorType | undefined>(undefined);
 
-  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null); // Changed from array
+  const [generatedImageUrls, setGeneratedImageUrls] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isImprovingPrompt, setIsImprovingPrompt] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,7 +81,7 @@ export function ImageGenerator() {
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     setIsLoading(true);
     setError(null);
-    setGeneratedImageUrl(null); // Changed from empty array
+    setGeneratedImageUrls([]);
 
     const aspectRatioTextHint = aspectRatiosWithText.find(ar => ar.value === selectedAspectRatio)?.textHint || '';
     const fullPrompt = `${data.prompt}${aspectRatioTextHint ? `, ${aspectRatioTextHint}` : ''}`;
@@ -96,8 +96,8 @@ export function ImageGenerator() {
     
     try {
       const result = await generateImage(generationParams);
-      if (result.imageUrl) {
-        setGeneratedImageUrl(result.imageUrl);
+      if (result.imageUrls && result.imageUrls.length > 0) {
+        setGeneratedImageUrls(result.imageUrls);
         const historyItem: GeneratedImageHistoryItem = {
           id: new Date().toISOString() + Math.random().toString(36).substring(2,9),
           prompt: data.prompt,
@@ -106,15 +106,14 @@ export function ImageGenerator() {
           mood: selectedMood,
           lighting: selectedLighting,
           color: selectedColor,
-          imageUrl: result.imageUrl, // Changed from imageUrls
+          imageUrls: result.imageUrls,
           timestamp: new Date(),
         };
         setHistory(prev => [historyItem, ...prev.slice(0, 19)]);
         toast({ title: 'Vision Forged!', description: `Your image has been successfully generated.` });
       } else {
-        // This case should ideally be handled by the error thrown from the flow
-        setError('No image was generated. The AI might be busy or the prompt too restrictive.');
-        toast({ title: 'Generation Issue', description: 'No image was returned by the AI.', variant: 'destructive' });
+        setError('The AI returned no images. Please try a different prompt or check the logs.');
+        toast({ title: 'Generation Issue', description: 'No images were returned by the AI.', variant: 'destructive' });
       }
     } catch (e: any) {
       console.error('Image generation error:', e);
@@ -176,7 +175,7 @@ export function ImageGenerator() {
     setSelectedMood(item.mood);
     setSelectedLighting(item.lighting);
     setSelectedColor(item.color);
-    setGeneratedImageUrl(item.imageUrl); // Changed from imageUrls
+    setGeneratedImageUrls(item.imageUrls);
     setError(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
     toast({ title: 'History Item Loaded', description: 'Parameters and image loaded from history.' });
@@ -266,7 +265,7 @@ export function ImageGenerator() {
 
         <div className="lg:col-span-7">
           <ImageDisplay
-            imageUrl={generatedImageUrl} // Changed from imageUrls
+            imageUrls={generatedImageUrls}
             prompt={currentPrompt}
             aspectRatio={selectedAspectRatio}
             isLoading={isLoading}

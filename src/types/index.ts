@@ -12,6 +12,6 @@ export interface GeneratedImageParams {
 
 export interface GeneratedImageHistoryItem extends GeneratedImageParams {
   id: string;
-  imageUrl: string; // Changed from imageUrls: string[] to imageUrl: string
+  imageUrls: string[]; // Changed from imageUrl: string to imageUrls: string[]
   timestamp: Date;
 }

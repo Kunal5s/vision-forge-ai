@@ -10,7 +10,7 @@ import { FuturisticPanel } from './FuturisticPanel';
 import { useEffect, useState } from 'react';
 
 interface ImageDisplayProps {
-  imageUrl: string | null; // Changed from imageUrls: string[]
+  imageUrls: string[];
   prompt: string;
   aspectRatio: string;
   isLoading: boolean;
@@ -20,7 +20,7 @@ interface ImageDisplayProps {
 }
 
 export function ImageDisplay({
-  imageUrl,
+  imageUrls,
   prompt,
   aspectRatio,
   isLoading,
@@ -29,7 +29,7 @@ export function ImageDisplay({
   onCopyPrompt,
 }: ImageDisplayProps) {
   
-  const [animateImage, setAnimateImage] = useState(false);
+  const [animateImages, setAnimateImages] = useState(false);
 
   const getAspectRatioClass = (ratio: string) => {
     switch (ratio) {
@@ -47,7 +47,7 @@ export function ImageDisplay({
     }
   };
 
-  const handleDownloadImage = () => {
+  const handleDownloadImage = (imageUrl: string) => {
     if (!imageUrl) return;
     const link = document.createElement('a');
     link.href = imageUrl;
@@ -59,22 +59,21 @@ export function ImageDisplay({
   };
 
   useEffect(() => {
-    if (imageUrl && !isLoading && !error) {
-      setAnimateImage(true);
+    if (imageUrls.length > 0 && !isLoading && !error) {
+      setAnimateImages(true);
       const timer = setTimeout(() => {
-        setAnimateImage(false);
+        setAnimateImages(false);
       }, 5000); // Animation duration
       return () => clearTimeout(timer);
     }
-  }, [imageUrl, isLoading, error]);
+  }, [imageUrls, isLoading, error]);
 
 
   return (
     <FuturisticPanel className="flex flex-col gap-4 h-full">
       <div className={cn(
-          "relative w-full rounded-lg border border-border/50 bg-muted/30 flex items-center justify-center min-h-[300px] md:min-h-[400px] overflow-hidden group", // Added group here
-          getAspectRatioClass(aspectRatio),
-          {'newly-generated-image-animate': animateImage}
+          "w-full rounded-lg border border-border/50 bg-muted/30 flex items-center justify-center min-h-[300px] md:min-h-[400px] overflow-hidden p-2",
+          {'newly-generated-image-animate': animateImages}
         )}
       >
         {isLoading && (
@@ -86,42 +85,45 @@ export function ImageDisplay({
         {error && !isLoading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-destructive p-4 text-center">
             <AlertTriangle size={48} className="mb-2" />
-            <p className="font-semibold">Error Generating Image</p>
-            <p className="text-sm">{error}</p>
+            <p className="font-semibold">Error Generating Images</p>
+            <p className="text-sm max-w-md mx-auto">{error}</p>
           </div>
         )}
-        {!isLoading && !error && imageUrl && (
-          <>
-            <Image
-              key={imageUrl.slice(-20)} // Use part of URL for key
-              src={imageUrl}
-              alt={prompt || 'Generated AI image'}
-              layout="fill"
-              objectFit="contain"
-              className="transition-opacity duration-500 opacity-0 data-[loaded=true]:opacity-100 bg-muted/10"
-              data-loaded="false"
-              onLoadingComplete={(img) => img.setAttribute('data-loaded', 'true')}
-              data-ai-hint="generated art"
-            />
-            <Button 
-              onClick={handleDownloadImage} 
-              variant="ghost" 
-              size="icon" 
-              className="absolute bottom-2 right-2 bg-black/50 hover:bg-black/70 text-white hover:text-white opacity-0 group-hover:opacity-100 transition-opacity futuristic-glow-button"
-              title="Download Image"
-            >
-              <Download size={18} />
-            </Button>
-          </>
+        {!isLoading && !error && imageUrls.length > 0 && (
+          <div className="grid grid-cols-2 gap-2 w-full h-full">
+            {imageUrls.map((url, index) => (
+              <div key={url.slice(-20) + index} className={cn("relative group rounded-md overflow-hidden bg-muted/10", getAspectRatioClass(aspectRatio))}>
+                 <Image
+                    src={url}
+                    alt={`${prompt || 'Generated AI image'} - variation ${index + 1}`}
+                    layout="fill"
+                    objectFit="contain"
+                    className="transition-opacity duration-500 opacity-0 data-[loaded=true]:opacity-100"
+                    data-loaded="false"
+                    onLoadingComplete={(img) => img.setAttribute('data-loaded', 'true')}
+                    data-ai-hint="generated art"
+                  />
+                  <Button 
+                    onClick={() => handleDownloadImage(url)} 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute bottom-2 right-2 bg-black/50 hover:bg-black/70 text-white hover:text-white opacity-0 group-hover:opacity-100 transition-opacity futuristic-glow-button"
+                    title="Download Image"
+                  >
+                    <Download size={18} />
+                  </Button>
+              </div>
+            ))}
+          </div>
         )}
-        {!isLoading && !error && !imageUrl && (
+        {!isLoading && !error && imageUrls.length === 0 && (
            <div className="flex flex-col items-center justify-center text-muted-foreground opacity-50 p-4 text-center">
             <ImageIcon size={64} />
             <p className="mt-2 text-lg">Your vision will appear here</p>
           </div>
         )}
       </div>
-      {(imageUrl || prompt) && !isLoading && !error && (
+      {(imageUrls.length > 0 || prompt) && !isLoading && !error && (
         <div className="flex flex-wrap gap-2 justify-center">
           <Button onClick={onRegenerate} variant="outline" className="futuristic-glow-button">
             <RefreshCw size={18} className="mr-2" />
