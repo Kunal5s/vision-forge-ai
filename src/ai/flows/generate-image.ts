@@ -14,65 +14,6 @@ import {z} from 'genkit';
 
 const GenerateImageInputSchema = z.object({
   prompt: z.string().describe('The prompt for generating the image. This should include textual hints for aspect ratio.'),
-  style: z.enum([
-    "3D",
-    "8-bit",
-    "Abstract",
-    "Analogue",
-    "Anime",
-    "Bokeh",
-    "Cartoon",
-    "Charcoal Sketch",
-    "Claymation",
-    "Collage",
-    "Cookie",
-    "Crayon",
-    "Cubism",
-    "Cybernetic",
-    "Doodle",
-    "Dough",
-    "Felt",
-    "Glitch Art",
-    "Illustrated",
-    "Impressionism",
-    "Knitted",
-    "Long Exposure",
-    "Low Poly",
-    "Macro",
-    "Marker",
-    "Mechanical",
-    "Oil Painting",
-    "Origami",
-    "Painting",
-    "Paper",
-    "Photorealistic",
-    "Pin",
-    "Plushie",
-    "Pop Art",
-    "Realistic",
-    "Stained Glass",
-    "Surrealism",
-    "Tattoo",
-    "Vaporwave",
-    "Watercolor",
-    "Woodblock",
-  ]).optional().describe('The style to apply to the image.'),
-  mood: z.enum([
-    'Sweets',
-    'Classical',
-    'Cyberpunk',
-    'Dreamy',
-    'Glowy',
-    'Gothic',
-    'Kawaii',
-    'Mystical',
-    'Trippy',
-    'Tropical',
-    'Steampunk',
-    'Wasteland',
-  ]).optional().describe('The mood to evoke in the image.'),
-  lighting: z.enum(['Bright', 'Dark', 'Neon', 'Sunset', 'Misty', 'Ethereal']).optional().describe('The lighting style for the image.'),
-  color: z.enum(['Cool', 'Earthy', 'Indigo', 'Infrared', 'Pastel', 'Warm']).optional().describe('The color palette for the image.'),
 });
 
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
@@ -102,20 +43,10 @@ const generateImageFlow = ai.defineFlow(
       return { imageUrls: [], error: errorMsg };
     }
 
-    const directives = [
-      input.style,
-      input.mood,
-      input.lighting,
-      input.color,
-    ].filter(Boolean).join(', ');
-
-    const basePrompt = `${input.prompt}${directives ? ` (${directives})` : ''}`;
-
-
     try {
       const { media } = await ai.generate({
         model: 'googleai/gemini-2.0-flash-preview-image-generation',
-        prompt: basePrompt,
+        prompt: input.prompt,
         config: {
           responseModalities: ['TEXT', 'IMAGE'],
         },

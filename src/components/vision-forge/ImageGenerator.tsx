@@ -105,10 +105,6 @@ export function ImageGenerator() {
 
     const generationParams: GenerateImageInput = {
       prompt: fullPrompt,
-      style: selectedStyle,
-      mood: selectedMood,
-      lighting: selectedLighting,
-      color: selectedColor,
     };
     
     const result = await generateImage(generationParams);
