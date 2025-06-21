@@ -157,7 +157,7 @@ export function ImageDisplay({
                     src={url}
                     alt={`${prompt || 'Generated AI image'} - variation ${index + 1}`}
                     layout="fill"
-                    objectFit="contain"
+                    objectFit="cover"
                     className="transition-opacity duration-500 opacity-0 data-[loaded=true]:opacity-100"
                     data-loaded="false"
                     onLoadingComplete={(img) => img.setAttribute('data-loaded', 'true')}
