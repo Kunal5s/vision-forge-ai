@@ -21,6 +21,7 @@ export type ImprovePromptInput = z.infer<typeof ImprovePromptInputSchema>;
 const ImprovePromptOutputSchema = z.object({
   improvedPrompt: z.string().describe('The improved image generation prompt.'),
   reasoning: z.string().describe('The reasoning behind the suggested improvements.'),
+  error: z.string().optional().describe('An error message if the suggestion failed.'),
 });
 export type ImprovePromptOutput = z.infer<typeof ImprovePromptOutputSchema>;
 
@@ -31,7 +32,10 @@ export async function improvePrompt(input: ImprovePromptInput): Promise<ImproveP
 const improvePromptPrompt = ai.definePrompt({
   name: 'improvePromptPrompt',
   input: {schema: ImprovePromptInputSchema},
-  output: {schema: ImprovePromptOutputSchema},
+  output: {schema: z.object({
+      improvedPrompt: z.string().describe('The improved image generation prompt.'),
+      reasoning: z.string().describe('The reasoning behind the suggested improvements.'),
+  })},
   prompt: `You are an AI assistant specializing in improving image generation prompts.
 
   Given the following prompt:
@@ -50,19 +54,23 @@ const improvePromptFlow = ai.defineFlow(
     inputSchema: ImprovePromptInputSchema,
     outputSchema: ImprovePromptOutputSchema,
   },
-  async input => {
-    if (!process.env.GOOGLE_API_KEY) {
-      const errorMessage = 'The GOOGLE_API_KEY environment variable is not set. Please add it to your deployment settings and redeploy.';
-      console.error(errorMessage);
-      throw new Error(errorMessage);
-    }
-    
+  async (input): Promise<ImprovePromptOutput> => {
     try {
         const {output} = await improvePromptPrompt(input);
-        return output!;
+        if (!output) {
+            return { improvedPrompt: '', reasoning: '', error: 'The AI could not generate a suggestion for this prompt.' };
+        }
+        return {
+            improvedPrompt: output.improvedPrompt,
+            reasoning: output.reasoning,
+        };
     } catch (e: any) {
         console.error("Improve prompt API call failed:", e);
-        throw new Error("Failed to get suggestion. Please check the following and try again:\n1. Your GOOGLE_API_KEY is correct in your Netlify environment variables.\n2. In your Google Cloud project, the 'Generative Language API' or 'Vertex AI API' is enabled.\n3. Billing is enabled for your Google Cloud project.");
+        if (!process.env.GOOGLE_API_KEY) {
+            return { improvedPrompt: '', reasoning: '', error: 'The GOOGLE_API_KEY environment variable is not set. Please add it to your deployment settings and redeploy.' };
+        }
+        const detailedMessage = "Failed to get suggestion. Please check the following and try again:\n1. Your GOOGLE_API_KEY is correct in your Netlify environment variables.\n2. In your Google Cloud project, the 'Generative Language API' or 'Vertex AI API' is enabled.\n3. Billing is enabled for your Google Cloud project.";
+        return { improvedPrompt: '', reasoning: '', error: detailedMessage };
     }
   }
 );

@@ -6,7 +6,7 @@
  * Generates a single image with enhanced prompting for quality and aspect ratio.
  * - generateImage - A function that generates an image based on a prompt and selected styles.
  * - GenerateImageInput - The input type for the generateImage function.
- * - GenerateImageOutput - The return type for the generateImage function, containing an array of URLs.
+ * - GenerateImageOutput - The return type for the generateImage function, containing an array of URLs or an error.
  */
 
 import {ai} from '@/ai/genkit';
@@ -79,6 +79,7 @@ export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
 
 const GenerateImageOutputSchema = z.object({
   imageUrls: z.array(z.string()).describe('A list of data URIs of the generated images.'),
+  error: z.string().optional().describe('An error message if the generation failed.'),
 });
 
 export type GenerateImageOutput = z.infer<typeof GenerateImageOutputSchema>;
@@ -93,13 +94,7 @@ const generateImageFlow = ai.defineFlow(
     inputSchema: GenerateImageInputSchema,
     outputSchema: GenerateImageOutputSchema,
   },
-  async (input) => {
-    if (!process.env.GOOGLE_API_KEY) {
-      const errorMessage = 'The GOOGLE_API_KEY environment variable is not set. Please add it to your deployment settings and redeploy.';
-      console.error(errorMessage);
-      throw new Error(errorMessage);
-    }
-    
+  async (input): Promise<GenerateImageOutput> => {
     const basePrompt = `You are a world-class expert image generation AI, renowned for creating breathtaking and flawless visuals. Your task is to generate an image based on the following specifications, with strict adherence to all provided directives.
 
 **Primary Goal:** Generate an image that strictly adheres to the requested aspect ratio hint included in the User Prompt (e.g., 'widescreen', 'portrait'). The final image's dimensions must match this ratio as closely as possible. This is a critical technical requirement.
@@ -130,22 +125,24 @@ ${input.color ? `\n- **Color Palette:** The dominant color palette MUST be **${i
       }
 
       const candidate = candidates?.[0];
-      let reason = "The AI did not return an image.";
+      let reason = "The AI did not return an image. This can happen with very complex or unsafe prompts. Please try simplifying your request.";
       if (candidate) {
-        reason += ` Finish Reason: ${candidate.finishReason}.`;
-        if (candidate.finishMessage) {
-          reason += ` Message: ${candidate.finishMessage}`;
-        }
         if (candidate.finishReason === 'SAFETY') {
-            reason += ' The prompt may have violated content safety policies.';
+          reason = 'The prompt may have violated content safety policies. Please adjust your prompt and try again.';
+        } else if (candidate.finishMessage) {
+           reason = `Generation failed: ${candidate.finishMessage} (Reason: ${candidate.finishReason}).`;
         }
       }
       console.error("Image generation failed. Full API response:", { media, candidates });
-      throw new Error(reason);
+      return { imageUrls: [], error: reason };
 
     } catch (e: any) {
       console.error("Image generation API call failed:", e);
-      throw new Error("Image generation failed. Please check the following and try again:\n1. Your GOOGLE_API_KEY is correct in your Netlify environment variables.\n2. In your Google Cloud project, the 'Generative Language API' or 'Vertex AI API' is enabled.\n3. Billing is enabled for your Google Cloud project.\n4. Your prompt does not violate content safety policies.");
+      if (!process.env.GOOGLE_API_KEY) {
+        return { imageUrls: [], error: 'The GOOGLE_API_KEY environment variable is not set. Please add it to your deployment settings and redeploy.' };
+      }
+      const detailedMessage = "Image generation failed. Please check the following and try again:\n1. Your GOOGLE_API_KEY is correct in your Netlify environment variables.\n2. In your Google Cloud project, the 'Generative Language API' or 'Vertex AI API' is enabled.\n3. Billing is enabled for your Google Cloud project.\n4. Your prompt does not violate content safety policies.";
+      return { imageUrls: [], error: detailedMessage };
     }
   }
 );

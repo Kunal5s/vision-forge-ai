@@ -34,6 +34,9 @@ const formSchema = z.object({
 });
 type FormData = z.infer<typeof formSchema>;
 
+type StrippedImprovePromptOutput = Omit<ImprovePromptOutput, 'error'>;
+
+
 const aspectRatiosWithText = ASPECT_RATIOS.map(ar => ({
   ...ar,
   textHint: ar.label.split(' (')[1]?.replace(')', '')?.toLowerCase() || ar.value,
@@ -54,7 +57,7 @@ export function ImageGenerator() {
   const [error, setError] = useState<string | null>(null);
   
   const [history, setHistory] = useState<GeneratedImageHistoryItem[]>([]);
-  const [improvedPromptSuggestion, setImprovedPromptSuggestion] = useState<ImprovePromptOutput | null>(null);
+  const [improvedPromptSuggestion, setImprovedPromptSuggestion] = useState<StrippedImprovePromptOutput | null>(null);
   const [showImprovePromptDialog, setShowImprovePromptDialog] = useState(false);
 
   const { register, handleSubmit, watch, setValue: setFormValue, formState: { errors } } = useForm<FormData>({
@@ -108,34 +111,33 @@ export function ImageGenerator() {
       color: selectedColor,
     };
     
-    try {
-      const result = await generateImage(generationParams);
-      if (result.imageUrls && result.imageUrls.length > 0) {
-        setGeneratedImageUrls(result.imageUrls);
-        const historyItem: GeneratedImageHistoryItem = {
-          id: new Date().toISOString() + Math.random().toString(36).substring(2,9),
-          prompt: data.prompt,
-          aspectRatio: selectedAspectRatio,
-          style: selectedStyle,
-          mood: selectedMood,
-          lighting: selectedLighting,
-          color: selectedColor,
-          imageUrl: result.imageUrls[0], // Only save the first image to history
-          timestamp: new Date(),
-        };
-        setHistory(prev => [historyItem, ...prev.slice(0, 4)]); // Keep history size small
-        toast({ title: 'Vision Forged!', description: `Your images have been successfully generated.` });
-      } else {
-        setError('The AI returned no images. Please try a different prompt or check the logs.');
-        toast({ title: 'Generation Issue', description: 'No images were returned by the AI.', variant: 'destructive' });
-      }
-    } catch (e: any) {
-      console.error('Image generation error:', e);
-      const errorMessage = e.message || 'An unexpected error occurred during image generation.';
-      setError(errorMessage);
-      toast({ title: 'Generation Failed', description: errorMessage, variant: 'destructive' });
-    } finally {
-      setIsLoading(false);
+    const result = await generateImage(generationParams);
+
+    setIsLoading(false);
+
+    if (result.error) {
+      console.error('Image generation error from flow:', result.error);
+      setError(result.error);
+      toast({ title: 'Generation Failed', description: result.error, variant: 'destructive', duration: 9000 });
+    } else if (result.imageUrls && result.imageUrls.length > 0) {
+      setGeneratedImageUrls(result.imageUrls);
+      const historyItem: GeneratedImageHistoryItem = {
+        id: new Date().toISOString() + Math.random().toString(36).substring(2,9),
+        prompt: data.prompt,
+        aspectRatio: selectedAspectRatio,
+        style: selectedStyle,
+        mood: selectedMood,
+        lighting: selectedLighting,
+        color: selectedColor,
+        imageUrl: result.imageUrls[0], // Only save the first image to history
+        timestamp: new Date(),
+      };
+      setHistory(prev => [historyItem, ...prev.slice(0, 49)]); // Keep history size reasonable
+      toast({ title: 'Vision Forged!', description: `Your images have been successfully generated.` });
+    } else {
+      const fallbackError = 'The AI returned no images. This can happen with very complex or unsafe prompts. Please try simplifying your request.';
+      setError(fallbackError);
+      toast({ title: 'Generation Issue', description: fallbackError, variant: 'destructive' });
     }
   };
 
@@ -146,15 +148,24 @@ export function ImageGenerator() {
     }
     setIsImprovingPrompt(true);
     setImprovedPromptSuggestion(null);
-    try {
-      const suggestion = await improvePrompt({ prompt: currentPrompt });
-      setImprovedPromptSuggestion(suggestion);
-      setShowImprovePromptDialog(true);
-    } catch (e: any) {
-      console.error('Improve prompt error:', e);
-      toast({ title: 'Suggestion Failed', description: e.message || 'Could not get prompt suggestion.', variant: 'destructive' });
-    } finally {
-      setIsImprovingPrompt(false);
+
+    const suggestion = await improvePrompt({ prompt: currentPrompt });
+    
+    setIsImprovingPrompt(false);
+
+    if (suggestion.error) {
+        toast({ title: 'Suggestion Failed', description: suggestion.error, variant: 'destructive', duration: 9000 });
+        return;
+    }
+
+    if (suggestion.improvedPrompt) {
+        setImprovedPromptSuggestion({
+            improvedPrompt: suggestion.improvedPrompt,
+            reasoning: suggestion.reasoning
+        });
+        setShowImprovePromptDialog(true);
+    } else {
+        toast({ title: 'Suggestion Failed', description: 'The AI could not generate a suggestion for this prompt.', variant: 'destructive' });
     }
   };
 
