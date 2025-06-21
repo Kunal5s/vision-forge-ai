@@ -94,20 +94,21 @@ const generateImageFlow = ai.defineFlow(
     outputSchema: GenerateImageOutputSchema,
   },
   async (input) => {
-    const basePrompt = `You are a world-class expert image generation AI, renowned for creating breathtaking and flawless visuals. Your task is to generate an image based on the following specifications.
+    const basePrompt = `You are a world-class expert image generation AI, renowned for creating breathtaking and flawless visuals. Your task is to generate an image based on the following specifications, with strict adherence to all provided directives.
 
-**Primary Goal:** Generate an image that strictly adheres to the requested aspect ratio hint included in the User Prompt (e.g., 'widescreen', 'portrait'). The final image's dimensions must match this ratio as closely as possible. This is a critical requirement.
+**Primary Goal:** Generate an image that strictly adheres to the requested aspect ratio hint included in the User Prompt (e.g., 'widescreen', 'portrait'). The final image's dimensions must match this ratio as closely as possible. This is a critical technical requirement.
 
-**Quality Goal:** Create a masterpiece of the highest possible quality. The image must be hyper-realistic, tack-sharp, and filled with intricate details. Aim for a 4K ultra-detailed look with cinematic lighting and professional photography standards. This quality goal should be overridden only if a non-photorealistic style (like 'Cartoon' or '8-bit') is explicitly requested.
+**Quality Mandate:** Create a masterpiece of the highest possible quality. The image must be hyper-realistic, tack-sharp, and filled with intricate details. Aim for a 4K ultra-detailed look with cinematic lighting and professional photography standards. This quality goal should be overridden only if a non-photorealistic style (like 'Cartoon' or '8-bit') is explicitly requested.
 
 **User Prompt:** "${input.prompt}"
 
-${input.style ? `**Style:** ${input.style}` : ''}
-${input.mood ? `**Mood:** ${input.mood}` : ''}
-${input.lighting ? `**Lighting:** ${input.lighting}` : ''}
-${input.color ? `**Color:** ${input.color}` : ''}
+${input.style || input.mood || input.lighting || input.color ? '**Mandatory Directives (Non-Negotiable):**' : ''}
+${input.style ? `\n- **Artistic Style:** The image's style MUST be **${input.style}**. This directive must define the entire visual language of the image. Do not deviate.` : ''}
+${input.mood ? `\n- **Overall Mood:** The mood MUST be **${input.mood}**. This must influence the colors, lighting, and subject's expression.` : ''}
+${input.lighting ? `\n- **Lighting Scheme:** The lighting MUST be **${input.lighting}**. This is a critical component of the scene's atmosphere and must be clearly visible.` : ''}
+${input.color ? `\n- **Color Palette:** The dominant color palette MUST be **${input.color}**. All colors in the image must harmonize with this directive.` : ''}
 
-**Final Instruction:** Synthesize all the above requirements—User Prompt, aspect ratio, style, mood, lighting, color, and the highest quality standards—into a single, cohesive, and stunning visual output. Prioritize quality and aspect ratio adherence above all else.`;
+**Final Command:** Synthesize ALL of the above requirements—User Prompt (including the aspect ratio hint), the Quality Mandate, and all Mandatory Directives—into a single, cohesive, and stunning visual output. There is no room for interpretation on the directives; they must all be present and correctly implemented in the final image. Failure to adhere to any directive is not an option.`;
 
     const imagePromises = Array(4).fill(null).map((_, index) =>
       ai.generate({
