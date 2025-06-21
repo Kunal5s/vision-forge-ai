@@ -42,12 +42,12 @@ const blogWriterPrompt = ai.definePrompt({
     1.  **HTML Structure - NON-NEGOTIABLE**: The entire output must be valid HTML.
         -   Start DIRECTLY with an <h1> tag for the topic: \`<h1>{{topic}}</h1>\`. There must be NO text before this tag.
         -   Your article MUST have a clear hierarchical structure.
-        -   Use at least four to five distinct \`<h2>\` tags for the main sections.
-        -   Under each \`<h2>\` tag, you MUST include at least two \`<h3>\` tags for subsections.
+        -   Use at least three to four distinct \`<h2>\` tags for the main sections.
+        -   Under each \`<h2>\` tag, you MUST include at least one or two \`<h3>\` tags for subsections.
         -   Use \`<h4>\`, \`<h5>\`, and \`<h6>\` for even deeper nesting where appropriate.
         -   Use \`<p>\` for paragraphs. Paragraphs should be clear and concise, typically 2-4 sentences long. Do not create long walls of text.
         -   Use \`<ul>\` or \`<ol>\` for lists, and \`<strong>\` or \`<em>\` for emphasis. Use \`<blockquote>\` for quotes.
-    2.  **Article Length**: The article must be substantial and approximately 1700 words long. The detailed structure will help achieve this.
+    2.  **Article Length**: The article must be substantial and approximately 800 words long. This is a shorter length to ensure stability on serverless platforms.
     3.  **Content and Tone**:
         -   The content must be cutting-edge, reflecting the absolute latest trends in the "{{category}}" of AI image generation.
         -   Provide practical, actionable tips, detailed prompt examples, and deep insights that are valuable to both beginners and experts.
@@ -83,7 +83,7 @@ const generateBlogArticleFlow = ai.defineFlow(
       return { articleContent: output.articleContent };
     } catch (e: any) {
        console.error("Error generating blog article:", e);
-       const errorContent = `<h1>Content Generation Failed</h1><p>We're sorry, but we were unable to generate this article at the moment. This can happen due to high server load or a temporary issue with the AI model. Please try again in a few moments.</p><p>If the problem persists, it might be related to the complexity of the topic or a configuration issue.</p>`;
+       const errorContent = `<h1>Content Generation Failed</h1><p>We're sorry, but we were unable to generate this article. This can happen due to several reasons:</p><ul><li class="mb-2"><strong>High Server Load:</strong> The AI model may be temporarily busy. Please try again in a few moments.</li><li class="mb-2"><strong>Function Timeout:</strong> On hosting platforms like Netlify, long-running tasks like generating a full article can exceed the time limit for serverless functions, causing the process to be terminated. Reducing article complexity can help avoid this.</li><li class="mb-2"><strong>Configuration Issue:</strong> Please ensure your GOOGLE_API_KEY is correctly set in your deployment environment and that billing is enabled for your Google Cloud project.</li></ul>`;
        return { articleContent: errorContent };
     }
   }

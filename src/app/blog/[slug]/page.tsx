@@ -48,11 +48,20 @@ export default async function ArticlePage({ params }: Props) {
     notFound();
   }
 
-  // Generate the article content in real-time using the AI flow
-  const articleContent = await generateBlogArticle({ 
-    topic: articleData.title, 
-    category: articleData.category 
-  });
+  let articleResult: { articleContent: string };
+  try {
+    // Generate the article content in real-time using the AI flow
+    articleResult = await generateBlogArticle({ 
+      topic: articleData.title, 
+      category: articleData.category 
+    });
+  } catch (error) {
+    console.error("Failed to generate blog article from page:", error);
+    articleResult = {
+      articleContent: `<h1>Oops! Something Went Wrong</h1><p>We encountered an unexpected server error while trying to generate this article. This might be a temporary issue. Please try refreshing the page.</p><p>If the problem continues, it could be due to a deployment configuration issue, such as a server timeout on Netlify.</p>`
+    };
+  }
+
 
   return (
     <main className="container mx-auto py-12 px-4">
@@ -86,7 +95,7 @@ export default async function ArticlePage({ params }: Props) {
           prose-code:text-accent-foreground prose-code:bg-accent/10 prose-code:p-1 prose-code:rounded-sm
           prose-ul:list-disc prose-ul:pl-6 prose-li:marker:text-primary
           prose-ol:list-decimal prose-ol:pl-6 prose-li:marker:text-primary">
-          <div dangerouslySetInnerHTML={{ __html: articleContent.articleContent }} />
+          <div dangerouslySetInnerHTML={{ __html: articleResult.articleContent }} />
         </article>
       </div>
     </main>
