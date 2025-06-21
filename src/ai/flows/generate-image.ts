@@ -3,7 +3,7 @@
 
 /**
  * @fileOverview Image generation flow using Google's latest image generation model.
- * Now generates 4 images in parallel.
+ * Now generates 4 images in parallel with enhanced prompting for quality and aspect ratio.
  * - generateImage - A function that generates 4 images based on a prompt and selected styles.
  * - GenerateImageInput - The input type for the generateImage function.
  * - GenerateImageOutput - The return type for the generateImage function, containing an array of URLs.
@@ -13,7 +13,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GenerateImageInputSchema = z.object({
-  prompt: z.string().describe('The prompt for generating the image. Aspect ratio hints should be included here if desired.'),
+  prompt: z.string().describe('The prompt for generating the image. This should include textual hints for aspect ratio.'),
   style: z.enum([
     "3D",
     "8-bit",
@@ -94,15 +94,22 @@ const generateImageFlow = ai.defineFlow(
     outputSchema: GenerateImageOutputSchema,
   },
   async (input) => {
-    const basePrompt = `Generate an image based on the following specifications. Pay close attention to any aspect ratio hints (e.g., 'widescreen', 'square', 'portrait') that might be included in the main prompt text.
+    const basePrompt = `You are an expert image generation AI. Create an image with the following specifications.
 
-Prompt: ${input.prompt}
-${input.style ? `Style: ${input.style}` : ''}
-${input.mood ? `Mood: ${input.mood}` : ''}
-${input.lighting ? `Lighting: ${input.lighting}` : ''}
-${input.color ? `Color: ${input.color}` : ''}`;
+**Primary Goal:** Generate an image that strictly adheres to the requested aspect ratio hint included in the User Prompt (e.g., 'widescreen', 'portrait'). The final image's dimensions must match this ratio as closely as possible.
 
-    const imagePromises = Array(4).fill(null).map((_, index) => 
+**Quality Goal:** The image should be of the highest possible quality, aiming for a 4K ultra-detailed and photorealistic look, unless a different style is specified which implies non-photorealism.
+
+**User Prompt:** "${input.prompt}"
+
+${input.style ? `**Style:** ${input.style}` : ''}
+${input.mood ? `**Mood:** ${input.mood}` : ''}
+${input.lighting ? `**Lighting:** ${input.lighting}` : ''}
+${input.color ? `**Color:** ${input.color}` : ''}
+
+Remember to prioritize the aspect ratio and overall image quality.`;
+
+    const imagePromises = Array(4).fill(null).map((_, index) =>
       ai.generate({
         model: 'googleai/gemini-2.0-flash-preview-image-generation',
         prompt: `${basePrompt}\n\n(Variation ${index + 1} of 4, ensure uniqueness)`,
@@ -151,7 +158,6 @@ ${input.color ? `Color: ${input.color}` : ''}`;
       throw new Error(detailedErrorMessage);
     }
     
-    // Log any partial failures for debugging purposes
     if(detailedFailures.length > 0) {
         console.warn(`Image generation had partial failures:\n${detailedFailures.join('\n')}`);
     }

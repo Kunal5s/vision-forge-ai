@@ -90,7 +90,7 @@ export function ImageGenerator() {
     } else {
       localStorage.removeItem('visionForgeHistory');
     }
-  }, [history]);
+  }, [history, toast]);
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     setIsLoading(true);
@@ -124,7 +124,7 @@ export function ImageGenerator() {
           timestamp: new Date(),
         };
         setHistory(prev => [historyItem, ...prev.slice(0, 4)]); // Keep history size small
-        toast({ title: 'Vision Forged!', description: `Your image has been successfully generated.` });
+        toast({ title: 'Vision Forged!', description: `Your images have been successfully generated.` });
       } else {
         setError('The AI returned no images. Please try a different prompt or check the logs.');
         toast({ title: 'Generation Issue', description: 'No images were returned by the AI.', variant: 'destructive' });

@@ -51,7 +51,7 @@ export function ImageDisplay({
     if (!imageUrl) return;
 
     const image = new window.Image();
-    image.crossOrigin = 'anonymous'; // This can help with tainted canvas issues, though not always with data URIs.
+    image.crossOrigin = 'anonymous';
     image.src = imageUrl;
 
     image.onload = () => {
@@ -72,25 +72,19 @@ export function ImageDisplay({
         let sourceY = 0;
         let sourceWidth = originalWidth;
         let sourceHeight = originalHeight;
-
-        // Determine how to crop by comparing the original aspect ratio to the target.
         const originalAspectRatioValue = originalWidth / originalHeight;
 
         if (originalAspectRatioValue > targetAspectRatio) {
-            // Original is wider than target: crop the width (sourceX will change).
             sourceWidth = originalHeight * targetAspectRatio;
             sourceX = (originalWidth - sourceWidth) / 2;
         } else if (originalAspectRatioValue < targetAspectRatio) {
-            // Original is taller than target: crop the height (sourceY will change).
             sourceHeight = originalWidth / targetAspectRatio;
             sourceY = (originalHeight - sourceHeight) / 2;
         }
-        // If aspect ratios are the same, no cropping is needed (source values remain as is).
 
         canvas.width = sourceWidth;
         canvas.height = sourceHeight;
 
-        // Draw the cropped portion of the original image onto the canvas.
         ctx.drawImage(
             image,
             sourceX,
@@ -99,11 +93,10 @@ export function ImageDisplay({
             sourceHeight,
             0,
             0,
-            sourceWidth, // The destination width on the canvas
-            sourceHeight // The destination height on the canvas
+            sourceWidth,
+            sourceHeight
         );
 
-        // Trigger download of the cropped image from the canvas.
         const croppedImageUrl = canvas.toDataURL('image/png');
         const link = document.createElement('a');
         link.href = croppedImageUrl;
@@ -115,7 +108,6 @@ export function ImageDisplay({
 
     image.onerror = () => {
         console.error("Failed to load image for cropping. Falling back to direct download of original image.");
-        // Fallback to direct download if the canvas method fails for any reason.
         const link = document.createElement('a');
         link.href = imageUrl;
         const extension = imageUrl.split(';')[0].split('/')[1] || 'png';
