@@ -2,6 +2,8 @@
 import type { Metadata } from 'next';
 import { BlogSection } from '@/components/vision-forge/BlogSection';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Blog | VisionForge AI',
   description: 'Explore the latest trends, tutorials, and news in AI image generation. Stay ahead with tips and insights from VisionForge AI.',
