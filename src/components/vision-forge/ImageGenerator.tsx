@@ -20,10 +20,8 @@ import { useToast } from '@/hooks/use-toast';
 import { generateImage, type GenerateImageInput } from '@/ai/flows/generate-image';
 import { improvePrompt, type ImprovePromptOutput } from '@/ai/flows/improve-prompt';
 import { ASPECT_RATIOS } from '@/lib/constants';
-import type { StyleType, MoodType, LightingType, ColorType } from '@/lib/constants';
 import type { GeneratedImageHistoryItem } from '@/types';
 import { ImageDisplay } from './ImageDisplay';
-import { StyleCustomizationPanel } from './StyleCustomizationPanel';
 import { UsageHistory } from './UsageHistory';
 import { FuturisticPanel } from './FuturisticPanel';
 import { Wand2, ThumbsUp, ThumbsDown } from 'lucide-react';
@@ -46,11 +44,6 @@ export function ImageGenerator() {
   const { toast } = useToast();
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>(aspectRatiosWithText[0].value);
   
-  const [selectedStyle, setSelectedStyle] = useState<StyleType | undefined>(undefined);
-  const [selectedMood, setSelectedMood] = useState<MoodType | undefined>(undefined);
-  const [selectedLighting, setSelectedLighting] = useState<LightingType | undefined>(undefined);
-  const [selectedColor, setSelectedColor] = useState<ColorType | undefined>(undefined);
-
   const [generatedImageUrls, setGeneratedImageUrls] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isImprovingPrompt, setIsImprovingPrompt] = useState(false);
@@ -121,10 +114,6 @@ export function ImageGenerator() {
         id: new Date().toISOString() + Math.random().toString(36).substring(2,9),
         prompt: data.prompt,
         aspectRatio: selectedAspectRatio,
-        style: selectedStyle,
-        mood: selectedMood,
-        lighting: selectedLighting,
-        color: selectedColor,
         imageUrl: result.imageUrls[0], // Only save the first image to history
         timestamp: new Date(),
       };
@@ -192,10 +181,6 @@ export function ImageGenerator() {
   const handleSelectHistoryItem = (item: GeneratedImageHistoryItem) => {
     setFormValue('prompt', item.prompt);
     setSelectedAspectRatio(item.aspectRatio);
-    setSelectedStyle(item.style);
-    setSelectedMood(item.mood);
-    setSelectedLighting(item.lighting);
-    setSelectedColor(item.color);
     setGeneratedImageUrls([item.imageUrl]); // Display the single saved image
     setError(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -268,13 +253,6 @@ export function ImageGenerator() {
                   </SelectContent>
                 </Select>
               </div>
-              
-              <StyleCustomizationPanel
-                selectedStyle={selectedStyle} setSelectedStyle={setSelectedStyle}
-                selectedMood={selectedMood} setSelectedMood={setSelectedMood}
-                selectedLighting={selectedLighting} setSelectedLighting={setSelectedLighting}
-                selectedColor={selectedColor} setSelectedColor={setSelectedColor}
-              />
               
               <Button type="submit" disabled={isLoading} className="w-full text-lg py-3 futuristic-glow-button-primary bg-primary hover:bg-primary/90 text-primary-foreground">
                 {isLoading ? <LoadingSpinner size={24} className="mr-2"/> : null}

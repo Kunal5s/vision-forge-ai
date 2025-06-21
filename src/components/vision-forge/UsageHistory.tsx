@@ -80,8 +80,6 @@ export function UsageHistory({ history, onSelectHistoryItem, onDeleteHistoryItem
                 <p className="text-xs text-muted-foreground">{new Date(item.timestamp).toLocaleDateString()} {new Date(item.timestamp).toLocaleTimeString()}</p>
                 <p className="text-xs text-muted-foreground">
                   {item.aspectRatio}
-                  {item.style ? `, ${item.style}` : ''}
-                  {item.mood ? `, ${item.mood}` : ''}
                 </p>
               </div>
               <div className="flex gap-2 shrink-0">
