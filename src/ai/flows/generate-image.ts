@@ -3,8 +3,8 @@
 
 /**
  * @fileOverview Image generation flow using Google's latest image generation model.
- * Generates a single image with enhanced prompting for quality and aspect ratio.
- * - generateImage - A function that generates an image based on a prompt and selected styles.
+ * Generates multiple image variations with enhanced prompting for quality and aspect ratio.
+ * - generateImage - A function that generates images based on a prompt and selected styles.
  * - GenerateImageInput - The input type for the generateImage function.
  * - GenerateImageOutput - The return type for the generateImage function, containing an array of URLs or an error.
  */
@@ -44,19 +44,30 @@ const generateImageFlow = ai.defineFlow(
     }
 
     try {
-      const { media } = await ai.generate({
-        model: 'googleai/gemini-2.0-flash-preview-image-generation',
-        prompt: input.prompt,
-        config: {
-          responseModalities: ['TEXT', 'IMAGE'],
-        },
+      // Create 4 promises for 4 image generation calls in parallel for variations.
+      const generationPromises = Array.from({ length: 4 }).map(() => {
+        return ai.generate({
+          model: 'googleai/gemini-2.0-flash-preview-image-generation',
+          prompt: input.prompt, // The model has inherent randomness, so the same prompt will yield different images.
+          config: {
+            responseModalities: ['TEXT', 'IMAGE'],
+          },
+        });
       });
+      
+      // Await all promises to resolve
+      const results = await Promise.all(generationPromises);
 
-      if (media?.url) {
-        return { imageUrls: [media.url] };
+      const imageUrls = results
+        .map(result => result.media?.url)
+        .filter((url): url is string => !!url);
+
+
+      if (imageUrls.length > 0) {
+        return { imageUrls };
       }
-
-      console.error("Image generation did not return a media URL.");
+      
+      console.error("Image generation did not return any media URLs.");
       const failureReason = "Image generation failed. This is often a Google Cloud setup issue. Please check:\n1. **Billing is enabled** for your Google Cloud project.\n2. The **'Generative Language API'** is enabled.";
       return { imageUrls: [], error: failureReason };
 
