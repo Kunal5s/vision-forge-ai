@@ -1,6 +1,8 @@
 
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useState, useEffect } from 'react';
 import { notFound, useParams } from 'next/navigation';
 import { articles, type Article } from '@/lib/blog-data';
