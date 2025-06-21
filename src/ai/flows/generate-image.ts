@@ -95,24 +95,21 @@ const generateImageFlow = ai.defineFlow(
     outputSchema: GenerateImageOutputSchema,
   },
   async (input): Promise<GenerateImageOutput> => {
-    const basePrompt = `You are a world-class expert image generation AI, renowned for creating breathtaking and flawless visuals. Your task is to generate an image based on the following specifications, with strict adherence to all provided directives.
+    
+    const directives = [
+      input.style ? `- Style: ${input.style}` : '',
+      input.mood ? `- Mood: ${input.mood}` : '',
+      input.lighting ? `- Lighting: ${input.lighting}` : '',
+      input.color ? `- Color: ${input.color}` : '',
+    ].filter(Boolean).join('\n');
 
-**Primary Goal:** Generate an image that strictly adheres to the requested aspect ratio hint included in the User Prompt (e.g., 'widescreen', 'portrait'). The final image's dimensions must match this ratio as closely as possible. This is a critical technical requirement.
+    const basePrompt = `Generate a hyper-realistic, 4k ultra-detailed image.
+User Prompt: "${input.prompt}"
+${directives ? `\nStrictly adhere to these directives:\n${directives}` : ''}`;
 
-**Quality Mandate:** Create a masterpiece of the highest possible quality. The image must be hyper-realistic, tack-sharp, and filled with intricate details. Aim for a 4K ultra-detailed look with cinematic lighting and professional photography standards. This quality goal should be overridden only if a non-photorealistic style (like 'Cartoon' or '8-bit') is explicitly requested.
-
-**User Prompt:** "${input.prompt}"
-
-${input.style || input.mood || input.lighting || input.color ? '**Mandatory Directives (Non-Negotiable):**' : ''}
-${input.style ? `\n- **Artistic Style:** The image's style MUST be **${input.style}**. This directive must define the entire visual language of the image. Do not deviate.` : ''}
-${input.mood ? `\n- **Overall Mood:** The mood MUST be **${input.mood}**. This must influence the colors, lighting, and subject's expression.` : ''}
-${input.lighting ? `\n- **Lighting Scheme:** The lighting MUST be **${input.lighting}**. This is a critical component of the scene's atmosphere and must be clearly visible.` : ''}
-${input.color ? `\n- **Color Palette:** The dominant color palette MUST be **${input.color}**. All colors in the image must harmonize with this directive.` : ''}
-
-**Final Command:** Synthesize ALL of the above requirements—User Prompt (including the aspect ratio hint), the Quality Mandate, and all Mandatory Directives—into a single, cohesive, and stunning visual output. There is no room for interpretation on the directives; they must all be present and correctly implemented in the final image. Failure to adhere to any directive is not an option.`;
 
     try {
-      const { media, candidates } = await ai.generate({
+      const { media } = await ai.generate({
         model: 'googleai/gemini-2.0-flash-preview-image-generation',
         prompt: basePrompt,
         config: {
@@ -124,24 +121,15 @@ ${input.color ? `\n- **Color Palette:** The dominant color palette MUST be **${i
         return { imageUrls: [media.url] };
       }
 
-      const candidate = candidates?.[0];
-      let reason = "The AI did not return an image. This can happen with very complex or unsafe prompts. Please try simplifying your request.";
-      if (candidate) {
-        if (candidate.finishReason === 'SAFETY') {
-          reason = 'The prompt may have violated content safety policies. Please adjust your prompt and try again.';
-        } else if (candidate.finishMessage) {
-           reason = `Generation failed: ${candidate.finishMessage} (Reason: ${candidate.finishReason}).`;
-        }
-      }
-      console.error("Image generation failed. Full API response:", { media, candidates });
-      return { imageUrls: [], error: reason };
+      // If no media URL, something went wrong. Provide the checklist.
+      console.error("Image generation did not return a media URL.");
+      const failureReason = "Image generation failed. This might be due to a safety policy violation or a problem with your Google Cloud project configuration. Please check the following and try again:\n\n1. **Billing is enabled** for your Google Cloud project.\n2. The **'Generative Language API'** is enabled.\n3. Your prompt does not violate safety policies.";
+      return { imageUrls: [], error: failureReason };
+
 
     } catch (e: any) {
       console.error("Image generation API call failed:", e);
-      if (!process.env.GOOGLE_API_KEY) {
-        return { imageUrls: [], error: 'The GOOGLE_API_KEY environment variable is not set. Please add it to your deployment settings and redeploy.' };
-      }
-      const detailedMessage = "Image generation failed. Please check the following and try again:\n1. Your GOOGLE_API_KEY is correct in your Netlify environment variables.\n2. In your Google Cloud project, the 'Generative Language API' or 'Vertex AI API' is enabled.\n3. Billing is enabled for your Google Cloud project.\n4. Your prompt does not violate content safety policies.";
+      const detailedMessage = "An unexpected error occurred. This is often caused by an incorrect API Key or Google Cloud project setup. Please check the following:\n\n1. Your **GOOGLE_API_KEY** is correct in your Netlify environment variables.\n2. **Billing is enabled** for your Google Cloud project.\n3. The **'Generative Language API'** (or Vertex AI) is enabled in Google Cloud.";
       return { imageUrls: [], error: detailedMessage };
     }
   }

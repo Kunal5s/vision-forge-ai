@@ -57,8 +57,9 @@ const improvePromptFlow = ai.defineFlow(
   async (input): Promise<ImprovePromptOutput> => {
     try {
         const {output} = await improvePromptPrompt(input);
-        if (!output) {
-            return { improvedPrompt: '', reasoning: '', error: 'The AI could not generate a suggestion for this prompt.' };
+        if (!output?.improvedPrompt) {
+            const failureReason = "The AI could not generate a suggestion. This might be due to a safety policy violation or a problem with your Google Cloud project configuration. Please check the following and try again:\n\n1. **Billing is enabled** for your Google Cloud project.\n2. The **'Generative Language API'** is enabled.\n3. Your prompt does not violate safety policies.";
+            return { improvedPrompt: '', reasoning: '', error: failureReason };
         }
         return {
             improvedPrompt: output.improvedPrompt,
@@ -66,10 +67,7 @@ const improvePromptFlow = ai.defineFlow(
         };
     } catch (e: any) {
         console.error("Improve prompt API call failed:", e);
-        if (!process.env.GOOGLE_API_KEY) {
-            return { improvedPrompt: '', reasoning: '', error: 'The GOOGLE_API_KEY environment variable is not set. Please add it to your deployment settings and redeploy.' };
-        }
-        const detailedMessage = "Failed to get suggestion. Please check the following and try again:\n1. Your GOOGLE_API_KEY is correct in your Netlify environment variables.\n2. In your Google Cloud project, the 'Generative Language API' or 'Vertex AI API' is enabled.\n3. Billing is enabled for your Google Cloud project.";
+        const detailedMessage = "An unexpected error occurred. This is often caused by an incorrect API Key or Google Cloud project setup. Please check the following:\n\n1. Your **GOOGLE_API_KEY** is correct in your Netlify environment variables.\n2. **Billing is enabled** for your Google Cloud project.\n3. The **'Generative Language API'** (or Vertex AI) is enabled in Google Cloud.";
         return { improvedPrompt: '', reasoning: '', error: detailedMessage };
     }
   }
