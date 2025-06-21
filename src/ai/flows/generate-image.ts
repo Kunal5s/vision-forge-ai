@@ -3,8 +3,8 @@
 
 /**
  * @fileOverview Image generation flow using Google's latest image generation model.
- * Now generates 4 images in parallel with enhanced prompting for quality and aspect ratio.
- * - generateImage - A function that generates 4 images based on a prompt and selected styles.
+ * Generates a single image with enhanced prompting for quality and aspect ratio.
+ * - generateImage - A function that generates an image based on a prompt and selected styles.
  * - GenerateImageInput - The input type for the generateImage function.
  * - GenerateImageOutput - The return type for the generateImage function, containing an array of URLs.
  */
@@ -116,59 +116,36 @@ ${input.color ? `\n- **Color Palette:** The dominant color palette MUST be **${i
 
 **Final Command:** Synthesize ALL of the above requirements—User Prompt (including the aspect ratio hint), the Quality Mandate, and all Mandatory Directives—into a single, cohesive, and stunning visual output. There is no room for interpretation on the directives; they must all be present and correctly implemented in the final image. Failure to adhere to any directive is not an option.`;
 
-    const imagePromises = Array(4).fill(null).map((_, index) =>
-      ai.generate({
+    try {
+      const { media, candidates } = await ai.generate({
         model: 'googleai/gemini-2.0-flash-preview-image-generation',
-        prompt: `${basePrompt}\n\n(Variation ${index + 1} of 4, ensure uniqueness)`,
+        prompt: basePrompt,
         config: {
           responseModalities: ['TEXT', 'IMAGE'],
         },
-      })
-    );
+      });
 
-    const results = await Promise.allSettled(imagePromises);
-    
-    const successfulUrls: string[] = [];
-    const detailedFailures: string[] = [];
+      if (media?.url) {
+        return { imageUrls: [media.url] };
+      }
 
-    results.forEach((result, index) => {
-      if (result.status === 'fulfilled' && result.value.media?.url) {
-        successfulUrls.push(result.value.media.url);
-      } else {
-        let reason = `Attempt ${index + 1} failed.`;
-        if (result.status === 'rejected') {
-          reason += ` Error: ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`;
-        } else if (result.status === 'fulfilled') {
-          const candidate = result.value.candidates && result.value.candidates[0];
-          if (candidate) {
-            reason += ` Reason: ${candidate.finishReason} (${candidate.finishMessage || 'No specific message provided'}).`;
-            if (candidate.finishReason === 'SAFETY' || candidate.finishReason === 'BLOCKED') {
-              reason += ' (Prompt might have violated content policies).';
-            }
-          } else {
-            reason += ' (No media URL or candidates returned).';
-          }
+      const candidate = candidates?.[0];
+      let reason = "The AI did not return an image.";
+      if (candidate) {
+        reason += ` Finish Reason: ${candidate.finishReason}.`;
+        if (candidate.finishMessage) {
+          reason += ` Message: ${candidate.finishMessage}`;
         }
-        detailedFailures.push(reason);
+        if (candidate.finishReason === 'SAFETY') {
+            reason += ' The prompt may have violated content safety policies.';
+        }
       }
-    });
+      console.error("Image generation failed. Full API response:", { media, candidates });
+      throw new Error(reason);
 
-    if (successfulUrls.length === 0) {
-      let failureSummary = detailedFailures.join('\n');
-      if (!failureSummary) {
-          failureSummary = "All generation attempts failed without returning specific reasons. This could be due to an invalid API key, disabled Google Cloud APIs (Generative Language API or Vertex AI API), or billing issues. Please check your project configuration and server logs.";
-      }
-      
-      const detailedErrorMessage = `Failed to generate any image URLs.\n\nFailures:\n${failureSummary}\n\nPlease verify the following and try again:\n1. Your prompt is clear and adheres to content policies.\n2. Your API key (\`GOOGLE_API_KEY\` in .env) is correct, active, and has the necessary permissions.\n3. The correct APIs are enabled in your Google Cloud project.\n4. Billing is enabled and active for your Google Cloud project.\nReview server logs for more detailed technical information on the failed attempts.`;
-      
-      console.error("Image generation failure details:", detailedErrorMessage, "Full API results:", JSON.stringify(results, null, 2));
-      throw new Error(detailedErrorMessage);
+    } catch (e: any) {
+      console.error("Image generation API call failed:", e);
+      throw new Error("Image generation failed. Please check the following and try again:\n1. Your GOOGLE_API_KEY is correct in your Netlify environment variables.\n2. In your Google Cloud project, the 'Generative Language API' or 'Vertex AI API' is enabled.\n3. Billing is enabled for your Google Cloud project.\n4. Your prompt does not violate content safety policies.");
     }
-    
-    if(detailedFailures.length > 0) {
-        console.warn(`Image generation had partial failures:\n${detailedFailures.join('\n')}`);
-    }
-
-    return { imageUrls: successfulUrls };
   }
 );

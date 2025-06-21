@@ -146,11 +146,14 @@ export function ImageDisplay({
           <div className="absolute inset-0 flex flex-col items-center justify-center text-destructive p-4 text-center">
             <AlertTriangle size={48} className="mb-2" />
             <p className="font-semibold">Error Generating Images</p>
-            <p className="text-sm max-w-md mx-auto">{error}</p>
+            <p className="text-sm max-w-md mx-auto whitespace-pre-wrap">{error}</p>
           </div>
         )}
         {!isLoading && !error && imageUrls.length > 0 && (
-          <div className="grid grid-cols-2 gap-2 w-full h-full">
+          <div className={cn(
+            "w-full h-full",
+             imageUrls.length > 1 ? "grid grid-cols-2 gap-2" : ""
+            )}>
             {imageUrls.map((url, index) => (
               <div key={url.slice(-20) + index} className={cn("relative group rounded-md overflow-hidden bg-muted/10", getAspectRatioClass(aspectRatio))}>
                  <Image
