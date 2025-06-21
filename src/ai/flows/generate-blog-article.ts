@@ -33,23 +33,25 @@ const blogWriterPrompt = ai.definePrompt({
   input: { schema: GenerateBlogArticleInputSchema },
   output: { schema: z.object({ articleContent: z.string() }) },
   prompt: `
-    You are an expert blog writer and SEO specialist.
-    Your task is to write a comprehensive, engaging blog post about AI image generation, approximately 500 words long.
+    You are an expert SEO content writer. Your task is to generate a comprehensive, well-structured, and engaging blog article.
 
-    TOPIC: "{{topic}}"
-    CATEGORY: "{{category}}"
+    The topic is: "{{topic}}"
+    The category is: "{{category}}"
 
-    The entire output must be valid HTML:
-    - Start DIRECTLY with an <h1> tag for the topic.
-    - Use at least three to four distinct <h2> tags for main sections.
-    - Under each <h2>, include one or two <h3> tags for subsections.
-    - Use <p> for paragraphs (2-4 sentences long).
-    - Use <strong>, <em>, and <ul> for emphasis and lists.
+    You MUST follow these rules without exception:
+    1. The ENTIRE output MUST be valid HTML. Do not include any text before the first HTML tag or after the last one.
+    2. The article MUST start with an <h1> tag containing the topic.
+    3. The article MUST have a clear hierarchical structure using <h2>, <h3>, <h4>, <h5>, and <h6> tags.
+    4. There MUST be at least three <h2> sections.
+    5. Each <h2> section MUST contain at least two <h3> subsections.
+    6. Use <h4>, <h5>, and <h6> tags for deeper nesting where appropriate.
+    7. All text content MUST be enclosed in <p> tags. Paragraphs should be 2-4 sentences long.
+    8. Use <strong>, <em>, and <ul> with <li> for lists to enhance readability.
 
-    Begin writing.
+    Begin writing the HTML now.
   `,
   config: {
-    temperature: 0.7,
+    temperature: 0.8,
   }
 });
 

@@ -122,6 +122,8 @@ export default function ArticlePage() {
             prose-h2:text-accent prose-h2:border-b prose-h2:border-accent/40 prose-h2:pb-3 prose-h2:mt-16 prose-h2:mb-6 prose-h2:font-bold
             prose-h3:text-primary/90 prose-h3:mt-10 prose-h3:mb-4 prose-h3:font-semibold
             prose-h4:text-accent/90 prose-h4:mt-8 prose-h4:mb-2 prose-h4:font-semibold
+            prose-h5:text-primary/80 prose-h5:mt-6 prose-h5:mb-2 prose-h5:font-semibold
+            prose-h6:text-accent/80 prose-h6:mt-5 prose-h6:mb-1 prose-h6:font-medium
             prose-a:text-primary hover:prose-a:text-accent prose-a:transition-colors
             prose-strong:text-foreground
             prose-blockquote:border-accent prose-blockquote:text-muted-foreground prose-blockquote:text-lg
