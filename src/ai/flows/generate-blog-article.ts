@@ -20,6 +20,7 @@ export type GenerateBlogArticleInput = z.infer<typeof GenerateBlogArticleInputSc
 
 const GenerateBlogArticleOutputSchema = z.object({
   articleContent: z.string().describe('The full, HTML-formatted blog article.'),
+  error: z.string().optional().describe('An error message if generation failed.'),
 });
 export type GenerateBlogArticleOutput = z.infer<typeof GenerateBlogArticleOutputSchema>;
 
@@ -30,34 +31,25 @@ export async function generateBlogArticle(input: GenerateBlogArticleInput): Prom
 const blogWriterPrompt = ai.definePrompt({
   name: 'blogWriterPrompt',
   input: { schema: GenerateBlogArticleInputSchema },
-  output: { schema: GenerateBlogArticleOutputSchema },
+  output: { schema: z.object({ articleContent: z.string() }) },
   prompt: `
-    You are an expert blog writer and SEO specialist, a master of creating engaging, well-structured content about AI image generation.
-    Your task is to write a comprehensive, insightful, and engaging blog post on the given topic. The output must be perfectly structured for SEO and readability.
+    You are an expert blog writer and SEO specialist.
+    Your task is to write a comprehensive, engaging blog post about AI image generation, approximately 500 words long.
 
     TOPIC: "{{topic}}"
     CATEGORY: "{{category}}"
 
-    Follow these instructions with absolute precision:
-    1.  **HTML Structure - NON-NEGOTIABLE**: The entire output must be valid HTML.
-        -   Start DIRECTLY with an <h1> tag for the topic: \`<h1>{{topic}}</h1>\`. There must be NO text before this tag.
-        -   Your article MUST have a clear hierarchical structure.
-        -   Use at least three to four distinct \`<h2>\` tags for the main sections.
-        -   Under each \`<h2>\` tag, you MUST include at least one or two \`<h3>\` tags for subsections.
-        -   Use \`<h4>\`, \`<h5>\`, and \`<h6>\` for even deeper nesting where appropriate.
-        -   Use \`<p>\` for paragraphs. Paragraphs should be clear and concise, typically 2-4 sentences long. Do not create long walls of text.
-        -   Use \`<ul>\` or \`<ol>\` for lists, and \`<strong>\` or \`<em>\` for emphasis. Use \`<blockquote>\` for quotes.
-    2.  **Article Length**: The article must be substantial and approximately 500 words long. This is a shorter length to ensure stability on serverless platforms.
-    3.  **Content and Tone**:
-        -   The content must be cutting-edge, reflecting the absolute latest trends in the "{{category}}" of AI image generation.
-        -   Provide practical, actionable tips, detailed prompt examples, and deep insights that are valuable to both beginners and experts.
-        -   The tone should be authoritative, engaging, and professional.
-    4.  **Final Check**: Before finishing, ensure your response is ONLY the HTML content, starting with \`<h1>\` and ending with the final closing tag. No introductory or concluding remarks outside of the HTML.
+    The entire output must be valid HTML:
+    - Start DIRECTLY with an <h1> tag for the topic.
+    - Use at least three to four distinct <h2> tags for main sections.
+    - Under each <h2>, include one or two <h3> tags for subsections.
+    - Use <p> for paragraphs (2-4 sentences long).
+    - Use <strong>, <em>, and <ul> for emphasis and lists.
 
-    Begin writing the article now.
+    Begin writing.
   `,
   config: {
-    temperature: 0.7, 
+    temperature: 0.7,
   }
 });
 
@@ -68,17 +60,34 @@ const generateBlogArticleFlow = ai.defineFlow(
     inputSchema: GenerateBlogArticleInputSchema,
     outputSchema: GenerateBlogArticleOutputSchema,
   },
-  async (input) => {
-    // --- TEMPORARY DEBUGGING STEP ---
-    // Return placeholder content to ensure the Netlify build passes.
-    // This removes the heavy AI call that is likely causing the build to time out.
-    console.log(`Bypassing AI for topic: ${input.topic} to ensure successful deployment.`);
-    const placeholderContent = `<h1>${input.topic}</h1>
-      <h2>Deployment Successful!</h2>
-      <p>This is placeholder content. It confirms that the website update was deployed successfully to Netlify.</p>
-      <p>The live AI article generation was temporarily disabled to resolve the build failure. We will now proceed with safely re-enabling it.</p>
-      <p>Thank you for your patience.</p>`;
-    return { articleContent: placeholderContent };
-    // --- END TEMPORARY STEP ---
+  async (input): Promise<GenerateBlogArticleOutput> => {
+    if (!process.env.GOOGLE_API_KEY) {
+      const errorMsg = "Your GOOGLE_API_KEY is not set correctly. Please check your Netlify environment variables.";
+      console.error(errorMsg);
+      return {
+        articleContent: `<h1>Configuration Error</h1><p>${errorMsg}</p>`,
+        error: errorMsg
+      };
+    }
+
+    try {
+      const { output } = await blogWriterPrompt(input);
+      if (!output?.articleContent) {
+        const failureReason = "The AI could not generate the article. This might be due to a temporary issue with the AI service or a problem with your prompt. Please try again.";
+        return {
+            articleContent: `<h1>Generation Failed</h1><p>${failureReason}</p>`,
+            error: failureReason
+        };
+      }
+      return { articleContent: output.articleContent };
+
+    } catch (e: any) {
+      console.error("Blog article generation failed:", e);
+      const detailedMessage = "An unexpected server error occurred during article generation. This can be caused by server timeouts on free hosting plans or issues with the underlying AI service. Please try refreshing the page.";
+      return {
+        articleContent: `<h1>Server Error</h1><p>${detailedMessage}</p>`,
+        error: detailedMessage
+      };
+    }
   }
 );

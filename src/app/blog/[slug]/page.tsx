@@ -57,7 +57,12 @@ export default function ArticlePage() {
           // Race the generation against the timeout
           const result = await Promise.race([generationPromise, timeoutPromise]);
 
-          setArticleContent(result.articleContent);
+          if (result.error) {
+            // The flow now returns HTML with the error message, so we can set it directly.
+            setArticleContent(result.articleContent);
+          } else {
+            setArticleContent(result.articleContent);
+          }
 
         } catch (error: any) {
           console.error("Failed to generate or fetch blog article:", error);
