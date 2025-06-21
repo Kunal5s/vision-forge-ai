@@ -24,7 +24,7 @@ const portraitTitles = [
 ];
 
 const landscapeTitles = [
-  "Crafting Epic, Otherworldly Vistas with AI Landscape Generation",
+  "Crafting Epic, Otherworldly Vistas with Powerful AI Landscape Generation",
   "The Role of Atmospheric Effects in AI Landscape Art",
   "Generating Photorealistic Terrains: A Deep Dive into Prompt Engineering",
   "From Serene Sunsets to Stormy Seas: Capturing Mood Landscapes",
@@ -62,7 +62,7 @@ const animalTitles = [
 const scifiTitles = [
   "Designing Advanced Futuristic Cities with AI: A Comprehensive Tutorial",
   "Conceptualizing Next-Generation Spaceships and Vehicles with AI Prompts",
-  "The Art of Cyberpunk: Mastering Neon-Soaked AI Cityscapes",
+  "The Art of Cyberpunk: Mastering Luminous Neon-Soaked AI Cityscapes",
   "Creating Compelling Alien Species with AI Image Generation Tools",
   "From Dystopian Futures to Utopian Dreams in AI Art",
   "A Guide to Generating Detailed and Functional Sci-Fi UI",

@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -31,23 +32,27 @@ const blogWriterPrompt = ai.definePrompt({
   input: { schema: GenerateBlogArticleInputSchema },
   output: { schema: GenerateBlogArticleOutputSchema },
   prompt: `
-    You are an expert blog writer and journalist specializing in AI image generation technology and digital art.
-    Your task is to write a comprehensive, insightful, and engaging blog post on a given topic.
+    You are an expert blog writer and SEO specialist, a master of creating engaging, well-structured content about AI image generation.
+    Your task is to write a comprehensive, insightful, and engaging blog post on the given topic. The output must be perfectly structured for SEO and readability.
 
     TOPIC: "{{topic}}"
     CATEGORY: "{{category}}"
 
-    Follow these instructions precisely:
-    1.  **Article Length**: The article must be detailed and approximately 1700 words long.
-    2.  **HTML Structure**: The entire output must be valid HTML.
-        -   Start DIRECTLY with an <h1> tag for the topic: \`<h1>{{topic}}</h1>\`. Do not add any text before this tag.
-        -   Structure the article with proper semantic HTML. Use <h2> for major sections, <h3> for sub-sections, and <h4>, <h5>, <h6> for deeper subheadings.
-        -   Use <p> for paragraphs, <ul> or <ol> for lists, and <strong> or <em> for emphasis. Use <blockquote> for quotes.
+    Follow these instructions with absolute precision:
+    1.  **HTML Structure - NON-NEGOTIABLE**: The entire output must be valid HTML.
+        -   Start DIRECTLY with an <h1> tag for the topic: \`<h1>{{topic}}</h1>\`. There must be NO text before this tag.
+        -   Your article MUST have a clear hierarchical structure.
+        -   Use at least four to five distinct \`<h2>\` tags for the main sections.
+        -   Under each \`<h2>\` tag, you MUST include at least two \`<h3>\` tags for subsections.
+        -   Use \`<h4>\`, \`<h5>\`, and \`<h6>\` for even deeper nesting where appropriate.
+        -   Use \`<p>\` for paragraphs. Paragraphs should be clear and concise, typically 2-4 sentences long. Do not create long walls of text.
+        -   Use \`<ul>\` or \`<ol>\` for lists, and \`<strong>\` or \`<em>\` for emphasis. Use \`<blockquote>\` for quotes.
+    2.  **Article Length**: The article must be substantial and approximately 1700 words long. The detailed structure will help achieve this.
     3.  **Content and Tone**:
-        -   The content must be up-to-date, reflecting the latest trends in the "{{category}}" of AI image generation.
-        -   The tone should be authoritative, insightful, and inspiring for both beginners and advanced users.
-        -   Provide practical tips, prompt examples, and deep insights.
-    4.  **No Preamble**: Do not write any introduction or text before the initial \`<h1>\` tag. Your response should be the article content itself.
+        -   The content must be cutting-edge, reflecting the absolute latest trends in the "{{category}}" of AI image generation.
+        -   Provide practical, actionable tips, detailed prompt examples, and deep insights that are valuable to both beginners and experts.
+        -   The tone should be authoritative, engaging, and professional.
+    4.  **Final Check**: Before finishing, ensure your response is ONLY the HTML content, starting with \`<h1>\` and ending with the final closing tag. No introductory or concluding remarks outside of the HTML.
 
     Begin writing the article now.
   `,

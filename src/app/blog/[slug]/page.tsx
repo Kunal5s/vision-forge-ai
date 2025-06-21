@@ -75,9 +75,11 @@ export default async function ArticlePage({ params }: Props) {
         </Alert>
 
         <article className="prose prose-invert prose-lg max-w-none 
+          prose-p:leading-relaxed
           prose-h1:text-primary prose-h1:text-4xl prose-h1:md:text-5xl prose-h1:font-extrabold
-          prose-h2:text-accent prose-h2:border-b prose-h2:border-accent/30 prose-h2:pb-2
-          prose-h3:text-primary/90
+          prose-h2:text-accent prose-h2:border-b prose-h2:border-accent/30 prose-h2:pb-2 prose-h2:mt-12
+          prose-h3:text-primary/90 prose-h3:mt-8
+          prose-h4:text-accent/80 prose-h4:font-semibold
           prose-a:text-primary hover:prose-a:text-accent
           prose-strong:text-foreground
           prose-blockquote:border-accent prose-blockquote:text-muted-foreground
