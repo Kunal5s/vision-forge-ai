@@ -39,15 +39,34 @@ export default function ArticlePage() {
     if (articleData) {
       const fetchArticle = async () => {
         setIsLoading(true);
+        setArticleContent(''); // Clear previous content
+        
         try {
-          const result = await generateBlogArticle({ 
+          // Set a 25-second timeout for the client-side request
+          const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('timeout')), 25000)
+          );
+
+          const generationPromise = generateBlogArticle({ 
             topic: articleData.title, 
             category: articleData.category 
           });
+
+          // Race the generation against the timeout
+          const result = await Promise.race([generationPromise, timeoutPromise]);
+
           setArticleContent(result.articleContent);
-        } catch (error) {
-          console.error("Failed to generate blog article from page:", error);
-          const errorHtml = `<h1>Oops! Something Went Wrong</h1><p>We encountered an unexpected server error while trying to generate this article. This might be a temporary issue. Please try refreshing the page.</p><p>If the problem continues, it could be due to a deployment configuration issue, such as a server timeout on Netlify.</p>`;
+
+        } catch (error: any) {
+          console.error("Failed to generate or fetch blog article:", error);
+          let errorHtml = `<h1>Oops! Something Went Wrong</h1><p>We encountered an unexpected server error while trying to generate this article. Please try refreshing the page or check the server logs.</p>`;
+          
+          if (error.message === 'timeout') {
+            errorHtml = `<h1>Content Generation Timed Out</h1>
+                         <p>The request to the AI model took too long to complete. This is a common issue on free hosting platforms like Netlify, which have short execution time limits for server functions.</p>
+                         <p><strong>Please try refreshing the page.</strong> If the problem persists, the platform may be under heavy load.</p>`;
+          }
+          
           setArticleContent(errorHtml);
         } finally {
           setIsLoading(false);

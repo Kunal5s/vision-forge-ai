@@ -47,7 +47,7 @@ const blogWriterPrompt = ai.definePrompt({
         -   Use \`<h4>\`, \`<h5>\`, and \`<h6>\` for even deeper nesting where appropriate.
         -   Use \`<p>\` for paragraphs. Paragraphs should be clear and concise, typically 2-4 sentences long. Do not create long walls of text.
         -   Use \`<ul>\` or \`<ol>\` for lists, and \`<strong>\` or \`<em>\` for emphasis. Use \`<blockquote>\` for quotes.
-    2.  **Article Length**: The article must be substantial and approximately 800 words long. This is a shorter length to ensure stability on serverless platforms.
+    2.  **Article Length**: The article must be substantial and approximately 500 words long. This is a shorter length to ensure stability on serverless platforms.
     3.  **Content and Tone**:
         -   The content must be cutting-edge, reflecting the absolute latest trends in the "{{category}}" of AI image generation.
         -   Provide practical, actionable tips, detailed prompt examples, and deep insights that are valuable to both beginners and experts.
