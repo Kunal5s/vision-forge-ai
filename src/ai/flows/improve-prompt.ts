@@ -50,6 +50,11 @@ const improvePromptFlow = ai.defineFlow(
     outputSchema: ImprovePromptOutputSchema,
   },
   async input => {
+    if (!process.env.GOOGLE_API_KEY) {
+      const errorMessage = 'The GOOGLE_API_KEY environment variable is not set. Please add it to your deployment settings and redeploy.';
+      console.error(errorMessage);
+      throw new Error(errorMessage);
+    }
     const {output} = await improvePromptPrompt(input);
     return output!;
   }

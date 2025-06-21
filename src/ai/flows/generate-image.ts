@@ -94,6 +94,12 @@ const generateImageFlow = ai.defineFlow(
     outputSchema: GenerateImageOutputSchema,
   },
   async (input) => {
+    if (!process.env.GOOGLE_API_KEY) {
+      const errorMessage = 'The GOOGLE_API_KEY environment variable is not set. Please add it to your deployment settings and redeploy.';
+      console.error(errorMessage);
+      throw new Error(errorMessage);
+    }
+    
     const basePrompt = `You are a world-class expert image generation AI, renowned for creating breathtaking and flawless visuals. Your task is to generate an image based on the following specifications, with strict adherence to all provided directives.
 
 **Primary Goal:** Generate an image that strictly adheres to the requested aspect ratio hint included in the User Prompt (e.g., 'widescreen', 'portrait'). The final image's dimensions must match this ratio as closely as possible. This is a critical technical requirement.
