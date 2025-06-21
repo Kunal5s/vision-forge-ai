@@ -103,15 +103,13 @@ const generateImageFlow = ai.defineFlow(
     }
 
     const directives = [
-      input.style ? `- Style: ${input.style}` : '',
-      input.mood ? `- Mood: ${input.mood}` : '',
-      input.lighting ? `- Lighting: ${input.lighting}` : '',
-      input.color ? `- Color: ${input.color}` : '',
-    ].filter(Boolean).join('\n');
+      input.style,
+      input.mood,
+      input.lighting,
+      input.color,
+    ].filter(Boolean).join(', ');
 
-    const basePrompt = `Generate a hyper-realistic, 4k ultra-detailed image.
-User Prompt: "${input.prompt}"
-${directives ? `\nStrictly adhere to these directives:\n${directives}` : ''}`;
+    const basePrompt = `${input.prompt}${directives ? ` (${directives})` : ''}`;
 
 
     try {
@@ -128,13 +126,13 @@ ${directives ? `\nStrictly adhere to these directives:\n${directives}` : ''}`;
       }
 
       console.error("Image generation did not return a media URL.");
-      const failureReason = "Image generation failed. This might be due to a safety policy violation or a problem with your Google Cloud project configuration. Please check the following and try again:\n\n1. **Billing is enabled** for your Google Cloud project.\n2. The **'Generative Language API'** is enabled.\n3. Your prompt does not violate safety policies.";
+      const failureReason = "Image generation failed. This is often a Google Cloud setup issue. Please check:\n1. **Billing is enabled** for your Google Cloud project.\n2. The **'Generative Language API'** is enabled.";
       return { imageUrls: [], error: failureReason };
 
 
     } catch (e: any) {
       console.error("Image generation API call failed:", e);
-      const detailedMessage = "An unexpected error occurred. This is often caused by an incorrect API Key or Google Cloud project setup. Please check the following:\n\n1. Your **GOOGLE_API_KEY** is correct in your Netlify environment variables.\n2. **Billing is enabled** for your Google Cloud project.\n3. The **'Generative Language API'** (or Vertex AI) is enabled in Google Cloud.";
+      const detailedMessage = "An unexpected error occurred. This is often a Google Cloud setup issue. Please check:\n1. **Billing is enabled** for your Google Cloud project.\n2. The **'Generative Language API'** is enabled.";
       return { imageUrls: [], error: detailedMessage };
     }
   }

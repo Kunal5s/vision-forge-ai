@@ -64,7 +64,7 @@ const improvePromptFlow = ai.defineFlow(
     try {
         const {output} = await improvePromptPrompt(input);
         if (!output?.improvedPrompt) {
-            const failureReason = "The AI could not generate a suggestion. This might be due to a safety policy violation or a problem with your Google Cloud project configuration. Please check the following and try again:\n\n1. **Billing is enabled** for your Google Cloud project.\n2. The **'Generative Language API'** is enabled.\n3. Your prompt does not violate safety policies.";
+            const failureReason = "The AI could not generate a suggestion. This is often a Google Cloud setup issue. Please check:\n1. **Billing is enabled** for your Google Cloud project.\n2. The **'Generative Language API'** is enabled.";
             return { improvedPrompt: '', reasoning: '', error: failureReason };
         }
         return {
@@ -73,7 +73,7 @@ const improvePromptFlow = ai.defineFlow(
         };
     } catch (e: any) {
         console.error("Improve prompt API call failed:", e);
-        const detailedMessage = "An unexpected error occurred. This is often caused by an incorrect API Key or Google Cloud project setup. Please check the following:\n\n1. Your **GOOGLE_API_KEY** is correct in your Netlify environment variables.\n2. **Billing is enabled** for your Google Cloud project.\n3. The **'Generative Language API'** (or Vertex AI) is enabled in Google Cloud.";
+        const detailedMessage = "An unexpected error occurred. This is often a Google Cloud setup issue. Please check:\n1. **Billing is enabled** for your Google Cloud project.\n2. The **'Generative Language API'** is enabled.";
         return { improvedPrompt: '', reasoning: '', error: detailedMessage };
     }
   }
