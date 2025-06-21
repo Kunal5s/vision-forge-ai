@@ -74,17 +74,18 @@ export default async function ArticlePage({ params }: Props) {
           </AlertDescription>
         </Alert>
 
-        <article className="prose prose-invert prose-lg max-w-none 
-          prose-p:leading-relaxed
-          prose-h1:text-primary prose-h1:text-4xl prose-h1:md:text-5xl prose-h1:font-extrabold
-          prose-h2:text-accent prose-h2:border-b prose-h2:border-accent/30 prose-h2:pb-2 prose-h2:mt-12
-          prose-h3:text-primary/90 prose-h3:mt-8
-          prose-h4:text-accent/80 prose-h4:font-semibold
-          prose-a:text-primary hover:prose-a:text-accent
+        <article className="prose prose-invert prose-xl max-w-none 
+          prose-p:leading-relaxed prose-p:text-foreground/80
+          prose-h1:text-primary prose-h1:text-4xl prose-h1:md:text-5xl prose-h1:font-extrabold prose-h1:tracking-tight prose-h1:mb-8
+          prose-h2:text-accent prose-h2:border-b prose-h2:border-accent/40 prose-h2:pb-3 prose-h2:mt-16 prose-h2:mb-6 prose-h2:font-bold
+          prose-h3:text-primary/90 prose-h3:mt-10 prose-h3:mb-4 prose-h3:font-semibold
+          prose-h4:text-accent/90 prose-h4:mt-8 prose-h4:mb-2 prose-h4:font-semibold
+          prose-a:text-primary hover:prose-a:text-accent prose-a:transition-colors
           prose-strong:text-foreground
-          prose-blockquote:border-accent prose-blockquote:text-muted-foreground
+          prose-blockquote:border-accent prose-blockquote:text-muted-foreground prose-blockquote:text-lg
           prose-code:text-accent-foreground prose-code:bg-accent/10 prose-code:p-1 prose-code:rounded-sm
-          prose-li:marker:text-primary">
+          prose-ul:list-disc prose-ul:pl-6 prose-li:marker:text-primary
+          prose-ol:list-decimal prose-ol:pl-6 prose-li:marker:text-primary">
           <div dangerouslySetInnerHTML={{ __html: articleContent.articleContent }} />
         </article>
       </div>
