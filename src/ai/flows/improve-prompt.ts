@@ -55,6 +55,12 @@ const improvePromptFlow = ai.defineFlow(
     outputSchema: ImprovePromptOutputSchema,
   },
   async (input): Promise<ImprovePromptOutput> => {
+    if (!process.env.GOOGLE_API_KEY) {
+      const errorMsg = "Your GOOGLE_API_KEY is not set correctly for deployment. Please go to your Netlify site settings under 'Build & deploy' > 'Environment' and add your API key. The key should not be public.";
+      console.error(errorMsg);
+      return { improvedPrompt: '', reasoning: '', error: errorMsg };
+    }
+
     try {
         const {output} = await improvePromptPrompt(input);
         if (!output?.improvedPrompt) {

@@ -96,6 +96,12 @@ const generateImageFlow = ai.defineFlow(
   },
   async (input): Promise<GenerateImageOutput> => {
     
+    if (!process.env.GOOGLE_API_KEY) {
+      const errorMsg = "Your GOOGLE_API_KEY is not set correctly for deployment. Please go to your Netlify site settings under 'Build & deploy' > 'Environment' and add your API key. The key should not be public.";
+      console.error(errorMsg);
+      return { imageUrls: [], error: errorMsg };
+    }
+
     const directives = [
       input.style ? `- Style: ${input.style}` : '',
       input.mood ? `- Mood: ${input.mood}` : '',
@@ -121,7 +127,6 @@ ${directives ? `\nStrictly adhere to these directives:\n${directives}` : ''}`;
         return { imageUrls: [media.url] };
       }
 
-      // If no media URL, something went wrong. Provide the checklist.
       console.error("Image generation did not return a media URL.");
       const failureReason = "Image generation failed. This might be due to a safety policy violation or a problem with your Google Cloud project configuration. Please check the following and try again:\n\n1. **Billing is enabled** for your Google Cloud project.\n2. The **'Generative Language API'** is enabled.\n3. Your prompt does not violate safety policies.";
       return { imageUrls: [], error: failureReason };
