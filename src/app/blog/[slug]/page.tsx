@@ -1,10 +1,13 @@
 
 import { notFound } from 'next/navigation';
-import { articles } from '@/lib/blog-data';
+import { articles, Article } from '@/lib/blog-data';
 import type { Metadata, ResolvingMetadata } from 'next';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { generateBlogArticle } from '@/ai/flows/generate-blog-article';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Terminal } from 'lucide-react';
 
 type Props = {
   params: { slug: string };
@@ -12,13 +15,13 @@ type Props = {
 
 // Find the article across all categories
 const allArticles = Object.values(articles).flat();
-const getArticle = (slug: string) => allArticles.find((article) => article.slug === slug);
+const getArticleData = (slug: string): Article | undefined => allArticles.find((article) => article.slug === slug);
 
 export async function generateMetadata(
   { params }: Props,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  const article = getArticle(params.slug);
+  const article = getArticleData(params.slug);
 
   if (!article) {
     return {
@@ -26,8 +29,7 @@ export async function generateMetadata(
     };
   }
 
-  const previousImages = (await parent).openGraph?.images || [];
-  const description = article.content.replace(/<[^>]*>?/gm, '').substring(0, 160);
+  const description = `Live AI-generated article on: ${article.title}. Explore the latest trends and techniques in AI image generation with VisionForge AI.`;
 
   return {
     title: `${article.title} | VisionForge AI Blog`,
@@ -35,17 +37,22 @@ export async function generateMetadata(
     openGraph: {
       title: article.title,
       description: description,
-      images: ['/og-image-blog.png', ...previousImages], // Placeholder OG image
     },
   };
 }
 
-export default function ArticlePage({ params }: Props) {
-  const article = getArticle(params.slug);
+export default async function ArticlePage({ params }: Props) {
+  const articleData = getArticleData(params.slug);
 
-  if (!article) {
+  if (!articleData) {
     notFound();
   }
+
+  // Generate the article content in real-time using the AI flow
+  const articleContent = await generateBlogArticle({ 
+    topic: articleData.title, 
+    category: articleData.category 
+  });
 
   return (
     <main className="container mx-auto py-12 px-4">
@@ -58,16 +65,25 @@ export default function ArticlePage({ params }: Props) {
                 </Link>
             </Button>
         </div>
+
+        <Alert className="mb-8 bg-primary/10 border-primary/30 text-primary-foreground">
+          <Terminal className="h-4 w-4" />
+          <AlertTitle className="text-primary">Live AI-Generated Content!</AlertTitle>
+          <AlertDescription>
+            This article was generated in real-time by VisionForge AI, just for you. Enjoy the latest insights on this topic.
+          </AlertDescription>
+        </Alert>
+
         <article className="prose prose-invert prose-lg max-w-none 
           prose-h1:text-primary prose-h1:text-4xl prose-h1:md:text-5xl prose-h1:font-extrabold
           prose-h2:text-accent prose-h2:border-b prose-h2:border-accent/30 prose-h2:pb-2
           prose-h3:text-primary/90
           prose-a:text-primary hover:prose-a:text-accent
           prose-strong:text-foreground
-          prose-blockquote:border-accent
-          prose-code:text-accent-foreground prose-code:bg-accent/10 prose-code:p-1 prose-code:rounded-sm">
-          <h1 className="mb-4">{article.title}</h1>
-          <div dangerouslySetInnerHTML={{ __html: article.content }} />
+          prose-blockquote:border-accent prose-blockquote:text-muted-foreground
+          prose-code:text-accent-foreground prose-code:bg-accent/10 prose-code:p-1 prose-code:rounded-sm
+          prose-li:marker:text-primary">
+          <div dangerouslySetInnerHTML={{ __html: articleContent.articleContent }} />
         </article>
       </div>
     </main>

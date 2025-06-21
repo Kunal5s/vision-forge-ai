@@ -15,12 +15,6 @@ const createSlug = (title: string) => {
     return title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
 }
 
-const getSnippet = (content: string, wordCount: number) => {
-    // Remove HTML tags to get plain text for the snippet
-    const plainText = content.replace(/<[^>]*>?/gm, '');
-    return plainText.split(' ').slice(0, wordCount).join(' ') + '...';
-};
-
 export function BlogSection() {
   const [selectedCategory, setSelectedCategory] = useState(categories[0]);
 
@@ -70,10 +64,10 @@ export function BlogSection() {
             </CardHeader>
             <CardContent className="flex-grow flex flex-col">
               <p className="text-sm text-muted-foreground flex-grow">
-                {getSnippet(article.content, 25)}
+                Click to generate a live, in-depth article on this topic using our real-time AI writing assistant.
               </p>
                <Link href={`/blog/${article.slug}`} className="text-sm font-semibold text-primary hover:text-accent mt-4 inline-flex items-center group/link">
-                  Read More
+                  Generate & Read Article
                   <ArrowRight size={16} className="ml-1 transition-transform duration-300 group-hover/link:translate-x-1" />
                 </Link>
             </CardContent>
