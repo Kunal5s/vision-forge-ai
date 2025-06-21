@@ -40,6 +40,55 @@ const aspectRatiosWithText = ASPECT_RATIOS.map(ar => ({
   textHint: ar.label.split(' (')[1]?.replace(')', '')?.toLowerCase() || ar.value,
 }));
 
+/**
+ * Creates a small JPEG thumbnail from a larger image data URL to save storage space.
+ * @param dataUrl The data URL of the original image.
+ * @param width The width of the thumbnail.
+ * @param height The height of the thumbnail.
+ * @returns A promise that resolves with the data URL of the thumbnail.
+ */
+const createThumbnail = (dataUrl: string, width = 128, height = 128): Promise<string> => {
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        console.error('Could not get canvas context, returning original URL.');
+        return resolve(dataUrl);
+      }
+      
+      const sourceWidth = img.naturalWidth;
+      const sourceHeight = img.naturalHeight;
+      const sourceAspectRatio = sourceWidth / sourceHeight;
+      const targetAspectRatio = width / height;
+      
+      let sx = 0, sy = 0, sw = sourceWidth, sh = sourceHeight;
+
+      if (sourceAspectRatio > targetAspectRatio) {
+        sw = sourceHeight * targetAspectRatio;
+        sx = (sourceWidth - sw) / 2;
+      } else if (sourceAspectRatio < targetAspectRatio) {
+        sh = sourceWidth / targetAspectRatio;
+        sy = (sourceHeight - sh) / 2;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, width, height);
+      
+      resolve(canvas.toDataURL('image/jpeg', 0.7)); // Use JPEG for smaller size
+    };
+    img.onerror = (err) => {
+      console.error("Failed to load image for thumbnail creation, returning original URL.", err);
+      resolve(dataUrl);
+    };
+    img.src = dataUrl;
+  });
+};
+
 export function ImageGenerator() {
   const { toast } = useToast();
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>(aspectRatiosWithText[0].value);
@@ -122,14 +171,17 @@ export function ImageGenerator() {
       toast({ title: 'Generation Failed', description: result.error, variant: 'destructive', duration: 9000 });
     } else if (result.imageUrls && result.imageUrls.length > 0) {
       setGeneratedImageUrls(result.imageUrls);
+      
+      const thumbnailUrl = await createThumbnail(result.imageUrls[0]);
+
       const historyItem: GeneratedImageHistoryItem = {
         id: new Date().toISOString() + Math.random().toString(36).substring(2,9),
         prompt: data.prompt,
         aspectRatio: selectedAspectRatio,
-        imageUrl: result.imageUrls[0], // Only save the first image to history
+        imageUrl: thumbnailUrl,
         timestamp: new Date(),
       };
-      setHistory(prev => [historyItem, ...prev.slice(0, 49)]); // Keep history size reasonable
+      setHistory(prev => [historyItem, ...prev.slice(0, 19)]); // Keep history size to 20
       toast({ title: 'Vision Forged!', description: `Your images have been successfully generated.` });
     } else {
       const fallbackError = 'The AI returned no images. This can happen with very complex or unsafe prompts. Please try simplifying your request.';
@@ -198,10 +250,10 @@ export function ImageGenerator() {
     setSelectedMood(MOODS[0]);
     setSelectedLighting(LIGHTING_OPTIONS[0]);
     setSelectedColor(COLOR_OPTIONS[0]);
-    setGeneratedImageUrls([item.imageUrl]); // Display the single saved image
+    setGeneratedImageUrls([]); // Clear the main display
     setError(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    toast({ title: 'History Item Loaded', description: 'Parameters and image loaded from history.' });
+    toast({ title: 'History Item Loaded', description: 'Parameters loaded. Click "Forge Vision" to regenerate.' });
   };
 
   const handleDeleteHistoryItem = (id: string) => {
