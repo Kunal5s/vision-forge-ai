@@ -1,3 +1,4 @@
+
 // src/ai/flows/improve-prompt.ts
 'use server';
 
@@ -55,7 +56,13 @@ const improvePromptFlow = ai.defineFlow(
       console.error(errorMessage);
       throw new Error(errorMessage);
     }
-    const {output} = await improvePromptPrompt(input);
-    return output!;
+    
+    try {
+        const {output} = await improvePromptPrompt(input);
+        return output!;
+    } catch (e: any) {
+        console.error("Improve prompt API call failed:", e);
+        throw new Error("Failed to get suggestion. Please check the following and try again:\n1. Your GOOGLE_API_KEY is correct in your Netlify environment variables.\n2. In your Google Cloud project, the 'Generative Language API' or 'Vertex AI API' is enabled.\n3. Billing is enabled for your Google Cloud project.");
+    }
   }
 );
