@@ -19,7 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { useToast } from '@/hooks/use-toast';
 import { generateImage, type GenerateImageInput } from '@/ai/flows/generate-image';
 import { improvePrompt, type ImprovePromptOutput } from '@/ai/flows/improve-prompt';
-import { ASPECT_RATIOS } from '@/lib/constants';
+import { ASPECT_RATIOS, STYLES, MOODS, LIGHTING_OPTIONS, COLOR_OPTIONS } from '@/lib/constants';
 import type { GeneratedImageHistoryItem } from '@/types';
 import { ImageDisplay } from './ImageDisplay';
 import { UsageHistory } from './UsageHistory';
@@ -43,6 +43,10 @@ const aspectRatiosWithText = ASPECT_RATIOS.map(ar => ({
 export function ImageGenerator() {
   const { toast } = useToast();
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>(aspectRatiosWithText[0].value);
+  const [selectedStyle, setSelectedStyle] = useState<string>(STYLES[0]);
+  const [selectedMood, setSelectedMood] = useState<string>(MOODS[0]);
+  const [selectedLighting, setSelectedLighting] = useState<string>(LIGHTING_OPTIONS[0]);
+  const [selectedColor, setSelectedColor] = useState<string>(COLOR_OPTIONS[0]);
   
   const [generatedImageUrls, setGeneratedImageUrls] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -93,8 +97,16 @@ export function ImageGenerator() {
     setError(null);
     setGeneratedImageUrls([]);
 
+    const promptParts = [data.prompt];
+    if (selectedStyle !== 'None') promptParts.push(selectedStyle);
+    if (selectedMood !== 'None') promptParts.push(`${selectedMood} mood`);
+    if (selectedLighting !== 'None') promptParts.push(selectedLighting);
+    if (selectedColor !== 'None') promptParts.push(`${selectedColor} color palette`);
+
     const aspectRatioTextHint = aspectRatiosWithText.find(ar => ar.value === selectedAspectRatio)?.textHint || '';
-    const fullPrompt = `${data.prompt}${aspectRatioTextHint ? `, ${aspectRatioTextHint}` : ''}`;
+    if (aspectRatioTextHint) promptParts.push(aspectRatioTextHint);
+
+    const fullPrompt = promptParts.join(', ');
 
     const generationParams: GenerateImageInput = {
       prompt: fullPrompt,
@@ -181,6 +193,11 @@ export function ImageGenerator() {
   const handleSelectHistoryItem = (item: GeneratedImageHistoryItem) => {
     setFormValue('prompt', item.prompt);
     setSelectedAspectRatio(item.aspectRatio);
+    // Reset other controls to default as they are not stored in history
+    setSelectedStyle(STYLES[0]);
+    setSelectedMood(MOODS[0]);
+    setSelectedLighting(LIGHTING_OPTIONS[0]);
+    setSelectedColor(COLOR_OPTIONS[0]);
     setGeneratedImageUrls([item.imageUrl]); // Display the single saved image
     setError(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -236,6 +253,61 @@ export function ImageGenerator() {
                   </Button>
                 </div>
                 {errors.prompt && <p className="text-sm text-destructive mt-1">{errors.prompt.message}</p>}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div>
+                    <Label htmlFor="style" className="text-sm font-medium mb-1 block text-foreground/80">Artistic Style</Label>
+                    <Select value={selectedStyle} onValueChange={setSelectedStyle}>
+                        <SelectTrigger id="style" className="w-full futuristic-glow-button bg-input hover:bg-input/80">
+                            <SelectValue placeholder="Select style" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {STYLES.map((style) => (
+                                <SelectItem key={style} value={style}>{style}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div>
+                    <Label htmlFor="mood" className="text-sm font-medium mb-1 block text-foreground/80">Mood</Label>
+                    <Select value={selectedMood} onValueChange={setSelectedMood}>
+                        <SelectTrigger id="mood" className="w-full futuristic-glow-button bg-input hover:bg-input/80">
+                            <SelectValue placeholder="Select mood" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {MOODS.map((mood) => (
+                                <SelectItem key={mood} value={mood}>{mood}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div>
+                    <Label htmlFor="lighting" className="text-sm font-medium mb-1 block text-foreground/80">Lighting</Label>
+                    <Select value={selectedLighting} onValueChange={setSelectedLighting}>
+                        <SelectTrigger id="lighting" className="w-full futuristic-glow-button bg-input hover:bg-input/80">
+                            <SelectValue placeholder="Select lighting" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {LIGHTING_OPTIONS.map((lighting) => (
+                                <SelectItem key={lighting} value={lighting}>{lighting}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div>
+                    <Label htmlFor="color" className="text-sm font-medium mb-1 block text-foreground/80">Color Palette</Label>
+                    <Select value={selectedColor} onValueChange={setSelectedColor}>
+                        <SelectTrigger id="color" className="w-full futuristic-glow-button bg-input hover:bg-input/80">
+                            <SelectValue placeholder="Select color" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {COLOR_OPTIONS.map((color) => (
+                                <SelectItem key={color} value={color}>{color}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
               </div>
 
               <div>

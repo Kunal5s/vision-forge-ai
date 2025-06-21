@@ -12,61 +12,20 @@ export const ASPECT_RATIOS = [
 ];
 
 export const STYLES = [
-  "3D",
-  "8-bit",
-  "Abstract",
-  "Analogue",
-  "Anime",
-  "Bokeh",
-  "Cartoon",
-  "Charcoal Sketch",
-  "Claymation",
-  "Collage",
-  "Cookie",
-  "Crayon",
-  "Cubism",
-  "Cybernetic",
-  "Doodle",
-  "Dough",
-  "Felt",
-  "Glitch Art",
-  "Illustrated",
-  "Impressionism",
-  "Knitted",
-  "Long Exposure",
-  "Low Poly",
-  "Macro",
-  "Marker",
-  "Mechanical",
-  "Oil Painting",
-  "Origami",
-  "Painting",
-  "Paper",
-  "Photorealistic",
-  "Pin",
-  "Plushie",
-  "Pop Art",
-  "Realistic",
-  "Stained Glass",
-  "Surrealism",
-  "Tattoo",
-  "Vaporwave",
-  "Watercolor",
-  "Woodblock",
+  "None", "Photorealistic", "3D Render", "Anime", "Abstract", "Cartoon", "Oil Painting", "Cyberpunk", "Vintage", "Minimalist"
 ] as const;
 
 export const MOODS = [
-  "Sweets", "Classical", "Cyberpunk", "Dreamy", "Glowy", "Gothic", 
-  "Kawaii", "Mystical", "Trippy", "Tropical", "Steampunk", "Wasteland"
-];
+  "None", "Cinematic", "Dramatic", "Dreamy", "Eerie", "Energetic", "Mysterious", "Peaceful", "Romantic", "Whimsical"
+] as const;
 
 export const LIGHTING_OPTIONS = [
-  "Bright", "Dark", "Neon", "Sunset", "Misty", "Ethereal"
-];
+  "None", "Soft Lighting", "Bright", "Dark", "Dramatic Lighting", "Neon", "Studio Lighting", "Sunset", "Golden Hour"
+] as const;
 
 export const COLOR_OPTIONS = [
-  "Cool", "Earthy", "Indigo", "Infrared", "Pastel", "Warm"
-];
+  "None", "Vibrant", "Monochromatic", "Pastel", "Cool Tones", "Warm Tones", "Black and White"
+] as const;
 
 export type StyleType = typeof STYLES[number];
 export type MoodType = typeof MOODS[number];
