@@ -1,6 +1,6 @@
 
 import { ImageGenerator } from '@/components/vision-forge/ImageGenerator';
-import { Sparkles, Cpu, Lightbulb, Palette, Maximize, Brain } from 'lucide-react'; // Added Palette, Maximize, Brain for more variety
+import { Wand2, Maximize, BrainCircuit, SlidersHorizontal, ZoomIn, Grid } from 'lucide-react';
 import { FuturisticPanel } from '@/components/vision-forge/FuturisticPanel';
 
 interface FeatureCardProps {
@@ -33,52 +33,52 @@ export default function HomePage() {
       <section id="features" className="container mx-auto py-16 px-4">
         <header className="text-center mb-12">
           <h2 className="text-4xl font-extrabold tracking-tight text-primary mb-3">
-            Discover What Vision<span className="text-accent">Forge</span> AI Offers
+            Latest & Trending <span className="text-accent">Features</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Unlock a new era of creativity with our powerful and intuitive AI image generation platform.
+            Explore the cutting-edge capabilities we've integrated to push the boundaries of your creativity.
           </p>
         </header>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           <FeatureCard
-            icon={<Sparkles className="h-10 w-10 text-primary" />}
-            title="Stunning Image Generation"
-            description="Leverage the power of advanced AI models to generate high-quality, diverse, and coherent images from simple text prompts. From photorealistic scenes to fantastical illustrations, the only limit is your imagination."
+            icon={<ZoomIn className="h-10 w-10 text-primary" />}
+            title="Hyper-Detailed 4K Quality"
+            description="Leveraging our enhanced prompting, generate images with breathtaking detail and sharpness. Our AI is instructed to aim for a 4K, ultra-detailed look for every creation."
             iconBgClass="bg-primary/10"
             iconTextClass="text-primary"
           />
           <FeatureCard
-            icon={<Palette className="h-10 w-10 text-accent" />} // Changed icon
-            title="Advanced Customization"
-            description="Fine-tune your creations with a wide array of options including aspect ratios, artistic styles (e.g., 3D, Anime, Realistic), moods (e.g., Cyberpunk, Dreamy), lighting, and color palettes. Our intuitive interface gives you precise control."
+            icon={<SlidersHorizontal className="h-10 w-10 text-accent" />}
+            title="Advanced Style & Mood Control"
+            description="Go beyond simple prompts. Master the final image by dictating the exact artistic style, mood, lighting, and color palette with our non-negotiable directive system."
             iconBgClass="bg-accent/10"
             iconTextClass="text-accent"
           />
           <FeatureCard
-            icon={<Brain className="h-10 w-10 text-primary" />} // Changed icon
-            title="AI-Powered Prompt Assistance"
-            description="Not sure how to phrase your idea? Our AI-powered prompt improvement feature helps you refine your text descriptions to achieve more accurate and compelling results, unlocking the full potential of the AI model."
+            icon={<BrainCircuit className="h-10 w-10 text-primary" />}
+            title="Complex Prompt Comprehension"
+            description="Our AI understands nuanced and detailed prompts, allowing you to create complex scenes with multiple subjects and actions more accurately than ever before."
             iconBgClass="bg-primary/10"
             iconTextClass="text-primary"
           />
            <FeatureCard
             icon={<Maximize className="h-10 w-10 text-accent" />}
-            title="Flexible Aspect Ratios"
-            description="Choose from a wide range of aspect ratios like 1:1 (Square), 16:9 (Widescreen), 4:3 (Standard), 9:16 (Tall Portrait) and more, to perfectly fit your creative needs, whether for social media, presentations, or art projects."
+            title="Strict Aspect Ratio Adherence"
+            description="Generate images that strictly adhere to your chosen aspect ratio. From widescreen cinematic shots (16:9) to tall portraits (9:16), get the perfect frame every time."
             iconBgClass="bg-accent/10"
             iconTextClass="text-accent"
           />
            <FeatureCard
-            icon={<Cpu className="h-10 w-10 text-primary" />}
-            title="Cutting-Edge AI Models"
-            description="Powered by Google's state-of-the-art Imagen 3 technology, VisionForge AI delivers exceptional image quality, coherence, and prompt understanding, pushing the boundaries of AI-generated art."
+            icon={<Wand2 className="h-10 w-10 text-primary" />}
+            title="AI-Powered Prompt Enhancement"
+            description="Stuck for ideas or need more detail? Let our AI assistant analyze your prompt and suggest improvements to unlock more creative and vivid results."
             iconBgClass="bg-primary/10"
             iconTextClass="text-primary"
           />
           <FeatureCard
-            icon={<Lightbulb className="h-10 w-10 text-accent" />}
-            title="Intuitive User Experience"
-            description="Designed for both beginners and professionals, our user-friendly interface makes it easy to navigate options, manage your creations with a usage history, and bring your visions to life without a steep learning curve."
+            icon={<Grid className="h-10 w-10 text-accent" />}
+            title="Rapid Quad-Variations"
+            description="Get four unique, high-quality image variations from a single prompt in seconds. This gives you more creative options to choose from instantly, speeding up your workflow."
             iconBgClass="bg-accent/10"
             iconTextClass="text-accent"
           />
