@@ -74,7 +74,7 @@ const generateImageFlow = ai.defineFlow(
     outputSchema: GenerateImageOutputSchema,
   },
   async (input) => {
-    const fullPrompt = `Generate an image based on the following specifications. Pay close attention to any aspect ratio hints (e.g., 'widescreen', 'square', 'portrait') that might be included in the main prompt text.
+    const basePrompt = `Generate an image based on the following specifications. Pay close attention to any aspect ratio hints (e.g., 'widescreen', 'square', 'portrait') that might be included in the main prompt text.
 
 Prompt: ${input.prompt}
 ${input.style ? `Style: ${input.style}` : ''}
@@ -82,10 +82,10 @@ ${input.mood ? `Mood: ${input.mood}` : ''}
 ${input.lighting ? `Lighting: ${input.lighting}` : ''}
 ${input.color ? `Color: ${input.color}` : ''}`;
 
-    const imagePromises = Array(4).fill(null).map(() => 
+    const imagePromises = Array(4).fill(null).map((_, index) => 
       ai.generate({
         model: 'googleai/gemini-2.0-flash-preview-image-generation',
-        prompt: fullPrompt,
+        prompt: `${basePrompt}\n\n(Variation ${index + 1} of 4)`,
         config: {
           responseModalities: ['TEXT', 'IMAGE'],
         },
