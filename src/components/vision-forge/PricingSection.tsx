@@ -48,9 +48,9 @@ const pricingPlans = [
       'Team collaboration features',
       'Dedicated support',
     ],
-    buttonText: 'Choose Mega Plan',
+    buttonText: 'Upgrade to Mega',
     buttonVariant: 'outline',
-    href: '#', // Placeholder link
+    href: 'https://buy.polar.sh/polar_cl_BozstB6v0fuS4BjfjFkqBXDQMxT5qEBYKlQKR0sMiR8',
     isFeatured: false,
   },
 ];
