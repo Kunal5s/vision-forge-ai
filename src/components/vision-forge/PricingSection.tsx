@@ -32,9 +32,9 @@ const pricingPlans = [
       'Commercial use license',
       'Priority support',
     ],
-    buttonText: 'Choose Pro Plan',
+    buttonText: 'Upgrade to Pro',
     buttonVariant: 'default',
-    href: '#', // Placeholder link
+    href: 'https://buy.polar.sh/polar_cl_zW8axhXjqFczXedDs6hRlhy9kytiSe6myTiCs08RuEL',
     isFeatured: true,
   },
   {
