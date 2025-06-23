@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Header } from '@/components/layout/Header'; // Import Header
 import { Footer } from '@/components/layout/Footer'; 
 import { PreFooterCallToAction } from '@/components/layout/PreFooterCallToAction'; 
+import { SubscriptionProvider } from '@/hooks/use-subscription';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -30,13 +31,15 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-full bg-background`}>
-        <Header /> {/* Add Header here */}
-        <div className="flex-grow">
-          {children}
-        </div>
-        <PreFooterCallToAction /> 
-        <Footer />
-        <Toaster />
+        <SubscriptionProvider>
+          <Header />
+          <div className="flex-grow">
+            {children}
+          </div>
+          <PreFooterCallToAction /> 
+          <Footer />
+          <Toaster />
+        </SubscriptionProvider>
       </body>
     </html>
   );

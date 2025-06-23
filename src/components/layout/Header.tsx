@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { SubscriptionManager } from '../vision-forge/SubscriptionManager';
 
 const navLinks = [
   { href: '/', label: 'Generate' },
@@ -33,7 +34,7 @@ export function Header() {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex gap-6 items-center">
+        <nav className="hidden md:flex gap-4 items-center">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -46,10 +47,11 @@ export function Header() {
               {link.label}
             </Link>
           ))}
+          <SubscriptionManager />
         </nav>
 
         {/* Mobile Navigation */}
-        <div className="md:hidden">
+        <div className="md:hidden flex items-center gap-2">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="text-foreground futuristic-glow-button">
@@ -87,6 +89,9 @@ export function Header() {
                     </Link>
                   </SheetClose>
                 ))}
+                 <div className="border-t border-border/30 pt-4 mt-4">
+                   <SubscriptionManager />
+                 </div>
               </nav>
             </SheetContent>
           </Sheet>

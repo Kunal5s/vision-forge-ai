@@ -24,8 +24,9 @@ import type { GeneratedImageHistoryItem } from '@/types';
 import { ImageDisplay } from './ImageDisplay';
 import { UsageHistory } from './UsageHistory';
 import { FuturisticPanel } from './FuturisticPanel';
-import { Wand2, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Wand2, ThumbsUp, ThumbsDown, Gem } from 'lucide-react';
 import { LoadingSpinner } from './LoadingSpinner';
+import { useSubscription } from '@/hooks/use-subscription';
 
 const formSchema = z.object({
   prompt: z.string().min(1, 'Prompt cannot be empty. Let your imagination flow!').max(1000, 'Prompt is too long.'),
@@ -42,6 +43,8 @@ const aspectRatiosWithText = ASPECT_RATIOS.map(ar => ({
 
 export function ImageGenerator() {
   const { toast } = useToast();
+  const { subscription, useCredit, isLoading: isSubLoading } = useSubscription();
+
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>(aspectRatiosWithText[0].value);
   const [selectedStyle, setSelectedStyle] = useState<string>(STYLES[0]);
   const [selectedMood, setSelectedMood] = useState<string>(MOODS[0]);
@@ -63,13 +66,6 @@ export function ImageGenerator() {
   });
   const currentPrompt = watch('prompt');
 
-  /**
-   * Creates a small JPEG thumbnail from a larger image data URL to save storage space.
-   * @param dataUrl The data URL of the original image.
-   * @param width The width of the thumbnail.
-   * @param height The height of the thumbnail.
-   * @returns A promise that resolves with the data URL of the thumbnail.
-   */
   const createThumbnail = (dataUrl: string, width = 128, height = 128): Promise<string> => {
     return new Promise((resolve) => {
       const img = new window.Image();
@@ -141,7 +137,23 @@ export function ImageGenerator() {
     }
   }, [history, toast]);
 
+  const canGenerate = () => {
+    if (isSubLoading) return false;
+    if (!subscription) return false;
+    if (subscription.plan === 'mega') return true;
+    return subscription.credits > 0;
+  }
+
   const onSubmit: SubmitHandler<FormData> = async (data) => {
+    if (!canGenerate()) {
+      toast({
+        title: 'Out of Credits',
+        description: 'Please upgrade your plan or activate your subscription to continue generating.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     setIsLoading(true);
     setError(null);
     setGeneratedImageUrls([]);
@@ -170,6 +182,13 @@ export function ImageGenerator() {
       setError(result.error);
       toast({ title: 'Generation Failed', description: result.error, variant: 'destructive', duration: 9000 });
     } else if (result.imageUrls && result.imageUrls.length > 0) {
+      const creditUsed = useCredit();
+      if (!creditUsed) {
+        // This case should ideally not be hit due to the canGenerate check, but it's a good failsafe.
+         toast({ title: 'Credit Error', description: 'Could not use a credit. Please try again.', variant: 'destructive' });
+         return;
+      }
+
       setGeneratedImageUrls(result.imageUrls);
       
       const thumbnailUrl = await createThumbnail(result.imageUrls[0]);
@@ -279,6 +298,25 @@ export function ImageGenerator() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-5 space-y-6">
           <FuturisticPanel>
+            {isSubLoading ? (
+              <div className="text-center text-sm text-muted-foreground p-4">Loading subscription...</div>
+            ) : subscription ? (
+              <div className="flex justify-between items-center text-sm mb-4 p-2 rounded-md bg-primary/10 border border-primary/20">
+                  <span className="font-semibold text-primary">
+                    Plan: {subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)}
+                  </span>
+                  <div className="flex items-center gap-2 text-primary">
+                    <Gem size={16} />
+                    <span className="font-semibold">
+                      {subscription.plan === 'mega' ? 'Unlimited' : `${subscription.credits} Credits`}
+                    </span>
+                  </div>
+              </div>
+            ) : (
+              <div className="text-center text-sm text-muted-foreground mb-4 p-2 rounded-md bg-destructive/10 border border-destructive/20">
+                No active plan. Activate one to start generating.
+              </div>
+            )}
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div>
                 <Label htmlFor="prompt" className="text-lg font-semibold mb-2 block text-foreground/90">
@@ -378,7 +416,7 @@ export function ImageGenerator() {
                 </Select>
               </div>
               
-              <Button type="submit" disabled={isLoading} className="w-full text-lg py-3 futuristic-glow-button-primary bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Button type="submit" disabled={isLoading || !canGenerate()} className="w-full text-lg py-3 futuristic-glow-button-primary bg-primary hover:bg-primary/90 text-primary-foreground">
                 {isLoading ? <LoadingSpinner size={24} className="mr-2"/> : null}
                 Forge Vision
               </Button>
