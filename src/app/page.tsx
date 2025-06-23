@@ -2,6 +2,8 @@
 import { ImageGenerator } from '@/components/vision-forge/ImageGenerator';
 import { Wand2, Maximize, BrainCircuit, SlidersHorizontal, ZoomIn, Grid } from 'lucide-react';
 import { FuturisticPanel } from '@/components/vision-forge/FuturisticPanel';
+import { TestimonialsSection } from '@/components/vision-forge/TestimonialsSection';
+import { PricingSection } from '@/components/vision-forge/PricingSection';
 
 interface FeatureCardProps {
   icon: React.ReactNode;
@@ -84,6 +86,10 @@ export default function HomePage() {
           />
         </div>
       </section>
+
+      <TestimonialsSection />
+      <PricingSection />
+
     </main>
   );
 }
