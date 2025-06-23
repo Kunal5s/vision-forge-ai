@@ -126,11 +126,19 @@ export function ImageGenerator() {
         localStorage.setItem('visionForgeHistory', JSON.stringify(history));
       } catch (e) {
         console.error("Failed to save history to localStorage:", e);
-        toast({
-          title: "Could not save history",
-          description: "Browser storage might be full. Older history items may not be saved.",
-          variant: "destructive"
-        });
+        if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+             toast({
+              title: "Could not save history",
+              description: "Your browser storage is full. Please clear some history items to save new ones.",
+              variant: "destructive"
+            });
+        } else {
+            toast({
+              title: "Could not save history",
+              description: "An unknown error occurred while saving to browser storage.",
+              variant: "destructive"
+            });
+        }
       }
     } else {
       localStorage.removeItem('visionForgeHistory');
@@ -138,17 +146,18 @@ export function ImageGenerator() {
   }, [history, toast]);
 
   const canGenerate = () => {
-    if (isSubLoading) return false;
-    if (!subscription) return false;
+    if (isSubLoading || !subscription) return false;
     if (subscription.plan === 'mega') return true;
     return subscription.credits > 0;
-  }
+  };
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     if (!canGenerate()) {
       toast({
-        title: 'Out of Credits',
-        description: 'Please upgrade your plan or activate your subscription to continue generating.',
+        title: subscription?.plan === 'free' ? 'Free Limit Reached' : 'Out of Credits',
+        description: subscription?.plan === 'free' 
+          ? 'You have used all 10 of your free generations. Please upgrade to continue creating.'
+          : 'Please upgrade or renew your plan to continue generating.',
         variant: 'destructive',
       });
       return;
@@ -184,7 +193,6 @@ export function ImageGenerator() {
     } else if (result.imageUrls && result.imageUrls.length > 0) {
       const creditUsed = useCredit();
       if (!creditUsed) {
-        // This case should ideally not be hit due to the canGenerate check, but it's a good failsafe.
          toast({ title: 'Credit Error', description: 'Could not use a credit. Please try again.', variant: 'destructive' });
          return;
       }
@@ -313,9 +321,7 @@ export function ImageGenerator() {
                   </div>
               </div>
             ) : (
-              <div className="text-center text-sm text-muted-foreground mb-4 p-2 rounded-md bg-destructive/10 border border-destructive/20">
-                No active plan. Activate one to start generating.
-              </div>
+               <div className="text-center text-sm text-muted-foreground p-4">Loading subscription...</div>
             )}
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div>

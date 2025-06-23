@@ -15,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSubscription } from '@/hooks/use-subscription';
-import { KeyRound, UserCheck, UserX } from 'lucide-react';
+import { UserCheck, UserX, ArrowUpCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export function SubscriptionManager() {
@@ -36,7 +36,7 @@ export function SubscriptionManager() {
     activateSubscription(email);
     toast({
       title: 'Plan Activated!',
-      description: `Your plan has been activated for ${email}.`,
+      description: `Your new plan has been activated for ${email}.`,
     });
     setIsOpen(false);
   };
@@ -45,7 +45,7 @@ export function SubscriptionManager() {
     deactivateSubscription();
     toast({
       title: 'Plan Deactivated',
-      description: 'Your subscription has been deactivated.',
+      description: 'Your subscription has been deactivated. You are now on the Free plan.',
     });
     setIsOpen(false);
   }
@@ -54,25 +54,27 @@ export function SubscriptionManager() {
     return <Button variant="outline" className="futuristic-glow-button" disabled>Loading...</Button>;
   }
 
+  const isFreePlan = subscription?.plan === 'free';
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" className="futuristic-glow-button">
-          {subscription ? <UserCheck className="mr-2 h-4 w-4 text-primary" /> : <KeyRound className="mr-2 h-4 w-4" />}
-          {subscription ? 'Plan Active' : 'Activate Plan'}
+          {isFreePlan ? <ArrowUpCircle className="mr-2 h-4 w-4 text-accent" /> : <UserCheck className="mr-2 h-4 w-4 text-primary" />}
+          {isFreePlan ? 'Upgrade Plan' : 'Plan Active'}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] glassmorphism-panel">
         <DialogHeader>
-          <DialogTitle>{subscription ? 'Manage Your Subscription' : 'Activate Your Plan'}</DialogTitle>
+          <DialogTitle>{isFreePlan ? 'Activate Your Purchased Plan' : 'Manage Your Subscription'}</DialogTitle>
           <DialogDescription>
-            {subscription 
+            {subscription && !isFreePlan
               ? `Your ${subscription.plan.toUpperCase()} plan is active for ${subscription.email}.`
-              : "Enter the email you used to purchase a plan to activate it."}
+              : "Enter the email you used to purchase a plan to activate it and unlock more features."}
           </DialogDescription>
         </DialogHeader>
         
-        {!subscription && (
+        {isFreePlan && (
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="email" className="text-right">
@@ -88,13 +90,13 @@ export function SubscriptionManager() {
               />
             </div>
             <p className="text-xs text-center text-muted-foreground px-4">
-              This is a prototype. Use an email ending in '@mega.com' for the Mega plan or any other for Pro.
+              Use an email ending in '@mega.com' for the Mega plan or any other for Pro to test activation.
             </p>
           </div>
         )}
 
         <DialogFooter>
-          {subscription ? (
+          {subscription && !isFreePlan ? (
             <Button onClick={handleDeactivate} variant="destructive">
               <UserX className="mr-2 h-4 w-4" /> Deactivate Plan
             </Button>

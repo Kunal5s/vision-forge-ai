@@ -21,6 +21,14 @@ interface SubscriptionContextType {
 
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
 
+const createFreePlan = (): Subscription => ({
+  email: 'guest',
+  plan: 'free',
+  status: 'active',
+  credits: PLAN_CREDITS.free as number,
+});
+
+
 export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,38 +38,38 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
       const storedSub = localStorage.getItem('visionForgeSubscription');
       if (storedSub) {
         const parsedSub = JSON.parse(storedSub) as Subscription;
-        // Simple validation
         if (parsedSub.email && parsedSub.plan) {
-            // For mega plan, credits are infinite
             if(parsedSub.plan === 'mega') parsedSub.credits = Infinity;
             setSubscription(parsedSub);
+        } else {
+            setSubscription(createFreePlan());
         }
+      } else {
+        saveSubscription(createFreePlan());
       }
     } catch (error) {
       console.error("Failed to load subscription from localStorage", error);
-      localStorage.removeItem('visionForgeSubscription');
+      saveSubscription(createFreePlan());
     } finally {
       setIsLoading(false);
     }
   }, []);
 
   const saveSubscription = (sub: Subscription | null) => {
-    setSubscription(sub);
     if (sub) {
-      localStorage.setItem('visionForgeSubscription', JSON.stringify(sub));
+        setSubscription(sub);
+        localStorage.setItem('visionForgeSubscription', JSON.stringify(sub));
     } else {
-      localStorage.removeItem('visionForgeSubscription');
+        const freePlan = createFreePlan();
+        setSubscription(freePlan);
+        localStorage.setItem('visionForgeSubscription', JSON.stringify(freePlan));
     }
   };
 
   const activateSubscription = useCallback((email: string) => {
-    // In a real app, this would verify purchase against a backend.
-    // For this prototype, we'll assign a plan based on the email.
-    let plan: Plan = 'pro'; // Default to pro
-    if (email.endsWith('@mega.com')) { // Simple rule for demo
+    let plan: Plan = 'pro';
+    if (email.endsWith('@mega.com')) {
       plan = 'mega';
-    } else if (email.endsWith('@example.com')) { // a free user for demo
-        plan = 'free'
     }
 
     const newSubscription: Subscription = {
@@ -74,27 +82,21 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const deactivateSubscription = useCallback(() => {
-    saveSubscription(null);
+    saveSubscription(createFreePlan());
   }, []);
 
   const useCredit = useCallback(() => {
-    if (isLoading) return false;
+    if (isLoading || !subscription) return false;
 
-    // If no subscription, treat as free user with 0 credits left.
-    if(!subscription) return false;
+    if (subscription.plan === 'mega') return true;
 
-    // Mega plan has infinite credits
-    if(subscription.plan === 'mega') return true;
-
-    if(subscription.credits > 0) {
-        const newSub = {...subscription, credits: subscription.credits - 1};
+    if (subscription.credits > 0) {
+        const newSub = { ...subscription, credits: subscription.credits - 1 };
         saveSubscription(newSub);
         return true;
     }
 
-    // Out of credits
     return false;
-
   }, [subscription, isLoading]);
 
   return (
