@@ -18,11 +18,19 @@ const MOCK_PURCHASED_EMAILS: Record<string, Plan> = {
   'mega@example.com': 'mega',
 };
 
+// Define credit cost per generation for each plan
+const PLAN_CREDIT_COST: Record<Plan, number> = {
+  free: 1,
+  pro: 20,
+  mega: 15,
+};
+
 interface SubscriptionContextType {
   subscription: Subscription | null;
   activateSubscription: (email: string) => boolean; // Returns true on success
   deactivateSubscription: () => void;
   useCredit: () => boolean;
+  canGenerate: () => boolean;
   isLoading: boolean;
 }
 
@@ -40,17 +48,17 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   const saveSubscription = useCallback((sub: Subscription | null) => {
-    if (sub) {
-        setSubscription(sub);
-        localStorage.setItem('imagenBrainAiSubscription', JSON.stringify(sub));
-    } else {
-        const freePlan = createFreePlan();
-        setSubscription(freePlan);
-        localStorage.setItem('imagenBrainAiSubscription', JSON.stringify(freePlan));
+    const subToSave = sub || createFreePlan();
+    setSubscription(subToSave);
+    try {
+        localStorage.setItem('imagenBrainAiSubscription', JSON.stringify(subToSave));
+    } catch (e) {
+        console.error("Failed to save subscription to localStorage:", e);
     }
   }, []);
 
   useEffect(() => {
+    setIsLoading(true);
     try {
       const storedSub = localStorage.getItem('imagenBrainAiSubscription');
       if (storedSub) {
@@ -102,20 +110,24 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   const useCredit = useCallback(() => {
     if (isLoading || !subscription) return false;
     
-    // For paid plans, they must have credits to proceed.
-    // For free plan, it's the same logic, but this also covers paid users running out.
-    if (subscription.credits > 0) {
-        const newSub = { ...subscription, credits: subscription.credits - 1 };
+    const cost = PLAN_CREDIT_COST[subscription.plan];
+    if (subscription.credits >= cost) {
+        const newSub = { ...subscription, credits: subscription.credits - cost };
         saveSubscription(newSub);
         return true;
     }
 
-    // If credits are 0 or less, deny usage.
     return false;
   }, [subscription, isLoading, saveSubscription]);
 
+  const canGenerate = useCallback(() => {
+    if (isLoading || !subscription) return false;
+    const cost = PLAN_CREDIT_COST[subscription.plan];
+    return subscription.credits >= cost;
+  }, [subscription, isLoading]);
+
   return (
-    <SubscriptionContext.Provider value={{ subscription, activateSubscription, deactivateSubscription, useCredit, isLoading }}>
+    <SubscriptionContext.Provider value={{ subscription, activateSubscription, deactivateSubscription, useCredit, canGenerate, isLoading }}>
       {children}
     </SubscriptionContext.Provider>
   );

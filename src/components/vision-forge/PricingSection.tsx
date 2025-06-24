@@ -11,8 +11,8 @@ const pricingPlans = [
     price: '$0',
     description: 'For starters and hobbyists.',
     features: [
-      '10 generations per month',
-      'Standard speed',
+      '10 credits per month (10 generations)',
+      'Standard speed & quality (1080p)',
       'Access to core models',
       'Personal use license',
     ],
@@ -26,8 +26,9 @@ const pricingPlans = [
     price: '$25',
     description: 'For professionals and creators.',
     features: [
-      '1,000 credits per month',
+      '1,000 credits per month (~50 generations)',
       'Fast generation speed',
+      'Premium quality (up to 8K)',
       'Access to all AI models',
       'Commercial use license',
       'Priority support',
@@ -42,9 +43,10 @@ const pricingPlans = [
     price: '$50',
     description: 'For power users and teams.',
     features: [
-      '3,000 credits per month',
+      '3,000 credits per month (~200 generations)',
       'Lightning-fast speed',
-      'API access',
+      'Premium quality (up to 8K)',
+      'API access (coming soon)',
       'Team collaboration features',
       'Dedicated support',
     ],
@@ -92,7 +94,7 @@ export function PricingSection() {
             </CardContent>
             <CardFooter>
               <Button asChild className={cn('w-full', plan.isFeatured ? 'futuristic-glow-button-primary' : 'futuristic-glow-button')} variant={plan.buttonVariant as any}>
-                <Link href={plan.href}>{plan.buttonText}</Link>
+                <Link href={plan.href} target="_blank" rel="noopener noreferrer">{plan.buttonText}</Link>
               </Button>
             </CardFooter>
           </Card>

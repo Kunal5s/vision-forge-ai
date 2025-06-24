@@ -43,7 +43,7 @@ const aspectRatiosWithText = ASPECT_RATIOS.map(ar => ({
 
 export function ImageGenerator() {
   const { toast } = useToast();
-  const { subscription, useCredit, isLoading: isSubLoading } = useSubscription();
+  const { subscription, useCredit, isLoading: isSubLoading, canGenerate } = useSubscription();
 
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>(aspectRatiosWithText[0].value);
   const [selectedStyle, setSelectedStyle] = useState<string>(STYLES[0]);
@@ -145,19 +145,15 @@ export function ImageGenerator() {
     }
   }, [history, toast]);
 
-  const canGenerate = () => {
-    if (isSubLoading || !subscription) return false;
-    return subscription.credits > 0;
-  };
-
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     if (!canGenerate()) {
       toast({
-        title: subscription?.plan === 'free' ? 'Free Limit Reached' : 'Out of Credits',
+        title: subscription?.plan === 'free' ? 'Free Limit Reached' : 'Not Enough Credits',
         description: subscription?.plan === 'free' 
           ? 'You have used all your free generations. Please visit our pricing page to upgrade.'
-          : 'You are out of credits. Please visit our pricing page to purchase a new plan.',
+          : `You don't have enough credits for this generation. Please purchase a new plan to top up your credits.`,
         variant: 'destructive',
+        duration: 7000,
       });
       return;
     }
@@ -165,8 +161,20 @@ export function ImageGenerator() {
     setIsLoading(true);
     setError(null);
     setGeneratedImageUrls([]);
+    
+    // Deduct credit before making the API call
+    const creditUsed = useCredit();
+    if (!creditUsed) {
+      // This is a safeguard, canGenerate() should prevent this.
+      toast({ title: 'Credit Error', description: 'Could not use credits for this generation. Please try again.', variant: 'destructive' });
+      setIsLoading(false);
+      return;
+    }
 
-    const qualityPrompt = subscription?.plan === 'free' ? "HD photo, 1080p" : "8K resolution, photorealistic, ultra-detailed, professional photography";
+    const qualityPrompt = (subscription?.plan === 'pro' || subscription?.plan === 'mega') 
+      ? "8K resolution, photorealistic, ultra-detailed, professional photography"
+      : "HD photo, 1080p";
+
     const promptParts = [data.prompt, qualityPrompt];
     
     if (selectedStyle !== 'None') promptParts.push(selectedStyle);
@@ -191,14 +199,8 @@ export function ImageGenerator() {
       console.error('Image generation error from flow:', result.error);
       setError(result.error);
       toast({ title: 'Generation Failed', description: result.error, variant: 'destructive', duration: 9000 });
+      // TODO: Implement credit refund logic here in a real application
     } else if (result.imageUrls && result.imageUrls.length > 0) {
-      const creditUsed = useCredit();
-      if (!creditUsed) {
-         // This case should ideally not be hit if canGenerate() check passes, but as a safeguard:
-         toast({ title: 'Credit Error', description: 'Could not use a credit. Please try again.', variant: 'destructive' });
-         return;
-      }
-
       setGeneratedImageUrls(result.imageUrls);
       
       const thumbnailUrl = await createThumbnail(result.imageUrls[0]);
@@ -417,7 +419,7 @@ export function ImageGenerator() {
                 </Select>
               </div>
               
-              <Button type="submit" disabled={isLoading || !canGenerate()} className="w-full text-lg py-3 futuristic-glow-button-primary bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Button type="submit" disabled={isLoading || isSubLoading || !canGenerate()} className="w-full text-lg py-3 futuristic-glow-button-primary bg-primary hover:bg-primary/90 text-primary-foreground">
                 {isLoading ? <LoadingSpinner size={24} className="mr-2"/> : null}
                 Forge Vision
               </Button>
