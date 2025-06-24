@@ -24,6 +24,9 @@ export const metadata: Metadata = {
     template: '%s | Imagen BrainAi',
   },
   description: 'Unleash your creativity with Imagen BrainAi, a powerful and free AI image generator powered by Google\'s Imagen 3. Turn text prompts into stunning, high-quality art, photos, and illustrations in seconds.',
+  verification: {
+    google: 'aa8zBqwKzkPcVhwnOe6eO2zOlvMqqUk41xpBzV9kSts',
+  },
 };
 
 export default function RootLayout({
