@@ -43,10 +43,10 @@ export function TestimonialsSection() {
           {testimonials.map((testimonial) => (
             <Card key={testimonial.name} className="glassmorphism-panel text-center flex flex-col h-full">
               <CardContent className="pt-10 relative flex-grow flex flex-col justify-between">
-                <Quote className="absolute top-4 left-4 h-8 w-8 text-primary/20" />
-                <p className="text-foreground/80 italic mb-6 flex-grow">
+                <Quote className="absolute top-4 left-4 h-10 w-10 text-primary/20" />
+                <blockquote className="text-foreground/80 mb-6 flex-grow text-left">
                   {testimonial.quote}
-                </p>
+                </blockquote>
                 <footer className="flex items-center justify-center gap-3 mt-auto">
                     <Avatar className="h-12 w-12 border-2 border-primary/50">
                         <AvatarImage src={testimonial.avatar} alt={testimonial.name} data-ai-hint={testimonial.dataAiHint} />
