@@ -19,8 +19,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Imagen BrainAi',
-  description: 'Generate stunning AI images with Imagen BrainAi, powered by Google Imagen 3.',
+  title: {
+    default: 'Imagen BrainAi | AI Image Generator - Turn Text to Art',
+    template: '%s | Imagen BrainAi',
+  },
+  description: 'Unleash your creativity with Imagen BrainAi, a powerful and free AI image generator powered by Google\'s Imagen 3. Turn text prompts into stunning, high-quality art, photos, and illustrations in seconds.',
 };
 
 export default function RootLayout({

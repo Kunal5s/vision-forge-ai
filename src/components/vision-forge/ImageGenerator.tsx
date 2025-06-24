@@ -295,14 +295,7 @@ export function ImageGenerator() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <header className="text-center mb-10">
-        <h1 className="text-5xl font-extrabold tracking-tight text-primary">
-          Imagen <span className="text-accent">BrainAi</span>
-        </h1>
-        <p className="mt-2 text-lg text-foreground/80">Craft stunning visuals with the power of AI.</p>
-      </header>
-
+    <>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-5 space-y-6">
           <FuturisticPanel>
@@ -486,6 +479,6 @@ export function ImageGenerator() {
           </DialogContent>
         </Dialog>
       )}
-    </div>
+    </>
   );
 }

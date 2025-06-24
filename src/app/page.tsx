@@ -4,6 +4,12 @@ import { Wand2, Maximize, BrainCircuit, SlidersHorizontal, ZoomIn, Grid } from '
 import { FuturisticPanel } from '@/components/vision-forge/FuturisticPanel';
 import { TestimonialsSection } from '@/components/vision-forge/TestimonialsSection';
 import { PricingSection } from '@/components/vision-forge/PricingSection';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Free AI Image Generator - Create Art from Text | Imagen BrainAi',
+  description: "Experience the magic of text-to-image AI. With Imagen BrainAi, you can generate unique, high-resolution images from simple text prompts for free. Powered by Google's advanced models, it's perfect for artists, designers, and creators.",
+};
 
 interface FeatureCardProps {
   icon: React.ReactNode;
@@ -30,7 +36,17 @@ function FeatureCard({ icon, title, description, iconBgClass = 'bg-primary/10', 
 export default function HomePage() {
   return (
     <main>
-      <ImageGenerator />
+      <div className="container mx-auto py-8 px-4">
+        <header className="text-center mb-10">
+          <h1 className="text-5xl font-extrabold tracking-tight text-primary">
+              Imagen <span className="text-accent">BrainAi</span>
+          </h1>
+          <p className="mt-4 text-lg text-foreground/80 max-w-3xl mx-auto">
+              Welcome to the future of creativity. Describe your vision, and our advanced AI, powered by Google's Imagen technology, will bring it to life in stunning detail. From photorealistic images to fantastical art, your imagination is the only limit. Get started for free and see what you can create.
+          </p>
+        </header>
+        <ImageGenerator />
+      </div>
 
       <section id="features" className="container mx-auto py-16 px-4">
         <header className="text-center mb-12">
