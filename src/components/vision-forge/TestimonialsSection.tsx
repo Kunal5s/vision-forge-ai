@@ -1,6 +1,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
+import { Quote } from 'lucide-react';
 
 const testimonials = [
   {
@@ -8,7 +9,7 @@ const testimonials = [
     role: 'Digital Artist',
     avatar: 'https://placehold.co/100x100.png',
     dataAiHint: 'woman portrait',
-    quote: "VisionForge AI has completely transformed my workflow. The quality is astounding, and the fine-tuning options make it an indispensable tool for any artist."
+    quote: "Imagen BrainAi has completely transformed my workflow. The quality is astounding, and the fine-tuning options make it an indispensable tool for any artist."
   },
   {
     name: 'Ben Carter',
@@ -40,11 +41,14 @@ export function TestimonialsSection() {
         </header>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {testimonials.map((testimonial) => (
-            <Card key={testimonial.name} className="glassmorphism-panel text-center">
-              <CardContent className="pt-6">
-                <p className="text-foreground/80 italic mb-4">"{testimonial.quote}"</p>
-                <div className="flex items-center justify-center gap-3">
-                    <Avatar>
+            <Card key={testimonial.name} className="glassmorphism-panel text-center flex flex-col h-full">
+              <CardContent className="pt-10 relative flex-grow flex flex-col justify-between">
+                <Quote className="absolute top-4 left-4 h-8 w-8 text-primary/20" />
+                <p className="text-foreground/80 italic mb-6 flex-grow">
+                  {testimonial.quote}
+                </p>
+                <footer className="flex items-center justify-center gap-3 mt-auto">
+                    <Avatar className="h-12 w-12 border-2 border-primary/50">
                         <AvatarImage src={testimonial.avatar} alt={testimonial.name} data-ai-hint={testimonial.dataAiHint} />
                         <AvatarFallback>{testimonial.name.charAt(0)}</AvatarFallback>
                     </Avatar>
@@ -52,7 +56,7 @@ export function TestimonialsSection() {
                         <p className="font-semibold text-foreground">{testimonial.name}</p>
                         <p className="text-sm text-muted-foreground">{testimonial.role}</p>
                     </div>
-                </div>
+                </footer>
               </CardContent>
             </Card>
           ))}
