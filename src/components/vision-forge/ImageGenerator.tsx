@@ -109,41 +109,45 @@ export function ImageGenerator() {
   }, []);
   
   useEffect(() => {
-    const storedHistory = localStorage.getItem('imagenBrainAiHistory');
-    if (storedHistory) {
-      try {
-        setHistory(JSON.parse(storedHistory).map((item:GeneratedImageHistoryItem) => ({...item, timestamp: new Date(item.timestamp)})));
-      } catch (e) {
-        console.error("Failed to parse history from localStorage", e);
-        localStorage.removeItem('imagenBrainAiHistory');
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (history.length > 0) {
-      try {
-        localStorage.setItem('imagenBrainAiHistory', JSON.stringify(history));
-      } catch (e: any) {
-        console.error("Failed to save history to localStorage:", e);
-        if (e instanceof DOMException && e.name === 'QuotaExceededError') {
-             toast({
-              title: "Could not save history",
-              description: "Your browser storage is full. Please clear some history items to save new ones.",
-              variant: "destructive"
-            });
-        } else {
-            toast({
-              title: "Could not save history",
-              description: "An unknown error occurred while saving to browser storage.",
-              variant: "destructive"
-            });
+    if (subscription?.plan === 'pro' || subscription?.plan === 'mega') {
+      const storedHistory = localStorage.getItem('imagenBrainAiHistory');
+      if (storedHistory) {
+        try {
+          setHistory(JSON.parse(storedHistory).map((item:GeneratedImageHistoryItem) => ({...item, timestamp: new Date(item.timestamp)})));
+        } catch (e) {
+          console.error("Failed to parse history from localStorage", e);
+          localStorage.removeItem('imagenBrainAiHistory');
         }
       }
-    } else {
-      localStorage.removeItem('imagenBrainAiHistory');
     }
-  }, [history, toast]);
+  }, [subscription?.plan]);
+
+  useEffect(() => {
+    if (subscription?.plan === 'pro' || subscription?.plan === 'mega') {
+        if (history.length > 0) {
+          try {
+            localStorage.setItem('imagenBrainAiHistory', JSON.stringify(history));
+          } catch (e: any) {
+            console.error("Failed to save history to localStorage:", e);
+            if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+                toast({
+                  title: "Could not save history",
+                  description: "Your browser storage is full. Please clear some history items to save new ones.",
+                  variant: "destructive"
+                });
+            } else {
+                toast({
+                  title: "Could not save history",
+                  description: "An unknown error occurred while saving to browser storage.",
+                  variant: "destructive"
+                });
+            }
+          }
+        } else {
+          localStorage.removeItem('imagenBrainAiHistory');
+        }
+    }
+  }, [history, toast, subscription?.plan]);
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     if (!canGenerate()) {
@@ -203,16 +207,18 @@ export function ImageGenerator() {
     } else if (result.imageUrls && result.imageUrls.length > 0) {
       setGeneratedImageUrls(result.imageUrls);
       
-      const thumbnailUrl = await createThumbnail(result.imageUrls[0]);
+      if (subscription?.plan === 'pro' || subscription?.plan === 'mega') {
+        const thumbnailUrl = await createThumbnail(result.imageUrls[0]);
+        const historyItem: GeneratedImageHistoryItem = {
+          id: new Date().toISOString() + Math.random().toString(36).substring(2,9),
+          prompt: data.prompt,
+          aspectRatio: selectedAspectRatio,
+          imageUrl: thumbnailUrl,
+          timestamp: new Date(),
+        };
+        setHistory(prev => [historyItem, ...prev.slice(0, 19)]); // Keep history size to 20
+      }
 
-      const historyItem: GeneratedImageHistoryItem = {
-        id: new Date().toISOString() + Math.random().toString(36).substring(2,9),
-        prompt: data.prompt,
-        aspectRatio: selectedAspectRatio,
-        imageUrl: thumbnailUrl,
-        timestamp: new Date(),
-      };
-      setHistory(prev => [historyItem, ...prev.slice(0, 19)]); // Keep history size to 20
       toast({ title: 'Vision Forged!', description: `Your images have been successfully generated.` });
     } else {
       const fallbackError = 'The AI returned no images. This can happen with very complex or unsafe prompts. Please try simplifying your request.';
@@ -436,18 +442,21 @@ export function ImageGenerator() {
             error={error}
             onRegenerate={handleRegenerate}
             onCopyPrompt={handleCopyPrompt}
+            userPlan={subscription?.plan || 'free'}
           />
         </div>
       </div>
       
-      <div className="mt-12">
-         <UsageHistory 
-            history={history} 
-            onSelectHistoryItem={handleSelectHistoryItem}
-            onDeleteHistoryItem={handleDeleteHistoryItem}
-            onClearHistory={handleClearHistory}
-          />
-      </div>
+      {(subscription?.plan === 'pro' || subscription?.plan === 'mega') && (
+        <div className="mt-12">
+          <UsageHistory 
+              history={history} 
+              onSelectHistoryItem={handleSelectHistoryItem}
+              onDeleteHistoryItem={handleDeleteHistoryItem}
+              onClearHistory={handleClearHistory}
+            />
+        </div>
+      )}
 
       {improvedPromptSuggestion && (
         <Dialog open={showImprovePromptDialog} onOpenChange={setShowImprovePromptDialog}>

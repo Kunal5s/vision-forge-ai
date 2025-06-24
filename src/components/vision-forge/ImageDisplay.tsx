@@ -8,6 +8,10 @@ import { LoadingSpinner } from './LoadingSpinner';
 import { cn } from '@/lib/utils';
 import { FuturisticPanel } from './FuturisticPanel';
 import { useEffect, useState } from 'react';
+import type { Plan } from '@/types';
+import { useToast } from '@/hooks/use-toast';
+import JSZip from 'jszip';
+
 
 interface ImageDisplayProps {
   imageUrls: string[];
@@ -17,6 +21,7 @@ interface ImageDisplayProps {
   error: string | null;
   onRegenerate: () => void;
   onCopyPrompt: () => void;
+  userPlan: Plan;
 }
 
 export function ImageDisplay({
@@ -27,9 +32,11 @@ export function ImageDisplay({
   error,
   onRegenerate,
   onCopyPrompt,
+  userPlan,
 }: ImageDisplayProps) {
   
   const [animateImages, setAnimateImages] = useState(false);
+  const { toast } = useToast();
 
   const getAspectRatioClass = (ratio: string) => {
     switch (ratio) {
@@ -44,6 +51,49 @@ export function ImageDisplay({
       case '2:1': return 'aspect-[2/1]';
       case '3:1': return 'aspect-[3/1]';
       default: return 'aspect-square';
+    }
+  };
+  
+  const handleDownloadAll = async () => {
+    if (imageUrls.length < 1) return;
+
+    const { id, update, dismiss } = toast({
+      title: 'Preparing Download',
+      description: 'Zipping your images, please wait...',
+    });
+
+    try {
+      const zip = new JSZip();
+      
+      const imagePromises = imageUrls.map(async (url, index) => {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch image ${index + 1}`);
+        }
+        const blob = await response.blob();
+        const extension = blob.type.split('/')[1] || 'png';
+        zip.file(`imagenbrainai_${index + 1}.${extension}`, blob);
+      });
+
+      await Promise.all(imagePromises);
+
+      const content = await zip.generateAsync({ type: 'blob' });
+      
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(content);
+      const safePrompt = prompt.substring(0, 20).replace(/\s+/g, '_');
+      link.download = `imagenbrainai_${safePrompt}_${Date.now()}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+
+      update({ id, title: 'Download Started!', description: 'Your ZIP file is being downloaded.' });
+    } catch (e: any) {
+      console.error('Failed to create zip file:', e);
+      update({ id, title: 'Error', description: `Could not prepare download: ${e.message}`, variant: 'destructive' });
+    } finally {
+      setTimeout(() => dismiss(id), 5000);
     }
   };
 
@@ -196,6 +246,12 @@ export function ImageDisplay({
             <Copy size={18} className="mr-2" />
             Copy Prompt
           </Button>
+          {(userPlan === 'pro' || userPlan === 'mega') && imageUrls.length > 1 && (
+             <Button onClick={handleDownloadAll} variant="default" className="futuristic-glow-button-primary bg-primary hover:bg-primary/90 text-primary-foreground">
+                <Download size={18} className="mr-2" />
+                Download All
+            </Button>
+          )}
         </div>
       )}
     </FuturisticPanel>
