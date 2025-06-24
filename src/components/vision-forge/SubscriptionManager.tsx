@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { useSubscription } from '@/hooks/use-subscription';
 import { UserCheck, UserX, ArrowUpCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 export function SubscriptionManager() {
   const { subscription, activateSubscription, deactivateSubscription, isLoading } = useSubscription();
@@ -33,12 +34,23 @@ export function SubscriptionManager() {
       });
       return;
     }
-    activateSubscription(email);
-    toast({
-      title: 'Plan Activated!',
-      description: `Your new plan has been activated for ${email}.`,
-    });
-    setIsOpen(false);
+    
+    const success = activateSubscription(email);
+
+    if (success) {
+      toast({
+        title: 'Plan Activated!',
+        description: `Your new plan has been activated for ${email}.`,
+      });
+      setIsOpen(false);
+    } else {
+       toast({
+        title: 'Activation Failed',
+        description: 'Email not found in purchase records. Please ensure you used the correct email or visit our pricing page to purchase a plan.',
+        variant: 'destructive',
+        duration: 7000,
+      });
+    }
   };
   
   const handleDeactivate = () => {
@@ -54,7 +66,7 @@ export function SubscriptionManager() {
     return <Button variant="outline" className="futuristic-glow-button" disabled>Loading...</Button>;
   }
 
-  const isFreePlan = subscription?.plan === 'free';
+  const isFreePlan = !subscription || subscription.plan === 'free';
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -70,7 +82,7 @@ export function SubscriptionManager() {
           <DialogDescription>
             {subscription && !isFreePlan
               ? `Your ${subscription.plan.toUpperCase()} plan is active for ${subscription.email}.`
-              : "Enter the email you used to purchase a plan to activate it and unlock more features."}
+              : "First, purchase a plan from our pricing page. Then, enter the email you used for the purchase here to activate it."}
           </DialogDescription>
         </DialogHeader>
         
@@ -90,7 +102,13 @@ export function SubscriptionManager() {
               />
             </div>
             <p className="text-xs text-center text-muted-foreground px-4">
-              Use an email ending in '@mega.com' for the Mega plan or any other for Pro to test activation.
+              For this prototype, use 'pro@example.com' for Pro or 'mega@example.com' for the Mega plan to test activation.
+            </p>
+             <p className="text-xs text-center text-muted-foreground px-4 mt-2">
+              Haven't purchased yet?{' '}
+              <Link href="/pricing" className="text-primary underline hover:text-primary/80" onClick={() => setIsOpen(false)}>
+                View Plans
+              </Link>
             </p>
           </div>
         )}

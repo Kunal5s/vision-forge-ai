@@ -5,17 +5,24 @@ import React, { createContext, useContext, useState, useEffect, useCallback, Rea
 import type { Subscription, Plan } from '@/types';
 
 // These would come from a real backend in a full implementation.
-const PLAN_CREDITS: Record<Plan, number | typeof Infinity> = {
+const PLAN_CREDITS: Record<Plan, number> = {
   free: 10,
   pro: 1000,
-  mega: Infinity,
+  mega: 3000,
+};
+
+// SIMULATED DATABASE of purchased emails.
+// In a real app, this check would be done on a secure backend server.
+const MOCK_PURCHASED_EMAILS: Record<string, Plan> = {
+  'pro@example.com': 'pro',
+  'mega@example.com': 'mega',
 };
 
 interface SubscriptionContextType {
   subscription: Subscription | null;
-  activateSubscription: (email: string) => void;
+  activateSubscription: (email: string) => boolean; // Returns true on success
   deactivateSubscription: () => void;
-  useCredit: () => boolean; // Returns true if a credit was successfully used, false otherwise
+  useCredit: () => boolean;
   isLoading: boolean;
 }
 
@@ -25,24 +32,40 @@ const createFreePlan = (): Subscription => ({
   email: 'guest',
   plan: 'free',
   status: 'active',
-  credits: PLAN_CREDITS.free as number,
+  credits: PLAN_CREDITS.free,
 });
-
 
 export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const saveSubscription = useCallback((sub: Subscription | null) => {
+    if (sub) {
+        setSubscription(sub);
+        localStorage.setItem('imagenBrainAiSubscription', JSON.stringify(sub));
+    } else {
+        const freePlan = createFreePlan();
+        setSubscription(freePlan);
+        localStorage.setItem('imagenBrainAiSubscription', JSON.stringify(freePlan));
+    }
+  }, []);
 
   useEffect(() => {
     try {
       const storedSub = localStorage.getItem('imagenBrainAiSubscription');
       if (storedSub) {
         const parsedSub = JSON.parse(storedSub) as Subscription;
-        if (parsedSub.email && parsedSub.plan) {
-            if(parsedSub.plan === 'mega') parsedSub.credits = Infinity;
+        // Re-validate any stored paid plan to prevent tampering with local storage
+        if (parsedSub.plan !== 'free') {
+          const isValidPurchase = MOCK_PURCHASED_EMAILS[parsedSub.email.toLowerCase()] === parsedSub.plan;
+          if (isValidPurchase) {
             setSubscription(parsedSub);
+          } else {
+            // The stored plan is invalid, revert to free plan
+            saveSubscription(createFreePlan());
+          }
         } else {
-            setSubscription(createFreePlan());
+          setSubscription(parsedSub);
         }
       } else {
         saveSubscription(createFreePlan());
@@ -53,51 +76,43 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [saveSubscription]);
 
-  const saveSubscription = (sub: Subscription | null) => {
-    if (sub) {
-        setSubscription(sub);
-        localStorage.setItem('imagenBrainAiSubscription', JSON.stringify(sub));
-    } else {
-        const freePlan = createFreePlan();
-        setSubscription(freePlan);
-        localStorage.setItem('imagenBrainAiSubscription', JSON.stringify(freePlan));
-    }
-  };
+  const activateSubscription = useCallback((email: string): boolean => {
+    const purchasedPlan = MOCK_PURCHASED_EMAILS[email.toLowerCase()];
 
-  const activateSubscription = useCallback((email: string) => {
-    let plan: Plan = 'pro';
-    if (email.endsWith('@mega.com')) {
-      plan = 'mega';
+    if (purchasedPlan) {
+        const newSubscription: Subscription = {
+          email,
+          plan: purchasedPlan,
+          status: 'active',
+          credits: PLAN_CREDITS[purchasedPlan],
+        };
+        saveSubscription(newSubscription);
+        return true;
     }
 
-    const newSubscription: Subscription = {
-      email,
-      plan,
-      status: 'active',
-      credits: PLAN_CREDITS[plan],
-    };
-    saveSubscription(newSubscription);
-  }, []);
+    return false;
+  }, [saveSubscription]);
 
   const deactivateSubscription = useCallback(() => {
     saveSubscription(createFreePlan());
-  }, []);
+  }, [saveSubscription]);
 
   const useCredit = useCallback(() => {
     if (isLoading || !subscription) return false;
-
-    if (subscription.plan === 'mega') return true;
-
+    
+    // For paid plans, they must have credits to proceed.
+    // For free plan, it's the same logic, but this also covers paid users running out.
     if (subscription.credits > 0) {
         const newSub = { ...subscription, credits: subscription.credits - 1 };
         saveSubscription(newSub);
         return true;
     }
 
+    // If credits are 0 or less, deny usage.
     return false;
-  }, [subscription, isLoading]);
+  }, [subscription, isLoading, saveSubscription]);
 
   return (
     <SubscriptionContext.Provider value={{ subscription, activateSubscription, deactivateSubscription, useCredit, isLoading }}>

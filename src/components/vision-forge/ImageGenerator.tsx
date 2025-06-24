@@ -147,7 +147,6 @@ export function ImageGenerator() {
 
   const canGenerate = () => {
     if (isSubLoading || !subscription) return false;
-    if (subscription.plan === 'mega') return true;
     return subscription.credits > 0;
   };
 
@@ -156,8 +155,8 @@ export function ImageGenerator() {
       toast({
         title: subscription?.plan === 'free' ? 'Free Limit Reached' : 'Out of Credits',
         description: subscription?.plan === 'free' 
-          ? 'You have used all 10 of your free generations. Please upgrade to continue creating.'
-          : 'Please upgrade or renew your plan to continue generating.',
+          ? 'You have used all your free generations. Please visit our pricing page to upgrade.'
+          : 'You are out of credits. Please visit our pricing page to purchase a new plan.',
         variant: 'destructive',
       });
       return;
@@ -167,7 +166,9 @@ export function ImageGenerator() {
     setError(null);
     setGeneratedImageUrls([]);
 
-    const promptParts = [data.prompt];
+    const qualityPrompt = subscription?.plan === 'free' ? "HD photo, 1080p" : "8K resolution, photorealistic, ultra-detailed, professional photography";
+    const promptParts = [data.prompt, qualityPrompt];
+    
     if (selectedStyle !== 'None') promptParts.push(selectedStyle);
     if (selectedMood !== 'None') promptParts.push(`${selectedMood} mood`);
     if (selectedLighting !== 'None') promptParts.push(selectedLighting);
@@ -193,6 +194,7 @@ export function ImageGenerator() {
     } else if (result.imageUrls && result.imageUrls.length > 0) {
       const creditUsed = useCredit();
       if (!creditUsed) {
+         // This case should ideally not be hit if canGenerate() check passes, but as a safeguard:
          toast({ title: 'Credit Error', description: 'Could not use a credit. Please try again.', variant: 'destructive' });
          return;
       }
@@ -309,7 +311,7 @@ export function ImageGenerator() {
                   <div className="flex items-center gap-2 text-primary">
                     <Gem size={16} />
                     <span className="font-semibold">
-                      {subscription.plan === 'mega' ? 'Unlimited' : `${subscription.credits} Credits`}
+                      {`${subscription.credits} Credits`}
                     </span>
                   </div>
               </div>
