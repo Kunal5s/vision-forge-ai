@@ -4,8 +4,8 @@ import Image from 'next/image';
 import { Sparkles, Cpu, Lightbulb } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'About Us | VisionForge AI',
-  description: 'Discover the mission, vision, and technology behind VisionForge AI. We are dedicated to revolutionizing creative workflows with AI-powered image generation.',
+  title: 'About Us | Imagen BrainAi',
+  description: 'Discover the mission, vision, and technology behind Imagen BrainAi. We are dedicated to revolutionizing creative workflows with AI-powered image generation.',
 };
 
 export default function AboutPage() {
@@ -13,10 +13,10 @@ export default function AboutPage() {
     <main className="container mx-auto py-16 px-4">
       <header className="text-center mb-12">
         <h1 className="text-5xl font-extrabold tracking-tight text-primary mb-4">
-          About Vision<span className="text-accent">Forge</span> AI
+          About Imagen <span className="text-accent">BrainAi</span>
         </h1>
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-          We are passionate about unlocking human creativity through the power of artificial intelligence. Learn how VisionForge AI is shaping the future of digital art and design.
+          We are passionate about unlocking human creativity through the power of artificial intelligence. Learn how Imagen BrainAi is shaping the future of digital art and design.
         </p>
       </header>
 
@@ -25,7 +25,7 @@ export default function AboutPage() {
           <div>
             <h2 className="text-3xl font-semibold text-foreground mb-4">Our Mission</h2>
             <p className="text-lg text-foreground/80 mb-4">
-              At VisionForge AI, our mission is to democratize creativity by providing intuitive and powerful AI tools that enable anyone to bring their imaginative visions to life. We believe that technology should serve as a catalyst for innovation, breaking down barriers and opening up new possibilities for artists, designers, marketers, and dreamers alike.
+              At Imagen BrainAi, our mission is to democratize creativity by providing intuitive and powerful AI tools that enable anyone to bring their imaginative visions to life. We believe that technology should serve as a catalyst for innovation, breaking down barriers and opening up new possibilities for artists, designers, marketers, and dreamers alike.
             </p>
             <p className="text-lg text-foreground/80">
               We strive to build a platform that is not only technologically advanced, leveraging the cutting-edge capabilities of models like Google's Imagen 3, but also user-friendly and accessible. Our goal is to empower you to create stunning, unique visuals with unprecedented ease and control.
@@ -72,7 +72,7 @@ export default function AboutPage() {
         <section>
           <h2 className="text-3xl font-semibold text-foreground mb-4">Our Vision for the Future</h2>
           <p className="text-lg text-foreground/80 mb-4">
-            We envision a future where AI acts as a seamless partner in the creative process, augmenting human ingenuity rather than replacing it. VisionForge AI is committed to continuous innovation, exploring new AI capabilities, and expanding our toolset to support an ever-wider range of creative endeavors.
+            We envision a future where AI acts as a seamless partner in the creative process, augmenting human ingenuity rather than replacing it. Imagen BrainAi is committed to continuous innovation, exploring new AI capabilities, and expanding our toolset to support an ever-wider range of creative endeavors.
           </p>
           <p className="text-lg text-foreground/80">
             Join us on this exciting journey as we continue to push the boundaries of what's possible with AI and art. Your feedback and creativity are integral to our growth and evolution. Together, let's forge new realities.

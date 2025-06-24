@@ -35,7 +35,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     try {
-      const storedSub = localStorage.getItem('visionForgeSubscription');
+      const storedSub = localStorage.getItem('imagenBrainAiSubscription');
       if (storedSub) {
         const parsedSub = JSON.parse(storedSub) as Subscription;
         if (parsedSub.email && parsedSub.plan) {
@@ -58,11 +58,11 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   const saveSubscription = (sub: Subscription | null) => {
     if (sub) {
         setSubscription(sub);
-        localStorage.setItem('visionForgeSubscription', JSON.stringify(sub));
+        localStorage.setItem('imagenBrainAiSubscription', JSON.stringify(sub));
     } else {
         const freePlan = createFreePlan();
         setSubscription(freePlan);
-        localStorage.setItem('visionForgeSubscription', JSON.stringify(freePlan));
+        localStorage.setItem('imagenBrainAiSubscription', JSON.stringify(freePlan));
     }
   };
 

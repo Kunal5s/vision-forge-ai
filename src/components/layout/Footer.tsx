@@ -10,7 +10,7 @@ export function Footer() {
           <div>
             <Link href="/" className="flex items-center gap-2 mb-3">
               <Sparkles className="h-7 w-7 text-primary" />
-              <span className="text-xl font-bold text-foreground">VisionForge AI</span>
+              <span className="text-xl font-bold text-foreground">Imagen BrainAi</span>
             </Link>
             <p className="text-sm text-muted-foreground">
               Empowering your creativity with cutting-edge AI image generation and editing tools. Bring your visions to life.
@@ -41,7 +41,7 @@ export function Footer() {
         </div>
         
         <div className="text-center text-xs text-muted-foreground border-t border-border/30 pt-8">
-          <p>&copy; {new Date().getFullYear()} VisionForge AI. All Rights Reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Imagen BrainAi. All Rights Reserved.</p>
           <p className="mt-1">Crafted with <span role="img" aria-label="heart">❤️</span> and powered by Google AI & Firebase.</p>
         </div>
       </div>

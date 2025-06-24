@@ -85,7 +85,7 @@ export default function ImageEditorPage() {
   const [imageStyles, setImageStyles] = useState<React.CSSProperties>({});
 
   useEffect(() => {
-    document.title = 'Image Editor | VisionForge AI';
+    document.title = 'Image Editor | Imagen BrainAi';
   }, []);
 
   // Update image style when filter states change

@@ -100,7 +100,7 @@ export function ImageDisplay({
         const croppedImageUrl = canvas.toDataURL('image/png');
         const link = document.createElement('a');
         link.href = croppedImageUrl;
-        link.download = `visionforge_${prompt.substring(0, 20).replace(/\s+/g, '_')}_${Date.now()}.png`;
+        link.download = `imagenbrainai_${prompt.substring(0, 20).replace(/\s+/g, '_')}_${Date.now()}.png`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -111,7 +111,7 @@ export function ImageDisplay({
         const link = document.createElement('a');
         link.href = imageUrl;
         const extension = imageUrl.split(';')[0].split('/')[1] || 'png';
-        link.download = `visionforge_fallback_${prompt.substring(0, 20).replace(/\s+/g, '_')}_${Date.now()}.${extension}`;
+        link.download = `imagenbrainai_fallback_${prompt.substring(0, 20).replace(/\s+/g, '_')}_${Date.now()}.${extension}`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

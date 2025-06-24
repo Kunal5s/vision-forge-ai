@@ -2,8 +2,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service | VisionForge AI',
-  description: 'Read the Terms of Service for VisionForge AI. By using our services, you agree to these terms.',
+  title: 'Terms of Service | Imagen BrainAi',
+  description: 'Read the Terms of Service for Imagen BrainAi. By using our services, you agree to these terms.',
 };
 
 export default function TermsOfServicePage() {
@@ -20,7 +20,7 @@ export default function TermsOfServicePage() {
         <section>
           <h2 className="text-2xl font-semibold text-foreground mb-3">1. Acceptance of Terms</h2>
           <p>
-            By accessing and using VisionForge AI (the "Service"), you accept and agree to be bound by the terms and provision of this agreement. In addition, when using this Service's particular services, you shall be subject to any posted guidelines or rules applicable to such services. Any participation in this Service will constitute acceptance of this agreement. If you do not agree to abide by the above, please do not use this Service.
+            By accessing and using Imagen BrainAi (the "Service"), you accept and agree to be bound by the terms and provision of this agreement. In addition, when using this Service's particular services, you shall be subject to any posted guidelines or rules applicable to such services. Any participation in this Service will constitute acceptance of this agreement. If you do not agree to abide by the above, please do not use this Service.
           </p>
            <p className="font-bold mt-2 text-destructive">
             IMPORTANT: This is a template Terms of Service and should be reviewed and customized by a legal professional. Do not use this template as-is for your live website.
@@ -30,7 +30,7 @@ export default function TermsOfServicePage() {
         <section>
           <h2 className="text-2xl font-semibold text-foreground mb-3">2. Description of Service</h2>
           <p>
-            VisionForge AI provides users with AI-powered image generation tools. This includes features for text-to-image synthesis, prompt assistance, and style customization (the "Service"). You understand and agree that the Service may include advertisements and that these advertisements are necessary for VisionForge AI to provide the Service. You also understand and agree that the Service may include certain communications from VisionForge AI, such as service announcements, administrative messages, and newsletters, and that these communications are considered part of VisionForge AI membership and you may not be able to opt out of receiving them.
+            Imagen BrainAi provides users with AI-powered image generation tools. This includes features for text-to-image synthesis, prompt assistance, and style customization (the "Service"). You understand and agree that the Service may include advertisements and that these advertisements are necessary for Imagen BrainAi to provide the Service. You also understand and agree that the Service may include certain communications from Imagen BrainAi, such as service announcements, administrative messages, and newsletters, and that these communications are considered part of Imagen BrainAi membership and you may not be able to opt out of receiving them.
           </p>
         </section>
 
@@ -53,31 +53,31 @@ export default function TermsOfServicePage() {
         <section>
           <h2 className="text-2xl font-semibold text-foreground mb-3">4. Intellectual Property Rights</h2>
           <p>
-            <strong>Your Content:</strong> You retain ownership of the prompts you submit and any original aspects of the images generated based on your prompts, to the extent permitted by law. However, by using the Service, you grant VisionForge AI a worldwide, non-exclusive, royalty-free license to use, reproduce, modify, and display the generated images solely for the purpose of providing and improving the Service.
+            <strong>Your Content:</strong> You retain ownership of the prompts you submit and any original aspects of the images generated based on your prompts, to the extent permitted by law. However, by using the Service, you grant Imagen BrainAi a worldwide, non-exclusive, royalty-free license to use, reproduce, modify, and display the generated images solely for the purpose of providing and improving the Service.
           </p>
           <p className="mt-2">
-            <strong>Our Content:</strong> The Service and its original content (excluding content provided by users), features, and functionality are and will remain the exclusive property of VisionForge AI and its licensors.
+            <strong>Our Content:</strong> The Service and its original content (excluding content provided by users), features, and functionality are and will remain the exclusive property of Imagen BrainAi and its licensors.
           </p>
         </section>
         
         <section>
           <h2 className="text-2xl font-semibold text-foreground mb-3">5. Disclaimer of Warranties</h2>
           <p>
-            The Service is provided on an "AS IS" and "AS AVAILABLE" basis. VisionForge AI makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights. Further, VisionForge AI does not warrant or make any representations concerning the accuracy, likely results, or reliability of the use of the materials on its website or otherwise relating to such materials or on any sites linked to this site. AI-generated content can be unpredictable and may not always meet expectations.
+            The Service is provided on an "AS IS" and "AS AVAILABLE" basis. Imagen BrainAi makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights. Further, Imagen BrainAi does not warrant or make any representations concerning the accuracy, likely results, or reliability of the use of the materials on its website or otherwise relating to such materials or on any sites linked to this site. AI-generated content can be unpredictable and may not always meet expectations.
           </p>
         </section>
 
         <section>
           <h2 className="text-2xl font-semibold text-foreground mb-3">6. Limitation of Liability</h2>
           <p>
-            In no event shall VisionForge AI or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use the materials on VisionForge AI's website, even if VisionForge AI or a VisionForge AI authorized representative has been notified orally or in writing of the possibility of such damage.
+            In no event shall Imagen BrainAi or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use the materials on Imagen BrainAi's website, even if Imagen BrainAi or a Imagen BrainAi authorized representative has been notified orally or in writing of the possibility of such damage.
           </p>
         </section>
         
         <section>
           <h2 className="text-2xl font-semibold text-foreground mb-3">7. Modifications to Terms</h2>
           <p>
-            VisionForge AI reserves the right, at its sole discretion, to modify or replace these Terms at any time. If a revision is material we will try to provide at least 30 days' notice prior to any new terms taking effect. What constitutes a material change will be determined at our sole discretion.
+            Imagen BrainAi reserves the right, at its sole discretion, to modify or replace these Terms at any time. If a revision is material we will try to provide at least 30 days' notice prior to any new terms taking effect. What constitutes a material change will be determined at our sole discretion.
           </p>
         </section>
 
@@ -93,9 +93,9 @@ export default function TermsOfServicePage() {
           <p>
             If you have any questions about these Terms, please contact us at:
             <br />
-            VisionForge AI Team
+            Imagen BrainAi Team
             <br />
-            Email: <a href="mailto:legal@visionforge.ai" className="text-primary hover:underline">legal@visionforge.ai</a>
+            Email: <a href="mailto:legal@imagenbrain.ai" className="text-primary hover:underline">legal@imagenbrain.ai</a>
           </p>
         </section>
         <p className="font-bold mt-4 text-destructive text-center">

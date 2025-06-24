@@ -19,8 +19,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'VisionForge AI',
-  description: 'Generate stunning AI images with VisionForge AI, powered by Google Imagen 3.',
+  title: 'Imagen BrainAi',
+  description: 'Generate stunning AI images with Imagen BrainAi, powered by Google Imagen 3.',
 };
 
 export default function RootLayout({

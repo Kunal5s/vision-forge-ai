@@ -12,10 +12,10 @@ export function PreFooterCallToAction() {
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div>
               <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4">
-                Ready to Forge Your Vision?
+                Ready to Bring Your Vision to Life?
               </h2>
               <p className="text-lg text-foreground/80 mb-6">
-                VisionForge AI empowers you with state-of-the-art tools to transform your imagination into stunning reality. Explore endless creative possibilities with our intuitive platform.
+                Imagen BrainAi empowers you with state-of-the-art tools to transform your imagination into stunning reality. Explore endless creative possibilities with our intuitive platform.
               </p>
               <Button asChild size="lg" className="futuristic-glow-button-primary bg-primary hover:bg-primary/90 text-primary-foreground">
                 <Link href="/">
@@ -53,7 +53,7 @@ export function PreFooterCallToAction() {
                 <div>
                   <h3 className="text-xl font-semibold text-foreground mb-1">Unleash Your Creativity</h3>
                   <p className="text-sm text-muted-foreground">
-                    Whether you're a professional designer or exploring your artistic side, VisionForge AI is your partner in digital art creation.
+                    Whether you're a professional designer or exploring your artistic side, Imagen BrainAi is your partner in digital art creation.
                   </p>
                 </div>
               </div>

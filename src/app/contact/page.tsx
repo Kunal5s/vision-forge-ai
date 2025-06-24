@@ -8,8 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 export const metadata: Metadata = {
-  title: 'Contact Us | VisionForge AI',
-  description: 'Get in touch with the VisionForge AI team. We are here to help with your inquiries, feedback, and support requests.',
+  title: 'Contact Us | Imagen BrainAi',
+  description: 'Get in touch with the Imagen BrainAi team. We are here to help with your inquiries, feedback, and support requests.',
 };
 
 // Placeholder for a server action. For now, it does nothing.
@@ -77,7 +77,7 @@ export default function ContactPage() {
             </CardHeader>
             <CardContent>
               <p className="text-foreground/80 mb-1">For general questions, partnership opportunities, or media inquiries, please email us at:</p>
-              <a href="mailto:info@visionforge.ai" className="text-primary hover:underline font-medium">info@visionforge.ai</a>
+              <a href="mailto:info@imagenbrain.ai" className="text-primary hover:underline font-medium">info@imagenbrain.ai</a>
               <p className="text-sm text-muted-foreground mt-2">We typically respond within 1-2 business days.</p>
             </CardContent>
           </Card>
@@ -87,8 +87,8 @@ export default function ContactPage() {
               <CardTitle className="flex items-center gap-2 text-xl"><HelpCircle className="text-accent" /> Support & Feedback</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-foreground/80 mb-1">Encountering an issue or have a suggestion to make VisionForge AI better? Contact our support team:</p>
-              <a href="mailto:support@visionforge.ai" className="text-accent hover:underline font-medium">support@visionforge.ai</a>
+              <p className="text-foreground/80 mb-1">Encountering an issue or have a suggestion to make Imagen BrainAi better? Contact our support team:</p>
+              <a href="mailto:support@imagenbrain.ai" className="text-accent hover:underline font-medium">support@imagenbrain.ai</a>
               <p className="text-sm text-muted-foreground mt-2">Your feedback is invaluable to us!</p>
             </CardContent>
           </Card>

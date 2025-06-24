@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -66,7 +66,7 @@ export function ImageGenerator() {
   });
   const currentPrompt = watch('prompt');
 
-  const createThumbnail = (dataUrl: string, width = 128, height = 128): Promise<string> => {
+  const createThumbnail = useCallback((dataUrl: string, width = 128, height = 128): Promise<string> => {
     return new Promise((resolve) => {
       const img = new window.Image();
       img.crossOrigin = 'anonymous';
@@ -106,16 +106,16 @@ export function ImageGenerator() {
       };
       img.src = dataUrl;
     });
-  };
+  }, []);
   
   useEffect(() => {
-    const storedHistory = localStorage.getItem('visionForgeHistory');
+    const storedHistory = localStorage.getItem('imagenBrainAiHistory');
     if (storedHistory) {
       try {
         setHistory(JSON.parse(storedHistory).map((item:GeneratedImageHistoryItem) => ({...item, timestamp: new Date(item.timestamp)})));
       } catch (e) {
         console.error("Failed to parse history from localStorage", e);
-        localStorage.removeItem('visionForgeHistory');
+        localStorage.removeItem('imagenBrainAiHistory');
       }
     }
   }, []);
@@ -123,8 +123,8 @@ export function ImageGenerator() {
   useEffect(() => {
     if (history.length > 0) {
       try {
-        localStorage.setItem('visionForgeHistory', JSON.stringify(history));
-      } catch (e) {
+        localStorage.setItem('imagenBrainAiHistory', JSON.stringify(history));
+      } catch (e: any) {
         console.error("Failed to save history to localStorage:", e);
         if (e instanceof DOMException && e.name === 'QuotaExceededError') {
              toast({
@@ -141,7 +141,7 @@ export function ImageGenerator() {
         }
       }
     } else {
-      localStorage.removeItem('visionForgeHistory');
+      localStorage.removeItem('imagenBrainAiHistory');
     }
   }, [history, toast]);
 
@@ -290,7 +290,7 @@ export function ImageGenerator() {
 
   const handleClearHistory = () => {
     setHistory([]);
-    localStorage.removeItem('visionForgeHistory');
+    localStorage.removeItem('imagenBrainAiHistory');
     toast({ title: 'History Cleared', description: 'All generated image history has been cleared.' });
   };
 
@@ -298,7 +298,7 @@ export function ImageGenerator() {
     <div className="container mx-auto py-8 px-4">
       <header className="text-center mb-10">
         <h1 className="text-5xl font-extrabold tracking-tight text-primary">
-          Vision<span className="text-accent">Forge</span> AI
+          Imagen <span className="text-accent">BrainAi</span>
         </h1>
         <p className="mt-2 text-lg text-foreground/80">Craft stunning visuals with the power of AI.</p>
       </header>

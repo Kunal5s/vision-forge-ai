@@ -2,8 +2,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy | VisionForge AI',
-  description: 'Read the Privacy Policy for VisionForge AI to understand how we collect, use, and protect your personal information.',
+  title: 'Privacy Policy | Imagen BrainAi',
+  description: 'Read the Privacy Policy for Imagen BrainAi to understand how we collect, use, and protect your personal information.',
 };
 
 export default function PrivacyPolicyPage() {
@@ -20,10 +20,10 @@ export default function PrivacyPolicyPage() {
         <section>
           <h2 className="text-2xl font-semibold text-foreground mb-3">1. Introduction</h2>
           <p>
-            Welcome to VisionForge AI ("we," "us," or "our"). We are committed to protecting your personal information and your right to privacy. If you have any questions or concerns about this privacy notice, or our practices with regards to your personal information, please contact us at privacy@visionforge.ai.
+            Welcome to Imagen BrainAi ("we," "us," or "our"). We are committed to protecting your personal information and your right to privacy. If you have any questions or concerns about this privacy notice, or our practices with regards to your personal information, please contact us at privacy@imagenbrain.ai.
           </p>
           <p className="mt-2">
-            This Privacy Policy governs the privacy policies and practices of our website, VisionForge AI (the "Website"). Please read this Privacy Policy carefully. We will alert you to any changes to this Policy by changing the "last updated" date at the top of this Policy. Any changes become effective immediately upon publication on our Website, and you waive specific notice of any changes to the Policy by continuing to use and access our Website.
+            This Privacy Policy governs the privacy policies and practices of our website, Imagen BrainAi (the "Website"). Please read this Privacy Policy carefully. We will alert you to any changes to this Policy by changing the "last updated" date at the top of this Policy. Any changes become effective immediately upon publication on our Website, and you waive specific notice of any changes to the Policy by continuing to use and access our Website.
           </p>
           <p className="font-bold mt-2 text-destructive">
             IMPORTANT: This is a template Privacy Policy and should be reviewed and customized by a legal professional to ensure it accurately reflects your data practices and complies with all applicable laws and regulations. Do not use this template as-is for your live website.
@@ -130,9 +130,9 @@ export default function PrivacyPolicyPage() {
           <p>
             If you have questions or comments about this Privacy Policy, please contact us at:
             <br />
-            VisionForge AI Team
+            Imagen BrainAi Team
             <br />
-            Email: <a href="mailto:privacy@visionforge.ai" className="text-primary hover:underline">privacy@visionforge.ai</a>
+            Email: <a href="mailto:privacy@imagenbrain.ai" className="text-primary hover:underline">privacy@imagenbrain.ai</a>
           </p>
         </section>
         <p className="font-bold mt-4 text-destructive text-center">

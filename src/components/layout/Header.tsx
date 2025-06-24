@@ -29,7 +29,7 @@ export function Header() {
         <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
           <Sparkles className="h-7 w-7 text-primary animate-pulse" />
           <span className="text-xl font-bold text-foreground">
-            Vision<span className="text-accent">Forge</span> AI
+            Imagen <span className="text-accent">BrainAi</span>
           </span>
         </Link>
 
@@ -65,7 +65,7 @@ export function Header() {
                    <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
                     <Sparkles className="h-6 w-6 text-primary" />
                     <span className="text-lg font-bold text-foreground">
-                      Vision<span className="text-accent">Forge</span> AI
+                      Imagen <span className="text-accent">BrainAi</span>
                     </span>
                   </Link>
                 </SheetTitle>

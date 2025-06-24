@@ -63,7 +63,7 @@ export function PricingSection() {
           Choose Your Perfect <span className="text-accent">Plan</span>
         </h2>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Simple, transparent pricing for VisionForge AI. No hidden fees.
+          Simple, transparent pricing for Imagen BrainAi. No hidden fees.
         </p>
       </header>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
