@@ -1,5 +1,4 @@
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Quote } from 'lucide-react';
 
@@ -7,22 +6,16 @@ const testimonials = [
   {
     name: 'Aisha Khan',
     role: 'Digital Artist',
-    avatar: 'https://placehold.co/100x100.png',
-    dataAiHint: 'woman portrait',
     quote: "Imagen BrainAi has completely transformed my workflow. The quality is astounding, and the fine-tuning options make it an indispensable tool for any artist."
   },
   {
     name: 'Ben Carter',
     role: 'Game Developer',
-    avatar: 'https://placehold.co/100x100.png',
-    dataAiHint: 'man developer',
     quote: "The speed and variation are incredible! I can generate dozens of concept assets in minutes. The API access on the Mega plan is a game-changer for our studio."
   },
   {
     name: 'Chloe Garcia',
     role: 'Marketing Manager',
-    avatar: 'https://placehold.co/100x100.png',
-    dataAiHint: 'woman professional',
     quote: "We've elevated our social media content with unique, tailored, eye-catching visuals. It's so much more effective than stock photography. The results speak for themselves."
   }
 ];
@@ -47,15 +40,9 @@ export function TestimonialsSection() {
                 <blockquote className="text-foreground/80 mb-6 flex-grow text-left">
                   {testimonial.quote}
                 </blockquote>
-                <footer className="flex items-center justify-center gap-3 mt-auto">
-                    <Avatar className="h-12 w-12 border-2 border-primary/50">
-                        <AvatarImage src={testimonial.avatar} alt={testimonial.name} data-ai-hint={testimonial.dataAiHint} />
-                        <AvatarFallback>{testimonial.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                        <p className="font-semibold text-foreground">{testimonial.name}</p>
-                        <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                    </div>
+                <footer className="mt-auto">
+                    <p className="font-semibold text-foreground">{testimonial.name}</p>
+                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
                 </footer>
               </CardContent>
             </Card>

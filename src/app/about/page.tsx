@@ -21,7 +21,7 @@ export default function AboutPage() {
       </header>
 
       <div className="space-y-12">
-        <section className="grid md:grid-cols-2 gap-8 items-center">
+        <section>
           <div>
             <h2 className="text-3xl font-semibold text-foreground mb-4">Our Mission</h2>
             <p className="text-lg text-foreground/80 mb-4">
@@ -30,9 +30,6 @@ export default function AboutPage() {
             <p className="text-lg text-foreground/80">
               We strive to build a platform that is not only technologically advanced, leveraging the cutting-edge capabilities of models like Google's Imagen 3, but also user-friendly and accessible. Our goal is to empower you to create stunning, unique visuals with unprecedented ease and control.
             </p>
-          </div>
-          <div className="relative h-64 md:h-80 rounded-xl overflow-hidden shadow-xl">
-            <Image src="https://placehold.co/600x400.png" alt="Abstract AI art" layout="fill" objectFit="cover" data-ai-hint="abstract technology" />
           </div>
         </section>
 
