@@ -45,6 +45,7 @@ export function ImageGenerator() {
   const { toast } = useToast();
   const { subscription, useCredit, isLoading: isSubLoading, canGenerate } = useSubscription();
 
+  const [selectedModel, setSelectedModel] = useState<'google' | 'pollinations'>('google');
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>(aspectRatiosWithText[0].value);
   const [selectedStyle, setSelectedStyle] = useState<string>(STYLES[0]);
   const [selectedMood, setSelectedMood] = useState<string>(MOODS[0]);
@@ -150,6 +151,31 @@ export function ImageGenerator() {
   }, [history, toast, subscription?.plan]);
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
+    setIsLoading(true);
+    setError(null);
+    setGeneratedImageUrls([]);
+
+    if (selectedModel === 'pollinations') {
+      const promptParts = [data.prompt];
+      if (selectedStyle !== 'None') promptParts.push(selectedStyle);
+      if (selectedMood !== 'None') promptParts.push(`${selectedMood} mood`);
+      if (selectedLighting !== 'None') promptParts.push(selectedLighting);
+      if (selectedColor !== 'None') promptParts.push(`${selectedColor} color palette`);
+      
+      const aspectRatioTextHint = aspectRatiosWithText.find(ar => ar.value === selectedAspectRatio)?.textHint || '';
+      if (aspectRatioTextHint) promptParts.push(aspectRatioTextHint);
+  
+      const fullPrompt = promptParts.join(', ');
+      const encodedPrompt = encodeURIComponent(fullPrompt);
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024`;
+      
+      setGeneratedImageUrls([imageUrl]);
+      setIsLoading(false);
+      toast({ title: 'Vision Forged!', description: 'Your image has been generated with Pollinations.' });
+      return;
+    }
+
+    // Handle Google model generation
     if (!canGenerate()) {
       toast({
         title: subscription?.plan === 'free' ? 'Free Limit Reached' : 'Not Enough Credits',
@@ -159,17 +185,12 @@ export function ImageGenerator() {
         variant: 'destructive',
         duration: 7000,
       });
+      setIsLoading(false);
       return;
     }
     
-    setIsLoading(true);
-    setError(null);
-    setGeneratedImageUrls([]);
-    
-    // Deduct credit before making the API call
     const creditUsed = useCredit();
     if (!creditUsed) {
-      // This is a safeguard, canGenerate() should prevent this.
       toast({ title: 'Credit Error', description: 'Could not use credits for this generation. Please try again.', variant: 'destructive' });
       setIsLoading(false);
       return;
@@ -203,7 +224,6 @@ export function ImageGenerator() {
       console.error('Image generation error from flow:', result.error);
       setError(result.error);
       toast({ title: 'Generation Failed', description: result.error, variant: 'destructive', duration: 9000 });
-      // TODO: Implement credit refund logic here in a real application
     } else if (result.imageUrls && result.imageUrls.length > 0) {
       setGeneratedImageUrls(result.imageUrls);
       
@@ -216,7 +236,7 @@ export function ImageGenerator() {
           imageUrl: thumbnailUrl,
           timestamp: new Date(),
         };
-        setHistory(prev => [historyItem, ...prev.slice(0, 19)]); // Keep history size to 20
+        setHistory(prev => [historyItem, ...prev.slice(0, 19)]);
       }
 
       toast({ title: 'Vision Forged!', description: `Your images have been successfully generated.` });
@@ -280,6 +300,7 @@ export function ImageGenerator() {
   };
 
   const handleSelectHistoryItem = (item: GeneratedImageHistoryItem) => {
+    setSelectedModel('google');
     setFormValue('prompt', item.prompt);
     setSelectedAspectRatio(item.aspectRatio);
     // Reset other controls to default as they are not stored in history
@@ -304,6 +325,8 @@ export function ImageGenerator() {
     toast({ title: 'History Cleared', description: 'All generated image history has been cleared.' });
   };
 
+  const isPollinationsSelected = selectedModel === 'pollinations';
+
   return (
     <>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -311,7 +334,7 @@ export function ImageGenerator() {
           <FuturisticPanel>
             {isSubLoading ? (
               <div className="text-center text-sm text-muted-foreground p-4">Loading subscription...</div>
-            ) : subscription ? (
+            ) : subscription && !isPollinationsSelected ? (
               <div className="flex justify-between items-center text-sm mb-4 p-2 rounded-md bg-primary/10 border border-primary/20">
                   <span className="font-semibold text-primary">
                     Plan: {subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)}
@@ -323,10 +346,29 @@ export function ImageGenerator() {
                     </span>
                   </div>
               </div>
-            ) : (
-               <div className="text-center text-sm text-muted-foreground p-4">Loading subscription...</div>
-            )}
+            ) : isPollinationsSelected ? (
+               <div className="flex justify-center items-center text-sm mb-4 p-2 rounded-md bg-accent/10 border border-accent/20">
+                  <span className="font-semibold text-accent">
+                    Free & Unlimited Generations
+                  </span>
+              </div>
+            ) : null}
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+               <div>
+                  <Label htmlFor="model" className="text-sm font-medium mb-1 block text-foreground/80">
+                    Generation Model
+                  </Label>
+                  <Select value={selectedModel} onValueChange={(value) => setSelectedModel(value as 'google' | 'pollinations')}>
+                    <SelectTrigger id="model" className="w-full futuristic-glow-button bg-input hover:bg-input/80">
+                      <SelectValue placeholder="Select a model" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="google">VisionForge AI (Google)</SelectItem>
+                      <SelectItem value="pollinations">Pollinations (Free)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
               <div>
                 <Label htmlFor="prompt" className="text-lg font-semibold mb-2 block text-foreground/90">
                   Enter Your Vision
@@ -345,8 +387,8 @@ export function ImageGenerator() {
                     size="icon"
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-accent hover:text-accent/80 futuristic-glow-button"
                     onClick={handleImprovePrompt}
-                    disabled={isImprovingPrompt || !currentPrompt}
-                    title="Improve Prompt with AI"
+                    disabled={isImprovingPrompt || !currentPrompt || isPollinationsSelected}
+                    title="Improve Prompt with AI (Google Model Only)"
                   >
                     {isImprovingPrompt ? <LoadingSpinner size={18} /> : <Wand2 size={18} />}
                   </Button>
@@ -425,7 +467,7 @@ export function ImageGenerator() {
                 </Select>
               </div>
               
-              <Button type="submit" disabled={isLoading || isSubLoading || !canGenerate()} className="w-full text-lg py-3 futuristic-glow-button-primary bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Button type="submit" disabled={isLoading || isSubLoading || (!isPollinationsSelected && !canGenerate())} className="w-full text-lg py-3 futuristic-glow-button-primary bg-primary hover:bg-primary/90 text-primary-foreground">
                 {isLoading ? <LoadingSpinner size={24} className="mr-2"/> : null}
                 Forge Vision
               </Button>
@@ -447,7 +489,7 @@ export function ImageGenerator() {
         </div>
       </div>
       
-      {(subscription?.plan === 'pro' || subscription?.plan === 'mega') && (
+      {(subscription?.plan === 'pro' || subscription?.plan === 'mega') && !isPollinationsSelected && (
         <div className="mt-12">
           <UsageHistory 
               history={history} 

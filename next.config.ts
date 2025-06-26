@@ -16,6 +16,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'image.pollinations.ai',
+        port: '',
+        pathname: '/prompt/**',
+      },
       // Placeholder for potential future image sources if not data URIs
       // {
       //   protocol: 'https',
