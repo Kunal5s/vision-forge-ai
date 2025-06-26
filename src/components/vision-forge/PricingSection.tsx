@@ -11,10 +11,9 @@ const pricingPlans = [
     price: '$0',
     description: 'For starters and hobbyists.',
     features: [
-      '10 Google credits per month',
-      'Unlimited Pollinations generations',
-      'Standard speed & quality (1080p)',
-      'Access to core models',
+      '10 Pollinations credits',
+      'Standard quality generations',
+      'Pollinations model access',
       'Personal use license',
     ],
     buttonText: 'Start Generating',

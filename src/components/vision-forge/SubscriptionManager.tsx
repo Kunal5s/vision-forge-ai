@@ -73,7 +73,7 @@ export function SubscriptionManager() {
       <DialogTrigger asChild>
         <Button variant="outline" className="futuristic-glow-button">
           {isFreePlan ? <ArrowUpCircle className="mr-2 h-4 w-4 text-accent" /> : <UserCheck className="mr-2 h-4 w-4 text-primary" />}
-          {isFreePlan ? 'Upgrade Plan' : 'Plan Active'}
+          {isFreePlan ? 'Activate Plan' : 'Manage Plan'}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] glassmorphism-panel">
@@ -82,7 +82,7 @@ export function SubscriptionManager() {
           <DialogDescription>
             {subscription && !isFreePlan
               ? `Your ${subscription.plan.toUpperCase()} plan is active for ${subscription.email}.`
-              : "First, purchase a plan from our pricing page. Then, enter the email you used for the purchase here to activate it."}
+              : "To access the premium VisionForge AI model and get more credits, please purchase a plan and activate it with your email."}
           </DialogDescription>
         </DialogHeader>
         
@@ -105,7 +105,7 @@ export function SubscriptionManager() {
               For this prototype, use 'pro@example.com' for Pro or 'mega@example.com' for the Mega plan to test activation.
             </p>
              <p className="text-xs text-center text-muted-foreground px-4 mt-2">
-              Haven't purchased yet?{' '}
+              Ready to upgrade?{' '}
               <Link href="/pricing" className="text-primary underline hover:text-primary/80" onClick={() => setIsOpen(false)}>
                 View Plans
               </Link>

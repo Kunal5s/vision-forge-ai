@@ -6,7 +6,7 @@ import type { Subscription, Plan, Credits } from '@/types';
 
 // These would come from a real backend in a full implementation.
 const PLAN_CREDITS: Record<Plan, Credits> = {
-  free: { google: 10, pollinations: Infinity },
+  free: { google: 0, pollinations: 10 },
   pro: { google: 500, pollinations: 500 },
   mega: { google: 1500, pollinations: 1500 },
 };
@@ -20,9 +20,9 @@ const MOCK_PURCHASED_EMAILS: Record<string, Plan> = {
 
 // Define credit cost per generation for each plan
 const PLAN_CREDIT_COST: Record<Plan, { google: number; pollinations: number; }> = {
-  free: { google: 1, pollinations: 0 }, // free pollinations generations
-  pro: { google: 20, pollinations: 1 }, // 1 credit per generation
-  mega: { google: 15, pollinations: 1 }, // 1 credit per generation
+  free: { google: 0, pollinations: 2 }, // Pollinations costs 2 credits for free users
+  pro: { google: 20, pollinations: 1 },
+  mega: { google: 15, pollinations: 1 },
 };
 
 interface SubscriptionContextType {
@@ -77,7 +77,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
             saveSubscription(createFreePlan());
           }
         } else {
-           if (!parsedSub.credits || typeof parsedSub.credits.google === 'undefined') {
+           if (!parsedSub.credits || typeof parsedSub.credits.google === 'undefined' || parsedSub.credits.google > 0) {
               parsedSub.credits = PLAN_CREDITS.free; // Always ensure free plan has correct credits
            }
           setSubscription(parsedSub);
@@ -118,6 +118,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
     if (isLoading || !subscription) return false;
     
     if (model === 'google') {
+      if (subscription.plan === 'free') return false; // Free users cannot use Google model
       const cost = PLAN_CREDIT_COST[subscription.plan].google;
       if (subscription.credits.google >= cost) {
           const newSub = { ...subscription, credits: { ...subscription.credits, google: subscription.credits.google - cost } };
@@ -125,7 +126,6 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
           return true;
       }
     } else if (model === 'pollinations') {
-       if (subscription.plan === 'free') return true; // unlimited for free
        const cost = PLAN_CREDIT_COST[subscription.plan].pollinations;
        if (subscription.credits.pollinations >= cost) {
           const newSub = { ...subscription, credits: { ...subscription.credits, pollinations: subscription.credits.pollinations - cost } };
@@ -141,10 +141,10 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
     if (isLoading || !subscription) return false;
 
     if (model === 'google') {
+        if (subscription.plan === 'free') return false; // Free users cannot use Google model at all
         const cost = PLAN_CREDIT_COST[subscription.plan].google;
         return subscription.credits.google >= cost;
     } else if (model === 'pollinations') {
-        if (subscription.plan === 'free') return true;
         const cost = PLAN_CREDIT_COST[subscription.plan].pollinations;
         return subscription.credits.pollinations >= cost;
     }

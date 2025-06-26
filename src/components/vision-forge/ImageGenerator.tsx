@@ -68,6 +68,13 @@ export function ImageGenerator() {
   });
   const currentPrompt = watch('prompt');
 
+  // If user plan changes to free (e.g. logout), switch model back to pollinations
+  useEffect(() => {
+    if (subscription?.plan === 'free' && activeModel === 'google') {
+      setActiveModel('pollinations');
+    }
+  }, [subscription?.plan, activeModel]);
+
   const createThumbnail = useCallback((dataUrl: string, width = 128, height = 128): Promise<string> => {
     return new Promise((resolve) => {
       const img = new window.Image();
@@ -156,10 +163,16 @@ export function ImageGenerator() {
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     if (!canGenerate(activeModel)) {
         toast({
-          title: 'Not Enough Credits',
-          description: `You don't have enough credits for this generation. Please purchase a new plan to top up your credits.`,
+          title: 'Out of Credits',
+          description: (
+            <span>
+              You don't have enough credits to generate with this model. Please{' '}
+              <Link href="/pricing" className="text-primary underline">upgrade your plan</Link>
+              {' '}to continue creating.
+            </span>
+          ),
           variant: 'destructive',
-          duration: 7000,
+          duration: 9000,
         });
         return;
       }
@@ -331,47 +344,30 @@ export function ImageGenerator() {
   };
   
   let creditDisplayNode = null;
-  if (!isSubLoading && subscription) {
-      if (activeModel === 'google') {
-          creditDisplayNode = (
-              <div className="flex justify-between items-center text-sm p-2 rounded-md bg-primary/10 border border-primary/20">
-                  <span className="font-semibold text-primary">
-                      Plan: {subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)}
-                  </span>
-                  <div className="flex items-center gap-2 text-primary">
-                      <Gem size={16} />
-                      <span className="font-semibold">
-                      {`${subscription.credits.google} Google Credits`}
-                      </span>
-                  </div>
-              </div>
-          );
+    if (!isSubLoading && subscription) {
+      const { plan, credits } = subscription;
+      if (activeModel === 'google' && plan !== 'free') {
+        creditDisplayNode = (
+          <div className="flex justify-between items-center text-sm p-2 rounded-md bg-primary/10 border border-primary/20">
+            <span className="font-semibold text-primary">Plan: {plan.charAt(0).toUpperCase() + plan.slice(1)}</span>
+            <div className="flex items-center gap-2 text-primary">
+              <Gem size={16} />
+              <span className="font-semibold">{`${credits.google} Google Credits`}</span>
+            </div>
+          </div>
+        );
       } else if (activeModel === 'pollinations') {
-          if (subscription.plan === 'free') {
-              creditDisplayNode = (
-                  <div className="flex justify-center items-center text-sm p-2 rounded-md bg-accent/10 border border-accent/20">
-                      <span className="font-semibold text-accent">
-                      Unlimited Pollinations Generations
-                      </span>
-                  </div>
-              );
-          } else {
-              creditDisplayNode = (
-                   <div className="flex justify-between items-center text-sm p-2 rounded-md bg-accent/10 border border-accent/20">
-                      <span className="font-semibold text-accent">
-                          Plan: {subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)}
-                      </span>
-                      <div className="flex items-center gap-2 text-accent">
-                          <Gem size={16} />
-                          <span className="font-semibold">
-                          {`${subscription.credits.pollinations} Pollinations Credits`}
-                          </span>
-                      </div>
-                  </div>
-              );
-          }
+        creditDisplayNode = (
+          <div className="flex justify-between items-center text-sm p-2 rounded-md bg-accent/10 border border-accent/20">
+            <span className="font-semibold text-accent">Plan: {plan.charAt(0).toUpperCase() + plan.slice(1)}</span>
+            <div className="flex items-center gap-2 text-accent">
+              <Gem size={16} />
+              <span className="font-semibold">{`${credits.pollinations} Pollinations Credits`}</span>
+            </div>
+          </div>
+        );
       }
-  }
+    }
 
 
   return (
@@ -381,18 +377,23 @@ export function ImageGenerator() {
           <FuturisticPanel>
             <div className="space-y-4">
               <div>
-                  <Label htmlFor="model-select" className="text-lg font-semibold mb-2 block text-foreground/90">
-                      Model
-                  </Label>
-                  <Select value={activeModel} onValueChange={(value) => setActiveModel(value as 'pollinations' | 'google')}>
-                      <SelectTrigger id="model-select" className="w-full futuristic-glow-button bg-input hover:bg-input/80">
-                          <SelectValue placeholder="Select a model" />
-                      </SelectTrigger>
-                      <SelectContent>
-                          <SelectItem value="pollinations">Pollinations (Free &amp; Paid)</SelectItem>
-                          <SelectItem value="google">VisionForge AI (Google)</SelectItem>
-                      </SelectContent>
-                  </Select>
+                <Label htmlFor="model-select" className="text-lg font-semibold mb-2 block text-foreground/90">
+                  Model
+                </Label>
+                <Select value={activeModel} onValueChange={(value) => setActiveModel(value as 'pollinations' | 'google')}>
+                  <SelectTrigger id="model-select" className="w-full futuristic-glow-button bg-input hover:bg-input/80">
+                    <SelectValue placeholder="Select a model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pollinations">Pollinations (Standard)</SelectItem>
+                    <SelectItem value="google" disabled={subscription?.plan === 'free'}>
+                        <div className="flex items-center gap-2">
+                            VisionForge AI (Premium)
+                            {subscription?.plan === 'free' && <span className="text-xs text-accent">(Upgrade to Use)</span>}
+                        </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2 !mt-4">
@@ -421,8 +422,8 @@ export function ImageGenerator() {
                     size="icon"
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-accent hover:text-accent/80 futuristic-glow-button"
                     onClick={handleImprovePrompt}
-                    disabled={isImprovingPrompt || !currentPrompt || activeModel === 'pollinations'}
-                    title="Improve Prompt with AI (Google Model Only)"
+                    disabled={isImprovingPrompt || !currentPrompt || subscription?.plan === 'free'}
+                    title="Improve Prompt with AI (Paid Plans Only)"
                   >
                     {isImprovingPrompt ? <LoadingSpinner size={18} /> : <Wand2 size={18} />}
                   </Button>
