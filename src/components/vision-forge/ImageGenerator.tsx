@@ -121,6 +121,8 @@ export function ImageGenerator() {
           localStorage.removeItem('imagenBrainAiHistory');
         }
       }
+    } else {
+      setHistory([]);
     }
   }, [subscription?.plan]);
 
@@ -171,7 +173,7 @@ export function ImageGenerator() {
       
       const imageUrls = Array.from({ length: 4 }).map(() => {
         const seed = Math.floor(Math.random() * 1000000);
-        return `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&seed=${seed}`;
+        return `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true`;
       });
       
       setGeneratedImageUrls(imageUrls);
@@ -344,7 +346,7 @@ export function ImageGenerator() {
                           <SelectValue placeholder="Select a model" />
                       </SelectTrigger>
                       <SelectContent>
-                          <SelectItem value="pollinations">Pollinations (Free &amp; Unlimited)</SelectItem>
+                          <SelectItem value="pollinations">Pollinations (Free & Unlimited)</SelectItem>
                           <SelectItem value="google">VisionForge AI (Google)</SelectItem>
                       </SelectContent>
                   </Select>
