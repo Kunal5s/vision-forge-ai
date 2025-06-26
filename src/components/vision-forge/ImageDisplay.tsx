@@ -35,8 +35,32 @@ export function ImageDisplay({
   userPlan,
 }: ImageDisplayProps) {
   
-  const [animateImages, setAnimateImages] = useState(false);
   const { toast } = useToast();
+  const [imageLoadingStates, setImageLoadingStates] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (imageUrls && imageUrls.length > 0) {
+      const initialLoadingStates = imageUrls.reduce((acc, url) => {
+        acc[url] = true;
+        return acc;
+      }, {} as Record<string, boolean>);
+      setImageLoadingStates(initialLoadingStates);
+    }
+  }, [imageUrls]);
+
+  const handleImageLoad = (url: string) => {
+    setImageLoadingStates(prev => ({ ...prev, [url]: false }));
+  };
+
+  const handleImageError = (url: string) => {
+    console.error(`Failed to load image: ${url}`);
+    setImageLoadingStates(prev => ({ ...prev, [url]: false }));
+    toast({
+      title: 'Image Load Error',
+      description: 'One of the generated images failed to load from the source.',
+      variant: 'destructive',
+    });
+  };
 
   const getAspectRatioClass = (ratio: string) => {
     switch (ratio) {
@@ -168,22 +192,11 @@ export function ImageDisplay({
     };
   };
 
-  useEffect(() => {
-    if (imageUrls.length > 0 && !isLoading && !error) {
-      setAnimateImages(true);
-      const timer = setTimeout(() => {
-        setAnimateImages(false);
-      }, 2000); // Animation duration reduced
-      return () => clearTimeout(timer);
-    }
-  }, [imageUrls, isLoading, error]);
-
 
   return (
     <FuturisticPanel className="flex flex-col gap-4 h-full">
       <div className={cn(
-          "w-full rounded-lg border border-border/50 bg-black/20 shadow-inner flex items-center justify-center min-h-[300px] md:min-h-[400px] overflow-hidden p-1",
-          {'newly-generated-image-animate': animateImages}
+          "w-full rounded-lg border border-border/50 bg-black/20 shadow-inner flex items-center justify-center min-h-[300px] md:min-h-[400px] overflow-hidden p-1"
         )}
       >
         {isLoading && (
@@ -206,19 +219,26 @@ export function ImageDisplay({
             )}>
             {imageUrls.map((url, index) => (
               <div key={url.slice(-20) + index} className={cn("relative group rounded-md overflow-hidden bg-muted/10 transition-transform duration-300 ease-in-out hover:scale-105 hover:z-10", getAspectRatioClass(aspectRatio))}>
+                 {imageLoadingStates[url] && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
+                      <LoadingSpinner size={32} />
+                    </div>
+                  )}
                  <Image
                     src={url}
                     alt={`${prompt || 'Generated AI image'} - variation ${index + 1}`}
                     layout="fill"
                     objectFit="cover"
-                    className="transition-all duration-300"
+                    className={cn("transition-opacity duration-500", imageLoadingStates[url] ? 'opacity-0' : 'opacity-100')}
+                    onLoad={() => handleImageLoad(url)}
+                    onError={() => handleImageError(url)}
                     data-ai-hint="generated art"
                   />
                   <Button 
                     onClick={() => handleDownloadImage(url)} 
                     variant="default" 
                     size="icon" 
-                    className="absolute bottom-2 right-2 bg-primary/70 backdrop-blur-sm text-primary-foreground hover:bg-primary opacity-80 group-hover:opacity-100 scale-90 group-hover:scale-100 transition-all futuristic-glow-button"
+                    className="absolute bottom-2 right-2 bg-primary/70 backdrop-blur-sm text-primary-foreground hover:bg-primary opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 transition-all futuristic-glow-button"
                     title="Download Image"
                   >
                     <Download size={18} />
