@@ -168,11 +168,15 @@ export function ImageGenerator() {
   
       const fullPrompt = promptParts.join(', ');
       const encodedPrompt = encodeURIComponent(fullPrompt);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nofeed=true`;
       
-      setGeneratedImageUrls([imageUrl]);
+      const imageUrls = Array.from({ length: 4 }).map(() => {
+        const seed = Math.floor(Math.random() * 1000000);
+        return `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&seed=${seed}`;
+      });
+      
+      setGeneratedImageUrls(imageUrls);
       setIsLoading(false);
-      toast({ title: 'Vision Forged!', description: 'Your image has been generated with Pollinations.' });
+      toast({ title: 'Vision Forged!', description: 'Four variations have been generated with Pollinations.' });
       return;
     }
 
