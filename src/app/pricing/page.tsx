@@ -4,8 +4,8 @@ import { TestimonialsSection } from '@/components/vision-forge/TestimonialsSecti
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'Pricing | Imagen BrainAi',
-    description: 'Choose the perfect plan for your creative needs. Imagen BrainAi offers simple, transparent pricing with no hidden fees.',
+    title: 'Pricing Plans | Imagen BrainAi',
+    description: 'Choose the perfect plan for your creative needs. Imagen BrainAi offers simple, transparent pricing to unlock premium AI image generation features, more credits, and higher quality results.',
 };
 
 export default function PricingPage() {

@@ -27,7 +27,8 @@ export const metadata: Metadata = {
     default: 'Imagen BrainAi | AI Image Generator - Turn Text to Art',
     template: '%s | Imagen BrainAi',
   },
-  description: 'Unleash your creativity with Imagen BrainAi, a powerful and free AI image generator powered by Google\'s Imagen 3. Turn text prompts into stunning, high-quality art, photos, and illustrations in seconds.',
+  description: 'Unleash your creativity with Imagen BrainAi, a powerful and free AI image generator powered by Google\'s Imagen technology. Turn text prompts into stunning, high-quality art, photos, and illustrations in seconds. Create unique AI-generated images for free.',
+  keywords: 'AI image generator, text to image, AI art generator, free AI image generator, create AI art, Google Imagen, AI photo generator, text to art, AI image creator',
   verification: {
     google: 'aa8zBqwKzkPcVhwnOe6eO2zOlvMqqUk41xpBzV9kSts',
   },
