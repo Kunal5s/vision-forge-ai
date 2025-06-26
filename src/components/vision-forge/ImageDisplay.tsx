@@ -173,7 +173,7 @@ export function ImageDisplay({
       setAnimateImages(true);
       const timer = setTimeout(() => {
         setAnimateImages(false);
-      }, 5000); // Animation duration
+      }, 2000); // Animation duration reduced
       return () => clearTimeout(timer);
     }
   }, [imageUrls, isLoading, error]);
@@ -211,9 +211,7 @@ export function ImageDisplay({
                     alt={`${prompt || 'Generated AI image'} - variation ${index + 1}`}
                     layout="fill"
                     objectFit="cover"
-                    className="transition-opacity duration-500 opacity-0 data-[loaded=true]:opacity-100"
-                    data-loaded="false"
-                    onLoadingComplete={(img) => img.setAttribute('data-loaded', 'true')}
+                    className="transition-all duration-300"
                     data-ai-hint="generated art"
                   />
                   <Button 

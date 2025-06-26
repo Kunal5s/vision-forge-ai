@@ -114,7 +114,7 @@ body {
     }
   }
   .newly-generated-image-animate {
-    animation: subtle-glow-pulse 1s ease-in-out 5; /* 1s per pulse, 5 iterations = 5s */
+    animation: subtle-glow-pulse 1s ease-in-out 2; /* 1s per pulse, 2 iterations */
   }
 }
 
