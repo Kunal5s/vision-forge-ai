@@ -18,6 +18,10 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
+// Programmatically create an SVG icon to avoid creating new files.
+const iconSvg = `<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="8" fill="#3B82F6"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="20px" fill="white">B</text></svg>`;
+const iconDataUrl = `data:image/svg+xml,${encodeURIComponent(iconSvg)}`;
+
 export const metadata: Metadata = {
   title: {
     default: 'Imagen BrainAi | AI Image Generator - Turn Text to Art',
@@ -26,6 +30,9 @@ export const metadata: Metadata = {
   description: 'Unleash your creativity with Imagen BrainAi, a powerful and free AI image generator powered by Google\'s Imagen 3. Turn text prompts into stunning, high-quality art, photos, and illustrations in seconds.',
   verification: {
     google: 'aa8zBqwKzkPcVhwnOe6eO2zOlvMqqUk41xpBzV9kSts',
+  },
+  icons: {
+    icon: iconDataUrl,
   },
 };
 
