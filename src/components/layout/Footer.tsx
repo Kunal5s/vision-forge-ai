@@ -1,6 +1,6 @@
 
 import Link from 'next/link';
-import { Sparkles, PencilRuler } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 export function Footer() {
   return (
@@ -21,7 +21,6 @@ export function Footer() {
             <h3 className="text-md font-semibold text-foreground mb-4">Our Services</h3>
             <ul className="space-y-2 text-sm">
               <li><Link href="/" className="text-muted-foreground hover:text-primary transition-colors">AI Image Generation</Link></li>
-              <li><Link href="/edit" className="text-muted-foreground hover:text-primary transition-colors flex items-center"><PencilRuler size={14} className="mr-1.5" /> Image Editor</Link></li>
               <li><Link href="/pricing" className="text-muted-foreground hover:text-primary transition-colors">Pricing</Link></li>
               <li><Link href="/#features" className="text-muted-foreground hover:text-primary transition-colors">Prompt Enhancement</Link></li>
               <li><Link href="/#features" className="text-muted-foreground hover:text-primary transition-colors">Style Customization</Link></li>

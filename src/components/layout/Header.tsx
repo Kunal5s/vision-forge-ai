@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -13,7 +12,6 @@ import { SubscriptionManager } from '../vision-forge/SubscriptionManager';
 
 const navLinks = [
   { href: '/', label: 'Generate' },
-  { href: '/edit', label: 'Edit' },
   { href: '/pricing', label: 'Pricing' },
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },
@@ -69,10 +67,6 @@ export function Header() {
                     </span>
                   </Link>
                 </SheetTitle>
-                 <SheetClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-                    <X className="h-5 w-5" />
-                    <span className="sr-only">Close</span>
-                  </SheetClose>
               </SheetHeader>
               <nav className="flex flex-col gap-1 p-4">
                 {navLinks.map((link) => (
