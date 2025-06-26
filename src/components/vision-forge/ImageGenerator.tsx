@@ -46,6 +46,7 @@ export function ImageGenerator() {
   const { toast } = useToast();
   const { subscription, useCredit, isLoading: isSubLoading, canGenerate } = useSubscription();
   
+  const [activeModel, setActiveModel] = useState<'pollinations' | 'google'>('pollinations');
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>(aspectRatiosWithText[0].value);
   const [selectedStyle, setSelectedStyle] = useState<string>(STYLES[0]);
   const [selectedMood, setSelectedMood] = useState<string>(MOODS[0]);
@@ -66,9 +67,6 @@ export function ImageGenerator() {
     defaultValues: { prompt: '' },
   });
   const currentPrompt = watch('prompt');
-
-  const usePollinationsAsFallback = subscription?.plan === 'free' && !canGenerate();
-  const activeModel = usePollinationsAsFallback ? 'pollinations' : 'google';
 
   const createThumbnail = useCallback((dataUrl: string, width = 128, height = 128): Promise<string> => {
     return new Promise((resolve) => {
@@ -178,74 +176,74 @@ export function ImageGenerator() {
       return;
     }
 
-    // Handle Google model generation
-    if (!canGenerate()) {
-      // This will now only catch paid users without credits
-      toast({
-        title: 'Not Enough Credits',
-        description: `You don't have enough credits for this generation. Please purchase a new plan to top up your credits.`,
-        variant: 'destructive',
-        duration: 7000,
-      });
-      setIsLoading(false);
-      return;
-    }
-    
-    const creditUsed = useCredit();
-    if (!creditUsed) {
-      toast({ title: 'Credit Error', description: 'Could not use credits for this generation. Please try again.', variant: 'destructive' });
-      setIsLoading(false);
-      return;
-    }
-
-    const qualityPrompt = (subscription?.plan === 'pro' || subscription?.plan === 'mega') 
-      ? "8K resolution, photorealistic, ultra-detailed, professional photography"
-      : "HD photo, 1080p";
-
-    const promptParts = [data.prompt, qualityPrompt];
-    
-    if (selectedStyle !== 'None') promptParts.push(selectedStyle);
-    if (selectedMood !== 'None') promptParts.push(`${selectedMood} mood`);
-    if (selectedLighting !== 'None') promptParts.push(selectedLighting);
-    if (selectedColor !== 'None') promptParts.push(`${selectedColor} color palette`);
-
-    const aspectRatioTextHint = aspectRatiosWithText.find(ar => ar.value === selectedAspectRatio)?.textHint || '';
-    if (aspectRatioTextHint) promptParts.push(aspectRatioTextHint);
-
-    const fullPrompt = promptParts.join(', ');
-
-    const generationParams: GenerateImageInput = {
-      prompt: fullPrompt,
-    };
-    
-    const result = await generateImage(generationParams);
-
-    setIsLoading(false);
-
-    if (result.error) {
-      console.error('Image generation error from flow:', result.error);
-      setError(result.error);
-      toast({ title: 'Generation Failed', description: result.error, variant: 'destructive', duration: 9000 });
-    } else if (result.imageUrls && result.imageUrls.length > 0) {
-      setGeneratedImageUrls(result.imageUrls);
+    if (activeModel === 'google') {
+      if (!canGenerate()) {
+        toast({
+          title: 'Not Enough Credits',
+          description: `You don't have enough credits for this generation. Please purchase a new plan to top up your credits.`,
+          variant: 'destructive',
+          duration: 7000,
+        });
+        setIsLoading(false);
+        return;
+      }
       
-      if (subscription?.plan === 'pro' || subscription?.plan === 'mega') {
-        const thumbnailUrl = await createThumbnail(result.imageUrls[0]);
-        const historyItem: GeneratedImageHistoryItem = {
-          id: new Date().toISOString() + Math.random().toString(36).substring(2,9),
-          prompt: data.prompt,
-          aspectRatio: selectedAspectRatio,
-          imageUrl: thumbnailUrl,
-          timestamp: new Date(),
-        };
-        setHistory(prev => [historyItem, ...prev.slice(0, 19)]);
+      const creditUsed = useCredit();
+      if (!creditUsed) {
+        toast({ title: 'Credit Error', description: 'Could not use credits for this generation. Please try again.', variant: 'destructive' });
+        setIsLoading(false);
+        return;
       }
 
-      toast({ title: 'Vision Forged!', description: `Your images have been successfully generated.` });
-    } else {
-      const fallbackError = 'The AI returned no images. This can happen with very complex or unsafe prompts. Please try simplifying your request.';
-      setError(fallbackError);
-      toast({ title: 'Generation Issue', description: fallbackError, variant: 'destructive' });
+      const qualityPrompt = (subscription?.plan === 'pro' || subscription?.plan === 'mega') 
+        ? "8K resolution, photorealistic, ultra-detailed, professional photography"
+        : "HD photo, 1080p";
+
+      const promptParts = [data.prompt, qualityPrompt];
+      
+      if (selectedStyle !== 'None') promptParts.push(selectedStyle);
+      if (selectedMood !== 'None') promptParts.push(`${selectedMood} mood`);
+      if (selectedLighting !== 'None') promptParts.push(selectedLighting);
+      if (selectedColor !== 'None') promptParts.push(`${selectedColor} color palette`);
+
+      const aspectRatioTextHint = aspectRatiosWithText.find(ar => ar.value === selectedAspectRatio)?.textHint || '';
+      if (aspectRatioTextHint) promptParts.push(aspectRatioTextHint);
+
+      const fullPrompt = promptParts.join(', ');
+
+      const generationParams: GenerateImageInput = {
+        prompt: fullPrompt,
+      };
+      
+      const result = await generateImage(generationParams);
+
+      setIsLoading(false);
+
+      if (result.error) {
+        console.error('Image generation error from flow:', result.error);
+        setError(result.error);
+        toast({ title: 'Generation Failed', description: result.error, variant: 'destructive', duration: 9000 });
+      } else if (result.imageUrls && result.imageUrls.length > 0) {
+        setGeneratedImageUrls(result.imageUrls);
+        
+        if (subscription?.plan === 'pro' || subscription?.plan === 'mega') {
+          const thumbnailUrl = await createThumbnail(result.imageUrls[0]);
+          const historyItem: GeneratedImageHistoryItem = {
+            id: new Date().toISOString() + Math.random().toString(36).substring(2,9),
+            prompt: data.prompt,
+            aspectRatio: selectedAspectRatio,
+            imageUrl: thumbnailUrl,
+            timestamp: new Date(),
+          };
+          setHistory(prev => [historyItem, ...prev.slice(0, 19)]);
+        }
+
+        toast({ title: 'Vision Forged!', description: `Your images have been successfully generated.` });
+      } else {
+        const fallbackError = 'The AI returned no images. This can happen with very complex or unsafe prompts. Please try simplifying your request.';
+        setError(fallbackError);
+        toast({ title: 'Generation Issue', description: fallbackError, variant: 'destructive' });
+      }
     }
   };
 
@@ -302,6 +300,7 @@ export function ImageGenerator() {
   };
 
   const handleSelectHistoryItem = (item: GeneratedImageHistoryItem) => {
+    setActiveModel('google'); // History is a premium feature, so switch to the Google model
     setFormValue('prompt', item.prompt);
     setSelectedAspectRatio(item.aspectRatio);
     // Reset other controls to default as they are not stored in history
@@ -331,38 +330,44 @@ export function ImageGenerator() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-5 space-y-6">
           <FuturisticPanel>
-             <div className="space-y-2 mb-4">
-                {isSubLoading ? (
-                  <div className="text-center text-sm text-muted-foreground p-4">Loading subscription...</div>
-                ) : subscription && activeModel === 'google' ? (
-                  <div className="flex justify-between items-center text-sm p-2 rounded-md bg-primary/10 border border-primary/20">
-                      <span className="font-semibold text-primary">
-                        Plan: {subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)}
-                      </span>
-                      <div className="flex items-center gap-2 text-primary">
-                        <Gem size={16} />
-                        <span className="font-semibold">
-                          {`${subscription.credits} Credits`}
+            <div className="space-y-4">
+              <div>
+                  <Label htmlFor="model-select" className="text-lg font-semibold mb-2 block text-foreground/90">
+                      Model
+                  </Label>
+                  <Select value={activeModel} onValueChange={(value) => setActiveModel(value as 'pollinations' | 'google')}>
+                      <SelectTrigger id="model-select" className="w-full futuristic-glow-button bg-input hover:bg-input/80">
+                          <SelectValue placeholder="Select a model" />
+                      </SelectTrigger>
+                      <SelectContent>
+                          <SelectItem value="pollinations">Pollinations (Free &amp; Unlimited)</SelectItem>
+                          <SelectItem value="google">VisionForge AI (Google)</SelectItem>
+                      </SelectContent>
+                  </Select>
+              </div>
+
+              {activeModel === 'google' && (
+                <div className="space-y-2 !mt-4">
+                  {isSubLoading ? (
+                    <div className="text-center text-sm text-muted-foreground p-4">Loading subscription...</div>
+                  ) : subscription ? (
+                    <div className="flex justify-between items-center text-sm p-2 rounded-md bg-primary/10 border border-primary/20">
+                        <span className="font-semibold text-primary">
+                          Plan: {subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)}
                         </span>
-                      </div>
-                  </div>
-                ) : null}
-
-                <div className="p-3 rounded-md border text-center text-sm bg-input">
-                    {activeModel === 'google' ? (
-                        <p>Active Model: <span className="font-semibold text-primary">VisionForge AI (Google)</span></p>
-                    ) : (
-                        <div>
-                            <p className="mb-1">Free credits exhausted. Using <span className="font-semibold text-accent">Pollinations (Free)</span> for unlimited basic generations.</p>
-                            <Button asChild variant="link" size="sm" className="h-auto p-0 text-primary">
-                                <Link href="/pricing">Upgrade for higher quality &amp; more features.</Link>
-                            </Button>
+                        <div className="flex items-center gap-2 text-primary">
+                          <Gem size={16} />
+                          <span className="font-semibold">
+                            {`${subscription.credits} Credits`}
+                          </span>
                         </div>
-                    )}
+                    </div>
+                  ) : null}
                 </div>
+              )}
             </div>
-
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 !mt-6">
               <div>
                 <Label htmlFor="prompt" className="text-lg font-semibold mb-2 block text-foreground/90">
                   Enter Your Vision
