@@ -27,6 +27,7 @@ import { FuturisticPanel } from './FuturisticPanel';
 import { Wand2, ThumbsUp, ThumbsDown, Gem } from 'lucide-react';
 import { LoadingSpinner } from './LoadingSpinner';
 import { useSubscription } from '@/hooks/use-subscription';
+import Link from 'next/link';
 
 const formSchema = z.object({
   prompt: z.string().min(1, 'Prompt cannot be empty. Let your imagination flow!').max(1000, 'Prompt is too long.'),
@@ -44,8 +45,7 @@ const aspectRatiosWithText = ASPECT_RATIOS.map(ar => ({
 export function ImageGenerator() {
   const { toast } = useToast();
   const { subscription, useCredit, isLoading: isSubLoading, canGenerate } = useSubscription();
-
-  const [selectedModel, setSelectedModel] = useState<'google' | 'pollinations'>('google');
+  
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>(aspectRatiosWithText[0].value);
   const [selectedStyle, setSelectedStyle] = useState<string>(STYLES[0]);
   const [selectedMood, setSelectedMood] = useState<string>(MOODS[0]);
@@ -66,6 +66,9 @@ export function ImageGenerator() {
     defaultValues: { prompt: '' },
   });
   const currentPrompt = watch('prompt');
+
+  const usePollinationsAsFallback = subscription?.plan === 'free' && !canGenerate();
+  const activeModel = usePollinationsAsFallback ? 'pollinations' : 'google';
 
   const createThumbnail = useCallback((dataUrl: string, width = 128, height = 128): Promise<string> => {
     return new Promise((resolve) => {
@@ -155,7 +158,7 @@ export function ImageGenerator() {
     setError(null);
     setGeneratedImageUrls([]);
 
-    if (selectedModel === 'pollinations') {
+    if (activeModel === 'pollinations') {
       const promptParts = [data.prompt];
       if (selectedStyle !== 'None') promptParts.push(selectedStyle);
       if (selectedMood !== 'None') promptParts.push(`${selectedMood} mood`);
@@ -177,11 +180,10 @@ export function ImageGenerator() {
 
     // Handle Google model generation
     if (!canGenerate()) {
+      // This will now only catch paid users without credits
       toast({
-        title: subscription?.plan === 'free' ? 'Free Limit Reached' : 'Not Enough Credits',
-        description: subscription?.plan === 'free' 
-          ? 'You have used all your free generations. Please visit our pricing page to upgrade.'
-          : `You don't have enough credits for this generation. Please purchase a new plan to top up your credits.`,
+        title: 'Not Enough Credits',
+        description: `You don't have enough credits for this generation. Please purchase a new plan to top up your credits.`,
         variant: 'destructive',
         duration: 7000,
       });
@@ -300,7 +302,6 @@ export function ImageGenerator() {
   };
 
   const handleSelectHistoryItem = (item: GeneratedImageHistoryItem) => {
-    setSelectedModel('google');
     setFormValue('prompt', item.prompt);
     setSelectedAspectRatio(item.aspectRatio);
     // Reset other controls to default as they are not stored in history
@@ -325,50 +326,43 @@ export function ImageGenerator() {
     toast({ title: 'History Cleared', description: 'All generated image history has been cleared.' });
   };
 
-  const isPollinationsSelected = selectedModel === 'pollinations';
-
   return (
     <>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-5 space-y-6">
           <FuturisticPanel>
-            {isSubLoading ? (
-              <div className="text-center text-sm text-muted-foreground p-4">Loading subscription...</div>
-            ) : subscription && !isPollinationsSelected ? (
-              <div className="flex justify-between items-center text-sm mb-4 p-2 rounded-md bg-primary/10 border border-primary/20">
-                  <span className="font-semibold text-primary">
-                    Plan: {subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)}
-                  </span>
-                  <div className="flex items-center gap-2 text-primary">
-                    <Gem size={16} />
-                    <span className="font-semibold">
-                      {`${subscription.credits} Credits`}
-                    </span>
+             <div className="space-y-2 mb-4">
+                {isSubLoading ? (
+                  <div className="text-center text-sm text-muted-foreground p-4">Loading subscription...</div>
+                ) : subscription && activeModel === 'google' ? (
+                  <div className="flex justify-between items-center text-sm p-2 rounded-md bg-primary/10 border border-primary/20">
+                      <span className="font-semibold text-primary">
+                        Plan: {subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)}
+                      </span>
+                      <div className="flex items-center gap-2 text-primary">
+                        <Gem size={16} />
+                        <span className="font-semibold">
+                          {`${subscription.credits} Credits`}
+                        </span>
+                      </div>
                   </div>
-              </div>
-            ) : isPollinationsSelected ? (
-               <div className="flex justify-center items-center text-sm mb-4 p-2 rounded-md bg-accent/10 border border-accent/20">
-                  <span className="font-semibold text-accent">
-                    Free & Unlimited Generations
-                  </span>
-              </div>
-            ) : null}
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-               <div>
-                  <Label htmlFor="model" className="text-sm font-medium mb-1 block text-foreground/80">
-                    Generation Model
-                  </Label>
-                  <Select value={selectedModel} onValueChange={(value) => setSelectedModel(value as 'google' | 'pollinations')}>
-                    <SelectTrigger id="model" className="w-full futuristic-glow-button bg-input hover:bg-input/80">
-                      <SelectValue placeholder="Select a model" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="google">VisionForge AI (Google)</SelectItem>
-                      <SelectItem value="pollinations">Pollinations (Free)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                ) : null}
 
+                <div className="p-3 rounded-md border text-center text-sm bg-input">
+                    {activeModel === 'google' ? (
+                        <p>Active Model: <span className="font-semibold text-primary">VisionForge AI (Google)</span></p>
+                    ) : (
+                        <div>
+                            <p className="mb-1">Free credits exhausted. Using <span className="font-semibold text-accent">Pollinations (Free)</span> for unlimited basic generations.</p>
+                            <Button asChild variant="link" size="sm" className="h-auto p-0 text-primary">
+                                <Link href="/pricing">Upgrade for higher quality &amp; more features.</Link>
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div>
                 <Label htmlFor="prompt" className="text-lg font-semibold mb-2 block text-foreground/90">
                   Enter Your Vision
@@ -387,7 +381,7 @@ export function ImageGenerator() {
                     size="icon"
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-accent hover:text-accent/80 futuristic-glow-button"
                     onClick={handleImprovePrompt}
-                    disabled={isImprovingPrompt || !currentPrompt || isPollinationsSelected}
+                    disabled={isImprovingPrompt || !currentPrompt || activeModel === 'pollinations'}
                     title="Improve Prompt with AI (Google Model Only)"
                   >
                     {isImprovingPrompt ? <LoadingSpinner size={18} /> : <Wand2 size={18} />}
@@ -467,7 +461,7 @@ export function ImageGenerator() {
                 </Select>
               </div>
               
-              <Button type="submit" disabled={isLoading || isSubLoading || (!isPollinationsSelected && !canGenerate())} className="w-full text-lg py-3 futuristic-glow-button-primary bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Button type="submit" disabled={isLoading || isSubLoading || (activeModel === 'google' && !canGenerate())} className="w-full text-lg py-3 futuristic-glow-button-primary bg-primary hover:bg-primary/90 text-primary-foreground">
                 {isLoading ? <LoadingSpinner size={24} className="mr-2"/> : null}
                 Forge Vision
               </Button>
@@ -489,7 +483,7 @@ export function ImageGenerator() {
         </div>
       </div>
       
-      {(subscription?.plan === 'pro' || subscription?.plan === 'mega') && !isPollinationsSelected && (
+      {(subscription?.plan === 'pro' || subscription?.plan === 'mega') && (
         <div className="mt-12">
           <UsageHistory 
               history={history} 
