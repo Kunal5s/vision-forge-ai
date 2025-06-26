@@ -23,7 +23,7 @@ const pricingPlans = [
   },
   {
     name: 'Pro',
-    price: '$25',
+    price: '$50',
     description: 'For professionals and creators.',
     features: [
       '500 Google Credits/month',
@@ -41,7 +41,7 @@ const pricingPlans = [
   },
   {
     name: 'Mega',
-    price: '$50',
+    price: '$100',
     description: 'For power users and teams.',
     features: [
       '1,500 Google Credits/month',
