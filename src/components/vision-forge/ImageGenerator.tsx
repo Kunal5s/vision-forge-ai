@@ -167,7 +167,7 @@ export function ImageGenerator() {
   
       const fullPrompt = promptParts.join(', ');
       const encodedPrompt = encodeURIComponent(fullPrompt);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024`;
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nofeed=true`;
       
       setGeneratedImageUrls([imageUrl]);
       setIsLoading(false);
