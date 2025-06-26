@@ -13,10 +13,15 @@ export interface GeneratedImageHistoryItem extends GeneratedImageParams {
 // New types for subscription
 export type Plan = 'free' | 'pro' | 'mega';
 
+export interface Credits {
+  google: number;
+  pollinations: number;
+}
+
 export interface Subscription {
   email: string;
   plan: Plan;
   status: 'active' | 'inactive';
-  credits: number;
+  credits: Credits; // Changed from number to Credits object
   expires?: string; 
 }

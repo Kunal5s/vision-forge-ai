@@ -154,9 +154,26 @@ export function ImageGenerator() {
   }, [history, toast, subscription?.plan]);
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
+    if (!canGenerate(activeModel)) {
+        toast({
+          title: 'Not Enough Credits',
+          description: `You don't have enough credits for this generation. Please purchase a new plan to top up your credits.`,
+          variant: 'destructive',
+          duration: 7000,
+        });
+        return;
+      }
+
     setIsLoading(true);
     setError(null);
     setGeneratedImageUrls([]);
+
+    const creditUsed = useCredit(activeModel);
+    if (!creditUsed) {
+      toast({ title: 'Credit Error', description: 'Could not use credits for this generation. Please try again.', variant: 'destructive' });
+      setIsLoading(false);
+      return;
+    }
 
     if (activeModel === 'pollinations') {
       const promptParts = [data.prompt];
@@ -183,24 +200,6 @@ export function ImageGenerator() {
     }
 
     if (activeModel === 'google') {
-      if (!canGenerate()) {
-        toast({
-          title: 'Not Enough Credits',
-          description: `You don't have enough credits for this generation. Please purchase a new plan to top up your credits.`,
-          variant: 'destructive',
-          duration: 7000,
-        });
-        setIsLoading(false);
-        return;
-      }
-      
-      const creditUsed = useCredit();
-      if (!creditUsed) {
-        toast({ title: 'Credit Error', description: 'Could not use credits for this generation. Please try again.', variant: 'destructive' });
-        setIsLoading(false);
-        return;
-      }
-
       const qualityPrompt = (subscription?.plan === 'pro' || subscription?.plan === 'mega') 
         ? "8K resolution, photorealistic, ultra-detailed, professional photography"
         : "HD photo, 1080p";
@@ -330,6 +329,50 @@ export function ImageGenerator() {
     localStorage.removeItem('imagenBrainAiHistory');
     toast({ title: 'History Cleared', description: 'All generated image history has been cleared.' });
   };
+  
+  let creditDisplayNode = null;
+  if (!isSubLoading && subscription) {
+      if (activeModel === 'google') {
+          creditDisplayNode = (
+              <div className="flex justify-between items-center text-sm p-2 rounded-md bg-primary/10 border border-primary/20">
+                  <span className="font-semibold text-primary">
+                      Plan: {subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)}
+                  </span>
+                  <div className="flex items-center gap-2 text-primary">
+                      <Gem size={16} />
+                      <span className="font-semibold">
+                      {`${subscription.credits.google} Google Credits`}
+                      </span>
+                  </div>
+              </div>
+          );
+      } else if (activeModel === 'pollinations') {
+          if (subscription.plan === 'free') {
+              creditDisplayNode = (
+                  <div className="flex justify-center items-center text-sm p-2 rounded-md bg-accent/10 border border-accent/20">
+                      <span className="font-semibold text-accent">
+                      Unlimited Pollinations Generations
+                      </span>
+                  </div>
+              );
+          } else {
+              creditDisplayNode = (
+                   <div className="flex justify-between items-center text-sm p-2 rounded-md bg-accent/10 border border-accent/20">
+                      <span className="font-semibold text-accent">
+                          Plan: {subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)}
+                      </span>
+                      <div className="flex items-center gap-2 text-accent">
+                          <Gem size={16} />
+                          <span className="font-semibold">
+                          {`${subscription.credits.pollinations} Pollinations Credits`}
+                          </span>
+                      </div>
+                  </div>
+              );
+          }
+      }
+  }
+
 
   return (
     <>
@@ -346,31 +389,17 @@ export function ImageGenerator() {
                           <SelectValue placeholder="Select a model" />
                       </SelectTrigger>
                       <SelectContent>
-                          <SelectItem value="pollinations">Pollinations (Free & Unlimited)</SelectItem>
+                          <SelectItem value="pollinations">Pollinations (Free &amp; Paid)</SelectItem>
                           <SelectItem value="google">VisionForge AI (Google)</SelectItem>
                       </SelectContent>
                   </Select>
               </div>
 
-              {activeModel === 'google' && (
-                <div className="space-y-2 !mt-4">
-                  {isSubLoading ? (
-                    <div className="text-center text-sm text-muted-foreground p-4">Loading subscription...</div>
-                  ) : subscription ? (
-                    <div className="flex justify-between items-center text-sm p-2 rounded-md bg-primary/10 border border-primary/20">
-                        <span className="font-semibold text-primary">
-                          Plan: {subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)}
-                        </span>
-                        <div className="flex items-center gap-2 text-primary">
-                          <Gem size={16} />
-                          <span className="font-semibold">
-                            {`${subscription.credits} Credits`}
-                          </span>
-                        </div>
-                    </div>
-                  ) : null}
-                </div>
-              )}
+              <div className="space-y-2 !mt-4">
+                {isSubLoading ? (
+                  <div className="text-center text-sm text-muted-foreground p-4">Loading subscription...</div>
+                ) : creditDisplayNode}
+              </div>
             </div>
             
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 !mt-6">
@@ -472,7 +501,7 @@ export function ImageGenerator() {
                 </Select>
               </div>
               
-              <Button type="submit" disabled={isLoading || isSubLoading || (activeModel === 'google' && !canGenerate())} className="w-full text-lg py-3 futuristic-glow-button-primary bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Button type="submit" disabled={isLoading || isSubLoading || !canGenerate(activeModel)} className="w-full text-lg py-3 futuristic-glow-button-primary bg-primary hover:bg-primary/90 text-primary-foreground">
                 {isLoading ? <LoadingSpinner size={24} className="mr-2"/> : null}
                 Forge Vision
               </Button>

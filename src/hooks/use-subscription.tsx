@@ -2,13 +2,13 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import type { Subscription, Plan } from '@/types';
+import type { Subscription, Plan, Credits } from '@/types';
 
 // These would come from a real backend in a full implementation.
-const PLAN_CREDITS: Record<Plan, number> = {
-  free: 10,
-  pro: 1000,
-  mega: 3000,
+const PLAN_CREDITS: Record<Plan, Credits> = {
+  free: { google: 10, pollinations: Infinity },
+  pro: { google: 500, pollinations: 500 },
+  mega: { google: 1500, pollinations: 1500 },
 };
 
 // SIMULATED DATABASE of purchased emails.
@@ -19,18 +19,18 @@ const MOCK_PURCHASED_EMAILS: Record<string, Plan> = {
 };
 
 // Define credit cost per generation for each plan
-const PLAN_CREDIT_COST: Record<Plan, number> = {
-  free: 1,
-  pro: 20,
-  mega: 15,
+const PLAN_CREDIT_COST: Record<Plan, { google: number; pollinations: number; }> = {
+  free: { google: 1, pollinations: 0 }, // free pollinations generations
+  pro: { google: 20, pollinations: 1 }, // 1 credit per generation
+  mega: { google: 15, pollinations: 1 }, // 1 credit per generation
 };
 
 interface SubscriptionContextType {
   subscription: Subscription | null;
   activateSubscription: (email: string) => boolean; // Returns true on success
   deactivateSubscription: () => void;
-  useCredit: () => boolean;
-  canGenerate: () => boolean;
+  useCredit: (model: 'google' | 'pollinations') => boolean;
+  canGenerate: (model: 'google' | 'pollinations') => boolean;
   isLoading: boolean;
 }
 
@@ -67,12 +67,19 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
         if (parsedSub.plan !== 'free') {
           const isValidPurchase = MOCK_PURCHASED_EMAILS[parsedSub.email.toLowerCase()] === parsedSub.plan;
           if (isValidPurchase) {
+             // Ensure credits structure is up-to-date in case it changed
+            if (!parsedSub.credits || typeof parsedSub.credits.google === 'undefined') {
+                parsedSub.credits = PLAN_CREDITS[parsedSub.plan];
+            }
             setSubscription(parsedSub);
           } else {
             // The stored plan is invalid, revert to free plan
             saveSubscription(createFreePlan());
           }
         } else {
+           if (!parsedSub.credits || typeof parsedSub.credits.google === 'undefined') {
+              parsedSub.credits = PLAN_CREDITS.free; // Always ensure free plan has correct credits
+           }
           setSubscription(parsedSub);
         }
       } else {
@@ -107,23 +114,42 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
     saveSubscription(createFreePlan());
   }, [saveSubscription]);
 
-  const useCredit = useCallback(() => {
+  const useCredit = useCallback((model: 'google' | 'pollinations') => {
     if (isLoading || !subscription) return false;
     
-    const cost = PLAN_CREDIT_COST[subscription.plan];
-    if (subscription.credits >= cost) {
-        const newSub = { ...subscription, credits: subscription.credits - cost };
-        saveSubscription(newSub);
-        return true;
+    if (model === 'google') {
+      const cost = PLAN_CREDIT_COST[subscription.plan].google;
+      if (subscription.credits.google >= cost) {
+          const newSub = { ...subscription, credits: { ...subscription.credits, google: subscription.credits.google - cost } };
+          saveSubscription(newSub);
+          return true;
+      }
+    } else if (model === 'pollinations') {
+       if (subscription.plan === 'free') return true; // unlimited for free
+       const cost = PLAN_CREDIT_COST[subscription.plan].pollinations;
+       if (subscription.credits.pollinations >= cost) {
+          const newSub = { ...subscription, credits: { ...subscription.credits, pollinations: subscription.credits.pollinations - cost } };
+          saveSubscription(newSub);
+          return true;
+       }
     }
 
     return false;
   }, [subscription, isLoading, saveSubscription]);
 
-  const canGenerate = useCallback(() => {
+  const canGenerate = useCallback((model: 'google' | 'pollinations') => {
     if (isLoading || !subscription) return false;
-    const cost = PLAN_CREDIT_COST[subscription.plan];
-    return subscription.credits >= cost;
+
+    if (model === 'google') {
+        const cost = PLAN_CREDIT_COST[subscription.plan].google;
+        return subscription.credits.google >= cost;
+    } else if (model === 'pollinations') {
+        if (subscription.plan === 'free') return true;
+        const cost = PLAN_CREDIT_COST[subscription.plan].pollinations;
+        return subscription.credits.pollinations >= cost;
+    }
+    
+    return false;
   }, [subscription, isLoading]);
 
   return (
