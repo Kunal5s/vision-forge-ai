@@ -198,7 +198,6 @@ export function ImageGenerator() {
       const fullPrompt = promptParts.join(', ');
       const encodedPrompt = encodeURIComponent(fullPrompt);
 
-      // Calculate width and height from aspect ratio string
       const [aspectW, aspectH] = selectedAspectRatio.split(':').map(Number);
       const baseSize = 1024;
       let width, height;
@@ -215,9 +214,21 @@ export function ImageGenerator() {
         return `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
       });
       
-      setGeneratedImageUrls(imageUrls);
-      setIsLoading(false);
-      toast({ title: 'Vision Forged!', description: 'Four variations have been generated with Pollinations.' });
+      try {
+        const response = await fetch(imageUrls[0]);
+        if (!response.ok || !response.headers.get('content-type')?.startsWith('image/')) {
+          throw new Error('The free image service did not return a valid image. It may be busy or the prompt was not suitable.');
+        }
+        setGeneratedImageUrls(imageUrls);
+        toast({ title: 'Vision Forged!', description: 'Four variations have been generated with Pollinations.' });
+      } catch (e: any) {
+        console.error('Pollinations API check failed:', e);
+        const errorMessage = e.message || 'The free image service is currently unavailable. Please try again later.';
+        setError(errorMessage);
+        toast({ title: 'Generation Failed', description: errorMessage, variant: 'destructive' });
+      } finally {
+        setIsLoading(false);
+      }
       return;
     }
 
