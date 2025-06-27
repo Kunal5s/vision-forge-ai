@@ -50,29 +50,3 @@ body {
     min-height: 100vh;
   }
 }
-
-@keyframes animated-gradient-border {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-.animated-border {
-  position: relative;
-  padding: 3px;
-  border-radius: 1.25rem;
-  background: linear-gradient(90deg, hsl(var(--primary) / 0.6), hsl(var(--accent) / 0.6), hsl(var(--primary) / 0.6));
-  background-size: 200% 200%;
-  animation: animated-gradient-border 5s ease-in-out infinite;
-}
-
-.animated-border > * {
-  background-color: hsl(var(--background));
-  border-radius: 1rem;
-}

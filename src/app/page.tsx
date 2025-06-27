@@ -22,7 +22,7 @@ interface FeatureCardProps {
 
 function FeatureCard({ icon, title, description, iconBgClass = 'bg-primary/10', iconTextClass = 'text-primary' }: FeatureCardProps) {
   return (
-    <FuturisticPanel className="flex flex-col items-center text-center h-full glassmorphism-panel !p-4 md:!p-6">
+    <FuturisticPanel className="flex flex-col items-center text-center h-full !p-4 md:!p-6">
       <div className={`p-3 ${iconBgClass} rounded-full mb-4`}>
         {icon}
       </div>
@@ -46,11 +46,7 @@ export default function HomePage() {
               Welcome to the future of AI image generation. Describe your vision, and our advanced text-to-image AI, powered by Google's Imagen technology, will bring it to life. Create stunning, high-quality images, illustrations, and art from text prompts in seconds. Get started for free and see what you can create.
           </p>
         </header>
-        <div className="animated-border">
-          <div>
-            <ImageGenerator />
-          </div>
-        </div>
+        <ImageGenerator />
       </div>
 
       <section id="features" className="container mx-auto py-16 px-4">
