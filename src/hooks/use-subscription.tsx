@@ -20,8 +20,8 @@ const MOCK_PURCHASED_EMAILS: Record<string, Plan> = {
 // Define credit cost per generation. Pro/Mega generate 2 images.
 const PLAN_CREDIT_COST: Record<Plan, { google: number; pollinations: number; }> = {
   free: { google: 0, pollinations: 10 }, 
-  pro: { google: 100, pollinations: 0 }, // 50 credits per image * 2 images
-  mega: { google: 200, pollinations: 0 }, // 100 credits per image * 2 images
+  pro: { google: 100, pollinations: 0 },
+  mega: { google: 200, pollinations: 0 },
 };
 
 const PLAN_VALIDITY_DAYS = 30;
@@ -68,8 +68,13 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
       let parsedSub: Subscription | null = storedSub ? JSON.parse(storedSub) : null;
 
       if (parsedSub) {
+        // Force update to new credit system if old values are detected
+        if (parsedSub.plan === 'free' && parsedSub.credits.pollinations > 200) {
+            parsedSub = null; // Invalidate old config to force reset
+        }
+        
         // Handle plan expiry for paid plans
-        if (parsedSub.plan === 'pro' || parsedSub.plan === 'mega') {
+        if (parsedSub && (parsedSub.plan === 'pro' || parsedSub.plan === 'mega')) {
             const purchaseDate = new Date(parsedSub.purchaseDate);
             const expiryDate = new Date(purchaseDate);
             expiryDate.setDate(purchaseDate.getDate() + PLAN_VALIDITY_DAYS);
@@ -85,7 +90,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
         }
         
         // Handle daily reset for free users
-        if (parsedSub.plan === 'free') {
+        if (parsedSub && parsedSub.plan === 'free') {
             const lastResetDate = new Date(parsedSub.lastReset);
             const now = new Date();
             const diffHours = (now.getTime() - lastResetDate.getTime()) / (1000 * 60 * 60);
@@ -96,7 +101,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
         }
         
         // Validate paid plans against mock DB just in case
-        if (parsedSub.plan !== 'free' && MOCK_PURCHASED_EMAILS[parsedSub.email.toLowerCase()] !== parsedSub.plan) {
+        if (parsedSub && parsedSub.plan !== 'free' && MOCK_PURCHASED_EMAILS[parsedSub.email.toLowerCase()] !== parsedSub.plan) {
             parsedSub = createFreePlan(); // Downgrade if invalid
         }
         
