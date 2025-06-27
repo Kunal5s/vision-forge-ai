@@ -99,12 +99,13 @@ const generateImageFlow = ai.defineFlow(
         return { imageUrls };
       }
       
-      const failureReason = "Image generation failed. This may be a temporary issue with the AI service. Please try again. If the problem persists, check your prompt for any potentially sensitive content.";
+      const failureReason = "Premium image generation failed. This could be due to a few reasons:\n1. Your prompt may have triggered a safety filter. Please try a different prompt.\n2. There might be a temporary issue with the AI service.\n3. (For site admins) Ensure your Google Cloud project has billing enabled and the 'Generative Language API' is active.";
       return { imageUrls: [], error: failureReason };
 
     } catch (e: any) {
       console.error("Image generation API call failed:", e);
-      return { imageUrls: [], error: e.message || "An unexpected error occurred during image generation." };
+      const detailedMessage = "An unexpected error occurred with the premium image generator. For site administrators, please check:\n1. Your GOOGLE_API_KEY is set correctly.\n2. Billing is enabled for your Google Cloud project.\n3. The 'Generative Language API' is enabled in your project.";
+      return { imageUrls: [], error: detailedMessage };
     }
   }
 );
