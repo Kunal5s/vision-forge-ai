@@ -10,15 +10,13 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Slider } from "@/components/ui/slider";
-import { AlertTriangle, UploadCloud, Palette, Crop, RotateCcw, Wand2, Text, Sticker, Download, Save, Trash2, Sparkles } from 'lucide-react';
+import { AlertTriangle, UploadCloud, Palette, RotateCcw, Wand2, Text, Sticker, Download, Save, Trash2, Sparkles } from 'lucide-react';
 import { FuturisticPanel } from '@/components/vision-forge/FuturisticPanel';
 import { cn } from '@/lib/utils';
 
 
 // Define types for filters to manage their state
 type AppliedFilter = "Grayscale" | "Sepia" | "Invert"; // Basic toggleable filters
-const basicAdjustmentFilters = ["Brightness", "Contrast", "Saturation", "Hue", "Sharpness", "Blur"];
-const transformFilters = ["Crop", "Rotate", "Flip", "Resize", "Aspect Ratio"];
 const annotationFilters = ["Add Text", "Draw", "Shapes"];
 const overlayFilters = ["Stickers", "Watermark", "Frames"];
 
@@ -33,8 +31,6 @@ const initialEditingTools: EditingTool[] = [
   // Basic Adjustments
   { name: "Brightness", type: "slider", category: "Basic Adjustments" },
   ...["Contrast", "Saturation", "Hue", "Sharpness", "Blur"].map(f => ({ name: f, type: "placeholder" as "placeholder", category: "Basic Adjustments" })),
-  // Transform
-  ...transformFilters.map(f => ({ name: f, type: "placeholder" as "placeholder", category: "Transform" })),
   // Filters & Effects
   { name: "Grayscale", type: "toggle" as "toggle", category: "Filters & Effects" },
   { name: "Sepia", type: "toggle" as "toggle", category: "Filters & Effects" },
@@ -50,10 +46,6 @@ const editingToolCategoriesConfig = [
   { 
     name: "Basic Adjustments", 
     icon: <Palette size={20} className="mr-2 text-primary" />,
-  },
-  { 
-    name: "Transform", 
-    icon: <Crop size={20} className="mr-2 text-primary" />,
   },
   { 
     name: "Filters & Effects", 
