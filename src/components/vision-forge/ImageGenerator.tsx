@@ -372,7 +372,7 @@ export function ImageGenerator() {
                   Model
                 </Label>
                 <Select value={activeModel} onValueChange={(value) => setActiveModel(value as 'pollinations' | 'google')}>
-                  <SelectTrigger id="model-select" className="w-full bg-background hover:bg-accent">
+                  <SelectTrigger id="model-select" className="w-full bg-background hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground">
                     <SelectValue placeholder="Select a model" />
                   </SelectTrigger>
                   <SelectContent>
@@ -426,7 +426,7 @@ export function ImageGenerator() {
                  <div>
                     <Label htmlFor="style" className="text-sm font-medium mb-1 block text-foreground/80">Artistic Style</Label>
                     <Select value={selectedStyle} onValueChange={setSelectedStyle}>
-                        <SelectTrigger id="style" className="w-full bg-background hover:bg-accent">
+                        <SelectTrigger id="style" className="w-full bg-background hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground">
                             <SelectValue placeholder="Select style" />
                         </SelectTrigger>
                         <SelectContent>
@@ -439,7 +439,7 @@ export function ImageGenerator() {
                 <div>
                     <Label htmlFor="mood" className="text-sm font-medium mb-1 block text-foreground/80">Mood</Label>
                     <Select value={selectedMood} onValueChange={setSelectedMood}>
-                        <SelectTrigger id="mood" className="w-full bg-background hover:bg-accent">
+                        <SelectTrigger id="mood" className="w-full bg-background hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground">
                             <SelectValue placeholder="Select mood" />
                         </SelectTrigger>
                         <SelectContent>
@@ -452,7 +452,7 @@ export function ImageGenerator() {
                 <div>
                     <Label htmlFor="lighting" className="text-sm font-medium mb-1 block text-foreground/80">Lighting</Label>
                     <Select value={selectedLighting} onValueChange={setSelectedLighting}>
-                        <SelectTrigger id="lighting" className="w-full bg-background hover:bg-accent">
+                        <SelectTrigger id="lighting" className="w-full bg-background hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground">
                             <SelectValue placeholder="Select lighting" />
                         </SelectTrigger>
                         <SelectContent>
@@ -465,7 +465,7 @@ export function ImageGenerator() {
                 <div>
                     <Label htmlFor="color" className="text-sm font-medium mb-1 block text-foreground/80">Color Palette</Label>
                     <Select value={selectedColor} onValueChange={setSelectedColor}>
-                        <SelectTrigger id="color" className="w-full bg-background hover:bg-accent">
+                        <SelectTrigger id="color" className="w-full bg-background hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground">
                             <SelectValue placeholder="Select color" />
                         </SelectTrigger>
                         <SelectContent>
@@ -480,7 +480,7 @@ export function ImageGenerator() {
               <div>
                 <Label htmlFor="aspect-ratio" className="text-sm font-medium mb-1 block text-foreground/80">Aspect Ratio</Label>
                 <Select value={selectedAspectRatio} onValueChange={setSelectedAspectRatio}>
-                  <SelectTrigger id="aspect-ratio" className="w-full bg-background hover:bg-accent">
+                  <SelectTrigger id="aspect-ratio" className="w-full bg-background hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground">
                     <SelectValue placeholder="Select aspect ratio" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border">
