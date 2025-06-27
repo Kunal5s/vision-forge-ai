@@ -11,7 +11,7 @@ const pricingPlans = [
     price: '$0',
     description: 'For starters and hobbyists.',
     features: [
-      '20 Daily Fast Generations',
+      '200 Daily Fast Generations',
       'Standard quality generations',
       'Community support',
       'Personal use license',
@@ -26,7 +26,7 @@ const pricingPlans = [
     price: '$50',
     description: 'For professionals and creators.',
     features: [
-      '500 Google Credits/month',
+      '5,000 Google Credits/month',
       'Unlimited standard generations',
       'Fast generation speed',
       'Premium quality (up to 8K)',
@@ -44,7 +44,7 @@ const pricingPlans = [
     price: '$100',
     description: 'For power users and teams.',
     features: [
-      '1,500 Google Credits/month',
+      '15,000 Google Credits/month',
       'Unlimited standard generations',
       'Lightning-fast speed',
       'Premium quality (up to 8K)',

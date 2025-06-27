@@ -24,7 +24,7 @@ import type { GeneratedImageHistoryItem } from '@/types';
 import { ImageDisplay } from './ImageDisplay';
 import { UsageHistory } from './UsageHistory';
 import { FuturisticPanel } from './FuturisticPanel';
-import { Wand2, ThumbsUp, ThumbsDown, Gem, RefreshCw } from 'lucide-react';
+import { Wand2, ThumbsUp, ThumbsDown, Gem, RefreshCw, AlertTriangle } from 'lucide-react';
 import { LoadingSpinner } from './LoadingSpinner';
 import { useSubscription } from '@/hooks/use-subscription';
 import Link from 'next/link';
@@ -497,6 +497,18 @@ export function ImageGenerator() {
                 {isLoading ? <LoadingSpinner size={24} className="mr-2"/> : null}
                 Forge Vision
               </Button>
+              {!isSubLoading && !canGenerate(activeModel) && (
+                <div className="text-center text-sm text-destructive bg-destructive/10 p-3 rounded-md flex items-center justify-center gap-2">
+                    <AlertTriangle size={16} />
+                    <div>
+                        You've used all your credits. Please{' '}
+                        <Link href="/pricing" className="underline font-semibold">
+                            upgrade your plan
+                        </Link>
+                        {' '}to continue.
+                    </div>
+                </div>
+              )}
             </form>
           </FuturisticPanel>
         </div>
