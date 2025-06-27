@@ -4,30 +4,28 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import type { Subscription, Plan, Credits } from '@/types';
 
-// These would come from a real backend in a full implementation.
 const PLAN_CREDITS: Record<Plan, Credits> = {
-  free: { google: 0, pollinations: 10 },
-  pro: { google: 500, pollinations: 500 },
-  mega: { google: 1500, pollinations: 1500 },
+  free: { google: 0, pollinations: 20 }, // 20 daily credits for the free plan
+  pro: { google: 500, pollinations: Infinity }, // Paid plans get unlimited standard generations
+  mega: { google: 1500, pollinations: Infinity },
 };
 
 // SIMULATED DATABASE of purchased emails.
-// In a real app, this check would be done on a secure backend server.
 const MOCK_PURCHASED_EMAILS: Record<string, Plan> = {
   'pro@example.com': 'pro',
   'mega@example.com': 'mega',
 };
 
-// Define credit cost per generation for each plan
+// Define credit cost per generation
 const PLAN_CREDIT_COST: Record<Plan, { google: number; pollinations: number; }> = {
-  free: { google: 0, pollinations: 2 }, // Pollinations costs 2 credits for free users
-  pro: { google: 20, pollinations: 1 },
-  mega: { google: 15, pollinations: 1 },
+  free: { google: 0, pollinations: 2 }, // Free plan costs 2 credits per generation
+  pro: { google: 20, pollinations: 0 }, // Paid plans have no cost for standard model
+  mega: { google: 15, pollinations: 0 },
 };
 
 interface SubscriptionContextType {
   subscription: Subscription | null;
-  activateSubscription: (email: string) => boolean; // Returns true on success
+  activateSubscription: (email: string) => boolean;
   deactivateSubscription: () => void;
   useCredit: (model: 'google' | 'pollinations') => boolean;
   canGenerate: (model: 'google' | 'pollinations') => boolean;
@@ -41,6 +39,7 @@ const createFreePlan = (): Subscription => ({
   plan: 'free',
   status: 'active',
   credits: PLAN_CREDITS.free,
+  lastReset: new Date().toISOString(),
 });
 
 export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
@@ -60,28 +59,32 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     setIsLoading(true);
     try {
-      const storedSub = localStorage.getItem('imagenBrainAiSubscription');
-      if (storedSub) {
-        const parsedSub = JSON.parse(storedSub) as Subscription;
-        // Re-validate any stored paid plan to prevent tampering with local storage
-        if (parsedSub.plan !== 'free') {
-          const isValidPurchase = MOCK_PURCHASED_EMAILS[parsedSub.email.toLowerCase()] === parsedSub.plan;
-          if (isValidPurchase) {
-             // Ensure credits structure is up-to-date in case it changed
-            if (!parsedSub.credits || typeof parsedSub.credits.google === 'undefined') {
-                parsedSub.credits = PLAN_CREDITS[parsedSub.plan];
-            }
-            setSubscription(parsedSub);
-          } else {
-            // The stored plan is invalid, revert to free plan
-            saveSubscription(createFreePlan());
+      let storedSub = localStorage.getItem('imagenBrainAiSubscription');
+      let parsedSub: Subscription | null = storedSub ? JSON.parse(storedSub) : null;
+
+      if (parsedSub) {
+        // Handle daily reset for free users
+        if (parsedSub.plan === 'free') {
+          const lastResetDate = new Date(parsedSub.lastReset || 0);
+          const now = new Date();
+          const oneDay = 24 * 60 * 60 * 1000;
+          if (now.getTime() - lastResetDate.getTime() > oneDay) {
+            parsedSub.credits = PLAN_CREDITS.free;
+            parsedSub.lastReset = now.toISOString();
           }
-        } else {
-           if (!parsedSub.credits || typeof parsedSub.credits.google === 'undefined' || parsedSub.credits.google > 0) {
-              parsedSub.credits = PLAN_CREDITS.free; // Always ensure free plan has correct credits
-           }
-          setSubscription(parsedSub);
         }
+        // Validate paid plans against mock DB
+        else if (MOCK_PURCHASED_EMAILS[parsedSub.email.toLowerCase()] !== parsedSub.plan) {
+            parsedSub = createFreePlan(); // Downgrade if invalid
+        }
+        
+        // Ensure credit structure is always correct
+        if (!parsedSub.credits || typeof parsedSub.credits.google === 'undefined') {
+            parsedSub.credits = PLAN_CREDITS[parsedSub.plan];
+        }
+
+        saveSubscription(parsedSub);
+
       } else {
         saveSubscription(createFreePlan());
       }
@@ -95,18 +98,17 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 
   const activateSubscription = useCallback((email: string): boolean => {
     const purchasedPlan = MOCK_PURCHASED_EMAILS[email.toLowerCase()];
-
     if (purchasedPlan) {
         const newSubscription: Subscription = {
           email,
           plan: purchasedPlan,
           status: 'active',
           credits: PLAN_CREDITS[purchasedPlan],
+          lastReset: new Date().toISOString(),
         };
         saveSubscription(newSubscription);
         return true;
     }
-
     return false;
   }, [saveSubscription]);
 
@@ -117,17 +119,23 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   const useCredit = useCallback((model: 'google' | 'pollinations') => {
     if (isLoading || !subscription) return false;
     
-    if (model === 'google') {
-      if (subscription.plan === 'free') return false; // Free users cannot use Google model
-      const cost = PLAN_CREDIT_COST[subscription.plan].google;
+    const cost = PLAN_CREDIT_COST[subscription.plan][model];
+    if (cost === 0) return true; // No cost for this model/plan
+
+    if (model === 'pollinations' && subscription.plan === 'free') {
+      if (subscription.credits.pollinations >= cost) {
+        const newSub = { ...subscription, credits: { ...subscription.credits, pollinations: subscription.credits.pollinations - cost }};
+        saveSubscription(newSub);
+        return true;
+      }
+    }
+    
+    if (model === 'google' && subscription.plan !== 'free') {
       if (subscription.credits.google >= cost) {
           const newSub = { ...subscription, credits: { ...subscription.credits, google: subscription.credits.google - cost } };
           saveSubscription(newSub);
           return true;
       }
-    } else if (model === 'pollinations') {
-       // Pollinations model is free and does not consume credits.
-       return true;
     }
 
     return false;
@@ -137,12 +145,13 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
     if (isLoading || !subscription) return false;
 
     if (model === 'google') {
-        if (subscription.plan === 'free') return false; // Free users cannot use Google model at all
-        const cost = PLAN_CREDIT_COST[subscription.plan].google;
-        return subscription.credits.google >= cost;
-    } else if (model === 'pollinations') {
-        // Pollinations model is always available.
-        return true;
+      if (subscription.plan === 'free') return false;
+      return subscription.credits.google >= PLAN_CREDIT_COST[subscription.plan].google;
+    }
+
+    if (model === 'pollinations') {
+      if (subscription.plan !== 'free') return true; // Paid plans have unlimited
+      return subscription.credits.pollinations >= PLAN_CREDIT_COST[subscription.plan].pollinations;
     }
     
     return false;

@@ -23,5 +23,6 @@ export interface Subscription {
   plan: Plan;
   status: 'active' | 'inactive';
   credits: Credits; // Changed from number to Credits object
-  expires?: string; 
+  expires?: string;
+  lastReset: string; // ISO string to track daily credit reset for free plan
 }

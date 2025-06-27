@@ -3,10 +3,11 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import { Header } from '@/components/layout/Header'; // Import Header
+import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer'; 
 import { PreFooterCallToAction } from '@/components/layout/PreFooterCallToAction'; 
 import { SubscriptionProvider } from '@/hooks/use-subscription';
+import { CookieConsent } from '@/components/layout/CookieConsent';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -18,7 +19,6 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
-// Programmatically create an SVG icon to avoid creating new files.
 const iconSvg = `<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="8" fill="#3B82F6"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="20px" fill="white">B</text></svg>`;
 const iconDataUrl = `data:image/svg+xml,${encodeURIComponent(iconSvg)}`;
 
@@ -56,6 +56,7 @@ export default function RootLayout({
           <PreFooterCallToAction /> 
           <Footer />
           <Toaster />
+          <CookieConsent />
         </SubscriptionProvider>
       </body>
     </html>

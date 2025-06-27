@@ -24,7 +24,7 @@ import type { GeneratedImageHistoryItem } from '@/types';
 import { ImageDisplay } from './ImageDisplay';
 import { UsageHistory } from './UsageHistory';
 import { FuturisticPanel } from './FuturisticPanel';
-import { Wand2, ThumbsUp, ThumbsDown, Gem } from 'lucide-react';
+import { Wand2, ThumbsUp, ThumbsDown, Gem, RefreshCw } from 'lucide-react';
 import { LoadingSpinner } from './LoadingSpinner';
 import { useSubscription } from '@/hooks/use-subscription';
 import Link from 'next/link';
@@ -68,7 +68,6 @@ export function ImageGenerator() {
   });
   const currentPrompt = watch('prompt');
 
-  // If user plan changes to free (e.g. logout), switch model back to pollinations
   useEffect(() => {
     if (subscription?.plan === 'free' && activeModel === 'google') {
       setActiveModel('pollinations');
@@ -83,7 +82,6 @@ export function ImageGenerator() {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         if (!ctx) {
-          console.error('Could not get canvas context, returning original URL.');
           return resolve(dataUrl);
         }
         
@@ -107,10 +105,9 @@ export function ImageGenerator() {
         
         ctx.drawImage(img, sx, sy, sw, sh, 0, 0, width, height);
         
-        resolve(canvas.toDataURL('image/jpeg', 0.7)); // Use JPEG for smaller size
+        resolve(canvas.toDataURL('image/jpeg', 0.7));
       };
-      img.onerror = (err) => {
-        console.error("Failed to load image for thumbnail creation, returning original URL.", err);
+      img.onerror = () => {
         resolve(dataUrl);
       };
       img.src = dataUrl;
@@ -124,7 +121,6 @@ export function ImageGenerator() {
         try {
           setHistory(JSON.parse(storedHistory).map((item:GeneratedImageHistoryItem) => ({...item, timestamp: new Date(item.timestamp)})));
         } catch (e) {
-          console.error("Failed to parse history from localStorage", e);
           localStorage.removeItem('imagenBrainAiHistory');
         }
       }
@@ -139,17 +135,10 @@ export function ImageGenerator() {
           try {
             localStorage.setItem('imagenBrainAiHistory', JSON.stringify(history));
           } catch (e: any) {
-            console.error("Failed to save history to localStorage:", e);
             if (e instanceof DOMException && e.name === 'QuotaExceededError') {
                 toast({
                   title: "Could not save history",
-                  description: "Your browser storage is full. Please clear some history items to save new ones.",
-                  variant: "destructive"
-                });
-            } else {
-                toast({
-                  title: "Could not save history",
-                  description: "An unknown error occurred while saving to browser storage.",
+                  description: "Your browser storage is full.",
                   variant: "destructive"
                 });
             }
@@ -163,12 +152,12 @@ export function ImageGenerator() {
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     if (!canGenerate(activeModel)) {
         toast({
-          title: 'Out of Credits',
+          title: 'Out of Daily Credits',
           description: (
             <span>
-              You don't have enough credits to generate with this model. Please{' '}
+              Please {' '}
               <Link href="/pricing" className="text-primary underline">upgrade your plan</Link>
-              {' '}to continue creating.
+              {' '} to get more credits and access premium models.
             </span>
           ),
           variant: 'destructive',
@@ -183,105 +172,58 @@ export function ImageGenerator() {
 
     const creditUsed = useCredit(activeModel);
     if (!creditUsed) {
-      toast({ title: 'Credit Error', description: 'Could not use credits for this generation. Please try again.', variant: 'destructive' });
+      toast({ title: 'Credit Error', description: 'Could not use credits. Please try again.', variant: 'destructive' });
       setIsLoading(false);
       return;
     }
 
+    let finalPrompt = data.prompt;
     if (activeModel === 'pollinations') {
-      const promptParts = [data.prompt];
-      if (selectedStyle !== 'None') promptParts.push(selectedStyle);
-      if (selectedMood !== 'None') promptParts.push(`${selectedMood} mood`);
-      if (selectedLighting !== 'None') promptParts.push(selectedLighting);
-      if (selectedColor !== 'None') promptParts.push(`${selectedColor} color palette`);
-      
-      const fullPrompt = promptParts.join(', ');
-      const encodedPrompt = encodeURIComponent(fullPrompt);
-
-      const [aspectW, aspectH] = selectedAspectRatio.split(':').map(Number);
-      const baseSize = 1024;
-      let width, height;
-      if (aspectW > aspectH) {
-        width = baseSize;
-        height = Math.round((baseSize * aspectH) / aspectW);
-      } else {
-        height = baseSize;
-        width = Math.round((baseSize * aspectW) / aspectH);
-      }
-      
-      const imageUrls = Array.from({ length: 2 }).map(() => {
-        const seed = Math.floor(Math.random() * 1000000);
-        return `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
-      });
-      
-      try {
-        const response = await fetch(imageUrls[0]);
-        if (!response.ok || !response.headers.get('content-type')?.startsWith('image/')) {
-          throw new Error('The free image service did not return a valid image. It may be busy or the prompt was not suitable.');
-        }
-        setGeneratedImageUrls(imageUrls);
-        toast({ title: 'Vision Forged!', description: 'Two variations have been generated with Pollinations.' });
-      } catch (e: any) {
-        console.error('Pollinations API check failed:', e);
-        // Silently fail as requested. Reset UI without showing an error.
-        setGeneratedImageUrls([]);
-        setError(null);
-      } finally {
-        setIsLoading(false);
-      }
-      return;
+        const promptParts = [data.prompt];
+        if (selectedStyle !== 'None') promptParts.push(selectedStyle);
+        if (selectedMood !== 'None') promptParts.push(`${selectedMood} mood`);
+        if (selectedLighting !== 'None') promptParts.push(selectedLighting);
+        if (selectedColor !== 'None') promptParts.push(`${selectedColor} color palette`);
+        finalPrompt = promptParts.join(', ');
+    }
+    
+    if (activeModel === 'google') {
+        const promptParts = [data.prompt];
+        if (selectedStyle !== 'None') promptParts.push(selectedStyle);
+        if (selectedMood !== 'None') promptParts.push(`${selectedMood} mood`);
+        if (selectedLighting !== 'None') promptParts.push(selectedLighting);
+        if (selectedColor !== 'None') promptParts.push(`${selectedColor} color palette`);
+        const aspectRatioTextHint = aspectRatiosWithText.find(ar => ar.value === selectedAspectRatio)?.textHint || '';
+        if (aspectRatioTextHint) promptParts.push(aspectRatioTextHint);
+        finalPrompt = promptParts.join(', ');
     }
 
-    if (activeModel === 'google') {
-      const qualityPrompt = (subscription?.plan === 'pro' || subscription?.plan === 'mega') 
-        ? "8K resolution, photorealistic, ultra-detailed, professional photography"
-        : "HD photo, 1080p";
+    const generationParams: GenerateImageInput = { prompt: finalPrompt };
+    const result = await generateImage(generationParams);
 
-      const promptParts = [data.prompt, qualityPrompt];
+    setIsLoading(false);
+
+    if (result.error) {
+      setError(result.error);
+      toast({ title: 'Generation Failed', description: result.error, variant: 'destructive', duration: 9000 });
+    } else if (result.imageUrls && result.imageUrls.length > 0) {
+      setGeneratedImageUrls(result.imageUrls);
       
-      if (selectedStyle !== 'None') promptParts.push(selectedStyle);
-      if (selectedMood !== 'None') promptParts.push(`${selectedMood} mood`);
-      if (selectedLighting !== 'None') promptParts.push(selectedLighting);
-      if (selectedColor !== 'None') promptParts.push(`${selectedColor} color palette`);
-
-      const aspectRatioTextHint = aspectRatiosWithText.find(ar => ar.value === selectedAspectRatio)?.textHint || '';
-      if (aspectRatioTextHint) promptParts.push(aspectRatioTextHint);
-
-      const fullPrompt = promptParts.join(', ');
-
-      const generationParams: GenerateImageInput = {
-        prompt: fullPrompt,
-      };
-      
-      const result = await generateImage(generationParams);
-
-      setIsLoading(false);
-
-      if (result.error) {
-        console.error('Image generation error from flow:', result.error);
-        setError(result.error);
-        toast({ title: 'Generation Failed', description: result.error, variant: 'destructive', duration: 9000 });
-      } else if (result.imageUrls && result.imageUrls.length > 0) {
-        setGeneratedImageUrls(result.imageUrls);
-        
-        if (subscription?.plan === 'pro' || subscription?.plan === 'mega') {
-          const thumbnailUrl = await createThumbnail(result.imageUrls[0]);
-          const historyItem: GeneratedImageHistoryItem = {
-            id: new Date().toISOString() + Math.random().toString(36).substring(2,9),
-            prompt: data.prompt,
-            aspectRatio: selectedAspectRatio,
-            imageUrl: thumbnailUrl,
-            timestamp: new Date(),
-          };
-          setHistory(prev => [historyItem, ...prev.slice(0, 19)]);
-        }
-
-        toast({ title: 'Vision Forged!', description: `Your images have been successfully generated.` });
-      } else {
-        const fallbackError = 'The AI returned no images. This can happen with very complex or unsafe prompts. Please try simplifying your request.';
-        setError(fallbackError);
-        toast({ title: 'Generation Issue', description: fallbackError, variant: 'destructive' });
+      if ((subscription?.plan === 'pro' || subscription?.plan === 'mega') && activeModel === 'google') {
+        const thumbnailUrl = await createThumbnail(result.imageUrls[0]);
+        const historyItem: GeneratedImageHistoryItem = {
+          id: new Date().toISOString() + Math.random().toString(36).substring(2,9),
+          prompt: data.prompt,
+          aspectRatio: selectedAspectRatio,
+          imageUrl: thumbnailUrl,
+          timestamp: new Date(),
+        };
+        setHistory(prev => [historyItem, ...prev.slice(0, 19)]);
       }
+
+      toast({ title: 'Vision Forged!', description: `Your images have been successfully generated.` });
+    } else {
+      setError('The AI returned no images. This can happen with very complex or unsafe prompts. Please try simplifying your request.');
     }
   };
 
@@ -338,15 +280,14 @@ export function ImageGenerator() {
   };
 
   const handleSelectHistoryItem = (item: GeneratedImageHistoryItem) => {
-    setActiveModel('google'); // History is a premium feature, so switch to the Google model
+    setActiveModel('google');
     setFormValue('prompt', item.prompt);
     setSelectedAspectRatio(item.aspectRatio);
-    // Reset other controls to default as they are not stored in history
     setSelectedStyle(STYLES[0]);
     setSelectedMood(MOODS[0]);
     setSelectedLighting(LIGHTING_OPTIONS[0]);
     setSelectedColor(COLOR_OPTIONS[0]);
-    setGeneratedImageUrls([]); // Clear the main display
+    setGeneratedImageUrls([]);
     setError(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
     toast({ title: 'History Item Loaded', description: 'Parameters loaded. Click "Forge Vision" to regenerate.' });
@@ -354,13 +295,12 @@ export function ImageGenerator() {
 
   const handleDeleteHistoryItem = (id: string) => {
     setHistory(prev => prev.filter(item => item.id !== id));
-    toast({ title: 'History Item Deleted', description: 'The item was removed from your history.' });
+    toast({ title: 'History Item Deleted' });
   };
 
   const handleClearHistory = () => {
     setHistory([]);
-    localStorage.removeItem('imagenBrainAiHistory');
-    toast({ title: 'History Cleared', description: 'All generated image history has been cleared.' });
+    toast({ title: 'History Cleared' });
   };
   
   let creditDisplayNode = null;
@@ -382,12 +322,21 @@ export function ImageGenerator() {
         );
       }
     } else { // activeModel is 'pollinations'
-      creditInfo = (
-        <div className="flex items-center gap-2">
-          <Wand2 size={16} />
-          <span className="font-semibold">Unlimited Standard Generations</span>
-        </div>
-      );
+       if (plan === 'free') {
+         creditInfo = (
+          <div className="flex items-center gap-2">
+            <RefreshCw size={16} />
+            <span className="font-semibold">{`${credits.pollinations} Daily Credits`}</span>
+          </div>
+        );
+       } else {
+         creditInfo = (
+            <div className="flex items-center gap-2">
+              <Wand2 size={16} />
+              <span className="font-semibold">Unlimited Standard</span>
+            </div>
+         );
+       }
     }
     
     const themeClass = activeModel === 'google' && plan !== 'free' 

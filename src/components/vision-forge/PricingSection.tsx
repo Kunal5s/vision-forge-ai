@@ -11,9 +11,9 @@ const pricingPlans = [
     price: '$0',
     description: 'For starters and hobbyists.',
     features: [
-      'Unlimited standard generations',
+      '20 Daily Standard Generations',
       'Standard quality generations',
-      'Pollinations model access',
+      'Community support',
       'Personal use license',
     ],
     buttonText: 'Start Generating',
