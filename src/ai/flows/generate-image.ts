@@ -47,7 +47,7 @@ const generateImageFlow = ai.defineFlow(
 
     try {
       if (input.plan === 'pro' || input.plan === 'mega') {
-          // Premium model logic
+          // Premium model logic for Pro and Mega plans (2 images)
           const promptEnhancement = input.plan === 'mega'
             ? "Masterpiece, best quality, professional photograph, 8K, cinematic lighting." // Simulating Imagen 3
             : "Photorealistic, 4K, ultra-detailed."; // Simulating Imagen 2
@@ -76,7 +76,7 @@ const generateImageFlow = ai.defineFlow(
           return { imageUrls: [], error: failureReason };
 
       } else {
-          // Pollinations (free model) logic - non-blocking
+          // Free plan logic (1 image)
           const encodedPrompt = encodeURIComponent(input.prompt);
           
           // Use the passed aspect ratio directly. Default to 1:1 if invalid.
@@ -97,11 +97,9 @@ const generateImageFlow = ai.defineFlow(
               // if they are equal, it remains 1024x1024
           }
 
-
+          // Generate a single image for the free plan for reliability and speed.
           const urls = Array.from({ length: 1 }, () => `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${Math.floor(Math.random() * 100000)}&nologo=true`);
           
-          // Return the URLs directly for the frontend to handle without a pre-flight check.
-          // This makes the UI feel much faster. The client will handle load states.
           return { imageUrls: urls };
       }
       
