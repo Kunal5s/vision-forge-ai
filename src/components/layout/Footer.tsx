@@ -19,22 +19,22 @@ export function Footer() {
           
           <div>
             <h3 className="text-md font-semibold text-foreground mb-4">Our Services</h3>
-            <ul className="space-y-2 text-sm">
-              <li><Link href="/" className="text-muted-foreground hover:text-primary transition-colors">AI Image Generation</Link></li>
-              <li><Link href="/pricing" className="text-muted-foreground hover:text-primary transition-colors">Pricing</Link></li>
-              <li><Link href="/#features" className="text-muted-foreground hover:text-primary transition-colors">Prompt Enhancement</Link></li>
-              <li><Link href="/#features" className="text-muted-foreground hover:text-primary transition-colors">Style Customization</Link></li>
+            <ul className="space-y-1 text-sm">
+              <li><Link href="/" className="block text-muted-foreground rounded-md -ml-2 px-2 py-1 transition-colors hover:bg-muted">AI Image Generation</Link></li>
+              <li><Link href="/pricing" className="block text-muted-foreground rounded-md -ml-2 px-2 py-1 transition-colors hover:bg-muted">Pricing</Link></li>
+              <li><Link href="/#features" className="block text-muted-foreground rounded-md -ml-2 px-2 py-1 transition-colors hover:bg-muted">Prompt Enhancement</Link></li>
+              <li><Link href="/#features" className="block text-muted-foreground rounded-md -ml-2 px-2 py-1 transition-colors hover:bg-muted">Style Customization</Link></li>
             </ul>
           </div>
 
           <div>
             <h3 className="text-md font-semibold text-foreground mb-4">Legal</h3>
-            <ul className="space-y-2 text-sm">
-              <li><Link href="/about" className="text-muted-foreground hover:text-primary transition-colors">About Us</Link></li>
-              <li><Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact Us</Link></li>
-              <li><Link href="/privacy" className="text-muted-foreground hover:text-primary transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="text-muted-foreground hover:text-primary transition-colors">Terms of Service</Link></li>
-              <li><Link href="/disclaimer" className="text-muted-foreground hover:text-primary transition-colors">Disclaimer</Link></li>
+            <ul className="space-y-1 text-sm">
+              <li><Link href="/about" className="block text-muted-foreground rounded-md -ml-2 px-2 py-1 transition-colors hover:bg-muted">About Us</Link></li>
+              <li><Link href="/contact" className="block text-muted-foreground rounded-md -ml-2 px-2 py-1 transition-colors hover:bg-muted">Contact Us</Link></li>
+              <li><Link href="/privacy" className="block text-muted-foreground rounded-md -ml-2 px-2 py-1 transition-colors hover:bg-muted">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="block text-muted-foreground rounded-md -ml-2 px-2 py-1 transition-colors hover:bg-muted">Terms of Service</Link></li>
+              <li><Link href="/disclaimer" className="block text-muted-foreground rounded-md -ml-2 px-2 py-1 transition-colors hover:bg-muted">Disclaimer</Link></li>
             </ul>
           </div>
           
