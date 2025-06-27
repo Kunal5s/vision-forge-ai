@@ -49,10 +49,11 @@ const generateImageFlow = ai.defineFlow(
       if (input.plan === 'pro' || input.plan === 'mega') {
           // Premium model logic for Pro and Mega plans (2 images)
           const promptEnhancement = input.plan === 'mega'
-            ? "Masterpiece, best quality, professional photograph, cinematic lighting, ultra-high resolution." // Simulating Imagen 3
-            : "Photorealistic, highly detailed, professional quality."; // Simulating Imagen 2
+            ? "Masterpiece, best quality, professional photograph, cinematic lighting, ultra-high resolution, 8k."
+            : "Photorealistic, highly detailed, professional quality, 4k.";
             
-          const enhancedPrompt = `${promptEnhancement} ${input.prompt}`;
+          // Create a more direct and reliable prompt that explicitly states the aspect ratio.
+          const enhancedPrompt = `A ${input.aspectRatio} aspect ratio image of: ${input.prompt}. Style: ${promptEnhancement}`;
 
           // Generate 2 images in a single, more efficient API call.
           const result = await ai.generate({
@@ -79,27 +80,28 @@ const generateImageFlow = ai.defineFlow(
           // Free plan logic (1 image)
           const encodedPrompt = encodeURIComponent(input.prompt);
           
-          // Use the passed aspect ratio directly. Default to 1:1 if invalid.
           const [aspectW, aspectH] = (input.aspectRatio.split(':').map(Number) || [1, 1]);
 
           // Lower resolution for free plan for significantly faster generation and loading.
-          let width = 512;
-          let height = 512;
+          const maxDimension = 512;
+          let width = maxDimension;
+          let height = maxDimension;
 
-          // Calculate dimensions based on the aspect ratio, maintaining a max dimension of 512px
+          // Calculate dimensions and round to nearest 64 to improve API compatibility
           if (aspectW && aspectH && !isNaN(aspectW) && !isNaN(aspectH) && aspectW > 0 && aspectH > 0) {
               if (aspectW > aspectH) {
-                  width = 512;
-                  height = Math.round((512 * aspectH) / aspectW);
+                  width = maxDimension;
+                  height = Math.round( (maxDimension * aspectH) / aspectW );
               } else if (aspectH > aspectW) {
-                  height = 512;
-                  width = Math.round((512 * aspectW) / aspectH);
+                  height = maxDimension;
+                  width = Math.round( (maxDimension * aspectW) / aspectH );
               }
-              // if they are equal, it remains 512x512
+              // Round to nearest 64 for better compatibility
+              width = Math.max(64, Math.round(width / 64) * 64);
+              height = Math.max(64, Math.round(height / 64) * 64);
           }
 
-          // Generate a single image for the free plan for reliability and speed.
-          const urls = Array.from({ length: 1 }, () => `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${Math.floor(Math.random() * 100000)}&nologo=true`);
+          const urls = [`https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${Math.floor(Math.random() * 100000)}&nologo=true`];
           
           return { imageUrls: urls };
       }

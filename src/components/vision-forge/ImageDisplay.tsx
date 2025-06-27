@@ -203,16 +203,11 @@ export function ImageDisplay({
         {!isLoading && !error && imageUrls.length > 0 && (
           <div className={cn(
             "w-full h-full grid gap-1",
-             imageUrls.length > 1 ? "grid-cols-2" : "grid-cols-1" // Use 2 columns only if there are 2 images
+             imageUrls.length > 1 ? "grid-cols-2" : "grid-cols-1"
             )}>
             {imageUrls.map((url, index) => {
                 const key = `${url}-${index}`;
                 const state = imageStates[key];
-
-                // Don't render a slot for images that failed to load
-                if (state === 'error') {
-                    return null;
-                }
 
                 return (
                   <div key={key} className={cn("relative rounded-md overflow-hidden bg-muted/30", getAspectRatioClass(aspectRatio))}>
@@ -221,13 +216,25 @@ export function ImageDisplay({
                           <LoadingSpinner size={32} />
                         </div>
                     )}
+
+                    {state === 'error' && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-destructive/10 text-destructive text-center p-2">
+                          <AlertTriangle size={24} />
+                          <p className="text-xs mt-1 font-semibold">Load Failed</p>
+                          <p className="text-[10px] opacity-80">Service may be busy. Try again.</p>
+                        </div>
+                    )}
                     
                     <Image
                         src={url}
                         alt={`${prompt || 'Generated AI image'} - variation ${index + 1}`}
                         layout="fill"
                         objectFit="cover"
-                        className={cn("transition-opacity duration-500", state === 'loaded' ? 'opacity-100' : 'opacity-0')}
+                        className={cn(
+                            "transition-opacity duration-500", 
+                            state === 'loaded' ? 'opacity-100' : 'opacity-0',
+                            state === 'error' ? '!hidden' : ''
+                        )}
                         onLoad={() => handleImageLoad(key)}
                         onError={() => handleImageError(key)}
                         data-ai-hint="generated art"
