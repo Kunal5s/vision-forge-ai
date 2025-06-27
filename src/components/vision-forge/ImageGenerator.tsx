@@ -195,15 +195,24 @@ export function ImageGenerator() {
       if (selectedLighting !== 'None') promptParts.push(selectedLighting);
       if (selectedColor !== 'None') promptParts.push(`${selectedColor} color palette`);
       
-      const aspectRatioTextHint = aspectRatiosWithText.find(ar => ar.value === selectedAspectRatio)?.textHint || '';
-      if (aspectRatioTextHint) promptParts.push(aspectRatioTextHint);
-  
       const fullPrompt = promptParts.join(', ');
       const encodedPrompt = encodeURIComponent(fullPrompt);
+
+      // Calculate width and height from aspect ratio string
+      const [aspectW, aspectH] = selectedAspectRatio.split(':').map(Number);
+      const baseSize = 1024;
+      let width, height;
+      if (aspectW > aspectH) {
+        width = baseSize;
+        height = Math.round((baseSize * aspectH) / aspectW);
+      } else {
+        height = baseSize;
+        width = Math.round((baseSize * aspectW) / aspectH);
+      }
       
       const imageUrls = Array.from({ length: 4 }).map(() => {
         const seed = Math.floor(Math.random() * 1000000);
-        return `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true`;
+        return `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
       });
       
       setGeneratedImageUrls(imageUrls);
