@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, Rea
 import type { Subscription, Plan, Credits } from '@/types';
 
 const PLAN_CREDITS: Record<Plan, Credits> = {
-  free: { google: 0, pollinations: 200 }, // 200 daily credits for the free plan
+  free: { google: 0, pollinations: 2000 }, // 2000 daily credits for the free plan
   pro: { google: 5000, pollinations: Infinity }, // Paid plans get unlimited standard generations
   mega: { google: 15000, pollinations: Infinity },
 };
@@ -63,15 +63,11 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
       let parsedSub: Subscription | null = storedSub ? JSON.parse(storedSub) : null;
 
       if (parsedSub) {
-        // Handle daily reset for free users
+        // Handle daily reset for free users - MODIFIED FOR TESTING
         if (parsedSub.plan === 'free') {
-          const lastResetDate = new Date(parsedSub.lastReset || 0);
-          const now = new Date();
-          const oneDay = 24 * 60 * 60 * 1000;
-          if (now.getTime() - lastResetDate.getTime() > oneDay) {
-            parsedSub.credits = PLAN_CREDITS.free;
-            parsedSub.lastReset = now.toISOString();
-          }
+          // This is modified to reset credits on every load for easy testing.
+          parsedSub.credits = PLAN_CREDITS.free;
+          parsedSub.lastReset = new Date().toISOString();
         }
         // Validate paid plans against mock DB
         else if (MOCK_PURCHASED_EMAILS[parsedSub.email.toLowerCase()] !== parsedSub.plan) {
