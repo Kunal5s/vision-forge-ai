@@ -31,6 +31,9 @@ export const metadata: Metadata = {
   keywords: 'AI image generator, text to image, AI art generator, free AI image generator, create AI art, Google Imagen, AI photo generator, text to art, AI image creator',
   verification: {
     google: 'aa8zBqwKzkPcVhwnOe6eO2zOlvMqqUk41xpBzV9kSts',
+    other: {
+      'netpub_7b9465a6c000fc668f19805afb86902b': '7b9465a6c000fc668f19805afb86902b_05f79ef00f4f084d4066151ea34f5b21',
+    },
   },
   icons: {
     icon: iconDataUrl,
