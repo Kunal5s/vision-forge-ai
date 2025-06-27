@@ -11,7 +11,7 @@ const pricingPlans = [
     price: '$0',
     description: 'For starters and hobbyists.',
     features: [
-      '20 Daily Standard Generations',
+      '20 Daily Fast Generations',
       'Standard quality generations',
       'Community support',
       'Personal use license',

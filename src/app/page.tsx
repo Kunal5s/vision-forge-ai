@@ -60,8 +60,8 @@ export default function HomePage() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           <FeatureCard
             icon={<ZoomIn className="h-10 w-10 text-primary" />}
-            title="Generate Hyper-Detailed 4K Images"
-            description="Leverage our enhanced prompting to generate AI images with breathtaking detail and sharpness. Our text-to-image model is instructed to aim for a 4K, ultra-detailed look for every creation."
+            title="Premium High-Resolution Images"
+            description="Upgrade to our Pro or Mega plans to generate AI images with breathtaking detail and sharpness using advanced Google AI models for professional-quality results."
             iconBgClass="bg-primary/10"
             iconTextClass="text-primary"
           />

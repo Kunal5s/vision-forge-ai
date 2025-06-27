@@ -49,8 +49,8 @@ const generateImageFlow = ai.defineFlow(
       if (input.plan === 'pro' || input.plan === 'mega') {
           // Premium model logic for Pro and Mega plans (2 images)
           const promptEnhancement = input.plan === 'mega'
-            ? "Masterpiece, best quality, professional photograph, 8K, cinematic lighting." // Simulating Imagen 3
-            : "Photorealistic, 4K, ultra-detailed."; // Simulating Imagen 2
+            ? "Masterpiece, best quality, professional photograph, cinematic lighting, ultra-high resolution." // Simulating Imagen 3
+            : "Photorealistic, highly detailed, professional quality."; // Simulating Imagen 2
             
           const enhancedPrompt = `${promptEnhancement} ${input.prompt}`;
 
@@ -82,19 +82,20 @@ const generateImageFlow = ai.defineFlow(
           // Use the passed aspect ratio directly. Default to 1:1 if invalid.
           const [aspectW, aspectH] = (input.aspectRatio.split(':').map(Number) || [1, 1]);
 
-          let width = 1024;
-          let height = 1024;
+          // Lower resolution for free plan for significantly faster generation and loading.
+          let width = 512;
+          let height = 512;
 
-          // Calculate dimensions based on the aspect ratio, maintaining a max dimension of 1024px
+          // Calculate dimensions based on the aspect ratio, maintaining a max dimension of 512px
           if (aspectW && aspectH && !isNaN(aspectW) && !isNaN(aspectH) && aspectW > 0 && aspectH > 0) {
               if (aspectW > aspectH) {
-                  width = 1024;
-                  height = Math.round((1024 * aspectH) / aspectW);
+                  width = 512;
+                  height = Math.round((512 * aspectH) / aspectW);
               } else if (aspectH > aspectW) {
-                  height = 1024;
-                  width = Math.round((1024 * aspectW) / aspectH);
+                  height = 512;
+                  width = Math.round((512 * aspectW) / aspectH);
               }
-              // if they are equal, it remains 1024x1024
+              // if they are equal, it remains 512x512
           }
 
           // Generate a single image for the free plan for reliability and speed.
