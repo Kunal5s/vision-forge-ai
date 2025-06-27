@@ -182,7 +182,7 @@ export function ImageDisplay({
   };
 
   return (
-    <FuturisticPanel className="flex flex-col gap-4 h-full">
+    <FuturisticPanel className="flex flex-col gap-4 h-full animate-breathing-glow">
       <div className={cn(
           "w-full rounded-lg bg-background flex items-center justify-center min-h-[300px] md:min-h-[400px] overflow-hidden p-1 relative"
         )}

@@ -82,11 +82,16 @@ export default {
   				to: {
   					height: '0'
   				}
-  			}
+  			},
+        'breathing-glow': {
+          '0%, 100%': { boxShadow: '0 0 5px hsl(var(--primary) / 0.1), 0 0 10px hsl(var(--primary) / 0.05)' },
+          '50%': { boxShadow: '0 0 15px hsl(var(--primary) / 0.2), 0 0 25px hsl(var(--primary) / 0.1)' },
+        }
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+        'breathing-glow': 'breathing-glow 4s ease-in-out infinite alternate',
   		}
   	}
   },
