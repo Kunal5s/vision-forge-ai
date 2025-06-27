@@ -216,14 +216,6 @@ export function ImageDisplay({
                           <LoadingSpinner size={32} />
                         </div>
                     )}
-
-                    {state === 'error' && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-destructive/10 text-destructive text-center p-2">
-                          <AlertTriangle size={24} />
-                          <p className="text-xs mt-1 font-semibold">Load Failed</p>
-                          <p className="text-[10px] opacity-80">Service may be busy. Try again.</p>
-                        </div>
-                    )}
                     
                     <Image
                         src={url}

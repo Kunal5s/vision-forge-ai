@@ -15,9 +15,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSubscription } from '@/hooks/use-subscription';
-import { UserCheck, UserX, ArrowUpCircle } from 'lucide-react';
+import { UserCheck, UserX, ArrowUpCircle, CalendarDays } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
 
 export function SubscriptionManager() {
   const { subscription, activateSubscription, deactivateSubscription, isLoading } = useSubscription();
@@ -67,6 +68,17 @@ export function SubscriptionManager() {
   }
 
   const isFreePlan = !subscription || subscription.plan === 'free';
+  
+  const getDaysRemaining = () => {
+    if (!subscription || !subscription.purchaseDate || isFreePlan) return 0;
+    const purchaseDate = new Date(subscription.purchaseDate);
+    const expiryDate = new Date(purchaseDate);
+    expiryDate.setDate(purchaseDate.getDate() + 30);
+    const daysRemaining = Math.max(0, Math.ceil((expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)));
+    return daysRemaining;
+  };
+
+  const daysRemaining = getDaysRemaining();
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -81,12 +93,12 @@ export function SubscriptionManager() {
           <DialogTitle>{isFreePlan ? 'Activate Your Purchased Plan' : 'Manage Your Subscription'}</DialogTitle>
           <DialogDescription>
             {subscription && !isFreePlan
-              ? `Your ${subscription.plan.toUpperCase()} plan is active for ${subscription.email}.`
+              ? "View your current plan details or deactivate your subscription."
               : "To access the premium VisionForge AI model and get more credits, please purchase a plan and activate it with your email."}
           </DialogDescription>
         </DialogHeader>
         
-        {isFreePlan && (
+        {isFreePlan ? (
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="email" className="text-right">
@@ -110,6 +122,24 @@ export function SubscriptionManager() {
                 View Plans
               </Link>
             </p>
+          </div>
+        ) : (
+          <div className="space-y-4 py-4">
+            <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Email:</span>
+                <span className="font-semibold text-foreground">{subscription?.email}</span>
+            </div>
+             <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Plan:</span>
+                <Badge variant={subscription?.plan === 'mega' ? 'default' : 'secondary'} className="capitalize">{subscription?.plan}</Badge>
+            </div>
+             <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Validity:</span>
+                 <div className="flex items-center gap-1 font-semibold text-foreground">
+                    <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                    {daysRemaining} days remaining
+                 </div>
+            </div>
           </div>
         )}
 

@@ -47,21 +47,21 @@ const generateImageFlow = ai.defineFlow(
 
     try {
       if (input.plan === 'pro' || input.plan === 'mega') {
-          // Premium model logic for Pro and Mega plans (2 images)
-          const promptEnhancement = input.plan === 'mega'
+          // Premium model logic for Pro and Mega plans
+          const isMega = input.plan === 'mega';
+          
+          const promptEnhancement = isMega
             ? "Masterpiece, best quality, professional photograph, cinematic lighting, ultra-high resolution, 8k."
             : "Photorealistic, highly detailed, professional quality, 4k.";
             
-          // Create a more direct and reliable prompt that explicitly states the aspect ratio.
           const enhancedPrompt = `A ${input.aspectRatio} aspect ratio image of: ${input.prompt}. Style: ${promptEnhancement}`;
 
-          // Generate 2 images in a single, more efficient API call.
           const result = await ai.generate({
             model: 'googleai/gemini-2.0-flash-preview-image-generation',
             prompt: enhancedPrompt,
             config: { 
                 responseModalities: ['TEXT', 'IMAGE'],
-                candidates: 2 // Ask for 2 image candidates
+                candidates: 2
             },
           });
 
@@ -82,12 +82,10 @@ const generateImageFlow = ai.defineFlow(
           
           const [aspectW, aspectH] = (input.aspectRatio.split(':').map(Number) || [1, 1]);
 
-          // Lower resolution for free plan for significantly faster generation and loading.
           const maxDimension = 512;
           let width = maxDimension;
           let height = maxDimension;
 
-          // Calculate dimensions and round to nearest 64 to improve API compatibility
           if (aspectW && aspectH && !isNaN(aspectW) && !isNaN(aspectH) && aspectW > 0 && aspectH > 0) {
               if (aspectW > aspectH) {
                   width = maxDimension;
@@ -96,14 +94,13 @@ const generateImageFlow = ai.defineFlow(
                   height = maxDimension;
                   width = Math.round( (maxDimension * aspectW) / aspectH );
               }
-              // Round to nearest 64 for better compatibility
               width = Math.max(64, Math.round(width / 64) * 64);
               height = Math.max(64, Math.round(height / 64) * 64);
           }
 
           const urls = [`https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${Math.floor(Math.random() * 100000)}&nologo=true`];
           
-          return { imageUrls: urls };
+          return { imageUrls: [urls[0]] };
       }
       
     } catch (e: any) {

@@ -24,6 +24,6 @@ export interface Subscription {
   plan: Plan;
   status: 'active' | 'inactive';
   credits: Credits; // Changed from number to Credits object
-  expires?: string;
+  purchaseDate: string; // ISO string to track plan start date
   lastReset: string; // ISO string to track daily credit reset for free plan
 }
