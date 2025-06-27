@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -25,6 +25,7 @@ export function SubscriptionManager() {
   const [email, setEmail] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
+  const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
 
   const handleActivate = () => {
     if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
@@ -63,22 +64,25 @@ export function SubscriptionManager() {
     setIsOpen(false);
   }
 
-  if (isLoading) {
-    return <Button variant="outline" className="futuristic-glow-button" disabled>Loading...</Button>;
-  }
-
   const isFreePlan = !subscription || subscription.plan === 'free';
-  
-  const getDaysRemaining = () => {
-    if (!subscription || !subscription.purchaseDate || isFreePlan) return 0;
+
+  useEffect(() => {
+    if (isLoading || isFreePlan || !subscription || !subscription.purchaseDate) {
+      setDaysRemaining(null);
+      return;
+    }
+
     const purchaseDate = new Date(subscription.purchaseDate);
     const expiryDate = new Date(purchaseDate);
     expiryDate.setDate(purchaseDate.getDate() + 30);
-    const daysRemaining = Math.max(0, Math.ceil((expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)));
-    return daysRemaining;
-  };
+    const remaining = Math.max(0, Math.ceil((expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)));
+    setDaysRemaining(remaining);
+  }, [subscription, isLoading, isFreePlan]);
 
-  const daysRemaining = getDaysRemaining();
+
+  if (isLoading) {
+    return <Button variant="outline" className="futuristic-glow-button" disabled>Loading...</Button>;
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -137,7 +141,7 @@ export function SubscriptionManager() {
                 <span className="text-muted-foreground">Validity:</span>
                  <div className="flex items-center gap-1 font-semibold text-foreground">
                     <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                    {daysRemaining} days remaining
+                    {daysRemaining !== null ? `${daysRemaining} days remaining` : '...'}
                  </div>
             </div>
           </div>
