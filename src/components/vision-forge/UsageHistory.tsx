@@ -77,10 +77,19 @@ export function UsageHistory({ history, onSelectHistoryItem, onDeleteHistoryItem
               </div>
               <div className="flex-grow overflow-hidden">
                 <p className="text-sm font-medium truncate text-foreground" title={item.prompt}>{item.prompt}</p>
-                <p className="text-xs text-muted-foreground">{new Date(item.timestamp).toLocaleDateString()} {new Date(item.timestamp).toLocaleTimeString()}</p>
-                <p className="text-xs text-muted-foreground">
-                  {item.aspectRatio}
-                </p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{new Date(item.timestamp).toLocaleDateString()} {new Date(item.timestamp).toLocaleTimeString()}</span>
+                    <span>&middot;</span>
+                    <span>{item.aspectRatio}</span>
+                    <span>&middot;</span>
+                    <span className={`px-1.5 py-0.5 rounded-full capitalize ${
+                        item.plan === 'mega' ? 'bg-primary/20 text-primary font-semibold' :
+                        item.plan === 'pro' ? 'bg-accent/20 text-accent font-semibold' :
+                        'bg-muted'
+                    }`}>
+                        {item.plan}
+                    </span>
+                </div>
               </div>
               <div className="flex gap-2 shrink-0">
                 <Button variant="ghost" size="icon" onClick={() => onSelectHistoryItem(item)} title="View & Re-use Parameters" className="hover:text-primary">

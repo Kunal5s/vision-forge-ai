@@ -198,7 +198,10 @@ export function ImageGenerator() {
         finalPrompt = promptParts.join(', ');
     }
 
-    const generationParams: GenerateImageInput = { prompt: finalPrompt };
+    const generationParams: GenerateImageInput = { 
+        prompt: finalPrompt,
+        plan: subscription?.plan || 'free',
+     };
     const result = await generateImage(generationParams);
 
     setIsLoading(false);
@@ -209,7 +212,7 @@ export function ImageGenerator() {
     } else if (result.imageUrls && result.imageUrls.length > 0) {
       setGeneratedImageUrls(result.imageUrls);
       
-      if ((subscription?.plan === 'pro' || subscription?.plan === 'mega') && activeModel === 'google') {
+      if (subscription && (subscription.plan === 'pro' || subscription.plan === 'mega')) {
         const thumbnailUrl = await createThumbnail(result.imageUrls[0]);
         const historyItem: GeneratedImageHistoryItem = {
           id: new Date().toISOString() + Math.random().toString(36).substring(2,9),
@@ -217,6 +220,7 @@ export function ImageGenerator() {
           aspectRatio: selectedAspectRatio,
           imageUrl: thumbnailUrl,
           timestamp: new Date(),
+          plan: subscription.plan,
         };
         setHistory(prev => [historyItem, ...prev.slice(0, 19)]);
       }
@@ -280,7 +284,11 @@ export function ImageGenerator() {
   };
 
   const handleSelectHistoryItem = (item: GeneratedImageHistoryItem) => {
-    setActiveModel('google');
+    if (item.plan === 'free') {
+      setActiveModel('pollinations');
+    } else {
+      setActiveModel('google');
+    }
     setFormValue('prompt', item.prompt);
     setSelectedAspectRatio(item.aspectRatio);
     setSelectedStyle(STYLES[0]);

@@ -14,6 +14,7 @@ import {z} from 'genkit';
 
 const GenerateImageInputSchema = z.object({
   prompt: z.string().describe('The prompt for generating the image. This should include textual hints for aspect ratio.'),
+  plan: z.enum(['free', 'pro', 'mega']).describe("The user's current subscription plan."),
 });
 
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
@@ -37,22 +38,23 @@ const generateImageFlow = ai.defineFlow(
   },
   async (input): Promise<GenerateImageOutput> => {
     
-    // This check is now primarily for the premium Google model.
-    if (!process.env.GOOGLE_API_KEY && !input.prompt.includes('pollinations')) {
-      const errorMsg = "Your GOOGLE_API_KEY is not set correctly. Please see deployment documentation.";
+    if (input.plan !== 'free' && !process.env.GOOGLE_API_KEY) {
+      const errorMsg = "The site administrator has not configured the Google API Key. Premium models are unavailable.";
       console.error(errorMsg);
-      // For Google model, this is a hard failure.
       return { imageUrls: [], error: errorMsg };
     }
 
     try {
       let generationPromises;
-      // Heuristic to check if we're using the premium model based on prompt content
-      const isGoogleModel = !input.prompt.toLowerCase().includes('pollinations');
       
-      if (isGoogleModel) {
+      if (input.plan === 'pro' || input.plan === 'mega') {
           // Premium model logic
-          const enhancedPrompt = `Photorealistic, 4K resolution, ultra-detailed. ${input.prompt}`;
+          const promptEnhancement = input.plan === 'mega'
+            ? "Masterpiece, best quality, professional photograph, 8K, cinematic lighting." // Simulating Imagen 3
+            : "Photorealistic, 4K, ultra-detailed."; // Simulating Imagen 2
+            
+          const enhancedPrompt = `${promptEnhancement} ${input.prompt}`;
+
           generationPromises = Array.from({ length: 2 }).map(() => {
               return ai.generate({
                 model: 'googleai/gemini-2.0-flash-preview-image-generation',
@@ -65,16 +67,15 @@ const generateImageFlow = ai.defineFlow(
           const encodedPrompt = encodeURIComponent(input.prompt);
           const [aspectW, aspectH] = (input.prompt.match(/(\d+):(\d+)/) || ['1', '1']).slice(1).map(Number);
           
-          let width = 1024, height = 1024;
-           if (aspectW && aspectH) {
+          let width = 1024;
+          if (aspectW && aspectH) {
               if (aspectW > aspectH) {
                   width = 1024;
-                  height = Math.round((1024 * aspectH) / aspectW);
               } else {
-                  height = 1024;
                   width = Math.round((1024 * aspectW) / aspectH);
               }
           }
+          let height = Math.round((width * aspectH) / aspectW);
 
           const urls = Array.from({ length: 2 }, () => `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${Math.floor(Math.random() * 100000)}&nologo=true`);
           
