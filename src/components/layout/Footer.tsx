@@ -18,7 +18,7 @@ export function Footer() {
           </div>
           
           <div>
-            <h3 className="text-md font-semibold text-foreground mb-4">Our Services</h3>
+            <h3 className="text-md font-bold text-foreground mb-4">Our Services</h3>
             <ul className="space-y-1 text-sm">
               <li><Link href="/" className="block text-muted-foreground rounded-md -ml-2 px-2 py-1 transition-colors hover:bg-muted">AI Image Generation</Link></li>
               <li><Link href="/pricing" className="block text-muted-foreground rounded-md -ml-2 px-2 py-1 transition-colors hover:bg-muted">Pricing</Link></li>
@@ -28,7 +28,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="text-md font-semibold text-foreground mb-4">Legal</h3>
+            <h3 className="text-md font-bold text-foreground mb-4">Legal</h3>
             <ul className="space-y-1 text-sm">
               <li><Link href="/about" className="block text-muted-foreground rounded-md -ml-2 px-2 py-1 transition-colors hover:bg-muted">About Us</Link></li>
               <li><Link href="/contact" className="block text-muted-foreground rounded-md -ml-2 px-2 py-1 transition-colors hover:bg-muted">Contact Us</Link></li>
@@ -39,7 +39,7 @@ export function Footer() {
           </div>
           
           <div>
-            <h3 className="text-md font-semibold text-foreground mb-4">Follow Us</h3>
+            <h3 className="text-md font-bold text-foreground mb-4">Follow Us</h3>
             <div className="flex items-center gap-4">
               <Link href="#" aria-label="Twitter" className="text-muted-foreground hover:text-primary transition-colors">
                 <Twitter className="h-6 w-6" />
