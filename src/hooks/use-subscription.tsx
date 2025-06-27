@@ -126,12 +126,8 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
           return true;
       }
     } else if (model === 'pollinations') {
-       const cost = PLAN_CREDIT_COST[subscription.plan].pollinations;
-       if (subscription.credits.pollinations >= cost) {
-          const newSub = { ...subscription, credits: { ...subscription.credits, pollinations: subscription.credits.pollinations - cost } };
-          saveSubscription(newSub);
-          return true;
-       }
+       // Pollinations model is free and does not consume credits.
+       return true;
     }
 
     return false;
@@ -145,8 +141,8 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
         const cost = PLAN_CREDIT_COST[subscription.plan].google;
         return subscription.credits.google >= cost;
     } else if (model === 'pollinations') {
-        const cost = PLAN_CREDIT_COST[subscription.plan].pollinations;
-        return subscription.credits.pollinations >= cost;
+        // Pollinations model is always available.
+        return true;
     }
     
     return false;

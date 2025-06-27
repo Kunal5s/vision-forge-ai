@@ -11,7 +11,7 @@ const pricingPlans = [
     price: '$0',
     description: 'For starters and hobbyists.',
     features: [
-      '10 Pollinations credits',
+      'Unlimited standard generations',
       'Standard quality generations',
       'Pollinations model access',
       'Personal use license',
@@ -27,7 +27,7 @@ const pricingPlans = [
     description: 'For professionals and creators.',
     features: [
       '500 Google Credits/month',
-      '500 Pollinations Credits/month',
+      'Unlimited standard generations',
       'Fast generation speed',
       'Premium quality (up to 8K)',
       'Access to all AI models',
@@ -45,7 +45,7 @@ const pricingPlans = [
     description: 'For power users and teams.',
     features: [
       '1,500 Google Credits/month',
-      '1,500 Pollinations Credits/month',
+      'Unlimited standard generations',
       'Lightning-fast speed',
       'Premium quality (up to 8K)',
       'API access (coming soon)',

@@ -373,8 +373,8 @@ export function ImageGenerator() {
     } else { // activeModel is 'pollinations'
       creditInfo = (
         <div className="flex items-center gap-2">
-          <Gem size={16} />
-          <span className="font-semibold">{`${credits.pollinations} Pollinations Credits`}</span>
+          <Wand2 size={16} />
+          <span className="font-semibold">Unlimited Standard Generations</span>
         </div>
       );
     }
