@@ -63,29 +63,26 @@ const generateImageFlow = ai.defineFlow(
               });
           });
       } else {
-          // Pollinations (free model) logic
+          // Pollinations (free model) logic - non-blocking
           const encodedPrompt = encodeURIComponent(input.prompt);
           const [aspectW, aspectH] = (input.prompt.match(/(\d+):(\d+)/) || ['1', '1']).slice(1).map(Number);
           
           let width = 1024;
-          if (aspectW && aspectH) {
+          let height = 1024;
+          if (aspectW && aspectH && aspectW !== aspectH) {
               if (aspectW > aspectH) {
                   width = 1024;
+                  height = Math.round((1024 * aspectH) / aspectW);
               } else {
                   width = Math.round((1024 * aspectW) / aspectH);
+                  height = 1024;
               }
           }
-          let height = Math.round((width * aspectH) / aspectW);
 
           const urls = Array.from({ length: 2 }, () => `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${Math.floor(Math.random() * 100000)}&nologo=true`);
           
-          // Pre-flight check for the first URL to see if service is up
-          const testResponse = await fetch(urls[0]);
-          if (!testResponse.ok || !testResponse.headers.get('content-type')?.startsWith('image/')) {
-            throw new Error('The free image service may be temporarily unavailable or the prompt was unsuitable. Please try again later or with a different prompt.');
-          }
-
-          // Return the URLs directly for the frontend to handle
+          // Return the URLs directly for the frontend to handle without a pre-flight check.
+          // This makes the UI feel much faster. The client will handle load states.
           return { imageUrls: urls };
       }
       

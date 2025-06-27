@@ -54,8 +54,6 @@ export function ImageDisplay({
   };
 
   const handleImageError = (key: string) => {
-    // Silently handle the error by updating state, which will hide the image element
-    console.log(`Image failed to load, hiding element: ${key}`);
     setImageStates(prev => ({ ...prev, [key]: 'error' }));
   };
 
@@ -156,23 +154,21 @@ export function ImageDisplay({
         update({ id, title: 'Download Started!', description: 'Your image is on its way.' });
 
     } catch (e) {
-      console.error('Download failed, attempting fallback:', e);
-      // This fallback attempts a direct download link click, which might navigate
-      // instead of downloading on some browser/server configs, but it won't open a new tab.
-      try {
-        const link = document.createElement('a');
-        link.href = imageUrl;
-        const safePrompt = prompt.substring(0, 20).replace(/\s+/g, '_');
-        const extension = imageUrl.split('.').pop()?.split('?')[0] || 'png';
-        link.download = `imagenbrainai_fallback_${safePrompt}_${Date.now()}.${extension}`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        update({ id, title: 'Download Started!', description: 'Using fallback download method.' });
-      } catch (finalError) {
-        console.error("Fallback download also failed:", finalError);
-        update({ id, title: 'Download Failed', description: 'Could not download the image. Please try right-clicking to save.', variant: 'destructive' });
-      }
+        console.error('Download failed, attempting fallback:', e);
+        try {
+            const link = document.createElement('a');
+            link.href = imageUrl;
+            const safePrompt = prompt.substring(0, 20).replace(/\s+/g, '_');
+            const extension = imageUrl.split('.').pop()?.split('?')[0] || 'png';
+            link.download = `imagenbrainai_fallback_${safePrompt}_${Date.now()}.${extension}`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            update({ id, title: 'Download Started!', description: 'Using fallback download method.' });
+        } catch (finalError) {
+            console.error("Fallback download also failed:", finalError);
+            update({ id, title: 'Download Failed', description: 'Could not download the image. Please try right-clicking to save.', variant: 'destructive' });
+        }
     } finally {
         setTimeout(() => dismiss(id), 5000);
     }
@@ -181,7 +177,7 @@ export function ImageDisplay({
   return (
     <FuturisticPanel className="flex flex-col gap-4 h-full">
       <div className={cn(
-          "w-full rounded-lg bg-muted/10 flex items-center justify-center min-h-[300px] md:min-h-[400px] overflow-hidden p-1"
+          "w-full rounded-lg bg-muted/10 flex items-center justify-center min-h-[300px] md:min-h-[400px] overflow-hidden p-1 relative"
         )}
       >
         {isLoading && (
@@ -214,6 +210,12 @@ export function ImageDisplay({
                         </div>
                     )}
                     
+                    {state === 'error' && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-muted/20">
+                          {/* Intentionally blank to hide errors as requested */}
+                        </div>
+                    )}
+                    
                     {state !== 'error' && (
                       <Image
                           src={url}
@@ -231,7 +233,7 @@ export function ImageDisplay({
                           onClick={() => handleDownloadImage(url)} 
                           variant="default" 
                           size="icon" 
-                          className="absolute bottom-2 right-2 bg-primary/70 backdrop-blur-sm text-primary-foreground hover:bg-primary opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 transition-all futuristic-glow-button z-20"
+                          className="absolute bottom-2 right-2 bg-primary/70 backdrop-blur-sm text-primary-foreground hover:bg-primary opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 transition-all z-20"
                           title="Download Image"
                         >
                           <Download size={18} />
