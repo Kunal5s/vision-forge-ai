@@ -56,7 +56,6 @@ export function ImageDisplay({
   };
 
   const handleImageError = (key: string) => {
-    console.error(`Failed to load image for key: ${key}`);
     setImageStates(prev => ({ ...prev, [key]: 'error' }));
     setFailedCount(prev => prev + 1);
   };
@@ -213,7 +212,7 @@ export function ImageDisplay({
   return (
     <FuturisticPanel className="flex flex-col gap-4 h-full">
       <div className={cn(
-          "w-full rounded-lg border border-border/50 bg-muted/10 flex items-center justify-center min-h-[300px] md:min-h-[400px] overflow-hidden p-1"
+          "w-full rounded-lg bg-muted/10 flex items-center justify-center min-h-[300px] md:min-h-[400px] overflow-hidden p-1"
         )}
       >
         {isLoading && (
