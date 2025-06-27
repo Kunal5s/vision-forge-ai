@@ -344,30 +344,43 @@ export function ImageGenerator() {
   };
   
   let creditDisplayNode = null;
-    if (!isSubLoading && subscription) {
-      const { plan, credits } = subscription;
-      if (activeModel === 'google' && plan !== 'free') {
-        creditDisplayNode = (
-          <div className="flex justify-between items-center text-sm p-2 rounded-md bg-primary/10 border border-primary/20">
-            <span className="font-semibold text-primary">Plan: {plan.charAt(0).toUpperCase() + plan.slice(1)}</span>
-            <div className="flex items-center gap-2 text-primary">
-              <Gem size={16} />
-              <span className="font-semibold">{`${credits.google} Google Credits`}</span>
-            </div>
-          </div>
-        );
-      } else if (activeModel === 'pollinations') {
-        creditDisplayNode = (
-          <div className="flex justify-between items-center text-sm p-2 rounded-md bg-accent/10 border border-accent/20">
-            <span className="font-semibold text-accent">Plan: {plan.charAt(0).toUpperCase() + plan.slice(1)}</span>
-            <div className="flex items-center gap-2 text-accent">
-              <Gem size={16} />
-              <span className="font-semibold">{`${credits.pollinations} Pollinations Credits`}</span>
-            </div>
+  if (!isSubLoading && subscription) {
+    const { plan, credits } = subscription;
+    const planName = plan.charAt(0).toUpperCase() + plan.slice(1);
+    const planInfo = <span className="font-semibold">Plan: {planName}</span>;
+    let creditInfo = null;
+
+    if (activeModel === 'google') {
+      if (plan === 'free') {
+        creditInfo = <span className="font-semibold text-destructive">Upgrade to use</span>;
+      } else {
+        creditInfo = (
+          <div className="flex items-center gap-2">
+            <Gem size={16} />
+            <span className="font-semibold">{`${credits.google} Google Credits`}</span>
           </div>
         );
       }
+    } else { // activeModel is 'pollinations'
+      creditInfo = (
+        <div className="flex items-center gap-2">
+          <Gem size={16} />
+          <span className="font-semibold">{`${credits.pollinations} Pollinations Credits`}</span>
+        </div>
+      );
     }
+    
+    const themeClass = activeModel === 'google' && plan !== 'free' 
+      ? "text-primary bg-primary/10 border-primary/20" 
+      : "text-accent bg-accent/10 border-accent/20";
+
+    creditDisplayNode = (
+      <div className={`flex justify-between items-center text-sm p-2 rounded-md border ${themeClass}`}>
+        {planInfo}
+        {creditInfo}
+      </div>
+    );
+  }
 
 
   return (
