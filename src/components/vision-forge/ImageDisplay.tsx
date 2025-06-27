@@ -229,8 +229,8 @@ export function ImageDisplay({
                         layout="fill"
                         objectFit="contain"
                         className={cn(
-                            "transition-opacity duration-500", 
-                            state === 'loaded' ? 'opacity-100' : 'opacity-0'
+                            "transition-all duration-500 ease-in-out", 
+                            state === 'loaded' ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
                         )}
                         onLoad={() => handleImageLoad(key)}
                         onError={() => handleImageError(key)}
@@ -262,16 +262,16 @@ export function ImageDisplay({
       </div>
       {(imageUrls.length > 0 || prompt) && !isLoading && !error && (
         <div className="flex flex-wrap gap-2 justify-center">
-          <Button onClick={onRegenerate} variant="outline" className="futuristic-glow-button">
+          <Button onClick={onRegenerate} variant="outline" className="transition-shadow hover:shadow-lg hover:shadow-accent/20">
             <RefreshCw size={18} className="mr-2" />
             Regenerate
           </Button>
-          <Button onClick={onCopyPrompt} variant="outline" className="futuristic-glow-button" disabled={!prompt}>
+          <Button onClick={onCopyPrompt} variant="outline" className="transition-shadow hover:shadow-lg hover:shadow-accent/20" disabled={!prompt}>
             <Copy size={18} className="mr-2" />
             Copy Prompt
           </Button>
           {(userPlan === 'pro' || userPlan === 'mega') && imageUrls.length > 1 && (
-             <Button onClick={handleDownloadAll} variant="default" className="futuristic-glow-button-primary bg-primary hover:bg-primary/90 text-primary-foreground">
+             <Button onClick={handleDownloadAll} variant="default" className="bg-primary hover:bg-primary/90 text-primary-foreground transition-shadow hover:shadow-lg hover:shadow-primary/20">
                 <Download size={18} className="mr-2" />
                 Download All
             </Button>
