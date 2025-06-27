@@ -217,6 +217,12 @@ export function ImageDisplay({
                         </div>
                     )}
                     
+                     {state === 'error' && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/50 z-10 text-center p-2">
+                        {/* This space is intentionally left blank to avoid showing users a "Load Failed" message, as requested. */}
+                      </div>
+                    )}
+
                     <Image
                         src={url}
                         alt={`${prompt || 'Generated AI image'} - variation ${index + 1}`}
@@ -224,8 +230,7 @@ export function ImageDisplay({
                         objectFit="cover"
                         className={cn(
                             "transition-opacity duration-500", 
-                            state === 'loaded' ? 'opacity-100' : 'opacity-0',
-                            state === 'error' ? '!hidden' : ''
+                            state === 'loaded' ? 'opacity-100' : 'opacity-0'
                         )}
                         onLoad={() => handleImageLoad(key)}
                         onError={() => handleImageError(key)}

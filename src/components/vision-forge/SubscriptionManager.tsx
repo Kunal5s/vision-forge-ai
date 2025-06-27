@@ -75,7 +75,8 @@ export function SubscriptionManager() {
     const purchaseDate = new Date(subscription.purchaseDate);
     const expiryDate = new Date(purchaseDate);
     expiryDate.setDate(purchaseDate.getDate() + 30);
-    const remaining = Math.max(0, Math.ceil((expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)));
+    const now = new Date();
+    const remaining = Math.max(0, Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
     setDaysRemaining(remaining);
   }, [subscription, isLoading, isFreePlan]);
 
