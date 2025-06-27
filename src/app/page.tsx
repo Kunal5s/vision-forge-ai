@@ -4,6 +4,7 @@ import { Wand2, Maximize, BrainCircuit, SlidersHorizontal, ZoomIn, Grid } from '
 import { FuturisticPanel } from '@/components/vision-forge/FuturisticPanel';
 import { TestimonialsSection } from '@/components/vision-forge/TestimonialsSection';
 import { PricingSection } from '@/components/vision-forge/PricingSection';
+import { FaqSection } from '@/components/vision-forge/FaqSection';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -105,6 +106,7 @@ export default function HomePage() {
 
       <TestimonialsSection />
       <PricingSection />
+      <FaqSection />
 
     </main>
   );
