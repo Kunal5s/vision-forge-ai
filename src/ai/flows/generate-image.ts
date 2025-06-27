@@ -47,21 +47,39 @@ const generateImageFlow = ai.defineFlow(
 
     try {
       if (input.plan === 'pro' || input.plan === 'mega') {
-          // Premium model logic for Pro and Mega plans
           const isMega = input.plan === 'mega';
           
           const promptEnhancement = isMega
             ? "Masterpiece, best quality, professional photograph, cinematic lighting, ultra-high resolution, 8k."
             : "Photorealistic, highly detailed, professional quality, 4k.";
             
-          const enhancedPrompt = `A ${input.aspectRatio} aspect ratio image of: ${input.prompt}. Style: ${promptEnhancement}`;
+          const enhancedPrompt = `${input.prompt}. Style: ${promptEnhancement}`;
+
+          const [aspectW, aspectH] = (input.aspectRatio.split(':').map(Number) || [1, 1]);
+          const maxDimension = 1024;
+          let width = maxDimension;
+          let height = maxDimension;
+
+          if (aspectW && aspectH && !isNaN(aspectW) && !isNaN(aspectH) && aspectW > 0 && aspectH > 0) {
+              if (aspectW > aspectH) {
+                  width = maxDimension;
+                  height = Math.round( (maxDimension * aspectH) / aspectW );
+              } else if (aspectH > aspectW) {
+                  height = maxDimension;
+                  width = Math.round( (maxDimension * aspectW) / aspectH );
+              }
+              width = Math.max(64, Math.round(width / 64) * 64);
+              height = Math.max(64, Math.round(height / 64) * 64);
+          }
 
           const result = await ai.generate({
             model: 'googleai/gemini-2.0-flash-preview-image-generation',
             prompt: enhancedPrompt,
             config: { 
                 responseModalities: ['TEXT', 'IMAGE'],
-                candidates: 2
+                candidates: 2,
+                height: height,
+                width: width,
             },
           });
 
