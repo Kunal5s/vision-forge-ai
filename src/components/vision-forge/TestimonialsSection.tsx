@@ -22,7 +22,7 @@ const testimonials = [
 
 export function TestimonialsSection() {
   return (
-    <section id="testimonials" className="bg-background py-16">
+    <section id="testimonials" className="bg-muted py-16">
       <div className="container mx-auto px-4">
         <header className="text-center mb-12">
             <h2 className="text-4xl font-extrabold tracking-tight text-primary">
@@ -34,7 +34,7 @@ export function TestimonialsSection() {
         </header>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {testimonials.map((testimonial) => (
-            <Card key={testimonial.name} className="glassmorphism-panel text-center flex flex-col h-full">
+            <Card key={testimonial.name} className="bg-background text-center flex flex-col h-full shadow-none border">
               <CardContent className="pt-10 relative flex-grow flex flex-col justify-between">
                 <Quote className="absolute top-4 left-4 h-10 w-10 text-primary/20" />
                 <blockquote className="text-foreground/80 mb-6 flex-grow text-left">

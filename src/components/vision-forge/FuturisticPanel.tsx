@@ -8,7 +8,7 @@ export function FuturisticPanel({ className, children, ...props }: FuturisticPan
   return (
     <div
       className={cn(
-        'bg-card border rounded-xl p-6 transition-all duration-300 hover:shadow-xl hover:border-primary/30 hover:shadow-primary/10',
+        'bg-card border rounded-xl p-6',
         className
       )}
       {...props}
