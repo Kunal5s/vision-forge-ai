@@ -24,7 +24,7 @@ import type { GeneratedImageHistoryItem } from '@/types';
 import { ImageDisplay } from './ImageDisplay';
 import { UsageHistory } from './UsageHistory';
 import { FuturisticPanel } from './FuturisticPanel';
-import { Wand2, ThumbsUp, ThumbsDown, Gem, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Wand2, ThumbsUp, ThumbsDown, Gem, RefreshCw, AlertTriangle, Sparkles } from 'lucide-react';
 import { LoadingSpinner } from './LoadingSpinner';
 import { useSubscription } from '@/hooks/use-subscription';
 import Link from 'next/link';
@@ -365,14 +365,14 @@ export function ImageGenerator() {
     <>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-5 space-y-6">
-          <FuturisticPanel>
+          <FuturisticPanel className="animate-breathing-glow">
             <div className="space-y-4">
               <div>
                 <Label htmlFor="model-select" className="text-lg font-semibold mb-2 block text-foreground/90">
                   Model
                 </Label>
                 <Select value={activeModel} onValueChange={(value) => setActiveModel(value as 'pollinations' | 'google')}>
-                  <SelectTrigger id="model-select" className="w-full bg-background hover:bg-muted">
+                  <SelectTrigger id="model-select" className="w-full bg-background hover:bg-muted/50">
                     <SelectValue placeholder="Select a model" />
                   </SelectTrigger>
                   <SelectContent>
@@ -416,7 +416,7 @@ export function ImageGenerator() {
                     disabled={isImprovingPrompt || !currentPrompt || subscription?.plan === 'free'}
                     title="Improve Prompt with AI (Paid Plans Only)"
                   >
-                    {isImprovingPrompt ? <LoadingSpinner size={18} /> : <Wand2 size={18} />}
+                    {isImprovingPrompt ? <LoadingSpinner size={18} /> : <Sparkles size={18} />}
                   </Button>
                 </div>
                 {errors.prompt && <p className="text-sm text-destructive mt-1">{errors.prompt.message}</p>}
@@ -424,9 +424,9 @@ export function ImageGenerator() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <div>
-                    <Label htmlFor="style" className="text-sm font-medium mb-1 block text-foreground/80">Artistic Style</Label>
+                    <Label htmlFor="style" className="text-sm font-semibold mb-1 block text-foreground/80">Artistic Style</Label>
                     <Select value={selectedStyle} onValueChange={setSelectedStyle}>
-                        <SelectTrigger id="style" className="w-full bg-background hover:bg-muted">
+                        <SelectTrigger id="style" className="w-full bg-background hover:bg-muted/50">
                             <SelectValue placeholder="Select style" />
                         </SelectTrigger>
                         <SelectContent>
@@ -437,9 +437,9 @@ export function ImageGenerator() {
                     </Select>
                 </div>
                 <div>
-                    <Label htmlFor="mood" className="text-sm font-medium mb-1 block text-foreground/80">Mood</Label>
+                    <Label htmlFor="mood" className="text-sm font-semibold mb-1 block text-foreground/80">Mood</Label>
                     <Select value={selectedMood} onValueChange={setSelectedMood}>
-                        <SelectTrigger id="mood" className="w-full bg-background hover:bg-muted">
+                        <SelectTrigger id="mood" className="w-full bg-background hover:bg-muted/50">
                             <SelectValue placeholder="Select mood" />
                         </SelectTrigger>
                         <SelectContent>
@@ -450,9 +450,9 @@ export function ImageGenerator() {
                     </Select>
                 </div>
                 <div>
-                    <Label htmlFor="lighting" className="text-sm font-medium mb-1 block text-foreground/80">Lighting</Label>
+                    <Label htmlFor="lighting" className="text-sm font-semibold mb-1 block text-foreground/80">Lighting</Label>
                     <Select value={selectedLighting} onValueChange={setSelectedLighting}>
-                        <SelectTrigger id="lighting" className="w-full bg-background hover:bg-muted">
+                        <SelectTrigger id="lighting" className="w-full bg-background hover:bg-muted/50">
                             <SelectValue placeholder="Select lighting" />
                         </SelectTrigger>
                         <SelectContent>
@@ -463,9 +463,9 @@ export function ImageGenerator() {
                     </Select>
                 </div>
                 <div>
-                    <Label htmlFor="color" className="text-sm font-medium mb-1 block text-foreground/80">Color Palette</Label>
+                    <Label htmlFor="color" className="text-sm font-semibold mb-1 block text-foreground/80">Color Palette</Label>
                     <Select value={selectedColor} onValueChange={setSelectedColor}>
-                        <SelectTrigger id="color" className="w-full bg-background hover:bg-muted">
+                        <SelectTrigger id="color" className="w-full bg-background hover:bg-muted/50">
                             <SelectValue placeholder="Select color" />
                         </SelectTrigger>
                         <SelectContent>
@@ -478,9 +478,9 @@ export function ImageGenerator() {
               </div>
 
               <div>
-                <Label htmlFor="aspect-ratio" className="text-sm font-medium mb-1 block text-foreground/80">Aspect Ratio</Label>
+                <Label htmlFor="aspect-ratio" className="text-sm font-semibold mb-1 block text-foreground/80">Aspect Ratio</Label>
                 <Select value={selectedAspectRatio} onValueChange={setSelectedAspectRatio}>
-                  <SelectTrigger id="aspect-ratio" className="w-full bg-background hover:bg-muted">
+                  <SelectTrigger id="aspect-ratio" className="w-full bg-background hover:bg-muted/50">
                     <SelectValue placeholder="Select aspect ratio" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border">
