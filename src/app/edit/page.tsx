@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Slider } from "@/components/ui/slider";
 import { AlertTriangle, UploadCloud, Palette, RotateCcw, Wand2, Text, Sticker, Download, Save, Trash2, Sparkles } from 'lucide-react';
 import { FuturisticPanel } from '@/components/vision-forge/FuturisticPanel';
 import { cn } from '@/lib/utils';
@@ -28,9 +27,6 @@ interface EditingTool {
 }
 
 const initialEditingTools: EditingTool[] = [
-  // Basic Adjustments
-  { name: "Brightness", type: "slider", category: "Basic Adjustments" },
-  ...["Contrast", "Saturation", "Hue", "Sharpness", "Blur"].map(f => ({ name: f, type: "placeholder" as "placeholder", category: "Basic Adjustments" })),
   // Filters & Effects
   { name: "Grayscale", type: "toggle" as "toggle", category: "Filters & Effects" },
   { name: "Sepia", type: "toggle" as "toggle", category: "Filters & Effects" },
@@ -43,10 +39,6 @@ const initialEditingTools: EditingTool[] = [
 ];
 
 const editingToolCategoriesConfig = [
-  { 
-    name: "Basic Adjustments", 
-    icon: <Palette size={20} className="mr-2 text-primary" />,
-  },
   { 
     name: "Filters & Effects", 
     icon: <Wand2 size={20} className="mr-2 text-primary" />,
@@ -72,7 +64,6 @@ export default function ImageEditorPage() {
   const [isGrayscale, setIsGrayscale] = useState(false);
   const [isSepia, setIsSepia] = useState(false);
   const [isInverted, setIsInverted] = useState(false);
-  const [brightness, setBrightness] = useState(100); // Percentage, 100 is normal
   
   const [imageStyles, setImageStyles] = useState<React.CSSProperties>({});
 
@@ -86,10 +77,9 @@ export default function ImageEditorPage() {
     if (isGrayscale) filters.push('grayscale(100%)');
     if (isSepia) filters.push('sepia(100%)');
     if (isInverted) filters.push('invert(100%)');
-    if (brightness !== 100) filters.push(`brightness(${brightness}%)`);
     
     setImageStyles({ filter: filters.join(' ') || 'none' });
-  }, [isGrayscale, isSepia, isInverted, brightness]);
+  }, [isGrayscale, isSepia, isInverted]);
 
   const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -123,16 +113,10 @@ export default function ImageEditorPage() {
     }
   };
 
-  const handleBrightnessChange = (value: number[]) => {
-    if (!uploadedImage) return;
-    setBrightness(value[0]);
-  };
-
   const resetFilters = () => {
     setIsGrayscale(false);
     setIsSepia(false);
     setIsInverted(false);
-    setBrightness(100);
     setImageStyles({});
   };
   
@@ -189,20 +173,6 @@ export default function ImageEditorPage() {
                               >
                                 {tool.name}
                               </Button>
-                            )}
-                            {tool.name === "Brightness" && tool.type === 'slider' && (
-                              <div className="space-y-2">
-                                <Label htmlFor="brightness-slider" className="text-xs">Brightness: {brightness}%</Label>
-                                <Slider
-                                  id="brightness-slider"
-                                  min={0}
-                                  max={200}
-                                  step={1}
-                                  value={[brightness]}
-                                  onValueChange={handleBrightnessChange}
-                                  className="my-2"
-                                />
-                              </div>
                             )}
                             {tool.type === 'placeholder' && (
                                <Button 
@@ -272,14 +242,14 @@ export default function ImageEditorPage() {
             {uploadedImage && (
               <div className="w-full h-full flex flex-col items-center justify-center p-4 space-y-4">
                  <p className="text-sm text-muted-foreground">Editing: <strong>{fileName || 'Uploaded Image'}</strong></p>
-                <div className="relative w-full max-w-3xl max-h-[calc(70vh-120px)] overflow-hidden"> {/* Removed aspect-auto */}
+                <div className="relative w-full max-w-3xl max-h-[calc(70vh-120px)] overflow-hidden">
                   <Image
                     src={uploadedImage}
                     alt={fileName || "Uploaded image"}
                     layout="fill"
                     objectFit="contain"
                     style={imageStyles} // Apply CSS filters here
-                    className="transition-all duration-300" // Smooth transition for filter changes
+                    className="transition-all duration-300"
                     data-ai-hint="user uploaded image"
                   />
                 </div>
