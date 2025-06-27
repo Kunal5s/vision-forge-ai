@@ -38,6 +38,8 @@ export function ImageDisplay({
   const { toast } = useToast();
   // State to track individual image status: loading, loaded, or error
   const [imageStates, setImageStates] = useState<Record<string, 'loading' | 'loaded' | 'error'>>({});
+  const [failedCount, setFailedCount] = useState(0);
+
 
   useEffect(() => {
     if (imageUrls && imageUrls.length > 0) {
@@ -47,6 +49,7 @@ export function ImageDisplay({
         return acc;
       }, {} as Record<string, 'loading' | 'loaded' | 'error'>);
       setImageStates(initialStates);
+      setFailedCount(0); // Reset failed count for new set of images
     }
   }, [imageUrls]);
 
@@ -57,7 +60,7 @@ export function ImageDisplay({
   const handleImageError = (key: string) => {
     console.error(`Failed to load image for key: ${key}`);
     setImageStates(prev => ({ ...prev, [key]: 'error' }));
-    // IMPORTANT: No global toast message here. The error is handled visually per image.
+    setFailedCount(prev => prev + 1);
   };
 
 
@@ -209,6 +212,7 @@ export function ImageDisplay({
     };
   };
 
+  const allImagesFailed = !isLoading && imageUrls.length > 0 && failedCount === imageUrls.length;
 
   return (
     <FuturisticPanel className="flex flex-col gap-4 h-full">
@@ -229,7 +233,16 @@ export function ImageDisplay({
             <p className="text-sm max-w-md mx-auto whitespace-pre-wrap">{error}</p>
           </div>
         )}
-        {!isLoading && !error && imageUrls.length > 0 && (
+        {allImagesFailed && (
+           <div className="absolute inset-0 flex flex-col items-center justify-center text-destructive p-4 text-center">
+            <AlertTriangle size={48} className="mb-2" />
+            <p className="font-semibold">Image Loading Failed</p>
+            <p className="text-sm max-w-md mx-auto">
+              Could not load any of the generated images. The image service might be temporarily unavailable. Please try regenerating.
+            </p>
+          </div>
+        )}
+        {!isLoading && !error && !allImagesFailed && imageUrls.length > 0 && (
           <div className={cn(
             "w-full h-full",
              imageUrls.length > 1 ? "grid grid-cols-2 gap-1" : ""
@@ -279,7 +292,7 @@ export function ImageDisplay({
             })}
           </div>
         )}
-        {!isLoading && !error && imageUrls.length === 0 && (
+        {!isLoading && !error && !allImagesFailed && imageUrls.length === 0 && (
            <div className="flex flex-col items-center justify-center text-muted-foreground opacity-50 p-4 text-center">
             <ImageIcon size={64} />
             <p className="mt-2 text-lg">Your vision will appear here</p>
