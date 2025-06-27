@@ -98,7 +98,7 @@ const generateImageFlow = ai.defineFlow(
           }
 
 
-          const urls = Array.from({ length: 2 }, () => `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${Math.floor(Math.random() * 100000)}&nologo=true`);
+          const urls = Array.from({ length: 1 }, () => `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${Math.floor(Math.random() * 100000)}&nologo=true`);
           
           // Return the URLs directly for the frontend to handle without a pre-flight check.
           // This makes the UI feel much faster. The client will handle load states.

@@ -36,12 +36,15 @@ export function ImageDisplay({
 }: ImageDisplayProps) {
   
   const { toast } = useToast();
+  // State to track individual image loading status (loading, loaded, error)
   const [imageStates, setImageStates] = useState<Record<string, 'loading' | 'loaded' | 'error'>>({});
 
 
   useEffect(() => {
+    // When new image URLs are received, initialize their states to 'loading'
     if (imageUrls && imageUrls.length > 0) {
       const initialStates = imageUrls.reduce((acc, url, index) => {
+        // Create a unique key for each image to handle potential duplicate URLs
         acc[`${url}-${index}`] = 'loading';
         return acc;
       }, {} as Record<string, 'loading' | 'loaded' | 'error'>);
@@ -49,15 +52,17 @@ export function ImageDisplay({
     }
   }, [imageUrls]);
 
+  // Handler for when an image successfully loads
   const handleImageLoad = (key: string) => {
     setImageStates(prev => ({ ...prev, [key]: 'loaded' }));
   };
 
+  // Handler for when an image fails to load
   const handleImageError = (key: string) => {
     setImageStates(prev => ({ ...prev, [key]: 'error' }));
   };
 
-
+  // Utility to get the correct Tailwind aspect ratio class
   const getAspectRatioClass = (ratio: string) => {
     switch (ratio) {
       case '1:1': return 'aspect-square';
@@ -74,6 +79,7 @@ export function ImageDisplay({
     }
   };
   
+  // Handler to download all successfully loaded images as a ZIP
   const handleDownloadAll = async () => {
     const loadedImageUrls = imageUrls.filter((url, index) => imageStates[`${url}-${index}`] === 'loaded');
 
@@ -126,6 +132,7 @@ export function ImageDisplay({
     }
   };
 
+  // Handler to download a single image
   const handleDownloadImage = async (imageUrl: string) => {
     if (!imageUrl) return;
 
@@ -156,15 +163,15 @@ export function ImageDisplay({
     } catch (e) {
         console.error('Download failed, attempting fallback:', e);
         try {
+            // Fallback for cross-origin issues: open the image in a new tab.
             const link = document.createElement('a');
             link.href = imageUrl;
-            const safePrompt = prompt.substring(0, 20).replace(/\s+/g, '_');
-            const extension = imageUrl.split('.').pop()?.split('?')[0] || 'png';
-            link.download = `imagenbrainai_fallback_${safePrompt}_${Date.now()}.${extension}`;
+            link.target = '_blank'; // Open in a new tab, user can save from there.
+            link.rel = 'noopener noreferrer';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            update({ id, title: 'Download Started!', description: 'Using fallback download method.' });
+            update({ id, title: 'Download Started!', description: 'Your image opened in a new tab. You can save it from there.' });
         } catch (finalError) {
             console.error("Fallback download also failed:", finalError);
             update({ id, title: 'Download Failed', description: 'Could not download the image. Please try right-clicking to save.', variant: 'destructive' });
@@ -177,7 +184,7 @@ export function ImageDisplay({
   return (
     <FuturisticPanel className="flex flex-col gap-4 h-full">
       <div className={cn(
-          "w-full rounded-lg bg-muted/10 flex items-center justify-center min-h-[300px] md:min-h-[400px] overflow-hidden p-1 relative"
+          "w-full rounded-lg bg-background flex items-center justify-center min-h-[300px] md:min-h-[400px] overflow-hidden p-1 relative"
         )}
       >
         {isLoading && (
@@ -195,45 +202,43 @@ export function ImageDisplay({
         )}
         {!isLoading && !error && imageUrls.length > 0 && (
           <div className={cn(
-            "w-full h-full",
-             imageUrls.length > 1 ? "grid grid-cols-2 gap-1" : ""
+            "w-full h-full grid gap-1",
+             imageUrls.length > 1 ? "grid-cols-2" : "grid-cols-1" // Use 2 columns only if there are 2 images
             )}>
             {imageUrls.map((url, index) => {
                 const key = `${url}-${index}`;
                 const state = imageStates[key];
 
+                // Don't render a slot for images that failed to load
+                if (state === 'error') {
+                    return null;
+                }
+
                 return (
-                  <div key={key} className={cn("relative group rounded-md overflow-hidden bg-muted/20", getAspectRatioClass(aspectRatio))}>
+                  <div key={key} className={cn("relative rounded-md overflow-hidden bg-muted/30", getAspectRatioClass(aspectRatio))}>
                     {state === 'loading' && (
                         <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-20">
                           <LoadingSpinner size={32} />
                         </div>
                     )}
                     
-                    {state === 'error' && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-muted/20">
-                          {/* Intentionally blank to hide errors as requested */}
-                        </div>
-                    )}
-                    
-                    {state !== 'error' && (
-                      <Image
-                          src={url}
-                          alt={`${prompt || 'Generated AI image'} - variation ${index + 1}`}
-                          layout="fill"
-                          objectFit="cover"
-                          className={cn("transition-opacity duration-500", state === 'loaded' ? 'opacity-100' : 'opacity-0')}
-                          onLoad={() => handleImageLoad(key)}
-                          onError={() => handleImageError(key)}
-                          data-ai-hint="generated art"
-                        />
-                    )}
+                    <Image
+                        src={url}
+                        alt={`${prompt || 'Generated AI image'} - variation ${index + 1}`}
+                        layout="fill"
+                        objectFit="cover"
+                        className={cn("transition-opacity duration-500", state === 'loaded' ? 'opacity-100' : 'opacity-0')}
+                        onLoad={() => handleImageLoad(key)}
+                        onError={() => handleImageError(key)}
+                        data-ai-hint="generated art"
+                      />
+
                       {state === 'loaded' && (
                         <Button 
                           onClick={() => handleDownloadImage(url)} 
                           variant="default" 
                           size="icon" 
-                          className="absolute bottom-2 right-2 bg-primary/70 backdrop-blur-sm text-primary-foreground hover:bg-primary opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 transition-all z-20"
+                          className="absolute bottom-2 right-2 bg-primary/80 backdrop-blur-sm text-primary-foreground hover:bg-primary transition-all z-20"
                           title="Download Image"
                         >
                           <Download size={18} />
