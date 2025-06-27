@@ -191,7 +191,7 @@ export function ImageDisplay({
     };
 
     image.onerror = () => {
-        toast({ title: 'Download Failed', description: 'The image could not be loaded for processing. Please try again.', variant: 'destructive' });
+        toast({ title: 'Using Fallback Download', description: 'Could not process the image. Attempting a direct download.' });
         try {
           const link = document.createElement('a');
           link.href = imageUrl;
@@ -203,6 +203,7 @@ export function ImageDisplay({
           document.body.removeChild(link);
         } catch (e) {
             console.error("Fallback download failed", e);
+            toast({ title: 'Download Failed', description: 'The fallback download method also failed. Please try right-clicking to save.', variant: 'destructive' });
         }
     };
   };
@@ -222,17 +223,17 @@ export function ImageDisplay({
           </div>
         )}
         {error && !isLoading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-destructive p-4 text-center">
-            <AlertTriangle size={48} className="mb-2" />
-            <p className="font-semibold">Error Generating Images</p>
-            <p className="text-sm max-w-md mx-auto whitespace-pre-wrap">{error}</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
+            <AlertTriangle size={48} className="mb-2 text-destructive" />
+            <p className="font-semibold text-foreground">Error Generating Images</p>
+            <p className="text-sm max-w-md mx-auto whitespace-pre-wrap text-muted-foreground">{error}</p>
           </div>
         )}
         {allImagesFailed && (
-           <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground p-4 text-center">
+           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
             <AlertTriangle size={48} className="mb-4 text-destructive/50" />
             <p className="font-semibold text-foreground">Generation Failed</p>
-            <p className="text-sm max-w-md mx-auto mt-2">
+            <p className="text-sm max-w-md mx-auto mt-2 text-muted-foreground">
               The free image service may be busy or unavailable. Please try again in a moment, or simplify your prompt.
             </p>
           </div>
