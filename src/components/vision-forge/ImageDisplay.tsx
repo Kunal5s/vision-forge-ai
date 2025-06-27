@@ -37,7 +37,6 @@ export function ImageDisplay({
   
   const { toast } = useToast();
   const [imageStates, setImageStates] = useState<Record<string, 'loading' | 'loaded' | 'error'>>({});
-  const [failedCount, setFailedCount] = useState(0);
 
 
   useEffect(() => {
@@ -47,7 +46,6 @@ export function ImageDisplay({
         return acc;
       }, {} as Record<string, 'loading' | 'loaded' | 'error'>);
       setImageStates(initialStates);
-      setFailedCount(0);
     }
   }, [imageUrls]);
 
@@ -56,8 +54,9 @@ export function ImageDisplay({
   };
 
   const handleImageError = (key: string) => {
+    // Silently handle the error by updating state, which will hide the image element
+    console.log(`Image failed to load, hiding element: ${key}`);
     setImageStates(prev => ({ ...prev, [key]: 'error' }));
-    setFailedCount(prev => prev + 1);
   };
 
 
@@ -129,86 +128,55 @@ export function ImageDisplay({
     }
   };
 
-  const handleDownloadImage = (imageUrl: string) => {
+  const handleDownloadImage = async (imageUrl: string) => {
     if (!imageUrl) return;
 
-    const image = new window.Image();
-    image.crossOrigin = 'anonymous';
-    image.src = imageUrl;
+    const { id, update, dismiss } = toast({
+      title: 'Preparing Download',
+      description: 'Your image is being prepared...',
+    });
 
-    image.onload = () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-            toast({ title: 'Download Error', description: 'Could not create a canvas to process the image.', variant: 'destructive' });
-            return;
-        }
-
-        const originalWidth = image.naturalWidth;
-        const originalHeight = image.naturalHeight;
+    try {
+        const response = await fetch(imageUrl);
+        if (!response.ok) throw new Error('Network response was not ok.');
         
-        const [targetRatioW, targetRatioH] = aspectRatio.split(':').map(Number);
-        const targetAspectRatio = targetRatioW / targetRatioH;
-        
-        let sourceX = 0;
-        let sourceY = 0;
-        let sourceWidth = originalWidth;
-        let sourceHeight = originalHeight;
-        const originalAspectRatioValue = originalWidth / originalHeight;
-
-        if (Math.abs(originalAspectRatioValue - targetAspectRatio) > 0.01) {
-          if (originalAspectRatioValue > targetAspectRatio) {
-              sourceWidth = originalHeight * targetAspectRatio;
-              sourceX = (originalWidth - sourceWidth) / 2;
-          } else {
-              sourceHeight = originalWidth / targetAspectRatio;
-              sourceY = (originalHeight - sourceHeight) / 2;
-          }
-        }
-
-        canvas.width = sourceWidth;
-        canvas.height = sourceHeight;
-
-        ctx.drawImage(
-            image,
-            sourceX,
-            sourceY,
-            sourceWidth,
-            sourceHeight,
-            0,
-            0,
-            sourceWidth,
-            sourceHeight
-        );
-
-        const croppedImageUrl = canvas.toDataURL('image/png');
+        const blob = await response.blob();
         const link = document.createElement('a');
-        link.href = croppedImageUrl;
-        link.download = `imagenbrainai_${prompt.substring(0, 20).replace(/\s+/g, '_')}_${Date.now()}.png`;
+        link.href = URL.createObjectURL(blob);
+        
+        const safePrompt = prompt.substring(0, 20).replace(/\s+/g, '_');
+        const extension = blob.type.split('/')[1] || 'png';
+        link.download = `imagenbrainai_${safePrompt}_${Date.now()}.${extension}`;
+        
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-    };
+        URL.revokeObjectURL(link.href);
 
-    image.onerror = () => {
-        toast({ title: 'Using Fallback Download', description: 'Could not process the image. Attempting a direct download.' });
-        try {
-          const link = document.createElement('a');
-          link.href = imageUrl;
-          const extension = imageUrl.startsWith('data:') ? (imageUrl.split(';')[0].split('/')[1] || 'png') : 'jpg';
-          link.download = `imagenbrainai_fallback_${prompt.substring(0, 20).replace(/\s+/g, '_')}_${Date.now()}.${extension}`;
-          link.target = '_blank';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        } catch (e) {
-            console.error("Fallback download failed", e);
-            toast({ title: 'Download Failed', description: 'The fallback download method also failed. Please try right-clicking to save.', variant: 'destructive' });
-        }
-    };
+        update({ id, title: 'Download Started!', description: 'Your image is on its way.' });
+
+    } catch (e) {
+      console.error('Download failed, attempting fallback:', e);
+      // This fallback attempts a direct download link click, which might navigate
+      // instead of downloading on some browser/server configs, but it won't open a new tab.
+      try {
+        const link = document.createElement('a');
+        link.href = imageUrl;
+        const safePrompt = prompt.substring(0, 20).replace(/\s+/g, '_');
+        const extension = imageUrl.split('.').pop()?.split('?')[0] || 'png';
+        link.download = `imagenbrainai_fallback_${safePrompt}_${Date.now()}.${extension}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        update({ id, title: 'Download Started!', description: 'Using fallback download method.' });
+      } catch (finalError) {
+        console.error("Fallback download also failed:", finalError);
+        update({ id, title: 'Download Failed', description: 'Could not download the image. Please try right-clicking to save.', variant: 'destructive' });
+      }
+    } finally {
+        setTimeout(() => dismiss(id), 5000);
+    }
   };
-
-  const allImagesFailed = !isLoading && imageUrls.length > 0 && failedCount === imageUrls.length;
 
   return (
     <FuturisticPanel className="flex flex-col gap-4 h-full">
@@ -229,16 +197,7 @@ export function ImageDisplay({
             <p className="text-sm max-w-md mx-auto whitespace-pre-wrap text-muted-foreground">{error}</p>
           </div>
         )}
-        {allImagesFailed && (
-           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
-            <AlertTriangle size={48} className="mb-4 text-destructive/50" />
-            <p className="font-semibold text-foreground">Generation Failed</p>
-            <p className="text-sm max-w-md mx-auto mt-2 text-muted-foreground">
-              The free image service may be busy or unavailable. Please try again in a moment, or simplify your prompt.
-            </p>
-          </div>
-        )}
-        {!isLoading && !error && !allImagesFailed && imageUrls.length > 0 && (
+        {!isLoading && !error && imageUrls.length > 0 && (
           <div className={cn(
             "w-full h-full",
              imageUrls.length > 1 ? "grid grid-cols-2 gap-1" : ""
@@ -254,13 +213,8 @@ export function ImageDisplay({
                           <LoadingSpinner size={32} />
                         </div>
                     )}
-                    {state === 'error' && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-destructive/20 text-destructive-foreground p-2 text-center z-10">
-                            <AlertTriangle size={24} />
-                            <p className="text-xs mt-1 font-semibold">Load Failed</p>
-                        </div>
-                    )}
-                    {(state === 'loading' || state === 'loaded') && (
+                    
+                    {state !== 'error' && (
                       <Image
                           src={url}
                           alt={`${prompt || 'Generated AI image'} - variation ${index + 1}`}
@@ -288,7 +242,7 @@ export function ImageDisplay({
             })}
           </div>
         )}
-        {!isLoading && !error && !allImagesFailed && imageUrls.length === 0 && (
+        {!isLoading && !error && imageUrls.length === 0 && (
            <div className="flex flex-col items-center justify-center text-muted-foreground opacity-50 p-4 text-center">
             <ImageIcon size={64} />
             <p className="mt-2 text-lg">Your vision will appear here</p>

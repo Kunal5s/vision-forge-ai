@@ -47,8 +47,8 @@ const generateImageFlow = ai.defineFlow(
       // Enhance the prompt with quality modifiers for 4K, detailed output.
       const enhancedPrompt = `Photorealistic, 4K resolution, ultra-detailed, intricate textures, professional lighting, masterpiece quality. ${input.prompt}`;
 
-      // Create 4 promises for 4 image generation calls in parallel for variations.
-      const generationPromises = Array.from({ length: 4 }).map(() => {
+      // Create 2 promises for 2 image generation calls in parallel for variations.
+      const generationPromises = Array.from({ length: 2 }).map(() => {
         return ai.generate({
           model: 'googleai/gemini-2.0-flash-preview-image-generation',
           prompt: enhancedPrompt, // Use the enhanced prompt for higher quality.

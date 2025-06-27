@@ -209,7 +209,7 @@ export function ImageGenerator() {
         width = Math.round((baseSize * aspectW) / aspectH);
       }
       
-      const imageUrls = Array.from({ length: 4 }).map(() => {
+      const imageUrls = Array.from({ length: 2 }).map(() => {
         const seed = Math.floor(Math.random() * 1000000);
         return `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
       });
@@ -220,12 +220,12 @@ export function ImageGenerator() {
           throw new Error('The free image service did not return a valid image. It may be busy or the prompt was not suitable.');
         }
         setGeneratedImageUrls(imageUrls);
-        toast({ title: 'Vision Forged!', description: 'Four variations have been generated with Pollinations.' });
+        toast({ title: 'Vision Forged!', description: 'Two variations have been generated with Pollinations.' });
       } catch (e: any) {
         console.error('Pollinations API check failed:', e);
-        const errorMessage = e.message || 'The free image service is currently unavailable. Please try again later.';
-        setError(errorMessage);
-        toast({ title: 'Generation Failed', description: errorMessage, variant: 'destructive' });
+        // Silently fail as requested. Reset UI without showing an error.
+        setGeneratedImageUrls([]);
+        setError(null);
       } finally {
         setIsLoading(false);
       }
