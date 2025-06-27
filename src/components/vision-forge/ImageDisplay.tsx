@@ -36,7 +36,6 @@ export function ImageDisplay({
 }: ImageDisplayProps) {
   
   const { toast } = useToast();
-  // State to track individual image status: loading, loaded, or error
   const [imageStates, setImageStates] = useState<Record<string, 'loading' | 'loaded' | 'error'>>({});
   const [failedCount, setFailedCount] = useState(0);
 
@@ -44,12 +43,11 @@ export function ImageDisplay({
   useEffect(() => {
     if (imageUrls && imageUrls.length > 0) {
       const initialStates = imageUrls.reduce((acc, url, index) => {
-        // Use a unique key for each image instance
         acc[`${url}-${index}`] = 'loading';
         return acc;
       }, {} as Record<string, 'loading' | 'loaded' | 'error'>);
       setImageStates(initialStates);
-      setFailedCount(0); // Reset failed count for new set of images
+      setFailedCount(0);
     }
   }, [imageUrls]);
 
@@ -81,7 +79,6 @@ export function ImageDisplay({
   };
   
   const handleDownloadAll = async () => {
-    // Filter out images that failed to load
     const loadedImageUrls = imageUrls.filter((url, index) => imageStates[`${url}-${index}`] === 'loaded');
 
     if (loadedImageUrls.length < 1) {
@@ -160,7 +157,7 @@ export function ImageDisplay({
         let sourceHeight = originalHeight;
         const originalAspectRatioValue = originalWidth / originalHeight;
 
-        if (Math.abs(originalAspectRatioValue - targetAspectRatio) > 0.01) { // Add tolerance for floating point
+        if (Math.abs(originalAspectRatioValue - targetAspectRatio) > 0.01) {
           if (originalAspectRatioValue > targetAspectRatio) {
               sourceWidth = originalHeight * targetAspectRatio;
               sourceX = (originalWidth - sourceWidth) / 2;
@@ -196,7 +193,6 @@ export function ImageDisplay({
 
     image.onerror = () => {
         toast({ title: 'Download Failed', description: 'The image could not be loaded for processing. Please try again.', variant: 'destructive' });
-        // Fallback to direct download might still fail due to CORS if not data URI
         try {
           const link = document.createElement('a');
           link.href = imageUrl;
@@ -217,7 +213,7 @@ export function ImageDisplay({
   return (
     <FuturisticPanel className="flex flex-col gap-4 h-full">
       <div className={cn(
-          "w-full rounded-lg border border-border/50 bg-black/20 shadow-inner flex items-center justify-center min-h-[300px] md:min-h-[400px] overflow-hidden p-1"
+          "w-full rounded-lg border border-border/50 bg-muted/10 flex items-center justify-center min-h-[300px] md:min-h-[400px] overflow-hidden p-1"
         )}
       >
         {isLoading && (
@@ -234,11 +230,11 @@ export function ImageDisplay({
           </div>
         )}
         {allImagesFailed && (
-           <div className="absolute inset-0 flex flex-col items-center justify-center text-destructive p-4 text-center">
-            <AlertTriangle size={48} className="mb-2" />
-            <p className="font-semibold">Image Loading Failed</p>
-            <p className="text-sm max-w-md mx-auto">
-              Could not load any of the generated images. The image service might be temporarily unavailable. Please try regenerating.
+           <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground p-4 text-center">
+            <AlertTriangle size={48} className="mb-4 text-destructive/50" />
+            <p className="font-semibold text-foreground">Generation Failed</p>
+            <p className="text-sm max-w-md mx-auto mt-2">
+              The free image service may be busy or unavailable. Please try again in a moment, or simplify your prompt.
             </p>
           </div>
         )}
@@ -252,7 +248,7 @@ export function ImageDisplay({
                 const state = imageStates[key];
 
                 return (
-                  <div key={key} className={cn("relative group rounded-md overflow-hidden bg-muted/20 transition-transform duration-300 ease-in-out hover:scale-105 hover:z-10", getAspectRatioClass(aspectRatio))}>
+                  <div key={key} className={cn("relative group rounded-md overflow-hidden bg-muted/20", getAspectRatioClass(aspectRatio))}>
                     {state === 'loading' && (
                         <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-20">
                           <LoadingSpinner size={32} />
