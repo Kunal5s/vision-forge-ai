@@ -75,8 +75,8 @@ export function Header() {
                     <Link
                       href={link.href}
                       className={cn(
-                        "block rounded-md px-3 py-2 text-base font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
-                        pathname === link.href ? "bg-accent text-accent-foreground" : "text-foreground/80"
+                        "block rounded-md px-3 py-2 text-base font-medium transition-colors hover:bg-muted hover:text-foreground",
+                        pathname === link.href ? "bg-muted text-foreground font-semibold" : "text-foreground/80"
                       )}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
