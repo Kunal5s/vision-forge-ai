@@ -210,7 +210,7 @@ export function ImageDisplay({
                 const state = imageStates[key];
 
                 return (
-                  <div key={key} className={cn("relative rounded-md overflow-hidden bg-muted/30", getAspectRatioClass(aspectRatio))}>
+                  <div key={key} className={cn("relative rounded-md overflow-hidden bg-muted/30 flex items-center justify-center", getAspectRatioClass(aspectRatio))}>
                     {state === 'loading' && (
                         <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-20">
                           <LoadingSpinner size={32} />
@@ -219,7 +219,7 @@ export function ImageDisplay({
                     
                      {state === 'error' && (
                       <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/50 z-10 text-center p-2">
-                        {/* This space is intentionally left blank to avoid showing users a "Load Failed" message, as requested. */}
+                         {/* Intentionally blank to avoid "Load Failed" message */}
                       </div>
                     )}
 
@@ -227,7 +227,7 @@ export function ImageDisplay({
                         src={url}
                         alt={`${prompt || 'Generated AI image'} - variation ${index + 1}`}
                         layout="fill"
-                        objectFit="cover"
+                        objectFit="contain"
                         className={cn(
                             "transition-opacity duration-500", 
                             state === 'loaded' ? 'opacity-100' : 'opacity-0'
