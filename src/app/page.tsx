@@ -46,7 +46,11 @@ export default function HomePage() {
               Welcome to the future of AI image generation. Describe your vision, and our advanced text-to-image AI, powered by Google's Imagen technology, will bring it to life. Create stunning, high-quality images, illustrations, and art from text prompts in seconds. Get started for free and see what you can create.
           </p>
         </header>
-        <ImageGenerator />
+        <div className="animated-border">
+          <div>
+            <ImageGenerator />
+          </div>
+        </div>
       </div>
 
       <section id="features" className="container mx-auto py-16 px-4">

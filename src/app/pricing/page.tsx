@@ -1,6 +1,5 @@
 
 import { PricingSection } from '@/components/vision-forge/PricingSection';
-import { TestimonialsSection } from '@/components/vision-forge/TestimonialsSection';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -11,7 +10,6 @@ export const metadata: Metadata = {
 export default function PricingPage() {
     return (
         <main className="py-12">
-            <TestimonialsSection />
             <PricingSection />
         </main>
     );
