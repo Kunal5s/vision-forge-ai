@@ -45,8 +45,6 @@ const generateImageFlow = ai.defineFlow(
     }
 
     try {
-      let generationPromises;
-      
       if (input.plan === 'pro' || input.plan === 'mega') {
           // Premium model logic
           const promptEnhancement = input.plan === 'mega'
@@ -55,13 +53,27 @@ const generateImageFlow = ai.defineFlow(
             
           const enhancedPrompt = `${promptEnhancement} ${input.prompt}`;
 
-          generationPromises = Array.from({ length: 2 }).map(() => {
-              return ai.generate({
-                model: 'googleai/gemini-2.0-flash-preview-image-generation',
-                prompt: enhancedPrompt,
-                config: { responseModalities: ['TEXT', 'IMAGE'] },
-              });
+          // Generate 2 images in a single, more efficient API call.
+          const result = await ai.generate({
+            model: 'googleai/gemini-2.0-flash-preview-image-generation',
+            prompt: enhancedPrompt,
+            config: { 
+                responseModalities: ['TEXT', 'IMAGE'],
+                candidates: 2 // Ask for 2 image candidates
+            },
           });
+
+          const imageUrls = result.candidates
+            .map(candidate => candidate.media?.url)
+            .filter((url): url is string => !!url);
+            
+          if (imageUrls.length > 0) {
+            return { imageUrls };
+          }
+      
+          const failureReason = "Premium image generation failed. This could be due to a few reasons:\n1. Your prompt may have triggered a safety filter. Please try a different prompt.\n2. There might be a temporary issue with the AI service.\n3. (For site admins) Ensure your Google Cloud project has billing enabled and the 'Generative Language API' is active.";
+          return { imageUrls: [], error: failureReason };
+
       } else {
           // Pollinations (free model) logic - non-blocking
           const encodedPrompt = encodeURIComponent(input.prompt);
@@ -86,19 +98,6 @@ const generateImageFlow = ai.defineFlow(
           return { imageUrls: urls };
       }
       
-      const results = await Promise.all(generationPromises);
-
-      const imageUrls = results
-        .map(result => result.media?.url)
-        .filter((url): url is string => !!url);
-
-      if (imageUrls.length > 0) {
-        return { imageUrls };
-      }
-      
-      const failureReason = "Premium image generation failed. This could be due to a few reasons:\n1. Your prompt may have triggered a safety filter. Please try a different prompt.\n2. There might be a temporary issue with the AI service.\n3. (For site admins) Ensure your Google Cloud project has billing enabled and the 'Generative Language API' is active.";
-      return { imageUrls: [], error: failureReason };
-
     } catch (e: any) {
       console.error("Image generation API call failed:", e);
       const detailedMessage = "An unexpected error occurred with the premium image generator. For site administrators, please check:\n1. Your GOOGLE_API_KEY is set correctly.\n2. Billing is enabled for your Google Cloud project.\n3. The 'Generative Language API' is enabled in your project.";
