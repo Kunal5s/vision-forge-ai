@@ -17,7 +17,7 @@ export function PreFooterCallToAction() {
               <p className="text-lg text-foreground/80 mb-6">
                 Imagen BrainAi empowers you with state-of-the-art tools to transform your imagination into stunning reality. Explore endless creative possibilities with our intuitive platform.
               </p>
-              <Button asChild size="lg" className="futuristic-glow-button-primary bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 <Link href="/">
                   Start Creating Now <ArrowRight size={20} className="ml-2" />
                 </Link>

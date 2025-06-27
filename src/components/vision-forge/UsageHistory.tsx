@@ -43,7 +43,7 @@ export function UsageHistory({ history, onSelectHistoryItem, onDeleteHistoryItem
         {history.length > 0 && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm" className="futuristic-glow-button">
+                <Button variant="destructive" size="sm">
                   <Trash2 size={16} className="mr-2" /> Clear All
                 </Button>
               </AlertDialogTrigger>
@@ -67,7 +67,7 @@ export function UsageHistory({ history, onSelectHistoryItem, onDeleteHistoryItem
       <ScrollArea className="h-[400px] pr-4">
         <div className="space-y-4">
           {history.map((item) => (
-            <div key={item.id} className="flex items-center gap-4 p-3 rounded-lg border border-border/50 bg-background/30 hover:bg-accent/10 transition-colors duration-200">
+            <div key={item.id} className="flex items-center gap-4 p-3 rounded-lg border bg-background/30 hover:bg-accent/10 transition-colors duration-200">
               <div className="relative w-16 h-16 rounded-md overflow-hidden shrink-0 bg-muted/20 flex items-center justify-center">
                 {item.imageUrl ? (
                   <Image src={item.imageUrl} alt={item.prompt.substring(0,30)} layout="fill" objectFit="cover" data-ai-hint="history thumbnail" />

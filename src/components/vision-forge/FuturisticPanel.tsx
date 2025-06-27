@@ -1,3 +1,4 @@
+
 import type { HTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -7,7 +8,7 @@ export function FuturisticPanel({ className, children, ...props }: FuturisticPan
   return (
     <div
       className={cn(
-        'glassmorphism-panel p-6 rounded-xl',
+        'bg-card border rounded-xl p-6 transition-shadow hover:shadow-lg',
         className
       )}
       {...props}

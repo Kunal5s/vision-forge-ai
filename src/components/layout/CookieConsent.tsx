@@ -41,7 +41,7 @@ export function CookieConsent() {
 
   return (
     <div className={cn(
-      "fixed bottom-0 left-0 right-0 z-[100] p-4 bg-background/80 backdrop-blur-lg border-t border-border/50",
+      "fixed bottom-0 left-0 right-0 z-[100] p-4 bg-background border-t",
       "data-[state=visible]:animate-in data-[state=hidden]:animate-out data-[state=hidden]:slide-out-to-bottom-full data-[state=visible]:slide-in-from-bottom-full",
       "transition-all duration-500"
       )}
@@ -58,7 +58,7 @@ export function CookieConsent() {
                 .
             </p>
         </div>
-        <Button onClick={handleAccept} size="sm" className="futuristic-glow-button-primary bg-primary hover:bg-primary/90 text-primary-foreground shrink-0">
+        <Button onClick={handleAccept} size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shrink-0">
           Accept
         </Button>
       </div>

@@ -82,18 +82,18 @@ export function SubscriptionManager() {
 
 
   if (isLoading) {
-    return <Button variant="outline" className="futuristic-glow-button" disabled>Loading...</Button>;
+    return <Button variant="outline" disabled>Loading...</Button>;
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="futuristic-glow-button">
+        <Button variant="outline">
           {isFreePlan ? <ArrowUpCircle className="mr-2 h-4 w-4 text-accent" /> : <UserCheck className="mr-2 h-4 w-4 text-primary" />}
           {isFreePlan ? 'Activate Plan' : 'Manage Plan'}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] glassmorphism-panel">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>{isFreePlan ? 'Activate Your Purchased Plan' : 'Manage Your Subscription'}</DialogTitle>
           <DialogDescription>

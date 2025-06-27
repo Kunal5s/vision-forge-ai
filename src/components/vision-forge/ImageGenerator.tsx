@@ -372,7 +372,7 @@ export function ImageGenerator() {
                   Model
                 </Label>
                 <Select value={activeModel} onValueChange={(value) => setActiveModel(value as 'pollinations' | 'google')}>
-                  <SelectTrigger id="model-select" className="w-full futuristic-glow-button bg-input hover:bg-input/80">
+                  <SelectTrigger id="model-select" className="w-full bg-background hover:bg-accent">
                     <SelectValue placeholder="Select a model" />
                   </SelectTrigger>
                   <SelectContent>
@@ -405,13 +405,13 @@ export function ImageGenerator() {
                     {...register('prompt')}
                     placeholder="e.g., A futuristic cityscape at sunset, neon lights reflecting on wet streets..."
                     rows={4}
-                    className="bg-input border-border/70 focus:border-primary focus:ring-primary text-base resize-none pr-12"
+                    className="bg-background border-input focus:border-primary focus:ring-primary text-base resize-none pr-12"
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-accent hover:text-accent/80 futuristic-glow-button"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-accent hover:text-accent/80"
                     onClick={handleImprovePrompt}
                     disabled={isImprovingPrompt || !currentPrompt || subscription?.plan === 'free'}
                     title="Improve Prompt with AI (Paid Plans Only)"
@@ -426,7 +426,7 @@ export function ImageGenerator() {
                  <div>
                     <Label htmlFor="style" className="text-sm font-medium mb-1 block text-foreground/80">Artistic Style</Label>
                     <Select value={selectedStyle} onValueChange={setSelectedStyle}>
-                        <SelectTrigger id="style" className="w-full futuristic-glow-button bg-input hover:bg-input/80">
+                        <SelectTrigger id="style" className="w-full bg-background hover:bg-accent">
                             <SelectValue placeholder="Select style" />
                         </SelectTrigger>
                         <SelectContent>
@@ -439,7 +439,7 @@ export function ImageGenerator() {
                 <div>
                     <Label htmlFor="mood" className="text-sm font-medium mb-1 block text-foreground/80">Mood</Label>
                     <Select value={selectedMood} onValueChange={setSelectedMood}>
-                        <SelectTrigger id="mood" className="w-full futuristic-glow-button bg-input hover:bg-input/80">
+                        <SelectTrigger id="mood" className="w-full bg-background hover:bg-accent">
                             <SelectValue placeholder="Select mood" />
                         </SelectTrigger>
                         <SelectContent>
@@ -452,7 +452,7 @@ export function ImageGenerator() {
                 <div>
                     <Label htmlFor="lighting" className="text-sm font-medium mb-1 block text-foreground/80">Lighting</Label>
                     <Select value={selectedLighting} onValueChange={setSelectedLighting}>
-                        <SelectTrigger id="lighting" className="w-full futuristic-glow-button bg-input hover:bg-input/80">
+                        <SelectTrigger id="lighting" className="w-full bg-background hover:bg-accent">
                             <SelectValue placeholder="Select lighting" />
                         </SelectTrigger>
                         <SelectContent>
@@ -465,7 +465,7 @@ export function ImageGenerator() {
                 <div>
                     <Label htmlFor="color" className="text-sm font-medium mb-1 block text-foreground/80">Color Palette</Label>
                     <Select value={selectedColor} onValueChange={setSelectedColor}>
-                        <SelectTrigger id="color" className="w-full futuristic-glow-button bg-input hover:bg-input/80">
+                        <SelectTrigger id="color" className="w-full bg-background hover:bg-accent">
                             <SelectValue placeholder="Select color" />
                         </SelectTrigger>
                         <SelectContent>
@@ -480,7 +480,7 @@ export function ImageGenerator() {
               <div>
                 <Label htmlFor="aspect-ratio" className="text-sm font-medium mb-1 block text-foreground/80">Aspect Ratio</Label>
                 <Select value={selectedAspectRatio} onValueChange={setSelectedAspectRatio}>
-                  <SelectTrigger id="aspect-ratio" className="w-full futuristic-glow-button bg-input hover:bg-input/80">
+                  <SelectTrigger id="aspect-ratio" className="w-full bg-background hover:bg-accent">
                     <SelectValue placeholder="Select aspect ratio" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border">
@@ -493,7 +493,7 @@ export function ImageGenerator() {
                 </Select>
               </div>
               
-              <Button type="submit" disabled={isLoading || isSubLoading || !canGenerate(activeModel)} className="w-full text-lg py-3 futuristic-glow-button-primary bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Button type="submit" disabled={isLoading || isSubLoading || !canGenerate(activeModel)} className="w-full text-lg py-3 bg-primary hover:bg-primary/90 text-primary-foreground">
                 {isLoading ? <LoadingSpinner size={24} className="mr-2"/> : null}
                 Forge Vision
               </Button>
@@ -540,7 +540,7 @@ export function ImageGenerator() {
 
       {improvedPromptSuggestion && (
         <Dialog open={showImprovePromptDialog} onOpenChange={setShowImprovePromptDialog}>
-          <DialogContent className="sm:max-w-lg glassmorphism-panel">
+          <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle className="text-2xl text-primary flex items-center gap-2"><Wand2 /> AI Prompt Enhancement</DialogTitle>
               <DialogDescription className="text-foreground/80 pt-2">
@@ -550,7 +550,7 @@ export function ImageGenerator() {
             <div className="my-4 space-y-4">
               <div>
                 <h4 className="font-semibold text-foreground/90">Original Prompt:</h4>
-                <p className="text-sm p-3 bg-muted/50 rounded-md border border-border/30">{currentPrompt}</p>
+                <p className="text-sm p-3 bg-muted rounded-md border">{currentPrompt}</p>
               </div>
               <div>
                 <h4 className="font-semibold text-accent">Suggested Prompt:</h4>
@@ -558,14 +558,14 @@ export function ImageGenerator() {
               </div>
               <div>
                 <h4 className="font-semibold text-foreground/90">Reasoning:</h4>
-                <p className="text-sm p-3 bg-muted/50 rounded-md border border-border/30">{improvedPromptSuggestion.reasoning}</p>
+                <p className="text-sm p-3 bg-muted rounded-md border">{improvedPromptSuggestion.reasoning}</p>
               </div>
             </div>
             <DialogFooter className="sm:justify-between gap-2">
-              <Button variant="outline" onClick={() => setShowImprovePromptDialog(false)} className="futuristic-glow-button">
+              <Button variant="outline" onClick={() => setShowImprovePromptDialog(false)}>
                  <ThumbsDown size={18} className="mr-2"/> Keep Original
               </Button>
-              <Button onClick={applyImprovedPrompt} className="futuristic-glow-button-primary bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Button onClick={applyImprovedPrompt} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 <ThumbsUp size={18} className="mr-2"/> Apply Suggestion
               </Button>
             </DialogFooter>

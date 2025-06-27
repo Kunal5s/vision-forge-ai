@@ -139,7 +139,7 @@ export default function ImageEditorPage() {
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[70vh]">
-        <Card className="lg:col-span-4 xl:col-span-3 glassmorphism-panel flex flex-col">
+        <Card className="lg:col-span-4 xl:col-span-3 flex flex-col transition-shadow hover:shadow-lg">
           <CardHeader>
             <CardTitle className="text-xl flex items-center"><Sparkles className="mr-2 text-accent" /> Editing Tools</CardTitle>
             <CardDescription className="text-sm">Select a tool to start editing.</CardDescription>
@@ -148,7 +148,7 @@ export default function ImageEditorPage() {
             <ScrollArea className="h-full p-4">
               {uploadedImage ? (
                 <div className="space-y-6">
-                  <Button onClick={resetFilters} variant="outline" className="w-full futuristic-glow-button">
+                  <Button onClick={resetFilters} variant="outline" className="w-full">
                     <Trash2 size={16} className="mr-2" /> Reset All Filters
                   </Button>
                   {editingToolCategoriesConfig.map(category => (
@@ -164,7 +164,7 @@ export default function ImageEditorPage() {
                                 variant="outline" 
                                 size="sm" 
                                 className={cn(
-                                  "w-full text-xs justify-start futuristic-glow-button",
+                                  "w-full text-xs justify-start",
                                   (tool.name === "Grayscale" && isGrayscale) && "bg-accent/20 border-accent text-accent",
                                   (tool.name === "Sepia" && isSepia) && "bg-accent/20 border-accent text-accent",
                                   (tool.name === "Invert" && isInverted) && "bg-accent/20 border-accent text-accent"
@@ -179,7 +179,7 @@ export default function ImageEditorPage() {
                                 key={tool.name} 
                                 variant="outline" 
                                 size="sm" 
-                                className="text-xs justify-start futuristic-glow-button w-full"
+                                className="text-xs justify-start w-full"
                                 onClick={() => alert(`Feature "${tool.name}" is a placeholder.`)}
                               >
                                 {tool.name}
@@ -201,7 +201,7 @@ export default function ImageEditorPage() {
           </CardContent>
            {uploadedImage && (
              <div className="p-4 border-t border-border/30">
-                <Button onClick={handleSaveImage} className="w-full futuristic-glow-button-primary bg-primary hover:bg-primary/90" disabled={!uploadedImage}>
+                <Button onClick={handleSaveImage} className="w-full bg-primary hover:bg-primary/90" disabled={!uploadedImage}>
                   <Save size={18} className="mr-2" /> Save Image (Placeholder)
                 </Button>
              </div>
@@ -218,7 +218,7 @@ export default function ImageEditorPage() {
                   Drag and drop, or click to select. Max 10MB (PNG, JPG, GIF, WEBP).
                 </p>
                 <div className="relative mt-4">
-                   <Button asChild variant="default" size="lg" className="futuristic-glow-button-primary bg-primary hover:bg-primary/90 cursor-pointer">
+                   <Button asChild variant="default" size="lg" className="bg-primary hover:bg-primary/90 cursor-pointer">
                       <div>
                         <UploadCloud size={20} className="mr-2" /> Select Image
                       </div>
@@ -254,7 +254,7 @@ export default function ImageEditorPage() {
                   />
                 </div>
                  <div className="flex gap-2 mt-2">
-                    <Button variant="outline" onClick={() => {setUploadedImage(null); setImageFile(null); setFileName(null); setError(null); resetFilters();}} className="futuristic-glow-button">
+                    <Button variant="outline" onClick={() => {setUploadedImage(null); setImageFile(null); setFileName(null); setError(null); resetFilters();}}>
                       <RotateCcw size={18} className="mr-2"/> Upload New
                     </Button>
                   </div>

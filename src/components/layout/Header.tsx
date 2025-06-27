@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -22,24 +23,24 @@ export function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+    <header className="sticky top-0 z-50 w-full border-b bg-background">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
-          <Sparkles className="h-7 w-7 text-primary animate-pulse" />
+          <Sparkles className="h-7 w-7 text-primary" />
           <span className="text-xl font-bold text-foreground">
             Imagen <span className="text-accent">BrainAi</span>
           </span>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex gap-4 items-center">
+        <nav className="hidden md:flex gap-6 items-center">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={cn(
-                "text-sm font-medium transition-colors hover:text-primary futuristic-glow-button !p-1",
-                pathname === link.href ? "text-primary" : "text-muted-foreground"
+                "text-sm font-medium transition-colors hover:underline underline-offset-4",
+                pathname === link.href ? "text-primary font-semibold" : "text-muted-foreground"
               )}
             >
               {link.label}
@@ -52,13 +53,13 @@ export function Header() {
         <div className="md:hidden flex items-center gap-2">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-foreground futuristic-glow-button">
+              <Button variant="ghost" size="icon" className="text-foreground">
                 <Menu className="h-6 w-6" />
                 <span className="sr-only">Open menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[280px] bg-background/95 backdrop-blur-lg border-border/60 p-0">
-              <SheetHeader className="p-4 border-b border-border/30">
+            <SheetContent side="right" className="w-[280px] bg-background p-0">
+              <SheetHeader className="p-4 border-b">
                 <SheetTitle className="flex items-center gap-2">
                    <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
                     <Sparkles className="h-6 w-6 text-primary" />
@@ -74,8 +75,8 @@ export function Header() {
                     <Link
                       href={link.href}
                       className={cn(
-                        "block rounded-md px-3 py-2 text-base font-medium transition-colors hover:bg-accent/10 hover:text-primary",
-                        pathname === link.href ? "bg-primary/10 text-primary" : "text-foreground/80"
+                        "block rounded-md px-3 py-2 text-base font-medium transition-colors hover:bg-accent hover:text-primary",
+                        pathname === link.href ? "bg-accent text-primary" : "text-foreground/80"
                       )}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
@@ -83,7 +84,7 @@ export function Header() {
                     </Link>
                   </SheetClose>
                 ))}
-                 <div className="border-t border-border/30 pt-4 mt-4">
+                 <div className="border-t pt-4 mt-4">
                    <SubscriptionManager />
                  </div>
               </nav>

@@ -39,7 +39,7 @@ export default function ContactPage() {
       </header>
 
       <div className="grid md:grid-cols-2 gap-12 items-start">
-        <Card className="glassmorphism-panel">
+        <Card className="transition-shadow hover:shadow-lg">
           <CardHeader>
             <CardTitle className="text-2xl">Send Us a Message</CardTitle>
             <CardDescription>Fill out the form and we'll get back to you as soon as possible.</CardDescription>
@@ -48,18 +48,18 @@ export default function ContactPage() {
             <form action={submitContactForm} className="space-y-6">
               <div>
                 <Label htmlFor="name" className="text-foreground/90">Full Name</Label>
-                <Input type="text" id="name" name="name" placeholder="John Doe" required className="mt-1 bg-input border-border/70 focus:border-primary focus:ring-primary" />
+                <Input type="text" id="name" name="name" placeholder="John Doe" required className="mt-1 bg-input border-input focus:border-primary focus:ring-primary" />
               </div>
               <div>
                 <Label htmlFor="email" className="text-foreground/90">Email Address</Label>
-                <Input type="email" id="email" name="email" placeholder="you@example.com" required className="mt-1 bg-input border-border/70 focus:border-primary focus:ring-primary" />
+                <Input type="email" id="email" name="email" placeholder="you@example.com" required className="mt-1 bg-input border-input focus:border-primary focus:ring-primary" />
               </div>
               <div>
                 <Label htmlFor="message" className="text-foreground/90">Message</Label>
-                <Textarea id="message" name="message" rows={5} placeholder="Your question or feedback..." required className="mt-1 bg-input border-border/70 focus:border-primary focus:ring-primary resize-none" />
+                <Textarea id="message" name="message" rows={5} placeholder="Your question or feedback..." required className="mt-1 bg-input border-input focus:border-primary focus:ring-primary resize-none" />
               </div>
               <div>
-                <Button type="submit" className="w-full futuristic-glow-button-primary bg-primary hover:bg-primary/90 text-primary-foreground">
+                <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
                   <MessageSquare size={18} className="mr-2" /> Send Message
                 </Button>
                 <p className="text-xs text-muted-foreground mt-3 text-center">
@@ -71,7 +71,7 @@ export default function ContactPage() {
         </Card>
 
         <div className="space-y-8">
-          <Card className="glassmorphism-panel">
+          <Card className="transition-shadow hover:shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl"><Mail className="text-primary" /> General Inquiries</CardTitle>
             </CardHeader>
@@ -82,7 +82,7 @@ export default function ContactPage() {
             </CardContent>
           </Card>
           
-          <Card className="glassmorphism-panel">
+          <Card className="transition-shadow hover:shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl"><HelpCircle className="text-accent" /> Support & Feedback</CardTitle>
             </CardHeader>

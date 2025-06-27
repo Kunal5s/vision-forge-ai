@@ -75,7 +75,7 @@ export function PricingSection() {
           <Card
             key={plan.name}
             className={cn(
-              'flex flex-col h-full glassmorphism-panel',
+              'flex flex-col h-full transition-shadow hover:shadow-lg',
               plan.isFeatured && 'border-primary shadow-2xl scale-105'
             )}
           >
@@ -95,7 +95,7 @@ export function PricingSection() {
               </ul>
             </CardContent>
             <CardFooter>
-              <Button asChild className={cn('w-full', plan.isFeatured ? 'futuristic-glow-button-primary' : 'futuristic-glow-button')} variant={plan.buttonVariant as any}>
+              <Button asChild className={cn('w-full')} variant={plan.buttonVariant as any}>
                 <Link href={plan.href} target="_blank" rel="noopener noreferrer">{plan.buttonText}</Link>
               </Button>
             </CardFooter>

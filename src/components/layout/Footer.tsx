@@ -4,7 +4,7 @@ import { Sparkles, Twitter, Instagram, Facebook, Linkedin, Github } from 'lucide
 
 export function Footer() {
   return (
-    <footer className="bg-card/80 backdrop-blur-md text-card-foreground py-10 mt-auto border-t border-border/50">
+    <footer className="bg-background text-card-foreground py-10 mt-auto border-t">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           <div>
@@ -20,21 +20,21 @@ export function Footer() {
           <div>
             <h3 className="text-md font-semibold text-foreground mb-4">Our Services</h3>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/" className="text-muted-foreground hover:text-primary transition-colors">AI Image Generation</Link></li>
-              <li><Link href="/pricing" className="text-muted-foreground hover:text-primary transition-colors">Pricing</Link></li>
-              <li><Link href="/#features" className="text-muted-foreground hover:text-primary transition-colors">Prompt Enhancement</Link></li>
-              <li><Link href="/#features" className="text-muted-foreground hover:text-primary transition-colors">Style Customization</Link></li>
+              <li><Link href="/" className="text-muted-foreground hover:underline underline-offset-4 transition-colors">AI Image Generation</Link></li>
+              <li><Link href="/pricing" className="text-muted-foreground hover:underline underline-offset-4 transition-colors">Pricing</Link></li>
+              <li><Link href="/#features" className="text-muted-foreground hover:underline underline-offset-4 transition-colors">Prompt Enhancement</Link></li>
+              <li><Link href="/#features" className="text-muted-foreground hover:underline underline-offset-4 transition-colors">Style Customization</Link></li>
             </ul>
           </div>
 
           <div>
             <h3 className="text-md font-semibold text-foreground mb-4">Legal</h3>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/about" className="text-muted-foreground hover:text-primary transition-colors">About Us</Link></li>
-              <li><Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact Us</Link></li>
-              <li><Link href="/privacy" className="text-muted-foreground hover:text-primary transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="text-muted-foreground hover:text-primary transition-colors">Terms of Service</Link></li>
-              <li><Link href="/disclaimer" className="text-muted-foreground hover:text-primary transition-colors">Disclaimer</Link></li>
+              <li><Link href="/about" className="text-muted-foreground hover:underline underline-offset-4 transition-colors">About Us</Link></li>
+              <li><Link href="/contact" className="text-muted-foreground hover:underline underline-offset-4 transition-colors">Contact Us</Link></li>
+              <li><Link href="/privacy" className="text-muted-foreground hover:underline underline-offset-4 transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="text-muted-foreground hover:underline underline-offset-4 transition-colors">Terms of Service</Link></li>
+              <li><Link href="/disclaimer" className="text-muted-foreground hover:underline underline-offset-4 transition-colors">Disclaimer</Link></li>
             </ul>
           </div>
           
@@ -60,7 +60,7 @@ export function Footer() {
           </div>
         </div>
         
-        <div className="text-center text-xs text-muted-foreground border-t border-border/30 pt-8">
+        <div className="text-center text-xs text-muted-foreground border-t pt-8">
           <p>&copy; {new Date().getFullYear()} Imagen BrainAi. All Rights Reserved.</p>
           <p className="mt-1">Crafted with <span role="img" aria-label="heart">❤️</span> and powered by Google AI & Firebase.</p>
         </div>

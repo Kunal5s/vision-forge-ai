@@ -33,7 +33,7 @@ export default function AboutPage() {
           </div>
         </section>
 
-        <section className="bg-card/50 p-8 rounded-xl shadow-lg">
+        <section className="bg-muted p-8 rounded-xl">
           <h2 className="text-3xl font-semibold text-foreground mb-6 text-center">What Our AI Image Generator Offers</h2>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="flex flex-col items-center text-center p-4">
