@@ -36,31 +36,30 @@ export function ImageDisplay({
 }: ImageDisplayProps) {
   
   const { toast } = useToast();
-  const [imageLoadingStates, setImageLoadingStates] = useState<Record<string, boolean>>({});
+  // State to track individual image status: loading, loaded, or error
+  const [imageStates, setImageStates] = useState<Record<string, 'loading' | 'loaded' | 'error'>>({});
 
   useEffect(() => {
     if (imageUrls && imageUrls.length > 0) {
-      const initialLoadingStates = imageUrls.reduce((acc, url) => {
-        acc[url] = true;
+      const initialStates = imageUrls.reduce((acc, url, index) => {
+        // Use a unique key for each image instance
+        acc[`${url}-${index}`] = 'loading';
         return acc;
-      }, {} as Record<string, boolean>);
-      setImageLoadingStates(initialLoadingStates);
+      }, {} as Record<string, 'loading' | 'loaded' | 'error'>);
+      setImageStates(initialStates);
     }
   }, [imageUrls]);
 
-  const handleImageLoad = (url: string) => {
-    setImageLoadingStates(prev => ({ ...prev, [url]: false }));
+  const handleImageLoad = (key: string) => {
+    setImageStates(prev => ({ ...prev, [key]: 'loaded' }));
   };
 
-  const handleImageError = (url: string) => {
-    console.error(`Failed to load image: ${url}`);
-    setImageLoadingStates(prev => ({ ...prev, [url]: false }));
-    toast({
-      title: 'Image Load Error',
-      description: 'One of the generated images failed to load from the source.',
-      variant: 'destructive',
-    });
+  const handleImageError = (key: string) => {
+    console.error(`Failed to load image for key: ${key}`);
+    setImageStates(prev => ({ ...prev, [key]: 'error' }));
+    // IMPORTANT: No global toast message here. The error is handled visually per image.
   };
+
 
   const getAspectRatioClass = (ratio: string) => {
     switch (ratio) {
@@ -79,17 +78,27 @@ export function ImageDisplay({
   };
   
   const handleDownloadAll = async () => {
-    if (imageUrls.length < 1) return;
+    // Filter out images that failed to load
+    const loadedImageUrls = imageUrls.filter((url, index) => imageStates[`${url}-${index}`] === 'loaded');
+
+    if (loadedImageUrls.length < 1) {
+        toast({
+            title: 'No Images to Download',
+            description: 'None of the images loaded successfully.',
+            variant: 'destructive',
+        });
+        return;
+    }
 
     const { id, update, dismiss } = toast({
       title: 'Preparing Download',
-      description: 'Zipping your images, please wait...',
+      description: `Zipping your ${loadedImageUrls.length} image(s), please wait...`,
     });
 
     try {
       const zip = new JSZip();
       
-      const imagePromises = imageUrls.map(async (url, index) => {
+      const imagePromises = loadedImageUrls.map(async (url, index) => {
         const response = await fetch(url);
         if (!response.ok) {
           throw new Error(`Failed to fetch image ${index + 1}`);
@@ -132,7 +141,7 @@ export function ImageDisplay({
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         if (!ctx) {
-            console.error('Could not get canvas context.');
+            toast({ title: 'Download Error', description: 'Could not create a canvas to process the image.', variant: 'destructive' });
             return;
         }
 
@@ -148,12 +157,14 @@ export function ImageDisplay({
         let sourceHeight = originalHeight;
         const originalAspectRatioValue = originalWidth / originalHeight;
 
-        if (originalAspectRatioValue > targetAspectRatio) {
-            sourceWidth = originalHeight * targetAspectRatio;
-            sourceX = (originalWidth - sourceWidth) / 2;
-        } else if (originalAspectRatioValue < targetAspectRatio) {
-            sourceHeight = originalWidth / targetAspectRatio;
-            sourceY = (originalHeight - sourceHeight) / 2;
+        if (Math.abs(originalAspectRatioValue - targetAspectRatio) > 0.01) { // Add tolerance for floating point
+          if (originalAspectRatioValue > targetAspectRatio) {
+              sourceWidth = originalHeight * targetAspectRatio;
+              sourceX = (originalWidth - sourceWidth) / 2;
+          } else {
+              sourceHeight = originalWidth / targetAspectRatio;
+              sourceY = (originalHeight - sourceHeight) / 2;
+          }
         }
 
         canvas.width = sourceWidth;
@@ -181,14 +192,20 @@ export function ImageDisplay({
     };
 
     image.onerror = () => {
-        console.error("Failed to load image for cropping. Falling back to direct download of original image.");
-        const link = document.createElement('a');
-        link.href = imageUrl;
-        const extension = imageUrl.split(';')[0].split('/')[1] || 'png';
-        link.download = `imagenbrainai_fallback_${prompt.substring(0, 20).replace(/\s+/g, '_')}_${Date.now()}.${extension}`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        toast({ title: 'Download Failed', description: 'The image could not be loaded for processing. Please try again.', variant: 'destructive' });
+        // Fallback to direct download might still fail due to CORS if not data URI
+        try {
+          const link = document.createElement('a');
+          link.href = imageUrl;
+          const extension = imageUrl.startsWith('data:') ? (imageUrl.split(';')[0].split('/')[1] || 'png') : 'jpg';
+          link.download = `imagenbrainai_fallback_${prompt.substring(0, 20).replace(/\s+/g, '_')}_${Date.now()}.${extension}`;
+          link.target = '_blank';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } catch (e) {
+            console.error("Fallback download failed", e);
+        }
     };
   };
 
@@ -217,34 +234,49 @@ export function ImageDisplay({
             "w-full h-full",
              imageUrls.length > 1 ? "grid grid-cols-2 gap-1" : ""
             )}>
-            {imageUrls.map((url, index) => (
-              <div key={url.slice(-20) + index} className={cn("relative group rounded-md overflow-hidden bg-muted/10 transition-transform duration-300 ease-in-out hover:scale-105 hover:z-10", getAspectRatioClass(aspectRatio))}>
-                 {imageLoadingStates[url] && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
-                      <LoadingSpinner size={32} />
-                    </div>
-                  )}
-                 <Image
-                    src={url}
-                    alt={`${prompt || 'Generated AI image'} - variation ${index + 1}`}
-                    layout="fill"
-                    objectFit="cover"
-                    className={cn("transition-opacity duration-500", imageLoadingStates[url] ? 'opacity-0' : 'opacity-100')}
-                    onLoad={() => handleImageLoad(url)}
-                    onError={() => handleImageError(url)}
-                    data-ai-hint="generated art"
-                  />
-                  <Button 
-                    onClick={() => handleDownloadImage(url)} 
-                    variant="default" 
-                    size="icon" 
-                    className="absolute bottom-2 right-2 bg-primary/70 backdrop-blur-sm text-primary-foreground hover:bg-primary opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 transition-all futuristic-glow-button"
-                    title="Download Image"
-                  >
-                    <Download size={18} />
-                  </Button>
-              </div>
-            ))}
+            {imageUrls.map((url, index) => {
+                const key = `${url}-${index}`;
+                const state = imageStates[key];
+
+                return (
+                  <div key={key} className={cn("relative group rounded-md overflow-hidden bg-muted/20 transition-transform duration-300 ease-in-out hover:scale-105 hover:z-10", getAspectRatioClass(aspectRatio))}>
+                    {state === 'loading' && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-20">
+                          <LoadingSpinner size={32} />
+                        </div>
+                    )}
+                    {state === 'error' && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-destructive/20 text-destructive-foreground p-2 text-center z-10">
+                            <AlertTriangle size={24} />
+                            <p className="text-xs mt-1 font-semibold">Load Failed</p>
+                        </div>
+                    )}
+                    {(state === 'loading' || state === 'loaded') && (
+                      <Image
+                          src={url}
+                          alt={`${prompt || 'Generated AI image'} - variation ${index + 1}`}
+                          layout="fill"
+                          objectFit="cover"
+                          className={cn("transition-opacity duration-500", state === 'loaded' ? 'opacity-100' : 'opacity-0')}
+                          onLoad={() => handleImageLoad(key)}
+                          onError={() => handleImageError(key)}
+                          data-ai-hint="generated art"
+                        />
+                    )}
+                      {state === 'loaded' && (
+                        <Button 
+                          onClick={() => handleDownloadImage(url)} 
+                          variant="default" 
+                          size="icon" 
+                          className="absolute bottom-2 right-2 bg-primary/70 backdrop-blur-sm text-primary-foreground hover:bg-primary opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 transition-all futuristic-glow-button z-20"
+                          title="Download Image"
+                        >
+                          <Download size={18} />
+                        </Button>
+                      )}
+                  </div>
+                )
+            })}
           </div>
         )}
         {!isLoading && !error && imageUrls.length === 0 && (
