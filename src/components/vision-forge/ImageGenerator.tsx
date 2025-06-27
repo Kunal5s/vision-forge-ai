@@ -201,6 +201,7 @@ export function ImageGenerator() {
     const generationParams: GenerateImageInput = { 
         prompt: finalPrompt,
         plan: subscription?.plan || 'free',
+        aspectRatio: selectedAspectRatio,
      };
     const result = await generateImage(generationParams);
 

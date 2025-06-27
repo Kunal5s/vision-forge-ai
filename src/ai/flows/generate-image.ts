@@ -15,6 +15,7 @@ import {z} from 'genkit';
 const GenerateImageInputSchema = z.object({
   prompt: z.string().describe('The prompt for generating the image. This should include textual hints for aspect ratio.'),
   plan: z.enum(['free', 'pro', 'mega']).describe("The user's current subscription plan."),
+  aspectRatio: z.string().describe("The desired aspect ratio, e.g., '16:9'."),
 });
 
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
@@ -77,19 +78,25 @@ const generateImageFlow = ai.defineFlow(
       } else {
           // Pollinations (free model) logic - non-blocking
           const encodedPrompt = encodeURIComponent(input.prompt);
-          const [aspectW, aspectH] = (input.prompt.match(/(\d+):(\d+)/) || ['1', '1']).slice(1).map(Number);
           
+          // Use the passed aspect ratio directly. Default to 1:1 if invalid.
+          const [aspectW, aspectH] = (input.aspectRatio.split(':').map(Number) || [1, 1]);
+
           let width = 1024;
           let height = 1024;
-          if (aspectW && aspectH && aspectW !== aspectH) {
+
+          // Calculate dimensions based on the aspect ratio, maintaining a max dimension of 1024px
+          if (aspectW && aspectH && !isNaN(aspectW) && !isNaN(aspectH) && aspectW > 0 && aspectH > 0) {
               if (aspectW > aspectH) {
                   width = 1024;
                   height = Math.round((1024 * aspectH) / aspectW);
-              } else {
-                  width = Math.round((1024 * aspectW) / aspectH);
+              } else if (aspectH > aspectW) {
                   height = 1024;
+                  width = Math.round((1024 * aspectW) / aspectH);
               }
+              // if they are equal, it remains 1024x1024
           }
+
 
           const urls = Array.from({ length: 2 }, () => `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${Math.floor(Math.random() * 100000)}&nologo=true`);
           
