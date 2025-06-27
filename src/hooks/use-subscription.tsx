@@ -5,9 +5,9 @@ import React, { createContext, useContext, useState, useEffect, useCallback, Rea
 import type { Subscription, Plan, Credits } from '@/types';
 
 const PLAN_CREDITS: Record<Plan, Credits> = {
-  free: { google: 0, pollinations: 20 }, // 20 daily credits for the free plan
-  pro: { google: 500, pollinations: Infinity }, // Paid plans get unlimited standard generations
-  mega: { google: 1500, pollinations: Infinity },
+  free: { google: 0, pollinations: 200 }, // 200 daily credits for the free plan
+  pro: { google: 5000, pollinations: Infinity }, // Paid plans get unlimited standard generations
+  mega: { google: 15000, pollinations: Infinity },
 };
 
 // SIMULATED DATABASE of purchased emails.
@@ -18,7 +18,7 @@ const MOCK_PURCHASED_EMAILS: Record<string, Plan> = {
 
 // Define credit cost per generation
 const PLAN_CREDIT_COST: Record<Plan, { google: number; pollinations: number; }> = {
-  free: { google: 0, pollinations: 2 }, // Free plan costs 2 credits per generation
+  free: { google: 0, pollinations: 1 }, // Free plan costs 1 credit per generation
   pro: { google: 20, pollinations: 0 }, // Paid plans have no cost for standard model
   mega: { google: 15, pollinations: 0 },
 };
