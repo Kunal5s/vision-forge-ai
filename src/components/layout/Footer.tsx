@@ -1,12 +1,12 @@
 
 import Link from 'next/link';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Twitter, Instagram, Facebook, Linkedin, Github } from 'lucide-react';
 
 export function Footer() {
   return (
     <footer className="bg-card/80 backdrop-blur-md text-card-foreground py-10 mt-auto border-t border-border/50">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           <div>
             <Link href="/" className="flex items-center gap-2 mb-3">
               <Sparkles className="h-7 w-7 text-primary" />
@@ -36,6 +36,27 @@ export function Footer() {
               <li><Link href="/terms" className="text-muted-foreground hover:text-primary transition-colors">Terms of Service</Link></li>
               <li><Link href="/disclaimer" className="text-muted-foreground hover:text-primary transition-colors">Disclaimer</Link></li>
             </ul>
+          </div>
+          
+          <div>
+            <h3 className="text-md font-semibold text-foreground mb-4">Follow Us</h3>
+            <div className="flex items-center gap-4">
+              <Link href="#" aria-label="Twitter" className="text-muted-foreground hover:text-primary transition-colors">
+                <Twitter className="h-6 w-6" />
+              </Link>
+              <Link href="#" aria-label="Instagram" className="text-muted-foreground hover:text-primary transition-colors">
+                <Instagram className="h-6 w-6" />
+              </Link>
+              <Link href="#" aria-label="Facebook" className="text-muted-foreground hover:text-primary transition-colors">
+                <Facebook className="h-6 w-6" />
+              </Link>
+              <Link href="#" aria-label="LinkedIn" className="text-muted-foreground hover:text-primary transition-colors">
+                <Linkedin className="h-6 w-6" />
+              </Link>
+              <Link href="#" aria-label="GitHub" className="text-muted-foreground hover:text-primary transition-colors">
+                <Github className="h-6 w-6" />
+              </Link>
+            </div>
           </div>
         </div>
         
