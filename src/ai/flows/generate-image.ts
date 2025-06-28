@@ -2,13 +2,14 @@
 'use server';
 
 /**
- * @fileOverview Image generation flow that calls the Hugging Face Inference API.
- * - generateImage - A function that generates images by calling the external API.
+ * @fileOverview Image generation flow that calls Hugging Face or Google AI.
+ * - generateImage - A function that generates images by calling the appropriate API.
  * - GenerateImageInput - The input type for the generateImage function.
  * - GenerateImageOutput - The return type for the generateImage function.
  */
 
 import { z } from 'zod';
+import { ai } from '@/ai/genkit';
 import { ALL_MODEL_VALUES, GOOGLE_MODELS } from '@/lib/constants';
 
 // Input schema defines the data structure sent from the frontend.
@@ -27,7 +28,7 @@ const GenerateImageOutputSchema = z.object({
 });
 export type GenerateImageOutput = z.infer<typeof GenerateImageOutputSchema>;
 
-// Helper to calculate dimensions based on aspect ratio
+// Helper to calculate dimensions based on aspect ratio for Hugging Face models
 function getDimensions(aspectRatio: string): { width: number; height: number } {
   const [w, h] = aspectRatio.split(':').map(Number);
   const basePixels = 1024 * 1024; // Aim for a base resolution around 1 megapixel
@@ -44,28 +45,78 @@ function getDimensions(aspectRatio: string): { width: number; height: number } {
 }
 
 /**
- * Generates an image by sending a request to the appropriate inference API.
+ * Main function to delegate image generation to the correct service.
  * @param input The generation parameters from the frontend.
  * @returns A promise that resolves to the generation output.
  */
 export async function generateImage(input: GenerateImageInput): Promise<GenerateImageOutput> {
-  // Check if a premium Google model was selected
   if (GOOGLE_MODELS.some(m => m.value === input.model)) {
+    return generateWithGoogleAI(input);
+  } else {
+    return generateWithHuggingFace(input);
+  }
+}
+
+/**
+ * Generates images using Google AI (Gemini).
+ */
+async function generateWithGoogleAI(input: GenerateImageInput): Promise<GenerateImageOutput> {
+  if (!process.env.GOOGLE_API_KEY) {
     return {
       imageUrls: [],
-      error: "This premium Google Model requires a full Vertex AI backend setup, which is not yet implemented. Please select a model from the 'Stable Diffusion & Community Models' list to generate images.",
+      error: "The Google API key is not configured on the server. Please add GOOGLE_API_KEY to your environment variables to use premium models.",
     };
   }
 
-  // Handle Hugging Face models
-  const HUGGING_FACE_API_KEY = process.env.HF_API_KEY;
-  if (!HUGGING_FACE_API_KEY) {
+  try {
+    const generationCount = input.plan === 'mega' ? 4 : input.plan === 'pro' ? 1 : 0;
+    if (generationCount === 0) {
+      return { imageUrls: [], error: "Your current plan does not support premium model generation." };
+    }
+
+    const generationPromises = Array.from({ length: generationCount }).map(() =>
+      ai.generate({
+        model: 'googleai/gemini-2.0-flash-preview-image-generation',
+        prompt: input.prompt,
+        config: {
+          responseModalities: ['TEXT', 'IMAGE'], // Must provide both
+        },
+      })
+    );
+
+    const results = await Promise.all(generationPromises);
+    const imageUrls = results.map(res => res.media?.url).filter((url): url is string => !!url);
+
+    if (imageUrls.length === 0) {
+      return { imageUrls: [], error: 'The AI returned no images. This could be due to a safety filter or a temporary service issue.' };
+    }
+
+    return { imageUrls };
+
+  } catch (e: any) {
+    console.error("Google AI generation failed:", e);
+    return { imageUrls: [], error: `An error occurred with the Google AI service: ${e.message}. For site administrators, ensure your API key is valid and the Generative Language API is enabled.` };
+  }
+}
+
+/**
+ * Generates an image using the Hugging Face Inference API with key rotation.
+ */
+async function generateWithHuggingFace(input: GenerateImageInput): Promise<GenerateImageOutput> {
+  const hfApiKeys = Object.keys(process.env)
+    .filter(key => key.startsWith('HF_API_KEY'))
+    .map(key => process.env[key])
+    .filter((key): key is string => !!key);
+    
+  if (hfApiKeys.length === 0) {
     return {
       imageUrls: [],
-      error: 'The Hugging Face API key is not configured on the server. Please add HF_API_KEY to your environment variables.',
+      error: 'No Hugging Face API keys are configured on the server. Please add at least one HF_API_KEY to your environment variables.',
     };
   }
-
+  
+  const apiKey = hfApiKeys[Math.floor(Math.random() * hfApiKeys.length)];
+  
   const { width, height } = getDimensions(input.aspectRatio);
   const apiUrl = `https://api-inference.huggingface.co/models/${input.model}`;
   
@@ -74,14 +125,14 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${HUGGING_FACE_API_KEY}`,
+        'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         inputs: input.prompt,
         parameters: {
             width,
             height,
-            num_inference_steps: 25
+            num_inference_steps: 25,
         }
       }),
       signal: AbortSignal.timeout(30000), // 30 seconds timeout
@@ -91,10 +142,9 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
         let errorBody = `Request failed with status ${response.status}: ${response.statusText}`;
         try {
             const errorJson = await response.json();
-            // Hugging Face often returns errors in an 'error' property
             if(errorJson.error) {
                 errorBody = `API Error: ${errorJson.error}`;
-                if (errorJson.error.includes("is currently loading")) {
+                if (typeof errorJson.error === 'string' && errorJson.error.includes("is currently loading")) {
                     errorBody += ". This is common for less-used models. Please try again in a few minutes."
                 }
             }
@@ -106,8 +156,7 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
     }
 
     const blob = await response.blob();
-
-    // If HF returns a JSON response, it's an error.
+    
     if (blob.type.startsWith('application/json')) {
         const errorJsonText = await blob.text();
         const errorJson = JSON.parse(errorJsonText);
@@ -115,7 +164,6 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
         return { imageUrls: [], error: errorMessage };
     }
 
-    // Convert successful image response (blob) to a data URI
     const buffer = Buffer.from(await blob.arrayBuffer());
     const dataUri = `data:${blob.type};base64,${buffer.toString('base64')}`;
 
