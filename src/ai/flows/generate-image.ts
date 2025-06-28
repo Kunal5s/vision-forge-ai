@@ -61,6 +61,12 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
         process.env.HF_API_KEY_10,
     ].filter((key): key is string => !!key);
 
+    if (apiKeys.length === 0) {
+      const errorMessage = "No Hugging Face API keys are configured in the environment. For site administrators, please set up HF_API_KEY_1, HF_API_KEY_2, etc., in your deployment settings.";
+      console.error(errorMessage);
+      return { imageUrls: [], error: errorMessage };
+    }
+
     const allErrors: string[] = [];
     for (const apiKey of apiKeys) {
         const hf = new HfInference(apiKey);
@@ -93,6 +99,7 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
             if (e.message && e.message.includes('is currently loading')) {
                 const loadingError = `The model '${input.model}' is still loading on the server. This is a temporary issue on Hugging Face's end. Please try again in a moment, or select a different model.`;
                 console.error(loadingError);
+                // Return this specific error immediately without trying other keys
                 return { imageUrls: [], error: loadingError };
             }
 
@@ -119,6 +126,12 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
  * Generates images using Google AI (Gemini).
  */
 async function generateWithGoogleAI(input: GenerateImageInput): Promise<GenerateImageOutput> {
+  if (!process.env.GEMINI_API_KEY) {
+      const errorMessage = "Google/Gemini API key is not configured. For site administrators, please check your GEMINI_API_KEY environment variable.";
+      console.error(errorMessage);
+      return { imageUrls: [], error: errorMessage };
+  }
+  
   try {
     const generationCount = input.plan === 'mega' ? 4 : input.plan === 'pro' ? 1 : 0;
     if (generationCount === 0) {
