@@ -2,7 +2,7 @@
 'use server';
 
 /**
- * @fileOverview Image generation flow that securely calls a backend worker or handles generation server-side.
+ * @fileOverview Image generation flow that securely calls backend APIs using environment variables.
  * - generateImage - A function that generates images by calling the appropriate API.
  * - GenerateImageInput - The input type for the generateImage function.
  * - GenerateImageOutput - The return type for the generateImage function.
@@ -28,7 +28,7 @@ const GenerateImageOutputSchema = z.object({
 });
 export type GenerateImageOutput = z.infer<typeof GenerateImageOutputSchema>;
 
-// Helper to calculate dimensions based on aspect ratio for Hugging Face models
+// Helper to calculate dimensions based on aspect ratio
 function getDimensions(aspectRatio: string): { width: number; height: number } {
   const [w, h] = aspectRatio.split(':').map(Number);
   // Using a smaller base resolution for free models to improve speed and reduce load
@@ -71,7 +71,7 @@ async function generateWithGoogleAI(input: GenerateImageInput): Promise<Generate
   }
 
   try {
-    // Mega plan gets 4 variations, Pro gets 1.
+    // Mega plan gets 4 variations, Pro gets 1. Free plan gets 0.
     const generationCount = input.plan === 'mega' ? 4 : input.plan === 'pro' ? 1 : 0;
     if (generationCount === 0) {
       return { imageUrls: [], error: "Your current plan does not support premium model generation." };
