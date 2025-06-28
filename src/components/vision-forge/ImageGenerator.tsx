@@ -63,7 +63,7 @@ export function ImageGenerator() {
   });
   const currentPrompt = watch('prompt');
 
-  const isPremiumModel = true; // All models are now premium.
+  const isPremiumModel = MODEL_GROUPS.find(g => g.models.some(m => m.value === activeModel))?.premium ?? false;
 
   const createThumbnail = useCallback((dataUrl: string, width = 128, height = 128): Promise<string> => {
     return new Promise((resolve) => {
@@ -148,7 +148,7 @@ export function ImageGenerator() {
             <span>
               Please{' '}
               <Link href="/pricing" className="text-primary underline">upgrade your plan</Link>
-              {' '} to generate images with Google AI models.
+              {' '} to generate images with premium models.
             </span>
           ),
           variant: 'destructive',
@@ -295,18 +295,22 @@ export function ImageGenerator() {
     const planInfo = <span className="font-semibold">Plan: {planName}</span>;
     let creditInfo = null;
 
-    if (plan === 'free') {
-      creditInfo = <span className="font-semibold text-destructive">Upgrade to use Google Models</span>;
+    if (isPremiumModel) {
+      if (plan === 'free') {
+        creditInfo = <span className="font-semibold text-destructive">Upgrade to use Google Models</span>;
+      } else {
+        creditInfo = (
+          <div className="flex items-center gap-2">
+            <Gem size={16} />
+            <span className="font-semibold">{`${credits.google} Google Credits`}</span>
+          </div>
+        );
+      }
     } else {
-      creditInfo = (
-        <div className="flex items-center gap-2">
-          <Gem size={16} />
-          <span className="font-semibold">{`${credits.google} Google Credits`}</span>
-        </div>
-      );
+       creditInfo = <span className="font-semibold">Free Generation</span>;
     }
     
-    const themeClass = "text-primary bg-primary/10 border-primary/20";
+    const themeClass = isPremiumModel ? "text-primary bg-primary/10 border-primary/20" : "text-green-600 bg-green-500/10 border-green-500/20";
 
     creditDisplayNode = (
       <div className={`flex justify-between items-center text-sm p-2 rounded-md border ${themeClass}`}>
@@ -467,7 +471,7 @@ export function ImageGenerator() {
                         <Link href="/pricing" className="underline font-semibold">
                             upgrade your plan
                         </Link>
-                        {' '}to generate images.
+                        {' '}to generate images with premium models.
                     </div>
                 </div>
               )}

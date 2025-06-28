@@ -1,5 +1,21 @@
 
 
+export const HF_MODELS = [
+  { value: 'stabilityai/stable-diffusion-xl-base-1.0', label: 'Stable Diffusion XL 1.5+' },
+  { value: 'stabilityai/stable-diffusion-3-medium-diffusers', label: 'Stable Diffusion 3 Medium' },
+  { value: 'prompthero/openjourney-v4', label: 'OpenJourney V4 Pro' },
+  { value: 'dataautogpt3/OpenDalleV1.1', label: 'OpenDalle V1.1' },
+  { value: 'cagliostrolab/animagine-xl-3.0', label: 'Animagine XL 3.0 (Anime)' },
+  { value: 'gsgen/reliberate', label: 'Spellbrew V2 Fantasy' },
+  { value: 'sgm-lektra/realvisxl-v4.0', label: 'RealVisXL V4.0 UHD' },
+  { value: 'lykon/dreamshaper-8', label: 'DreamShaper 8 Photorealistic' },
+  { value: 'playgroundai/playground-v2.5-1024px-aesthetic', label: 'Playground V2.5 Ultra' },
+  { value: 'Lykon/dreamshaper-xl-turbo', label: 'DreamShaper XL Turbo' },
+  { value: 'PixArt-alpha/PixArt-Sigma-XL-2-1024-MS', label: 'PixArt-Σ Ultra' },
+  { value: 'kandinsky-community/kandinsky-3', label: 'Kandinsky 3.0 Elite' },
+];
+
+
 export const GOOGLE_MODELS = [
   { value: "google-imagen-3", label: "Google Imagen 3 XL Pro" },
   { value: "google-parti-cinema", label: "Google Parti Cinema" },
@@ -9,13 +25,18 @@ export const GOOGLE_MODELS = [
 
 export const MODEL_GROUPS = [
   {
+    label: "Standard Models (Hugging Face)",
+    models: HF_MODELS,
+    premium: false,
+  },
+  {
     label: "Premium Models (Google AI)",
     models: GOOGLE_MODELS,
     premium: true,
   }
 ];
 
-export const ALL_MODEL_VALUES = GOOGLE_MODELS.map(m => m.value) as [string, ...string[]];
+export const ALL_MODEL_VALUES = [...HF_MODELS.map(m => m.value), ...GOOGLE_MODELS.map(m => m.value)] as [string, ...string[]];
 
 export const ASPECT_RATIOS = [
   { label: "1:1 (Square)", value: "1:1" },

@@ -104,7 +104,12 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   const useCredit = useCallback((isPremium: boolean) => {
     if (isLoading || !subscription) return false;
     
-    // Free plan cannot generate
+    // Free models do not consume credits
+    if (!isPremium) {
+      return true;
+    }
+    
+    // Premium models on a free plan cannot be used
     if (subscription.plan === 'free') {
       return false;
     }
@@ -125,7 +130,12 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   const canGenerate = useCallback((isPremium: boolean) => {
     if (isLoading || !subscription) return false;
 
-    // Free plan cannot use any models
+    // Free models can be used by anyone
+    if (!isPremium) {
+      return true;
+    }
+
+    // Premium models can only be used on paid plans with enough credits
     if (subscription.plan === 'free') return false;
 
     return subscription.credits.google >= PLAN_CREDIT_COST[subscription.plan].google;

@@ -10,7 +10,25 @@
 
 import { z } from 'zod';
 import { ai } from '@/ai/genkit';
-import { ALL_MODEL_VALUES } from '@/lib/constants';
+import { HuggingFaceInference } from '@huggingface/inference';
+import { ALL_MODEL_VALUES, GOOGLE_MODELS } from '@/lib/constants';
+
+// --- Helper function to find available Hugging Face API keys ---
+function getHuggingFaceKeys(): string[] {
+  const keys: string[] = [];
+  // Check for rotating keys HF_API_KEY_1, HF_API_KEY_2, ...
+  for (let i = 1; i <= 10; i++) {
+    const key = process.env[`HF_API_KEY_${i}`];
+    if (key) {
+      keys.push(key);
+    }
+  }
+  // Fallback to a single key if no rotating keys are found
+  if (keys.length === 0 && process.env.HF_API_KEY) {
+    keys.push(process.env.HF_API_KEY);
+  }
+  return keys;
+}
 
 // Input schema defines the data structure sent from the frontend.
 const GenerateImageInputSchema = z.object({
@@ -34,8 +52,61 @@ export type GenerateImageOutput = z.infer<typeof GenerateImageOutputSchema>;
  * @returns A promise that resolves to the generation output.
  */
 export async function generateImage(input: GenerateImageInput): Promise<GenerateImageOutput> {
-  return generateWithGoogleAI(input);
+  const isGoogleModel = GOOGLE_MODELS.some(m => m.value === input.model);
+
+  if (isGoogleModel) {
+    return generateWithGoogleAI(input);
+  } else {
+    return generateWithHuggingFace(input);
+  }
 }
+
+/**
+ * Generates images using Hugging Face Inference API.
+ */
+async function generateWithHuggingFace(input: GenerateImageInput): Promise<GenerateImageOutput> {
+  const hfKeys = getHuggingFaceKeys();
+  if (hfKeys.length === 0) {
+    const errorMsg = "No Hugging Face API keys are configured on the server. For site administrators, please set the HF_API_KEY environment variable in your deployment settings.";
+    console.error(errorMsg);
+    return { imageUrls: [], error: errorMsg };
+  }
+  
+  // Pick a random key from the available ones to distribute the load.
+  const apiKey = hfKeys[Math.floor(Math.random() * hfKeys.length)];
+  const hf = new HuggingFaceInference(apiKey);
+
+  try {
+    const blob = await hf.textToImage({
+      model: input.model,
+      inputs: input.prompt,
+      parameters: {
+        negative_prompt: 'blurry, ugly, distorted, watermark, signature',
+        num_inference_steps: 30, // More steps for better quality
+      },
+    }, {
+      wait_for_model: true, // Wait if the model is loading
+      timeout: 30000, // 30-second timeout
+    });
+
+    // Convert Blob to a data URI to send to the frontend
+    const buffer = Buffer.from(await blob.arrayBuffer());
+    const dataUri = `data:${blob.type};base64,${buffer.toString('base64')}`;
+
+    return { imageUrls: [dataUri] };
+
+  } catch (e: any) {
+    console.error("Hugging Face generation failed:", e);
+    let errorMessage = `An unexpected error occurred with the Hugging Face service: ${e.message}.`;
+    if (e.message && e.message.includes('is currently loading')) {
+        errorMessage = `The model '${input.model}' is still loading on the server. Please try again in a few minutes.`;
+    } else if (e.message && (e.message.includes('401') || e.message.includes('authorization'))) {
+        errorMessage = 'The Hugging Face API key is invalid or unauthorized. For site administrators, please verify your HF_API_KEY.';
+    }
+    return { imageUrls: [], error: errorMessage };
+  }
+}
+
 
 /**
  * Generates images using Google AI (Gemini).
