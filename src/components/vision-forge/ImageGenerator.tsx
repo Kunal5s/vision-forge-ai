@@ -318,7 +318,7 @@ export function ImageGenerator() {
          creditInfo = (
           <div className="flex items-center gap-2">
             <RefreshCw size={16} />
-            <span className="font-semibold">{`${credits.pollinations} Daily Credits`}</span>
+            <span className="font-semibold">{`${credits.pollinations === Infinity ? 'Unlimited' : credits.pollinations} Daily Credits`}</span>
           </div>
         );
        } else {

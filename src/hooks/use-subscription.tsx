@@ -68,9 +68,9 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
       let parsedSub: Subscription | null = storedSub ? JSON.parse(storedSub) : null;
 
       if (parsedSub) {
-        // Force update to new credit system if old values are detected
-        if (parsedSub.plan === 'free' && parsedSub.credits.pollinations > 200 && parsedSub.credits.pollinations !== Infinity) {
-            parsedSub = null; // Invalidate old config to force reset
+        // Force update the credits for the free plan on every load to apply the temporary unlimited credits.
+        if (parsedSub.plan === 'free') {
+          parsedSub.credits = PLAN_CREDITS.free;
         }
         
         // Handle plan expiry for paid plans
@@ -89,13 +89,13 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
             }
         }
         
-        // Handle daily reset for free users
+        // Handle daily reset for free users - this is less relevant for Infinity but good to keep
         if (parsedSub && parsedSub.plan === 'free') {
             const lastResetDate = new Date(parsedSub.lastReset);
             const now = new Date();
             const diffHours = (now.getTime() - lastResetDate.getTime()) / (1000 * 60 * 60);
             if (diffHours >= 24) {
-              parsedSub.credits = PLAN_CREDITS.free;
+              parsedSub.credits = PLAN_CREDITS.free; // Will be Infinity
               parsedSub.lastReset = now.toISOString();
             }
         }
