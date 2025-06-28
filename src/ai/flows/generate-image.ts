@@ -13,9 +13,10 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GenerateImageInputSchema = z.object({
-  prompt: z.string().describe('The prompt for generating the image. This should include textual hints for aspect ratio.'),
+  prompt: z.string().describe('The prompt for generating the image.'),
   plan: z.enum(['free', 'pro', 'mega']).describe("The user's current subscription plan."),
   aspectRatio: z.string().describe("The desired aspect ratio, e.g., '16:9'."),
+  model: z.enum(['pollinations', 'google']).describe('The selected generation model.'),
 });
 
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
@@ -84,14 +85,21 @@ const generateImageFlow = ai.defineFlow(
   },
   async (input): Promise<GenerateImageOutput> => {
     
-    if (input.plan !== 'free' && !process.env.GOOGLE_API_KEY) {
-      const errorMsg = "The site administrator has not configured the GOOGLE_API_KEY. This is required for premium features. Please add it to your deployment environment's settings (e.g., in Cloudflare, Vercel, or Netlify) to enable premium models.";
-      console.error(errorMsg);
-      return { imageUrls: [], error: errorMsg };
-    }
-
     try {
-      if (input.plan === 'pro' || input.plan === 'mega') {
+      // Use the selected model to determine the generation path.
+      if (input.model === 'google') {
+          // This is the premium path. It requires a paid plan.
+          if (input.plan === 'free') {
+              const errorMsg = "You must have a Pro or Mega plan to use the premium VisionForge AI model. Please upgrade your plan.";
+              console.error(errorMsg);
+              return { imageUrls: [], error: errorMsg };
+          }
+          if (!process.env.GOOGLE_API_KEY) {
+            const errorMsg = "The site administrator has not configured the GOOGLE_API_KEY. This is required for premium features. Please add it to your deployment environment's settings (e.g., in Cloudflare, Vercel, or Netlify) to enable premium models.";
+            console.error(errorMsg);
+            return { imageUrls: [], error: errorMsg };
+          }
+          
           const isMega = input.plan === 'mega';
           
           const promptEnhancement = isMega
@@ -124,10 +132,11 @@ const generateImageFlow = ai.defineFlow(
           const failureReason = "Premium image generation failed. This could be due to a few reasons:\n1. Your prompt may have triggered a safety filter. Please try a different prompt.\n2. There might be a temporary issue with the AI service.\n3. (For site admins) Ensure your Google Cloud project has billing enabled and the 'Generative Language API' is active.";
           return { imageUrls: [], error: failureReason };
 
-      } else {
-          // Free plan logic (1 image)
+      } else { // This block is now for 'pollinations' model, regardless of plan.
+          // Free/Standard plan logic (1 image via Pollinations)
           const encodedPrompt = encodeURIComponent(input.prompt);
           
+          // Always use 'free' plan dimensions for Pollinations as it has its own limits.
           const { width, height } = calculateDimensions(input.aspectRatio, 'free');
 
           const urls = [`https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${Math.floor(Math.random() * 100000)}&nologo=true`];
@@ -137,7 +146,7 @@ const generateImageFlow = ai.defineFlow(
       
     } catch (e: any) {
       console.error("Image generation API call failed:", e);
-      const detailedMessage = "An unexpected error occurred with the premium image generator. For site administrators, please check:\n1. Your GOOGLE_API_KEY is set correctly.\n2. Billing is enabled for your Google Cloud project.\n3. The 'Generative Language API' is enabled in your project.";
+      const detailedMessage = "An unexpected error occurred with the image generator. For site administrators, please check:\n1. Your GOOGLE_API_KEY is set correctly.\n2. Billing is enabled for your Google Cloud project.\n3. The 'Generative Language API' is enabled in your project.";
       return { imageUrls: [], error: detailedMessage };
     }
   }

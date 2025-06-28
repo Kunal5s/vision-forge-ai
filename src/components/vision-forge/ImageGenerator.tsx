@@ -28,6 +28,7 @@ import { Wand2, ThumbsUp, ThumbsDown, Gem, RefreshCw, AlertTriangle, Sparkles } 
 import { LoadingSpinner } from './LoadingSpinner';
 import { useSubscription } from '@/hooks/use-subscription';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
   prompt: z.string().min(1, 'Prompt cannot be empty. Let your imagination flow!').max(1000, 'Prompt is too long.'),
@@ -202,6 +203,7 @@ export function ImageGenerator() {
         prompt: finalPrompt,
         plan: subscription?.plan || 'free',
         aspectRatio: selectedAspectRatio,
+        model: activeModel,
      };
     const result = await generateImage(generationParams);
 
