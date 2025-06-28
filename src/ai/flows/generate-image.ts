@@ -2,7 +2,7 @@
 'use server';
 
 /**
- * @fileOverview Image generation flow that calls Hugging Face or Google AI.
+ * @fileOverview Image generation flow that securely calls a backend worker or handles generation server-side.
  * - generateImage - A function that generates images by calling the appropriate API.
  * - GenerateImageInput - The input type for the generateImage function.
  * - GenerateImageOutput - The return type for the generateImage function.
