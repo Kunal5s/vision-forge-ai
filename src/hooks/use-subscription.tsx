@@ -21,7 +21,7 @@ const MOCK_PURCHASED_EMAILS: Record<string, Plan> = {
 const PLAN_CREDIT_COST: Record<Plan, { google: number }> = {
   free: { google: 0 }, 
   pro: { google: 100 },
-  mega: { google: 200 },
+  mega: { google: 100 }, // Reduced cost for Mega plan for more generations
 };
 
 const PLAN_VALIDITY_DAYS = 30;
@@ -46,13 +46,23 @@ const createFreePlan = (): Subscription => ({
   lastReset: new Date().toISOString(),
 });
 
+const createMegaPlan = (): Subscription => ({
+  email: 'mega@example.com',
+  plan: 'mega',
+  status: 'active',
+  credits: PLAN_CREDITS.mega,
+  purchaseDate: new Date().toISOString(),
+  lastReset: new Date().toISOString(),
+});
+
+
 export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
   const saveSubscription = useCallback((sub: Subscription | null) => {
-    const subToSave = sub || createFreePlan();
+    const subToSave = sub || createMegaPlan();
     setSubscription(subToSave);
     try {
         localStorage.setItem('imagenBrainAiSubscription', JSON.stringify(subToSave));
@@ -63,44 +73,11 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     setIsLoading(true);
-    try {
-      let storedSub = localStorage.getItem('imagenBrainAiSubscription');
-      let parsedSub: Subscription | null = storedSub ? JSON.parse(storedSub) : null;
-
-      if (parsedSub) {
-        // Handle plan expiry for paid plans
-        if (parsedSub && (parsedSub.plan === 'pro' || parsedSub.plan === 'mega')) {
-            const purchaseDate = new Date(parsedSub.purchaseDate);
-            const expiryDate = new Date(purchaseDate);
-            expiryDate.setDate(purchaseDate.getDate() + PLAN_VALIDITY_DAYS);
-
-            if (new Date() > expiryDate) {
-                toast({
-                    title: "Plan Expired",
-                    description: `Your ${parsedSub.plan} plan has expired. You are now on the Free plan.`,
-                    variant: 'destructive',
-                });
-                parsedSub = createFreePlan();
-            }
-        }
-        
-        // Validate paid plans against mock DB just in case
-        if (parsedSub && parsedSub.plan !== 'free' && MOCK_PURCHASED_EMAILS[parsedSub.email.toLowerCase()] !== parsedSub.plan) {
-            parsedSub = createFreePlan(); // Downgrade if invalid
-        }
-        
-        saveSubscription(parsedSub);
-
-      } else {
-        saveSubscription(createFreePlan());
-      }
-    } catch (error) {
-      console.error("Failed to load subscription from localStorage", error);
-      saveSubscription(createFreePlan());
-    } finally {
-      setIsLoading(false);
-    }
-  }, [saveSubscription, toast]);
+    // For this request, we will always default to the Mega plan to unlock premium features.
+    // This will override any existing plan in localStorage on every page load.
+    saveSubscription(createMegaPlan());
+    setIsLoading(false);
+  }, [saveSubscription]);
 
   const activateSubscription = useCallback((email: string): boolean => {
     const purchasedPlan = MOCK_PURCHASED_EMAILS[email.toLowerCase()];
