@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -50,6 +50,7 @@ export function ImageGenerator() {
   
   const [activeModel, setActiveModel] = useState<string>(MODEL_GROUPS[0].models[0].value);
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>(ASPECT_RATIOS[0].value);
+  const [displayAspectRatio, setDisplayAspectRatio] = useState<string>(ASPECT_RATIOS[0].value);
   const [selectedStyle, setSelectedStyle] = useState<string>(STYLES[0]);
   const [selectedMood, setSelectedMood] = useState<string>(MOODS[0]);
   const [selectedLighting, setSelectedLighting] = useState<string>(LIGHTING_OPTIONS[0]);
@@ -72,46 +73,6 @@ export function ImageGenerator() {
   const currentPrompt = watch('prompt');
 
   const isPremiumModel = MODEL_GROUPS.find(g => g.models.some(m => m.value === activeModel))?.premium ?? false;
-
-  const createThumbnail = useCallback((dataUrl: string, width = 128, height = 128): Promise<string> => {
-    return new Promise((resolve) => {
-      const img = new window.Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          return resolve(dataUrl);
-        }
-        
-        const sourceWidth = img.naturalWidth;
-        const sourceHeight = img.naturalHeight;
-        const sourceAspectRatio = sourceWidth / sourceHeight;
-        const targetAspectRatio = width / height;
-        
-        let sx = 0, sy = 0, sw = sourceWidth, sh = sourceHeight;
-  
-        if (sourceAspectRatio > targetAspectRatio) {
-          sw = sourceHeight * targetAspectRatio;
-          sx = (sourceWidth - sw) / 2;
-        } else if (sourceAspectRatio < targetAspectRatio) {
-          sh = sourceWidth / targetAspectRatio;
-          sy = (sourceHeight - sh) / 2;
-        }
-  
-        canvas.width = width;
-        canvas.height = height;
-        
-        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, width, height);
-        
-        resolve(canvas.toDataURL('image/jpeg', 0.7));
-      };
-      img.onerror = () => {
-        resolve(dataUrl);
-      };
-      img.src = dataUrl;
-    });
-  }, []);
   
   useEffect(() => {
     if (subscription?.plan === 'pro' || subscription?.plan === 'mega') {
@@ -137,9 +98,13 @@ export function ImageGenerator() {
             if (e instanceof DOMException && e.name === 'QuotaExceededError') {
                 toast({
                   title: "Could not save history",
-                  description: "Your browser storage is full.",
+                  description: "Your browser storage is full. Some older items may be removed.",
                   variant: "destructive"
                 });
+                // If quota is exceeded, trim history and try again
+                const trimmedHistory = history.slice(0, 10);
+                setHistory(trimmedHistory);
+                localStorage.setItem('imagenBrainAiHistory', JSON.stringify(trimmedHistory));
             }
           }
         } else {
@@ -176,13 +141,23 @@ export function ImageGenerator() {
       return;
     }
 
-    // Construct a detailed prompt for both models.
-    const promptParts = [data.prompt];
-    if (selectedStyle !== 'None') promptParts.push(selectedStyle);
-    if (selectedMood !== 'None') promptParts.push(`${selectedMood} mood`);
-    if (selectedLighting !== 'None') promptParts.push(selectedLighting);
-    if (selectedColor !== 'None') promptParts.push(`${selectedColor} color palette`);
-    const finalPrompt = promptParts.join(', ');
+    // Construct a detailed, structured prompt.
+    const promptParts = [
+      `best quality, masterpiece, ${data.prompt}`
+    ];
+    const details = [
+        selectedStyle !== 'None' ? `style: ${selectedStyle}` : '',
+        selectedMood !== 'None' ? `mood: ${selectedMood}` : '',
+        selectedLighting !== 'None' ? `lighting: ${selectedLighting}` : '',
+        selectedColor !== 'None' ? `color palette: ${selectedColor}` : '',
+    ].filter(Boolean).join(', ');
+
+    if (details) {
+        promptParts.push(`(${details})`);
+    }
+
+    const finalPrompt = promptParts.join('. ');
+
 
     const generationParams: GenerateImageInput = { 
         prompt: finalPrompt,
@@ -200,16 +175,16 @@ export function ImageGenerator() {
       toast({ title: 'Generation Failed', description: result.error, variant: 'destructive', duration: 9000 });
     } else if (result.imageUrls && result.imageUrls.length > 0) {
       setGeneratedImageUrls(result.imageUrls);
+      setDisplayAspectRatio(selectedAspectRatio);
       
       if (subscription && (subscription.plan === 'pro' || subscription.plan === 'mega')) {
-        const thumbnailUrl = await createThumbnail(result.imageUrls[0]);
         const historyItem: GeneratedImageHistoryItem = {
           id: new Date().toISOString() + Math.random().toString(36).substring(2,9),
           prompt: data.prompt,
           aspectRatio: selectedAspectRatio,
           model: activeModel,
           numberOfImages: generationParams.numberOfImages,
-          imageUrl: thumbnailUrl,
+          imageUrl: result.imageUrls[0], // Store full-res image URL
           timestamp: new Date(),
           plan: subscription.plan,
         };
@@ -510,7 +485,7 @@ export function ImageGenerator() {
           <ImageDisplay
             imageUrls={generatedImageUrls}
             prompt={currentPrompt}
-            aspectRatio={selectedAspectRatio}
+            aspectRatio={displayAspectRatio}
             isLoading={isLoading}
             error={error}
             onRegenerate={handleRegenerate}

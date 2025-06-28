@@ -99,14 +99,15 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
                     model: input.model,
                     inputs: input.prompt,
                     parameters: {
-                        negative_prompt: 'blurry, ugly, distorted, watermark, signature',
-                        num_inference_steps: 30, // Good balance of speed and quality
+                        negative_prompt: 'low quality, worst quality, bad hands, extra limbs, jpeg artifacts, blurry, ugly, distorted, watermark, signature',
+                        num_inference_steps: 40,
+                        guidance_scale: 7.5,
                         width,
                         height,
                     },
                 }, {
-                    wait_for_model: true, // Wait for model to be ready
-                    timeout: 45000, // Increased timeout for slower models
+                    wait_for_model: true,
+                    timeout: 60000, // Increased timeout for potentially slower, higher-quality generation
                 });
 
                 const buffer = Buffer.from(await blob.arrayBuffer());

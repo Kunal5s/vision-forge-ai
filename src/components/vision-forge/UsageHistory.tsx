@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { GeneratedImageHistoryItem } from '@/types';
-import { Eye, Trash2, Image as ImageIcon } from 'lucide-react';
+import { Download, Eye, Trash2, Image as ImageIcon } from 'lucide-react';
 import { FuturisticPanel } from './FuturisticPanel';
 import {
   AlertDialog,
@@ -18,6 +18,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { useToast } from '@/hooks/use-toast';
+
 
 interface UsageHistoryProps {
   history: GeneratedImageHistoryItem[];
@@ -27,6 +29,57 @@ interface UsageHistoryProps {
 }
 
 export function UsageHistory({ history, onSelectHistoryItem, onDeleteHistoryItem, onClearHistory }: UsageHistoryProps) {
+  const { toast } = useToast();
+
+  const handleDownloadHistoryImage = async (item: GeneratedImageHistoryItem) => {
+    if (!item.imageUrl) return;
+
+    const { id, update, dismiss } = toast({
+      title: 'Preparing Download',
+      description: 'Your image is being prepared...',
+    });
+
+    try {
+        const response = await fetch(item.imageUrl);
+        if (!response.ok) throw new Error('Network response was not ok.');
+        
+        const blob = await response.blob();
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        
+        const safePrompt = item.prompt.substring(0, 20).replace(/\s+/g, '_');
+        const extension = blob.type.split('/')[1] || 'png';
+        link.download = `imagenbrainai_${safePrompt}_${item.id.slice(-4)}.${extension}`;
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+
+        update({ id, title: 'Download Started!', description: 'Your image is on its way.' });
+
+    } catch (e) {
+        console.error('Download failed, attempting fallback:', e);
+        try {
+            // Fallback for cross-origin issues: open the image in a new tab.
+            const link = document.createElement('a');
+            link.href = item.imageUrl;
+            link.target = '_blank'; // Open in a new tab, user can save from there.
+            link.rel = 'noopener noreferrer';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            update({ id, title: 'Download Started!', description: 'Your image opened in a new tab. You can save it from there.' });
+        } catch (finalError) {
+            console.error("Fallback download also failed:", finalError);
+            update({ id, title: 'Download Failed', description: 'Could not download the image. Please try right-clicking to save.', variant: 'destructive' });
+        }
+    } finally {
+        setTimeout(() => dismiss(id), 5000);
+    }
+  };
+
+
   if (history.length === 0) {
     return (
       <FuturisticPanel className="mt-8">
@@ -70,7 +123,7 @@ export function UsageHistory({ history, onSelectHistoryItem, onDeleteHistoryItem
             <div key={item.id} className="flex items-center gap-4 p-3 rounded-lg border bg-background/30 hover:bg-accent/10 transition-colors duration-200">
               <div className="relative w-16 h-16 rounded-md overflow-hidden shrink-0 bg-muted/20 flex items-center justify-center">
                 {item.imageUrl ? (
-                  <Image src={item.imageUrl} alt={item.prompt.substring(0,30)} layout="fill" objectFit="cover" data-ai-hint="history thumbnail" />
+                  <Image src={item.imageUrl} alt={item.prompt.substring(0,30)} layout="fill" objectFit="contain" data-ai-hint="history thumbnail" />
                 ) : (
                   <ImageIcon size={24} className="text-muted-foreground" /> 
                 )}
@@ -94,6 +147,9 @@ export function UsageHistory({ history, onSelectHistoryItem, onDeleteHistoryItem
               <div className="flex gap-2 shrink-0">
                 <Button variant="ghost" size="icon" onClick={() => onSelectHistoryItem(item)} title="View & Re-use Parameters" className="hover:text-primary">
                   <Eye size={18} />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => handleDownloadHistoryImage(item)} title="Download Image" className="hover:text-primary">
+                  <Download size={18} />
                 </Button>
                  <AlertDialog>
                     <AlertDialogTrigger asChild>

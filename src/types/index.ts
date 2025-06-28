@@ -9,7 +9,7 @@ export interface GeneratedImageParams {
 
 export interface GeneratedImageHistoryItem extends GeneratedImageParams {
   id: string;
-  imageUrl: string; // Only storing one image URL to prevent storage quota errors.
+  imageUrl: string;
   timestamp: Date;
 }
 
