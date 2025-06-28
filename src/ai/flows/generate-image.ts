@@ -103,15 +103,21 @@ async function generateWithGoogleAI(input: GenerateImageInput): Promise<Generate
  * Generates an image using the Hugging Face Inference API with key rotation.
  */
 async function generateWithHuggingFace(input: GenerateImageInput): Promise<GenerateImageOutput> {
-  const hfApiKeys = Object.keys(process.env)
-    .filter(key => key.startsWith('HF_API_KEY'))
+  // First, look for rotating keys (e.g., HF_API_KEY_1, HF_API_KEY_2).
+  let hfApiKeys = Object.keys(process.env)
+    .filter(key => key.startsWith('HF_API_KEY_'))
     .map(key => process.env[key])
     .filter((key): key is string => !!key);
+
+  // If no rotating keys are found, fall back to a single HF_API_KEY.
+  if (hfApiKeys.length === 0 && process.env.HF_API_KEY) {
+    hfApiKeys = [process.env.HF_API_KEY];
+  }
     
   if (hfApiKeys.length === 0) {
     return {
       imageUrls: [],
-      error: 'No Hugging Face API keys are configured on the server. Please add at least one HF_API_KEY to your environment variables.',
+      error: 'No Hugging Face API keys are configured on the server. Please add at least one HF_API_KEY (or HF_API_KEY_1, etc.) to your environment variables.',
     };
   }
   
