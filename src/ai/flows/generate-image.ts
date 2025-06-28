@@ -109,7 +109,7 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
           steps: 25,
           n: input.numberOfImages,
         },
-        models: ['stable_diffusion_xl'], // Prioritize modern, high-quality SDXL models
+        models: ['stable_diffusion'], // Use the broader, faster pool of SD 1.5 models.
         nsfw: false,
       }),
     });
@@ -210,7 +210,7 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
                 console.log(`Attempting image ${i + 1}/${input.numberOfImages} with key ${keyIdentifier} for model: ${input.model}`);
                 const blob = await hf.textToImage({
                     model: input.model,
-                    inputs: input.prompt,
+                    inputs: `masterpiece, best quality, ${input.prompt}`,
                     parameters: {
                         negative_prompt: 'low quality, worst quality, bad hands, extra limbs, jpeg artifacts, blurry, ugly, distorted, watermark, signature',
                         num_inference_steps: 30,
