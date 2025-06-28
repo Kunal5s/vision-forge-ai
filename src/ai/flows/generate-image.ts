@@ -62,49 +62,67 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
 }
 
 /**
- * Generates images using Hugging Face Inference API.
+ * Generates images using Hugging Face Inference API with a robust key rotation and retry mechanism.
  */
 async function generateWithHuggingFace(input: GenerateImageInput): Promise<GenerateImageOutput> {
-  const hfKeys = getHuggingFaceKeys();
+  let hfKeys = getHuggingFaceKeys();
   if (hfKeys.length === 0) {
     const errorMsg = "No Hugging Face API keys are configured on the server. For site administrators, please set the HF_API_KEY environment variable in your deployment settings.";
     console.error(errorMsg);
     return { imageUrls: [], error: errorMsg };
   }
   
-  // Pick a random key from the available ones to distribute the load.
-  const apiKey = hfKeys[Math.floor(Math.random() * hfKeys.length)];
-  const hf = new HfInference(apiKey);
+  // Shuffle keys to distribute load and not always hit the same key first on retries.
+  hfKeys = hfKeys.sort(() => Math.random() - 0.5);
 
-  try {
-    const blob = await hf.textToImage({
-      model: input.model,
-      inputs: input.prompt,
-      parameters: {
-        negative_prompt: 'blurry, ugly, distorted, watermark, signature',
-        num_inference_steps: 30, // More steps for better quality
-      },
-    }, {
-      wait_for_model: true, // Wait if the model is loading
-      timeout: 30000, // 30-second timeout
-    });
+  const allErrors: string[] = [];
 
-    // Convert Blob to a data URI to send to the frontend
-    const buffer = Buffer.from(await blob.arrayBuffer());
-    const dataUri = `data:${blob.type};base64,${buffer.toString('base64')}`;
+  for (const apiKey of hfKeys) {
+    const hf = new HfInference(apiKey);
+    try {
+      console.log(`Attempting image generation with a new key for model: ${input.model}`);
+      const blob = await hf.textToImage({
+        model: input.model,
+        inputs: input.prompt,
+        parameters: {
+          negative_prompt: 'blurry, ugly, distorted, watermark, signature',
+          num_inference_steps: 30, // More steps for better quality
+        },
+      }, {
+        wait_for_model: true, // Wait if the model is loading
+        timeout: 30000, // 30-second timeout
+      });
 
-    return { imageUrls: [dataUri] };
+      // Convert Blob to a data URI to send to the frontend
+      const buffer = Buffer.from(await blob.arrayBuffer());
+      const dataUri = `data:${blob.type};base64,${buffer.toString('base64')}`;
 
-  } catch (e: any) {
-    console.error("Hugging Face generation failed:", e);
-    let errorMessage = `An unexpected error occurred with the Hugging Face service: ${e.message}.`;
-    if (e.message && e.message.includes('is currently loading')) {
-        errorMessage = `The model '${input.model}' is still loading on the server. Please try again in a few minutes.`;
-    } else if (e.message && (e.message.includes('401') || e.message.includes('authorization'))) {
-        errorMessage = 'The Hugging Face API key is invalid or unauthorized. For site administrators, please verify your HF_API_KEY.';
+      // Success! Return the image.
+      console.log(`Successfully generated image for model: ${input.model}`);
+      return { imageUrls: [dataUri] };
+
+    } catch (e: any) {
+      const keyIdentifier = `...${apiKey.slice(-4)}`;
+      let errorMessage = `API key ending in ${keyIdentifier} failed.`;
+
+      if (e.message) {
+        if (e.message.includes('is currently loading')) {
+          errorMessage = `The model '${input.model}' is still loading. This is a temporary issue.`;
+        } else if (e.message.includes('401') || e.message.includes('authorization')) {
+          errorMessage = `API key ending in ${keyIdentifier} is invalid or has insufficient credits.`;
+        } else {
+          errorMessage = `An unexpected error occurred with key ${keyIdentifier}: ${e.message}`;
+        }
+      }
+      console.error(errorMessage);
+      allErrors.push(errorMessage);
     }
-    return { imageUrls: [], error: errorMessage };
   }
+  
+  // This part is reached only if all keys have failed
+  console.error("All available Hugging Face API keys failed.", allErrors);
+  const finalError = `We tried all available API keys, but none succeeded in generating an image. This could be due to high traffic, exhausted credits on all keys, or the model being temporarily unavailable. Please try again later.`;
+  return { imageUrls: [], error: finalError };
 }
 
 
