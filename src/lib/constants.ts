@@ -12,10 +12,7 @@ export const HF_MODELS = [
 
 
 export const GOOGLE_MODELS = [
-  { value: "google-imagen-3", label: "Google Imagen 3 XL Pro" },
-  { value: "google-parti-cinema", label: "Google Parti Cinema" },
-  { value: "google-flux-schnell", label: "FLUX 1-schnell MAX" },
-  { value: "google-simulacra-qr", label: "Simulacra QR Art" },
+  { value: "googleai/gemini-2.0-flash-preview-image-generation", label: "Google AI (Premium)" },
 ];
 
 export const MODEL_GROUPS = [

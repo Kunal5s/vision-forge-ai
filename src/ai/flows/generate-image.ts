@@ -178,7 +178,7 @@ async function generateWithGoogleAI(input: GenerateImageInput): Promise<Generate
 
     const generationPromises = Array.from({ length: generationCount }).map(() =>
       ai.generate({
-        model: 'googleai/gemini-2.0-flash-preview-image-generation',
+        model: input.model as any,
         prompt: finalPrompt,
         config: {
           responseModalities: ['TEXT', 'IMAGE'], // Must provide both
