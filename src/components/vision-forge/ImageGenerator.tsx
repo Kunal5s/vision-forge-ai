@@ -25,7 +25,7 @@ import type { GeneratedImageHistoryItem } from '@/types';
 import { ImageDisplay } from './ImageDisplay';
 import { UsageHistory } from './UsageHistory';
 import { FuturisticPanel } from './FuturisticPanel';
-import { Wand2, ThumbsUp, ThumbsDown, Gem, AlertTriangle, Sparkles } from 'lucide-react';
+import { Wand2, ThumbsUp, ThumbsDown, Gem, AlertTriangle, Sparkles, Image as ImageIconIcon } from 'lucide-react';
 import { LoadingSpinner } from './LoadingSpinner';
 import { useSubscription } from '@/hooks/use-subscription';
 import Link from 'next/link';
@@ -37,6 +37,13 @@ type FormData = z.infer<typeof formSchema>;
 
 type StrippedImprovePromptOutput = Omit<ImprovePromptOutput, 'error'>;
 
+const imageCountOptions = [
+    { label: '1 Image', value: 1 },
+    { label: '2 Images', value: 2 },
+    { label: '4 Images', value: 4 },
+    { label: '6 Images', value: 6 },
+];
+
 export function ImageGenerator() {
   const { toast } = useToast();
   const { subscription, useCredit, isLoading: isSubLoading, canGenerate } = useSubscription();
@@ -47,6 +54,7 @@ export function ImageGenerator() {
   const [selectedMood, setSelectedMood] = useState<string>(MOODS[0]);
   const [selectedLighting, setSelectedLighting] = useState<string>(LIGHTING_OPTIONS[0]);
   const [selectedColor, setSelectedColor] = useState<string>(COLOR_OPTIONS[0]);
+  const [numberOfImages, setNumberOfImages] = useState<number>(1);
   
   const [generatedImageUrls, setGeneratedImageUrls] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -159,7 +167,7 @@ export function ImageGenerator() {
 
     setIsLoading(true);
     setError(null);
-    setGeneratedImageUrls([]);
+    // Do not clear old images, let them persist until new ones are loaded
 
     const creditUsed = useCredit(isPremiumModel);
     if (!creditUsed) {
@@ -181,6 +189,7 @@ export function ImageGenerator() {
         plan: subscription?.plan || 'free',
         aspectRatio: selectedAspectRatio,
         model: activeModel,
+        numberOfImages: subscription?.plan === 'pro' ? 1 : numberOfImages,
      };
     const result = await generateImage(generationParams);
 
@@ -199,6 +208,7 @@ export function ImageGenerator() {
           prompt: data.prompt,
           aspectRatio: selectedAspectRatio,
           model: activeModel,
+          numberOfImages: generationParams.numberOfImages,
           imageUrl: thumbnailUrl,
           timestamp: new Date(),
           plan: subscription.plan,
@@ -206,9 +216,10 @@ export function ImageGenerator() {
         setHistory(prev => [historyItem, ...prev.slice(0, 19)]);
       }
 
-      toast({ title: 'Vision Forged!', description: `Your images have been successfully generated.` });
+      toast({ title: 'Vision Forged!', description: `Your image(s) have been successfully generated.` });
     } else {
       setError('The AI returned no images. This can happen with very complex or unsafe prompts. Please try simplifying your request.');
+      setGeneratedImageUrls([]);
     }
   };
 
@@ -251,10 +262,8 @@ export function ImageGenerator() {
   const handleRegenerate = () => {
      if(currentPrompt) {
         handleSubmit(onSubmit)();
-     } else if (history.length > 0) {
-        handleSelectHistoryItem(history[0]); 
      } else {
-        toast({ title: 'Nothing to Regenerate', description: 'Enter a prompt or select from history.', variant: 'destructive' });
+        toast({ title: 'Nothing to Regenerate', description: 'Enter a prompt to generate images.', variant: 'destructive' });
      }
   };
 
@@ -268,6 +277,7 @@ export function ImageGenerator() {
     setActiveModel(item.model);
     setFormValue('prompt', item.prompt);
     setSelectedAspectRatio(item.aspectRatio);
+    setNumberOfImages(item.numberOfImages || 1);
     setSelectedStyle(STYLES[0]);
     setSelectedMood(MOODS[0]);
     setSelectedLighting(LIGHTING_OPTIONS[0]);
@@ -325,7 +335,7 @@ export function ImageGenerator() {
     <>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-5 space-y-6">
-          <FuturisticPanel className="animate-breathing-glow">
+          <FuturisticPanel>
             <div className="space-y-4">
               <div>
                 <Label htmlFor="model-select" className="text-lg font-semibold mb-2 block text-foreground/90">
@@ -441,26 +451,43 @@ export function ImageGenerator() {
                         </SelectContent>
                     </Select>
                 </div>
-              </div>
-
-              <div>
-                <Label htmlFor="aspect-ratio" className="text-sm font-semibold mb-1 block text-foreground/80">Aspect Ratio</Label>
-                <Select value={selectedAspectRatio} onValueChange={setSelectedAspectRatio}>
-                  <SelectTrigger id="aspect-ratio" className="w-full bg-background hover:bg-muted/50">
-                    <SelectValue placeholder="Select aspect ratio" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border-border">
-                    {ASPECT_RATIOS.map((ratio) => (
-                      <SelectItem key={ratio.value} value={ratio.value}>
-                        {ratio.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div>
+                  <Label htmlFor="aspect-ratio" className="text-sm font-semibold mb-1 block text-foreground/80">Aspect Ratio</Label>
+                  <Select value={selectedAspectRatio} onValueChange={setSelectedAspectRatio}>
+                    <SelectTrigger id="aspect-ratio" className="w-full bg-background hover:bg-muted/50">
+                      <SelectValue placeholder="Select aspect ratio" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border">
+                      {ASPECT_RATIOS.map((ratio) => (
+                        <SelectItem key={ratio.value} value={ratio.value}>
+                          {ratio.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                    <Label htmlFor="num-images" className="text-sm font-semibold mb-1 block text-foreground/80">Number of Images</Label>
+                    <Select 
+                        value={String(numberOfImages)} 
+                        onValueChange={(val) => setNumberOfImages(Number(val))}
+                        disabled={subscription?.plan !== 'mega'}
+                    >
+                        <SelectTrigger id="num-images" className="w-full bg-background hover:bg-muted/50">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {imageCountOptions.map((opt) => (
+                                <SelectItem key={opt.value} value={String(opt.value)}>{opt.label}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    {subscription?.plan !== 'mega' && <p className="text-xs text-muted-foreground mt-1">Upgrade to Mega for more images.</p>}
+                </div>
               </div>
               
               <Button type="submit" disabled={isLoading || isSubLoading || !canGenerate(isPremiumModel)} className="w-full text-lg py-3 bg-primary hover:bg-primary/90 text-primary-foreground transition-shadow hover:shadow-xl hover:shadow-primary/20">
-                {isLoading ? <LoadingSpinner size={24} className="mr-2"/> : null}
+                {isLoading ? <LoadingSpinner size={24} className="mr-2"/> : <ImageIconIcon size={20} className="mr-2" />}
                 Forge Vision
               </Button>
               {!isSubLoading && !canGenerate(isPremiumModel) && (
@@ -471,7 +498,7 @@ export function ImageGenerator() {
                         <Link href="/pricing" className="underline font-semibold">
                             upgrade your plan
                         </Link>
-                        {' '}to generate images with premium models.
+                        {' '}to generate images.
                     </div>
                 </div>
               )}

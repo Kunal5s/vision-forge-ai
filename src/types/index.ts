@@ -4,6 +4,7 @@ export interface GeneratedImageParams {
   aspectRatio: string;
   plan: Plan;
   model: string;
+  numberOfImages: number;
 }
 
 export interface GeneratedImageHistoryItem extends GeneratedImageParams {

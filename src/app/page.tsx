@@ -22,7 +22,7 @@ interface FeatureCardProps {
 
 function FeatureCard({ icon, title, description, iconBgClass = 'bg-primary/10', iconTextClass = 'text-primary' }: FeatureCardProps) {
   return (
-    <FuturisticPanel className="flex flex-col items-center text-center h-full !p-4 md:!p-6 animate-breathing-glow">
+    <FuturisticPanel className="flex flex-col items-center text-center h-full !p-4 md:!p-6">
       <div className={`p-3 ${iconBgClass} rounded-full mb-4`}>
         {icon}
       </div>

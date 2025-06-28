@@ -8,7 +8,7 @@ export function PreFooterCallToAction() {
   return (
     <section className="py-12 md:py-16 bg-background">
       <div className="container mx-auto px-4">
-        <FuturisticPanel className="!p-8 md:!p-12 animate-breathing-glow">
+        <FuturisticPanel className="!p-8 md:!p-12">
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div>
               <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4">

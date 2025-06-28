@@ -181,29 +181,32 @@ export function ImageDisplay({
     }
   };
 
+  const hasImages = imageUrls.length > 0;
+
   return (
-    <FuturisticPanel className="flex flex-col gap-4 h-full animate-breathing-glow">
+    <FuturisticPanel className="flex flex-col gap-4 h-full">
       <div className={cn(
-          "w-full rounded-lg bg-background flex items-center justify-center min-h-[300px] md:min-h-[400px] overflow-hidden p-1 relative"
+          "w-full rounded-lg bg-background flex items-center justify-center min-h-[300px] md:min-h-[400px] overflow-hidden p-2 relative border-2 border-dashed border-border/50"
         )}
       >
         {isLoading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/50 z-10">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm z-10">
             <LoadingSpinner size={64} />
             <p className="mt-4 text-lg font-semibold text-foreground animate-pulse">Forging Vision...</p>
           </div>
         )}
-        {error && !isLoading && (
+        {error && !isLoading && !hasImages && (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
             <AlertTriangle size={48} className="mb-2 text-destructive" />
             <p className="font-semibold text-foreground">Error Generating Images</p>
             <p className="text-sm max-w-md mx-auto whitespace-pre-wrap text-muted-foreground">{error}</p>
           </div>
         )}
-        {!isLoading && !error && imageUrls.length > 0 && (
+        {!isLoading && hasImages && (
           <div className={cn(
-            "w-full h-full grid gap-1",
-             imageUrls.length > 1 ? "grid-cols-2" : "grid-cols-1"
+            "w-full h-full grid gap-2",
+            imageUrls.length === 1 ? 'grid-cols-1' : 'grid-cols-2',
+            imageUrls.length > 2 && 'md:grid-cols-3',
             )}>
             {imageUrls.map((url, index) => {
                 const key = `${url}-${index}`;
@@ -229,8 +232,8 @@ export function ImageDisplay({
                         layout="fill"
                         objectFit="contain"
                         className={cn(
-                            "transition-all duration-500 ease-in-out", 
-                            state === 'loaded' ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+                            "transition-opacity duration-500 ease-in-out", 
+                            state === 'loaded' ? 'opacity-100' : 'opacity-0'
                         )}
                         onLoad={() => handleImageLoad(key)}
                         onError={() => handleImageError(key)}
@@ -242,10 +245,10 @@ export function ImageDisplay({
                           onClick={() => handleDownloadImage(url)} 
                           variant="default" 
                           size="icon" 
-                          className="absolute bottom-2 right-2 bg-primary/80 backdrop-blur-sm text-primary-foreground hover:bg-primary transition-all z-20"
+                          className="absolute bottom-2 right-2 bg-primary/80 backdrop-blur-sm text-primary-foreground hover:bg-primary transition-all z-20 h-8 w-8"
                           title="Download Image"
                         >
-                          <Download size={18} />
+                          <Download size={16} />
                         </Button>
                       )}
                   </div>
@@ -253,16 +256,17 @@ export function ImageDisplay({
             })}
           </div>
         )}
-        {!isLoading && !error && imageUrls.length === 0 && (
+        {!isLoading && !hasImages && !error && (
            <div className="flex flex-col items-center justify-center text-muted-foreground opacity-50 p-4 text-center">
             <ImageIcon size={64} />
-            <p className="mt-2 text-lg">Your vision will appear here</p>
+            <h3 className="mt-4 text-lg font-semibold">Your generated images will appear here.</h3>
+            <p className="mt-1 text-sm">Enter a prompt and adjust your settings to begin.</p>
           </div>
         )}
       </div>
-      {(imageUrls.length > 0 || prompt) && !isLoading && !error && (
+      {(hasImages || prompt) && !isLoading && (
         <div className="flex flex-wrap gap-2 justify-center">
-          <Button onClick={onRegenerate} variant="outline" className="transition-shadow hover:shadow-lg hover:shadow-accent/20">
+          <Button onClick={onRegenerate} variant="outline" className="transition-shadow hover:shadow-lg hover:shadow-accent/20" disabled={!prompt}>
             <RefreshCw size={18} className="mr-2" />
             Regenerate
           </Button>
@@ -270,10 +274,10 @@ export function ImageDisplay({
             <Copy size={18} className="mr-2" />
             Copy Prompt
           </Button>
-          {(userPlan === 'pro' || userPlan === 'mega') && imageUrls.length > 1 && (
+          {hasImages && (
              <Button onClick={handleDownloadAll} variant="default" className="bg-primary hover:bg-primary/90 text-primary-foreground transition-shadow hover:shadow-lg hover:shadow-primary/20">
                 <Download size={18} className="mr-2" />
-                Download All
+                Download All ({imageUrls.filter((url, index) => imageStates[`${url}-${index}`] === 'loaded').length})
             </Button>
           )}
         </div>

@@ -27,7 +27,7 @@ const pricingPlans = [
     description: 'For professionals and creators.',
     features: [
       '5,000 Google Credits/month',
-      'Fast generation speed',
+      'Generate 1 image at a time',
       'Premium quality (up to 8K)',
       'Access to all AI models',
       'Generation history saved',
@@ -45,7 +45,7 @@ const pricingPlans = [
     description: 'For power users and teams.',
     features: [
       '15,000 Google Credits/month',
-      'Lightning-fast speed',
+      'Generate up to 6 images at once',
       'Premium quality (up to 8K)',
       'Access to all AI models',
       'Generation history saved',
@@ -75,7 +75,7 @@ export function PricingSection() {
           <Card
             key={plan.name}
             className={cn(
-              'flex flex-col h-full transition-shadow hover:shadow-lg animate-breathing-glow',
+              'flex flex-col h-full transition-shadow hover:shadow-lg',
               plan.isFeatured && 'border-primary shadow-2xl scale-105'
             )}
           >
