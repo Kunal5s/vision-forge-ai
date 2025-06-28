@@ -141,7 +141,7 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
     
     // If after all attempts, no images were generated, return a generic but helpful error message.
     if (successfulUrls.length === 0) {
-        return { imageUrls: [], error: "We're experiencing high demand or a temporary issue with the AI models. All our generation resources were busy. Please try your request again in a few moments." };
+        return { imageUrls: [], error: `The model '${input.model}' is facing high demand or a temporary issue. This is common. Please select a different model or try again in a few minutes.` };
     }
 
     // Return all successfully generated images, even if some failed.
