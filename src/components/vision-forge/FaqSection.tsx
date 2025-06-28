@@ -9,23 +9,19 @@ import {
 const faqs = [
   {
     question: "What is Imagen BrainAi?",
-    answer: "Imagen BrainAi is a powerful AI image generator that turns your text descriptions into unique, high-quality images. It's designed for artists, designers, marketers, and anyone looking to bring their creative ideas to life."
+    answer: "Imagen BrainAi is a powerful AI image generator that turns your text descriptions into unique, high-quality images using Google's latest AI models. It's designed for artists, designers, marketers, and anyone looking to bring their creative ideas to life."
   },
   {
     question: "How do credits work?",
-    answer: "The Free plan includes 200 daily credits for standard generation. Pro and Mega plans come with a monthly allowance of premium credits for using advanced models. Each generation consumes a set amount of credits depending on the model and plan."
-  },
-  {
-    question: "What's the difference between Standard and Premium models?",
-    answer: "Standard models (Pollinations) are great for exploration and quick generations. Premium models (Google AI) offer significantly higher image quality, better prompt understanding, faster speeds, and generate multiple variations at once."
+    answer: "The Free plan allows you to explore the application's interface. To generate images, you must upgrade to a Pro or Mega plan. These paid plans come with a monthly allowance of Google Credits, which are used to power the advanced AI models for each image you create."
   },
   {
     question: "Can I use the generated images for commercial purposes?",
-    answer: "Images generated under the Free plan are for personal use only. The Pro and Mega plans include a commercial license, allowing you to use the images for your business, marketing, and other commercial projects."
+    answer: "Images generated under the Pro and Mega plans include a commercial license, allowing you to use them for your business, marketing, and other commercial projects. The Free plan does not include image generation."
   },
   {
     question: "Do my credits roll over to the next month?",
-    answer: "Daily credits on the Free plan reset every 24 hours and do not roll over. Monthly credits on the Pro and Mega plans are renewed on your billing date and do not roll over."
+    answer: "Monthly credits on the Pro and Mega plans are renewed on your billing date and do not roll over to the next month."
   },
   {
     question: "How do I upgrade my plan?",
@@ -37,7 +33,7 @@ const faqs = [
   },
   {
     question: "How can I get better results from my prompts?",
-    answer: "Be descriptive and specific. Use adjectives and details about the style, mood, and lighting you want. For Pro and Mega users, our AI-powered 'Improve Prompt' feature can analyze your idea and suggest a more effective prompt."
+    answer: "Be descriptive and specific. Use adjectives and details about the style, mood, and lighting you want. For paid plan users, our AI-powered 'Improve Prompt' feature can analyze your idea and suggest a more effective prompt."
   },
   {
     question: "Is my data and are my generations private?",
@@ -45,7 +41,7 @@ const faqs = [
   },
   {
     question: "What happens when my paid plan expires?",
-    answer: "Your plan is valid for 30 days from the date of purchase. After it expires, your account will automatically revert to the Free plan. You can purchase a new plan at any time to regain access to premium features and credits."
+    answer: "Your plan is valid for 30 days from the date of purchase. After it expires, your account will automatically revert to the Free plan, and you will need to purchase a new plan to continue generating images."
   }
 ];
 
