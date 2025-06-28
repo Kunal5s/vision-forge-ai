@@ -62,14 +62,8 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
  * Generates images using Google AI (Gemini).
  */
 async function generateWithGoogleAI(input: GenerateImageInput): Promise<GenerateImageOutput> {
-  const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return {
-      imageUrls: [],
-      error: "The Google/Gemini API key is not configured on the server. Please add GOOGLE_API_KEY or GEMINI_API_KEY to your environment variables to use premium models.",
-    };
-  }
-
+  // We will let the Genkit client handle API key errors from the environment.
+  // The GOOGLE_API_KEY or GEMINI_API_KEY must be set in the deployment environment.
   try {
     // Mega plan gets 4 variations, Pro gets 1. Free plan gets 0.
     const generationCount = input.plan === 'mega' ? 4 : input.plan === 'pro' ? 1 : 0;
@@ -98,6 +92,10 @@ async function generateWithGoogleAI(input: GenerateImageInput): Promise<Generate
 
   } catch (e: any) {
     console.error("Google AI generation failed:", e);
+    // Provide a more helpful error message for administrators.
+    if (e.message && e.message.includes('API key not valid')) {
+        return { imageUrls: [], error: 'The configured Google/Gemini API key is invalid. For site administrators, please check your API key and ensure the Generative Language API is enabled in your Google Cloud project.' };
+    }
     return { imageUrls: [], error: `An error occurred with the Google AI service: ${e.message}. For site administrators, ensure your API key is valid and the Generative Language API is enabled.` };
   }
 }
@@ -106,7 +104,7 @@ async function generateWithGoogleAI(input: GenerateImageInput): Promise<Generate
  * Generates an image using the Hugging Face Inference API with key rotation.
  */
 async function generateWithHuggingFace(input: GenerateImageInput): Promise<GenerateImageOutput> {
-  // Direct, explicit check for environment variables. This is more reliable in serverless environments.
+  // This is a more resilient way to get keys in various environments.
   const hfApiKeys: string[] = [
     process.env.HF_API_KEY_1,
     process.env.HF_API_KEY_2,
@@ -118,18 +116,12 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
     process.env.HF_API_KEY_8,
     process.env.HF_API_KEY_9,
     process.env.HF_API_KEY_10,
-    process.env.HF_API_KEY, // Fallback to a single key
-  ].filter((key): key is string => !!key); // Filter out any undefined/empty keys.
+    process.env.HF_API_KEY,
+  ].filter((key): key is string => !!key && key.trim() !== '');
 
-  if (hfApiKeys.length === 0) {
-    return {
-      imageUrls: [],
-      error: 'No Hugging Face API keys are configured on the server. Please add at least one HF_API_KEY (or HF_API_KEY_1, HF_API_KEY_2, etc.) to your environment variables.',
-    };
-  }
-  
-  // Randomly select a key from the available ones.
-  const apiKey = hfApiKeys[Math.floor(Math.random() * hfApiKeys.length)];
+  // We no longer return an error if no keys are found. Instead, we let the fetch fail.
+  // This provides a better diagnostic error from the Hugging Face API itself (e.g., 401 Unauthorized).
+  const apiKey = hfApiKeys.length > 0 ? hfApiKeys[Math.floor(Math.random() * hfApiKeys.length)] : undefined;
   
   const { width, height } = getDimensions(input.aspectRatio);
   const apiUrl = `https://api-inference.huggingface.co/models/${input.model}`;
@@ -154,12 +146,17 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
 
     if (!response.ok) {
         let errorBody = `Request failed with status ${response.status}: ${response.statusText}`;
+        
+        // Provide a clearer error message for the most common failure case.
+        if (response.status === 401) {
+             return { imageUrls: [], error: 'Authentication failed. For site administrators: Please ensure your Hugging Face API keys (HF_API_KEY or HF_API_KEY_1, etc.) are correctly configured in your deployment environment.' };
+        }
+
         try {
             const errorJson = await response.json();
             if(errorJson.error) {
-                // Provide more specific error messages
                 if (typeof errorJson.error === 'string' && errorJson.error.includes("is currently loading")) {
-                    errorBody = `The model "${input.model}" is currently loading. This is common for less-used models. Please try again in a few minutes.`
+                    errorBody = `The model "${input.model}" is currently loading. This can take several minutes for large models. Please try again later.`
                 } else {
                     errorBody = `API Error: ${errorJson.error}`;
                 }
@@ -173,7 +170,6 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
 
     const blob = await response.blob();
     
-    // Sometimes HF returns an error as a JSON object even with a 200 OK status.
     if (blob.type.startsWith('application/json')) {
         const errorJsonText = await blob.text();
         const errorJson = JSON.parse(errorJsonText);
