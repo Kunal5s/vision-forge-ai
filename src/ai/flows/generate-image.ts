@@ -31,13 +31,14 @@ export type GenerateImageOutput = z.infer<typeof GenerateImageOutputSchema>;
 // Helper to calculate dimensions based on aspect ratio for Hugging Face models
 function getDimensions(aspectRatio: string): { width: number; height: number } {
   const [w, h] = aspectRatio.split(':').map(Number);
-  const basePixels = 1024 * 1024; // Aim for a base resolution around 1 megapixel
+  // Using a smaller base resolution for free models to improve speed and reduce load
+  const basePixels = 1024 * 768; 
   const ratio = w / h;
 
   let height = Math.sqrt(basePixels / ratio);
   let width = height * ratio;
 
-  // Snap to the nearest multiple of 64 for model compatibility
+  // Snap to the nearest multiple of 8 or 64 for model compatibility
   width = Math.round(width / 64) * 64;
   height = Math.round(height / 64) * 64;
 
@@ -70,6 +71,7 @@ async function generateWithGoogleAI(input: GenerateImageInput): Promise<Generate
   }
 
   try {
+    // Mega plan gets 4 variations, Pro gets 1.
     const generationCount = input.plan === 'mega' ? 4 : input.plan === 'pro' ? 1 : 0;
     if (generationCount === 0) {
       return { imageUrls: [], error: "Your current plan does not support premium model generation." };
@@ -106,7 +108,7 @@ async function generateWithGoogleAI(input: GenerateImageInput): Promise<Generate
 async function generateWithHuggingFace(input: GenerateImageInput): Promise<GenerateImageOutput> {
   const hfApiKeys: string[] = [];
 
-  // Directly check for rotating keys from 1 to 10. This is more reliable in serverless environments.
+  // More reliable way to read rotating keys in serverless environments.
   for (let i = 1; i <= 10; i++) {
     const key = process.env[`HF_API_KEY_${i}`];
     if (key) {
@@ -129,6 +131,7 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
     };
   }
   
+  // Randomly select a key from the available ones.
   const apiKey = hfApiKeys[Math.floor(Math.random() * hfApiKeys.length)];
   
   const { width, height } = getDimensions(input.aspectRatio);
@@ -157,9 +160,11 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
         try {
             const errorJson = await response.json();
             if(errorJson.error) {
-                errorBody = `API Error: ${errorJson.error}`;
+                // Provide more specific error messages
                 if (typeof errorJson.error === 'string' && errorJson.error.includes("is currently loading")) {
-                    errorBody += ". This is common for less-used models. Please try again in a few minutes."
+                    errorBody = `The model "${input.model}" is currently loading. This is common for less-used models. Please try again in a few minutes.`
+                } else {
+                    errorBody = `API Error: ${errorJson.error}`;
                 }
             }
         } catch (e) {
@@ -171,6 +176,7 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
 
     const blob = await response.blob();
     
+    // Sometimes HF returns an error as a JSON object even with a 200 OK status.
     if (blob.type.startsWith('application/json')) {
         const errorJsonText = await blob.text();
         const errorJson = JSON.parse(errorJsonText);
