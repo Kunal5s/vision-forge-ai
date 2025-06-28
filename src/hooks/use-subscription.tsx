@@ -21,7 +21,7 @@ const MOCK_PURCHASED_EMAILS: Record<string, Plan> = {
 const PLAN_CREDIT_COST: Record<Plan, { google: number }> = {
   free: { google: 0 }, 
   pro: { google: 100 },
-  mega: { google: 100 }, // Reduced cost for Mega plan for more generations
+  mega: { google: 100 },
 };
 
 const PLAN_VALIDITY_DAYS = 30;
