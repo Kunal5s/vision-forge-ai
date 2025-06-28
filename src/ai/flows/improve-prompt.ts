@@ -56,7 +56,7 @@ const improvePromptFlow = ai.defineFlow(
   },
   async (input): Promise<ImprovePromptOutput> => {
     if (!process.env.GOOGLE_API_KEY) {
-      const errorMsg = "Your GOOGLE_API_KEY is not set correctly for deployment. Please go to your Netlify site settings under 'Build & deploy' > 'Environment' and add your API key. The key should not be public.";
+      const errorMsg = "The site administrator has not configured the GOOGLE_API_KEY. This is required for premium features. Please add it to your deployment environment's settings (e.g., in Cloudflare, Vercel, or Netlify) to enable premium models.";
       console.error(errorMsg);
       return { improvedPrompt: '', reasoning: '', error: errorMsg };
     }
@@ -64,7 +64,7 @@ const improvePromptFlow = ai.defineFlow(
     try {
         const {output} = await improvePromptPrompt(input);
         if (!output?.improvedPrompt) {
-            const failureReason = "The AI could not generate a suggestion. This is often a Google Cloud setup issue. Please check:\n1. **Billing is enabled** for your Google Cloud project.\n2. The **'Generative Language API'** is enabled.";
+            const failureReason = "The AI could not generate a suggestion. This could be due to a few reasons:\n1. Your prompt may have triggered a safety filter.\n2. There might be a temporary issue with the AI service.\n3. (For site admins) Ensure your Google Cloud project has billing enabled, the 'Generative Language API' is active, and your API key is correctly configured in your deployment environment.";
             return { improvedPrompt: '', reasoning: '', error: failureReason };
         }
         return {
@@ -73,7 +73,7 @@ const improvePromptFlow = ai.defineFlow(
         };
     } catch (e: any) {
         console.error("Improve prompt API call failed:", e);
-        const detailedMessage = "An unexpected error occurred. This is often a Google Cloud setup issue. Please check:\n1. **Billing is enabled** for your Google Cloud project.\n2. The **'Generative Language API'** is enabled.";
+        const detailedMessage = "An unexpected error occurred with the prompt enhancement service. For site administrators, please check:\n1. Your GOOGLE_API_KEY is set correctly in your deployment environment.\n2. Billing is enabled for your Google Cloud project.\n3. The 'Generative Language API' is enabled in your project.";
         return { improvedPrompt: '', reasoning: '', error: detailedMessage };
     }
   }

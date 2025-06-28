@@ -38,7 +38,7 @@ export type GenerateImageOutput = z.infer<typeof GenerateImageOutputSchema>;
 function calculateDimensions(aspectRatio: string, plan: 'free' | 'pro' | 'mega'): { width: number, height: number } {
     const [aspectW, aspectH] = (aspectRatio.split(':').map(Number) || [1, 1]);
     const maxDimension = (plan === 'pro' || plan === 'mega') ? 1024 : 512;
-    const maxBlocks = maxDimension / 64; // 16 for paid, 8 for free
+    const maxBlocks = maxDimension / 64;
 
     let width: number;
     let height: number;
@@ -49,22 +49,25 @@ function calculateDimensions(aspectRatio: string, plan: 'free' | 'pro' | 'mega')
             const widthBlocks = maxBlocks;
             const heightBlocks = Math.round(widthBlocks / ratio);
             width = widthBlocks * 64;
-            height = Math.max(64, heightBlocks * 64); // Ensure min height
+            height = Math.max(64, heightBlocks * 64);
         } else if (ratio < 1) { // Portrait
             const heightBlocks = maxBlocks;
             const widthBlocks = Math.round(heightBlocks * ratio);
             height = heightBlocks * 64;
-            width = Math.max(64, widthBlocks * 64); // Ensure min width
+            width = Math.max(64, widthBlocks * 64);
         } else { // Square
             width = maxDimension;
             height = maxDimension;
         }
     } else {
-        // Fallback for invalid ratio string
         width = maxDimension;
         height = maxDimension;
     }
 
+    // Ensure final dimensions are multiples of 64
+    width = Math.round(width / 64) * 64;
+    height = Math.round(height / 64) * 64;
+    
     return { width, height };
 }
 
@@ -82,7 +85,7 @@ const generateImageFlow = ai.defineFlow(
   async (input): Promise<GenerateImageOutput> => {
     
     if (input.plan !== 'free' && !process.env.GOOGLE_API_KEY) {
-      const errorMsg = "The site administrator has not configured the Google API Key. Premium models are unavailable.";
+      const errorMsg = "The site administrator has not configured the GOOGLE_API_KEY. This is required for premium features. Please add it to your deployment environment's settings (e.g., in Cloudflare, Vercel, or Netlify) to enable premium models.";
       console.error(errorMsg);
       return { imageUrls: [], error: errorMsg };
     }
