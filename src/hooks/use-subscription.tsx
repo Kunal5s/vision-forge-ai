@@ -6,7 +6,7 @@ import type { Subscription, Plan, Credits } from '@/types';
 import { useToast } from './use-toast';
 
 const PLAN_CREDITS: Record<Plan, Credits> = {
-  free: { google: 0, pollinations: 200 },
+  free: { google: 0, pollinations: Infinity },
   pro: { google: 5000, pollinations: Infinity },
   mega: { google: 15000, pollinations: Infinity },
 };
@@ -69,7 +69,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 
       if (parsedSub) {
         // Force update to new credit system if old values are detected
-        if (parsedSub.plan === 'free' && parsedSub.credits.pollinations > 200) {
+        if (parsedSub.plan === 'free' && parsedSub.credits.pollinations > 200 && parsedSub.credits.pollinations !== Infinity) {
             parsedSub = null; // Invalidate old config to force reset
         }
         
