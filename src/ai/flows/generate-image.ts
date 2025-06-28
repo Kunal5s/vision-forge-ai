@@ -11,20 +11,31 @@
 import { z } from 'zod';
 import { ai } from '@/ai/genkit';
 import { HfInference } from '@huggingface/inference';
-import { ALL_MODEL_VALUES, GOOGLE_MODELS } from '@/lib/constants';
+import { ALL_MODEL_VALUES, GOOGLE_MODELS, STABLE_HORDE_MODELS } from '@/lib/constants';
 
-// Helper to parse aspect ratio into width and height for Hugging Face models
+// Helper to parse aspect ratio into width and height.
+// Stable Horde and HF models work best with dimensions that are multiples of 64.
 const parseAspectRatio = (ratio: string): { width: number, height: number } => {
     try {
         const [w, h] = ratio.split(':').map(Number);
         if (isNaN(w) || isNaN(h)) return { width: 1024, height: 1024 };
 
         const baseSize = 1024;
+        let width, height;
+
         if (w > h) {
-            return { width: baseSize, height: Math.round(baseSize * (h / w)) };
+            width = baseSize;
+            height = Math.round(baseSize * (h / w));
         } else {
-            return { width: Math.round(baseSize * (w / h)), height: baseSize };
+            width = Math.round(baseSize * (w / h));
+            height = baseSize;
         }
+
+        // Ensure dimensions are multiples of 64
+        return {
+            width: Math.round(width / 64) * 64,
+            height: Math.round(height / 64) * 64
+        };
     } catch (error) {
         return { width: 1024, height: 1024 }; // Default to square on error
     }
@@ -55,17 +66,121 @@ export type GenerateImageOutput = z.infer<typeof GenerateImageOutputSchema>;
  */
 export async function generateImage(input: GenerateImageInput): Promise<GenerateImageOutput> {
   const isGoogleModel = GOOGLE_MODELS.some(m => m.value === input.model);
+  const isStableHordeModel = STABLE_HORDE_MODELS.some(m => m.value === input.model);
 
   if (isGoogleModel) {
     return generateWithGoogleAI(input);
+  } else if (isStableHordeModel) {
+    return generateWithStableHorde(input);
   } else {
     return generateWithHuggingFace(input);
   }
 }
 
 /**
+ * Helper function to introduce a delay.
+ * @param ms Milliseconds to wait.
+ */
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * Generates images using the community-powered Stable Horde network.
+ */
+async function generateWithStableHorde(input: GenerateImageInput): Promise<GenerateImageOutput> {
+  const apiKey = process.env.STABLE_HORDE_API_KEY || '0000000000';
+  const { width, height } = parseAspectRatio(input.aspectRatio);
+
+  try {
+    // Step 1: Asynchronously request image generation
+    const asyncResponse = await fetch('https://stablehorde.net/api/v2/generate/async', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': apiKey,
+        'Client-Agent': 'VisionForgeAI:1.0:https://imagenbrainai.in',
+      },
+      body: JSON.stringify({
+        prompt: `${input.prompt} ### high quality, masterpiece`,
+        params: {
+          sampler_name: 'k_dpmpp_2s_a',
+          cfg_scale: 7.0,
+          width,
+          height,
+          steps: 25,
+          n: input.numberOfImages,
+        },
+        models: ['stable_diffusion_xl'], // Prioritize modern, high-quality SDXL models
+        nsfw: false,
+      }),
+    });
+
+    if (!asyncResponse.ok) {
+      const errorBody = await asyncResponse.json().catch(() => ({ message: asyncResponse.statusText }));
+      throw new Error(`Stable Horde request failed: ${errorBody.message}`);
+    }
+
+    const { id } = await asyncResponse.json();
+
+    // Step 2: Poll for the result until it's done or timed out
+    const pollStartTime = Date.now();
+    const pollTimeout = 180000; // 3-minute timeout
+
+    while (Date.now() - pollStartTime < pollTimeout) {
+      await sleep(3000); // Wait 3 seconds between each poll
+
+      const statusResponse = await fetch(`https://stablehorde.net/api/v2/generate/status/${id}`);
+      if (!statusResponse.ok) {
+        console.warn(`Polling failed for ID ${id}, retrying...`);
+        continue;
+      }
+      
+      const statusData = await statusResponse.json();
+
+      if (statusData.faulted) {
+        throw new Error('Image generation failed on the Horde network. This can happen occasionally.');
+      }
+
+      if (statusData.done) {
+        // Step 3: Generation complete, fetch and process the images
+        const generatedImages = statusData.generations;
+        
+        if (!generatedImages || generatedImages.length === 0) {
+           throw new Error('Generation finished, but the Horde did not return any images.');
+        }
+        
+        const dataUriPromises = generatedImages.map(async (gen: any) => {
+            if (!gen.img) return null;
+            const imageResponse = await fetch(gen.img);
+            if (!imageResponse.ok) {
+                console.error(`Failed to fetch generated image from ${gen.img}`);
+                return null;
+            }
+            const blob = await imageResponse.blob();
+            const buffer = Buffer.from(await blob.arrayBuffer());
+            return `data:${blob.type};base64,${buffer.toString('base64')}`;
+        });
+
+        const successfulDataUris = (await Promise.all(dataUriPromises)).filter((url): url is string => !!url);
+        
+        if (successfulDataUris.length === 0) {
+            return { imageUrls: [], error: 'Could not fetch the generated images from the Horde network servers.' };
+        }
+
+        return { imageUrls: successfulDataUris };
+      }
+    }
+
+    // If the loop finishes, it means we timed out
+    throw new Error('Image generation timed out. The Horde is very busy. Please try again in a few moments.');
+
+  } catch (e: any) {
+    console.error("Stable Horde generation process failed:", e);
+    return { imageUrls: [], error: e.message || 'An unknown error occurred with the Stable Horde service.' };
+  }
+}
+
+/**
  * Generates images using Hugging Face Inference API with a robust key rotation and retry mechanism.
- * This function is designed to be highly resilient, trying every available API key for each requested image.
  */
 async function generateWithHuggingFace(input: GenerateImageInput): Promise<GenerateImageOutput> {
     const apiKeys = [
@@ -76,17 +191,15 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
     ].filter((key): key is string => !!key && key.trim() !== '');
 
     if (apiKeys.length === 0) {
-      // This error is for the developer/administrator, not the end user, if no keys are set in the environment.
-      return { imageUrls: [], error: "FATAL: No Hugging Face API keys are configured in the environment." };
+      return { imageUrls: [], error: "This site is not configured for Hugging Face generation. For site administrators, please check your HF_API_KEY environment variables." };
     }
     
     const { width, height } = parseAspectRatio(input.aspectRatio);
     const successfulUrls: string[] = [];
-    let keyIndex = 0; // To keep track of which key to use next.
+    let keyIndex = 0; 
 
     for (let i = 0; i < input.numberOfImages; i++) {
         let imageGenerated = false;
-        // Try every available API key for the current image generation.
         for (let j = 0; j < apiKeys.length; j++) {
             const currentApiKey = apiKeys[keyIndex % apiKeys.length];
             keyIndex++;
@@ -101,13 +214,13 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
                     parameters: {
                         negative_prompt: 'low quality, worst quality, bad hands, extra limbs, jpeg artifacts, blurry, ugly, distorted, watermark, signature',
                         num_inference_steps: 30,
-                        guidance_scale: 7.5,
+                        guidance_scale: 7.0,
                         width,
                         height,
                     },
                 }, {
                     wait_for_model: true,
-                    timeout: 90000, // Increased timeout to 90 seconds for slower models
+                    timeout: 90000, 
                 });
 
                 const buffer = Buffer.from(await blob.arrayBuffer());
@@ -115,36 +228,27 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
                 successfulUrls.push(dataUri);
                 imageGenerated = true;
                 console.log(`Successfully generated image ${i + 1} with key ${keyIdentifier}`);
-                break; // Success! Move to the next image generation.
+                break;
             } catch (e: any) {
                 const errorMessage = e.message || '';
-
-                // Specific, critical error: if a model is loading, it's pointless to try other keys.
-                // Inform the user and stop this entire generation request.
                 if (errorMessage.includes('is currently loading')) {
                     const loadingError = `The model '${input.model}' is still loading on the Hugging Face servers. This can take a few minutes. Please try again shortly or select a different model.`;
                     console.error(loadingError);
-                    // Return this specific error to the user.
                     return { imageUrls: successfulUrls, error: loadingError };
                 }
-                
-                // For any other error (e.g., key quota exhausted, network issue), just log it and try the next key.
                 console.error(`API key (${keyIdentifier}) failed. Error: ${errorMessage}. Trying next key.`);
             }
         }
 
         if (!imageGenerated) {
             console.error(`Failed to generate image ${i + 1} with any of the available API keys.`);
-            // Don't stop. If other images were requested, they might still succeed.
         }
     }
     
-    // If after all attempts, no images were generated, return a generic but helpful error message.
     if (successfulUrls.length === 0) {
-        return { imageUrls: [], error: `The model '${input.model}' is facing high demand or a temporary issue. This is common. Please select a different model or try again in a few minutes.` };
+        return { imageUrls: [], error: `The model '${input.model}' is facing high demand or a temporary issue. Please select a different model or try again in a few minutes.` };
     }
 
-    // Return all successfully generated images, even if some failed.
     return { imageUrls: successfulUrls };
 }
 
@@ -154,7 +258,7 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
  */
 async function generateWithGoogleAI(input: GenerateImageInput): Promise<GenerateImageOutput> {
   if (!process.env.GEMINI_API_KEY) {
-      const errorMessage = "Google/Gemini API key is not configured. For site administrators, please check your GEMINI_API_KEY environment variable.";
+      const errorMessage = "This site is not configured for Google AI generation. For site administrators, please check your GEMINI_API_KEY environment variable.";
       console.error(errorMessage);
       return { imageUrls: [], error: errorMessage };
   }
@@ -162,10 +266,8 @@ async function generateWithGoogleAI(input: GenerateImageInput): Promise<Generate
   try {
     let generationCount = 0;
     if (input.plan === 'pro') {
-      // Pro plan can only generate 1 image at a time
       generationCount = 1;
     } else if (input.plan === 'mega') {
-      // Mega plan can generate the selected number of images
       generationCount = input.numberOfImages;
     }
 
@@ -173,7 +275,6 @@ async function generateWithGoogleAI(input: GenerateImageInput): Promise<Generate
       return { imageUrls: [], error: "Your current plan does not support premium model generation." };
     }
 
-    // Hinting aspect ratio in the prompt for Google models
     const finalPrompt = `${input.prompt}, ${input.aspectRatio} aspect ratio`;
 
     const generationPromises = Array.from({ length: generationCount }).map(() =>
@@ -181,7 +282,7 @@ async function generateWithGoogleAI(input: GenerateImageInput): Promise<Generate
         model: input.model as any,
         prompt: finalPrompt,
         config: {
-          responseModalities: ['TEXT', 'IMAGE'], // Must provide both
+          responseModalities: ['TEXT', 'IMAGE'],
         },
       })
     );
@@ -201,7 +302,7 @@ async function generateWithGoogleAI(input: GenerateImageInput): Promise<Generate
     let detailedError = `An error occurred with the Google AI service.`;
     if (e.message) {
       if (e.message.includes('API key not valid') || e.message.includes('API_KEY_INVALID')) {
-          detailedError = 'The configured Google/Gemini API key is invalid. Please verify the key in your environment settings and ensure it is active.';
+          detailedError = 'The configured Google/Gemini API key is invalid. Please verify the key and ensure it is active.';
       } else if (e.message.includes('permission denied') || e.message.includes('Forbidden') || e.message.includes('are blocked')) {
           detailedError = "The Google AI service blocked the request. This is often due to the 'Generative Language API' not being enabled in your Google Cloud project, or billing not being set up. Please verify your Google Cloud project configuration.";
       } else {

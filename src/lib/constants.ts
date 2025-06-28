@@ -1,6 +1,4 @@
 // A curated list of reliable and high-quality Hugging Face models.
-// I have updated this list to include newer, faster, and more reliable models
-// to ensure a better and more consistent generation experience.
 export const HF_MODELS = [
   { value: 'stabilityai/stable-diffusion-xl-base-1.0', label: 'Stable Diffusion XL 1.0' },
   { value: 'playgroundai/playground-v2.5-1024px-aesthetic', label: 'Playground v2.5' },
@@ -10,12 +8,20 @@ export const HF_MODELS = [
   { value: 'kandinsky-community/kandinsky-3', label: 'Kandinsky 3' },
 ];
 
-
 export const GOOGLE_MODELS = [
   { value: "googleai/gemini-2.0-flash-preview-image-generation", label: "Google AI (Premium)" },
 ];
 
+export const STABLE_HORDE_MODELS = [
+  { value: 'stable_horde', label: 'Stable Horde (Community)' },
+];
+
 export const MODEL_GROUPS = [
+  {
+    label: "Community Models (Free)",
+    models: STABLE_HORDE_MODELS,
+    premium: false,
+  },
   {
     label: "Standard Models (Hugging Face)",
     models: HF_MODELS,
@@ -28,7 +34,11 @@ export const MODEL_GROUPS = [
   }
 ];
 
-export const ALL_MODEL_VALUES = [...HF_MODELS.map(m => m.value), ...GOOGLE_MODELS.map(m => m.value)] as [string, ...string[]];
+export const ALL_MODEL_VALUES = [
+    ...STABLE_HORDE_MODELS.map(m => m.value),
+    ...HF_MODELS.map(m => m.value), 
+    ...GOOGLE_MODELS.map(m => m.value)
+] as [string, ...string[]];
 
 export const ASPECT_RATIOS = [
   { label: "1:1 (Square)", value: "1:1" },

@@ -20,7 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { useToast } from '@/hooks/use-toast';
 import { generateImage, type GenerateImageInput } from '@/ai/flows/generate-image';
 import { improvePrompt, type ImprovePromptOutput } from '@/ai/flows/improve-prompt';
-import { ASPECT_RATIOS, STYLES, MOODS, LIGHTING_OPTIONS, COLOR_OPTIONS, MODEL_GROUPS } from '@/lib/constants';
+import { ASPECT_RATIOS, STYLES, MOODS, LIGHTING_OPTIONS, COLOR_OPTIONS, MODEL_GROUPS, STABLE_HORDE_MODELS } from '@/lib/constants';
 import type { GeneratedImageHistoryItem } from '@/types';
 import { ImageDisplay } from './ImageDisplay';
 import { UsageHistory } from './UsageHistory';
@@ -72,7 +72,9 @@ export function ImageGenerator() {
   });
   const currentPrompt = watch('prompt');
 
-  const isPremiumModel = MODEL_GROUPS.find(g => g.models.some(m => m.value === activeModel))?.premium ?? false;
+  const activeModelGroup = MODEL_GROUPS.find(g => g.models.some(m => m.value === activeModel));
+  const isPremiumModel = activeModelGroup?.premium ?? false;
+  const isCommunityModel = activeModelGroup?.label.includes('Community') ?? false;
   
   useEffect(() => {
     if (subscription?.plan === 'pro' || subscription?.plan === 'mega') {
@@ -101,13 +103,10 @@ export function ImageGenerator() {
                   description: "Your browser storage is full. Removing oldest history item to make space.",
                   variant: "destructive"
                 });
-                // If storage is full, remove the oldest item (which is at the end of the array)
-                // and let this effect run again on the next render with the smaller array.
                 setHistory(prev => prev.slice(0, -1));
             }
           }
         } else {
-          // If history is empty, ensure localStorage is also empty
           localStorage.removeItem('imagenBrainAiHistory');
         }
     }
@@ -132,7 +131,6 @@ export function ImageGenerator() {
 
     setIsLoading(true);
     setError(null);
-    // Do not clear old images, let them persist until new ones are loaded
 
     const creditUsed = useCredit(isPremiumModel);
     if (!creditUsed) {
@@ -141,9 +139,8 @@ export function ImageGenerator() {
       return;
     }
 
-    // Construct a detailed, structured prompt.
     const promptParts = [
-      `best quality, masterpiece, ${data.prompt}`
+      `masterpiece, best quality, ${data.prompt}`
     ];
     const details = [
         selectedStyle !== 'None' ? `style: ${selectedStyle}` : '',
@@ -157,7 +154,6 @@ export function ImageGenerator() {
     }
 
     const finalPrompt = promptParts.join('. ');
-
 
     const generationParams: GenerateImageInput = { 
         prompt: finalPrompt,
@@ -184,7 +180,7 @@ export function ImageGenerator() {
           aspectRatio: selectedAspectRatio,
           model: activeModel,
           numberOfImages: generationParams.numberOfImages,
-          imageUrl: result.imageUrls[0], // Store full-res image URL
+          imageUrl: result.imageUrls[0], 
           timestamp: new Date(),
           plan: subscription.plan,
         };
@@ -305,6 +301,16 @@ export function ImageGenerator() {
     );
   }
 
+  const getModelNote = () => {
+    if (isCommunityModel) {
+      return "Note: Community models are free but can be slower and depend on volunteer computing power.";
+    }
+    if (!isPremiumModel && !isCommunityModel) {
+      return "Note: Free models can sometimes face high demand. For guaranteed uptime, use Premium models.";
+    }
+    return null;
+  };
+  const modelNote = getModelNote();
 
   return (
     <>
@@ -336,9 +342,9 @@ export function ImageGenerator() {
                     ))}
                   </SelectContent>
                 </Select>
-                {!isPremiumModel && (
+                {modelNote && (
                   <p className="text-xs text-muted-foreground mt-2">
-                    Note: Free models can sometimes face high demand. For guaranteed uptime, please use our Premium Google Models.
+                    {modelNote}
                   </p>
                 )}
               </div>
