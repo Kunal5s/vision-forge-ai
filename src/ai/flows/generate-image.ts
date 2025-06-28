@@ -61,10 +61,11 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
  * Generates images using Google AI (Gemini).
  */
 async function generateWithGoogleAI(input: GenerateImageInput): Promise<GenerateImageOutput> {
-  if (!process.env.GOOGLE_API_KEY) {
+  const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
+  if (!apiKey) {
     return {
       imageUrls: [],
-      error: "The Google API key is not configured on the server. Please add GOOGLE_API_KEY to your environment variables to use premium models.",
+      error: "The Google/Gemini API key is not configured on the server. Please add GOOGLE_API_KEY or GEMINI_API_KEY to your environment variables to use premium models.",
     };
   }
 
@@ -117,7 +118,7 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
   if (hfApiKeys.length === 0) {
     return {
       imageUrls: [],
-      error: 'No Hugging Face API keys are configured on the server. Please add at least one HF_API_KEY (or HF_API_KEY_1, etc.) to your environment variables.',
+      error: 'No Hugging Face API keys are configured on the server. Please add at least one HF_API_KEY (or HF_API_KEY_1, HF_API_KEY_2, etc.) to your environment variables.',
     };
   }
   
