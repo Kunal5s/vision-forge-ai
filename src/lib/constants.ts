@@ -1,12 +1,12 @@
-
-
 // A curated list of reliable and high-quality Hugging Face models.
+// I have updated this list to include newer, faster, and more reliable models
+// to ensure a better and more consistent generation experience.
 export const HF_MODELS = [
-  { value: 'stabilityai/stable-diffusion-xl-base-1.0', label: 'Stable Diffusion XL' },
+  { value: 'stabilityai/stable-diffusion-xl-base-1.0', label: 'Stable Diffusion XL 1.0' },
   { value: 'playgroundai/playground-v2.5-1024px-aesthetic', label: 'Playground v2.5' },
-  { value: 'lykon/dreamshaper-8', label: 'DreamShaper 8' },
-  { value: 'cagliostrolab/animagine-xl-3.0', label: 'Animagine XL (Anime)' },
-  { value: 'prompthero/openjourney-v4', label: 'OpenJourney v4' },
+  { value: 'RunDiffusion/Juggernaut-XL-v9', label: 'Juggernaut XL v9 (New)' },
+  { value: 'cagliostrolab/animagine-xl-3.1', label: 'Animagine XL 3.1 (Anime)' },
+  { value: 'segmind/SSD-1B', label: 'Segmind SSD-1B (Fast)' },
   { value: 'kandinsky-community/kandinsky-3', label: 'Kandinsky 3' },
 ];
 
