@@ -55,8 +55,9 @@ const improvePromptFlow = ai.defineFlow(
     outputSchema: ImprovePromptOutputSchema,
   },
   async (input): Promise<ImprovePromptOutput> => {
-    if (!process.env.GOOGLE_API_KEY) {
-      const errorMsg = "The site administrator has not configured the GOOGLE_API_KEY. This is required for premium features. Please add it to your deployment environment's settings (e.g., in Cloudflare, Vercel, or Netlify) to enable premium models.";
+    // Check for either GEMINI_API_KEY or the older GOOGLE_API_KEY
+    if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_API_KEY) {
+      const errorMsg = "The site administrator has not configured the Gemini API Key. This is required for premium features. Please add the GEMINI_API_KEY to your deployment environment's settings.";
       console.error(errorMsg);
       return { improvedPrompt: '', reasoning: '', error: errorMsg };
     }
@@ -73,7 +74,7 @@ const improvePromptFlow = ai.defineFlow(
         };
     } catch (e: any) {
         console.error("Improve prompt API call failed:", e);
-        const detailedMessage = "An unexpected error occurred with the prompt enhancement service. For site administrators, please check:\n1. Your GOOGLE_API_KEY is set correctly in your deployment environment.\n2. Billing is enabled for your Google Cloud project.\n3. The 'Generative Language API' is enabled in your project.";
+        const detailedMessage = "An unexpected error occurred with the prompt enhancement service. For site administrators, please check:\n1. Your GEMINI_API_KEY is set correctly in your deployment environment.\n2. Billing is enabled for your Google Cloud project.\n3. The 'Generative Language API' is enabled in your project.";
         return { improvedPrompt: '', reasoning: '', error: detailedMessage };
     }
   }
