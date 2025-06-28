@@ -1,18 +1,15 @@
 
 
+// A curated list of reliable and high-quality Hugging Face models.
 export const HF_MODELS = [
-  { value: 'stabilityai/stable-diffusion-xl-base-1.0', label: 'Stable Diffusion XL 1.5+' },
-  { value: 'stabilityai/stable-diffusion-3-medium-diffusers', label: 'Stable Diffusion 3 Medium' },
-  { value: 'prompthero/openjourney-v4', label: 'OpenJourney V4 Pro' },
-  { value: 'dataautogpt3/OpenDalleV1.1', label: 'OpenDalle V1.1' },
-  { value: 'cagliostrolab/animagine-xl-3.0', label: 'Animagine XL 3.0 (Anime)' },
-  { value: 'gsgen/reliberate', label: 'Spellbrew V2 Fantasy' },
-  { value: 'sgm-lektra/realvisxl-v4.0', label: 'RealVisXL V4.0 UHD' },
-  { value: 'lykon/dreamshaper-8', label: 'DreamShaper 8 Photorealistic' },
-  { value: 'playgroundai/playground-v2.5-1024px-aesthetic', label: 'Playground V2.5 Ultra' },
-  { value: 'Lykon/dreamshaper-xl-turbo', label: 'DreamShaper XL Turbo' },
-  { value: 'PixArt-alpha/PixArt-Sigma-XL-2-1024-MS', label: 'PixArt-Σ Ultra' },
-  { value: 'kandinsky-community/kandinsky-3', label: 'Kandinsky 3.0 Elite' },
+  { value: 'stabilityai/stable-diffusion-xl-base-1.0', label: 'Stable Diffusion XL' },
+  { value: 'stabilityai/stable-diffusion-3-medium-diffusers', label: 'Stable Diffusion 3' },
+  { value: 'playgroundai/playground-v2.5-1024px-aesthetic', label: 'Playground v2.5' },
+  { value: 'lykon/dreamshaper-8', label: 'DreamShaper 8' },
+  { value: 'cagliostrolab/animagine-xl-3.0', label: 'Animagine XL (Anime)' },
+  { value: 'prompthero/openjourney-v4', label: 'OpenJourney v4' },
+  { value: 'kandinsky-community/kandinsky-3', label: 'Kandinsky 3' },
+  { value: 'dataautogpt3/OpenDalleV1.1', label: 'OpenDalle v1.1' },
 ];
 
 

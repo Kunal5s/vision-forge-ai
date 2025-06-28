@@ -65,6 +65,7 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
 
 /**
  * Generates images using Hugging Face Inference API with a robust key rotation and retry mechanism.
+ * This function is designed to be highly resilient, trying every available API key for each requested image.
  */
 async function generateWithHuggingFace(input: GenerateImageInput): Promise<GenerateImageOutput> {
     const apiKeys = [
@@ -75,16 +76,17 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
     ].filter((key): key is string => !!key && key.trim() !== '');
 
     if (apiKeys.length === 0) {
-      return { imageUrls: [], error: "No Hugging Face API keys are configured. For site administrators, please set up HF_API_KEY_1, HF_API_KEY_2, etc., in your deployment settings." };
+      // This error is for the developer/administrator, not the end user, if no keys are set in the environment.
+      return { imageUrls: [], error: "FATAL: No Hugging Face API keys are configured in the environment." };
     }
     
     const { width, height } = parseAspectRatio(input.aspectRatio);
     const successfulUrls: string[] = [];
-    const allErrors: string[] = [];
-    let keyIndex = 0;
+    let keyIndex = 0; // To keep track of which key to use next.
 
     for (let i = 0; i < input.numberOfImages; i++) {
         let imageGenerated = false;
+        // Try every available API key for the current image generation.
         for (let j = 0; j < apiKeys.length; j++) {
             const currentApiKey = apiKeys[keyIndex % apiKeys.length];
             keyIndex++;
@@ -98,13 +100,13 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
                     inputs: input.prompt,
                     parameters: {
                         negative_prompt: 'blurry, ugly, distorted, watermark, signature',
-                        num_inference_steps: 30,
+                        num_inference_steps: 30, // Good balance of speed and quality
                         width,
                         height,
                     },
                 }, {
-                    wait_for_model: true,
-                    timeout: 30000,
+                    wait_for_model: true, // Wait for model to be ready
+                    timeout: 45000, // Increased timeout for slower models
                 });
 
                 const buffer = Buffer.from(await blob.arrayBuffer());
@@ -112,30 +114,36 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
                 successfulUrls.push(dataUri);
                 imageGenerated = true;
                 console.log(`Successfully generated image ${i + 1} with key ${keyIdentifier}`);
-                break; // Success, move to the next image
+                break; // Success! Move to the next image generation.
             } catch (e: any) {
-                let errorMessage = `API key (${keyIdentifier}) failed.`;
-                 if (e.message && e.message.includes('is currently loading')) {
-                    const loadingError = `The model '${input.model}' is still loading on the server. Please try again in a moment, or select a different model.`;
+                const errorMessage = e.message || '';
+
+                // Specific, critical error: if a model is loading, it's pointless to try other keys.
+                // Inform the user and stop this entire generation request.
+                if (errorMessage.includes('is currently loading')) {
+                    const loadingError = `The model '${input.model}' is still loading on the Hugging Face servers. This can take a few minutes. Please try again shortly or select a different model.`;
                     console.error(loadingError);
-                    return { imageUrls: [], error: loadingError };
+                    // Return this specific error to the user.
+                    return { imageUrls: successfulUrls, error: loadingError };
                 }
-                if (e.message) {
-                    errorMessage += ` Error: ${e.message}`;
-                }
-                console.error(errorMessage);
-                allErrors.push(errorMessage);
+                
+                // For any other error (e.g., key quota exhausted, network issue), just log it and try the next key.
+                console.error(`API key (${keyIdentifier}) failed. Error: ${errorMessage}. Trying next key.`);
             }
         }
+
         if (!imageGenerated) {
             console.error(`Failed to generate image ${i + 1} with any of the available API keys.`);
+            // Don't stop. If other images were requested, they might still succeed.
         }
     }
     
+    // If after all attempts, no images were generated, return a generic but helpful error message.
     if (successfulUrls.length === 0) {
-        return { imageUrls: [], error: "We tried all available API keys, but none succeeded in generating images. This could be due to high traffic, exhausted credits, or a model being temporarily unavailable." };
+        return { imageUrls: [], error: "We're experiencing high demand or a temporary issue with the AI models. All our generation resources were busy. Please try your request again in a few moments." };
     }
 
+    // Return all successfully generated images, even if some failed.
     return { imageUrls: successfulUrls };
 }
 
