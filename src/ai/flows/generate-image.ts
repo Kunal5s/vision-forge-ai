@@ -67,6 +67,12 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
 async function generateWithHuggingFace(input: GenerateImageInput): Promise<GenerateImageOutput> {
   let hfKeys = getHuggingFaceKeys();
   
+  if (hfKeys.length === 0) {
+    const finalError = "No Hugging Face API keys were found. For site administrators, please ensure HF_API_KEY or HF_API_KEY_1, etc. are set in your deployment environment.";
+    console.error(finalError);
+    return { imageUrls: [], error: finalError };
+  }
+
   // Shuffle keys to distribute load and not always hit the same key first on retries.
   hfKeys = hfKeys.sort(() => Math.random() - 0.5);
 
@@ -116,9 +122,7 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
   
   // This part is reached only if all keys have failed
   console.error("All available Hugging Face API keys failed.", allErrors);
-  const finalError = hfKeys.length === 0
-    ? "No Hugging Face API keys were found. For site administrators, please ensure HF_API_KEY or HF_API_KEY_1, etc. are set in your deployment environment."
-    : `We tried all available API keys, but none succeeded in generating an image. This could be due to high traffic, exhausted credits on all keys, or the model being temporarily unavailable. Please try again later.`;
+  const finalError = `We tried all available API keys, but none succeeded in generating an image. This could be due to high traffic, exhausted credits on all keys, or the model being temporarily unavailable. Please try again later.`;
   return { imageUrls: [], error: finalError };
 }
 
