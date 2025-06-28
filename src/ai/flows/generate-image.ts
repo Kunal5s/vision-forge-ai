@@ -90,10 +90,14 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
             const keyIdentifier = `...${apiKey.slice(-4)}`;
             let errorMessage = `API key (ending in ${keyIdentifier}) failed.`;
 
+            if (e.message && e.message.includes('is currently loading')) {
+                const loadingError = `The model '${input.model}' is still loading on the server. This is a temporary issue on Hugging Face's end. Please try again in a moment, or select a different model.`;
+                console.error(loadingError);
+                return { imageUrls: [], error: loadingError };
+            }
+
             if (e.message) {
-                if (e.message.includes('is currently loading')) {
-                    errorMessage = `The model '${input.model}' is still loading. This is a temporary issue.`;
-                } else if (e.message.includes('401') || e.message.includes('authorization')) {
+                if (e.message.includes('401') || e.message.includes('authorization')) {
                     errorMessage = `API key (ending in ${keyIdentifier}) is invalid or has insufficient credits.`;
                 } else {
                     errorMessage = `An unexpected error occurred with key ${keyIdentifier}: ${e.message}`;
