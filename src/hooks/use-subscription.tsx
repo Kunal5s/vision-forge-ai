@@ -30,8 +30,8 @@ interface SubscriptionContextType {
   subscription: Subscription | null;
   activateSubscription: (email: string) => boolean;
   deactivateSubscription: () => void;
-  useCredit: (model: 'google' | 'pollinations') => boolean;
-  canGenerate: (model: 'google' | 'pollinations') => boolean;
+  useCredit: (isPremium: boolean) => boolean;
+  canGenerate: (isPremium: boolean) => boolean;
   isLoading: boolean;
 }
 
@@ -140,16 +140,19 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
     saveSubscription(createFreePlan());
   }, [saveSubscription]);
 
-  const useCredit = useCallback((model: 'google' | 'pollinations') => {
+  const useCredit = useCallback((isPremium: boolean) => {
     if (isLoading || !subscription) return false;
-    
-    const cost = PLAN_CREDIT_COST[subscription.plan][model];
-    if (cost === 0 && subscription.plan !== 'free') return true; // Unlimited standard for paid
 
-    const currentCredits = subscription.credits[model];
+    if (!isPremium && subscription.plan !== 'free') {
+      return true; // Unlimited standard for paid plans
+    }
+
+    const modelType = isPremium ? 'google' : 'pollinations';
+    const cost = PLAN_CREDIT_COST[subscription.plan][modelType];
+    const currentCredits = subscription.credits[modelType];
 
     if (currentCredits >= cost) {
-        const newCredits = { ...subscription.credits, [model]: currentCredits - cost };
+        const newCredits = { ...subscription.credits, [modelType]: currentCredits - cost };
         const newSub = { ...subscription, credits: newCredits };
         saveSubscription(newSub);
         return true;
@@ -158,20 +161,18 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
     return false;
   }, [subscription, isLoading, saveSubscription]);
 
-  const canGenerate = useCallback((model: 'google' | 'pollinations') => {
+  const canGenerate = useCallback((isPremium: boolean) => {
     if (isLoading || !subscription) return false;
 
-    if (model === 'google') {
-      if (subscription.plan === 'free') return false;
-      return subscription.credits.google >= PLAN_CREDIT_COST[subscription.plan].google;
-    }
-
-    if (model === 'pollinations') {
+    if (isPremium) {
+      if (subscription.plan === 'free') return false; // Free plan cannot use premium
+      const modelType = 'google';
+      return subscription.credits[modelType] >= PLAN_CREDIT_COST[subscription.plan][modelType];
+    } else { // Standard model
       if (subscription.plan !== 'free') return true; // Paid plans have unlimited standard
-      return subscription.credits.pollinations >= PLAN_CREDIT_COST[subscription.plan].pollinations;
+      const modelType = 'pollinations';
+      return subscription.credits[modelType] >= PLAN_CREDIT_COST[subscription.plan][modelType];
     }
-    
-    return false;
   }, [subscription, isLoading]);
 
   return (

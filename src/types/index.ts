@@ -3,6 +3,7 @@ export interface GeneratedImageParams {
   prompt: string;
   aspectRatio: string;
   plan: Plan;
+  model: string;
 }
 
 export interface GeneratedImageHistoryItem extends GeneratedImageParams {

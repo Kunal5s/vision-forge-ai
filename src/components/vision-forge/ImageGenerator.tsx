@@ -14,12 +14,13 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup,
 } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { generateImage, type GenerateImageInput } from '@/ai/flows/generate-image';
 import { improvePrompt, type ImprovePromptOutput } from '@/ai/flows/improve-prompt';
-import { ASPECT_RATIOS, STYLES, MOODS, LIGHTING_OPTIONS, COLOR_OPTIONS } from '@/lib/constants';
+import { ASPECT_RATIOS, STYLES, MOODS, LIGHTING_OPTIONS, COLOR_OPTIONS, MODEL_GROUPS } from '@/lib/constants';
 import type { GeneratedImageHistoryItem } from '@/types';
 import { ImageDisplay } from './ImageDisplay';
 import { UsageHistory } from './UsageHistory';
@@ -28,7 +29,6 @@ import { Wand2, ThumbsUp, ThumbsDown, Gem, RefreshCw, AlertTriangle, Sparkles } 
 import { LoadingSpinner } from './LoadingSpinner';
 import { useSubscription } from '@/hooks/use-subscription';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
   prompt: z.string().min(1, 'Prompt cannot be empty. Let your imagination flow!').max(1000, 'Prompt is too long.'),
@@ -37,17 +37,11 @@ type FormData = z.infer<typeof formSchema>;
 
 type StrippedImprovePromptOutput = Omit<ImprovePromptOutput, 'error'>;
 
-
-const aspectRatiosWithText = ASPECT_RATIOS.map(ar => ({
-  ...ar,
-  textHint: ar.label.split(' (')[1]?.replace(')', '')?.toLowerCase() || ar.value,
-}));
-
 export function ImageGenerator() {
   const { toast } = useToast();
   const { subscription, useCredit, isLoading: isSubLoading, canGenerate } = useSubscription();
   
-  const [activeModel, setActiveModel] = useState<'pollinations' | 'google'>('pollinations');
+  const [activeModel, setActiveModel] = useState<string>(MODEL_GROUPS.find(g => !g.premium)?.models[0].value || 'stable-diffusion-3-medium');
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>(ASPECT_RATIOS[0].value);
   const [selectedStyle, setSelectedStyle] = useState<string>(STYLES[0]);
   const [selectedMood, setSelectedMood] = useState<string>(MOODS[0]);
@@ -69,11 +63,14 @@ export function ImageGenerator() {
   });
   const currentPrompt = watch('prompt');
 
+  const isPremiumModel = MODEL_GROUPS.find(g => g.premium)?.models.some(m => m.value === activeModel) ?? false;
+
   useEffect(() => {
-    if (subscription?.plan === 'free' && activeModel === 'google') {
-      setActiveModel('pollinations');
+    // If user is on free plan and a premium model is selected, switch to a standard model
+    if (subscription?.plan === 'free' && isPremiumModel) {
+      setActiveModel(MODEL_GROUPS.find(g => !g.premium)?.models[0].value || 'stable-diffusion-3-medium');
     }
-  }, [subscription?.plan, activeModel]);
+  }, [subscription?.plan, isPremiumModel]);
 
   const createThumbnail = useCallback((dataUrl: string, width = 128, height = 128): Promise<string> => {
     return new Promise((resolve) => {
@@ -151,9 +148,9 @@ export function ImageGenerator() {
   }, [history, toast, subscription?.plan]);
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
-    if (!canGenerate(activeModel)) {
+    if (!canGenerate(isPremiumModel)) {
         toast({
-          title: 'Out of Daily Credits',
+          title: 'Out of Credits',
           description: (
             <span>
               Please{' '}
@@ -171,7 +168,7 @@ export function ImageGenerator() {
     setError(null);
     setGeneratedImageUrls([]);
 
-    const creditUsed = useCredit(activeModel);
+    const creditUsed = useCredit(isPremiumModel);
     if (!creditUsed) {
       toast({ title: 'Credit Error', description: 'Could not use credits. Please try again.', variant: 'destructive' });
       setIsLoading(false);
@@ -208,6 +205,7 @@ export function ImageGenerator() {
           id: new Date().toISOString() + Math.random().toString(36).substring(2,9),
           prompt: data.prompt,
           aspectRatio: selectedAspectRatio,
+          model: activeModel,
           imageUrl: thumbnailUrl,
           timestamp: new Date(),
           plan: subscription.plan,
@@ -274,11 +272,7 @@ export function ImageGenerator() {
   };
 
   const handleSelectHistoryItem = (item: GeneratedImageHistoryItem) => {
-    if (item.plan === 'free') {
-      setActiveModel('pollinations');
-    } else {
-      setActiveModel('google');
-    }
+    setActiveModel(item.model);
     setFormValue('prompt', item.prompt);
     setSelectedAspectRatio(item.aspectRatio);
     setSelectedStyle(STYLES[0]);
@@ -308,7 +302,7 @@ export function ImageGenerator() {
     const planInfo = <span className="font-semibold">Plan: {planName}</span>;
     let creditInfo = null;
 
-    if (activeModel === 'google') {
+    if (isPremiumModel) {
       if (plan === 'free') {
         creditInfo = <span className="font-semibold text-destructive">Upgrade to use</span>;
       } else {
@@ -319,7 +313,7 @@ export function ImageGenerator() {
           </div>
         );
       }
-    } else { // activeModel is 'pollinations'
+    } else { // Standard model
        if (plan === 'free') {
          creditInfo = (
           <div className="flex items-center gap-2">
@@ -337,7 +331,7 @@ export function ImageGenerator() {
        }
     }
     
-    const themeClass = activeModel === 'google' && plan !== 'free' 
+    const themeClass = isPremiumModel && plan !== 'free' 
       ? "text-primary bg-primary/10 border-primary/20" 
       : "text-accent bg-accent/10 border-accent/20";
 
@@ -360,18 +354,24 @@ export function ImageGenerator() {
                 <Label htmlFor="model-select" className="text-lg font-semibold mb-2 block text-foreground/90">
                   Model
                 </Label>
-                <Select value={activeModel} onValueChange={(value) => setActiveModel(value as 'pollinations' | 'google')}>
+                <Select value={activeModel} onValueChange={setActiveModel}>
                   <SelectTrigger id="model-select" className="w-full bg-background hover:bg-muted/50">
                     <SelectValue placeholder="Select a model" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pollinations">Pollinations (Standard)</SelectItem>
-                    <SelectItem value="google" disabled={subscription?.plan === 'free'}>
-                        <div className="flex items-center gap-2">
-                            VisionForge AI (Premium)
-                            {subscription?.plan === 'free' && <span className="text-xs text-accent">(Upgrade to Use)</span>}
-                        </div>
-                    </SelectItem>
+                    {MODEL_GROUPS.map(group => (
+                      <SelectGroup key={group.label}>
+                        <Label className="px-2 text-xs text-muted-foreground">{group.label}</Label>
+                        {group.models.map(model => (
+                          <SelectItem key={model.value} value={model.value} disabled={group.premium && subscription?.plan === 'free'}>
+                            <div className="flex items-center gap-2">
+                              {model.label}
+                              {group.premium && subscription?.plan === 'free' && <span className="text-xs text-accent">(Upgrade)</span>}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -482,11 +482,11 @@ export function ImageGenerator() {
                 </Select>
               </div>
               
-              <Button type="submit" disabled={isLoading || isSubLoading || !canGenerate(activeModel)} className="w-full text-lg py-3 bg-primary hover:bg-primary/90 text-primary-foreground transition-shadow hover:shadow-xl hover:shadow-primary/20">
+              <Button type="submit" disabled={isLoading || isSubLoading || !canGenerate(isPremiumModel)} className="w-full text-lg py-3 bg-primary hover:bg-primary/90 text-primary-foreground transition-shadow hover:shadow-xl hover:shadow-primary/20">
                 {isLoading ? <LoadingSpinner size={24} className="mr-2"/> : null}
                 Forge Vision
               </Button>
-              {!isSubLoading && !canGenerate(activeModel) && (
+              {!isSubLoading && !canGenerate(isPremiumModel) && (
                 <div className="text-center text-sm text-destructive bg-destructive/10 p-3 rounded-md flex items-center justify-center gap-2">
                     <AlertTriangle size={16} />
                     <div>

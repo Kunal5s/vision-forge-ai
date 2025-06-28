@@ -9,17 +9,18 @@
  */
 
 import { z } from 'zod';
+import { ALL_MODEL_VALUES } from '@/lib/constants';
 
-// Input schema remains the same, as the frontend sends this data.
+// Input schema defines the data structure sent from the frontend to the backend proxy.
 const GenerateImageInputSchema = z.object({
   prompt: z.string().describe('The prompt for generating the image.'),
   plan: z.enum(['free', 'pro', 'mega']).describe("The user's current subscription plan."),
   aspectRatio: z.string().describe("The desired aspect ratio, e.g., '16:9'."),
-  model: z.enum(['pollinations', 'google']).describe('The selected generation model.'),
+  model: z.enum(ALL_MODEL_VALUES).describe('The selected generation model identifier.'),
 });
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
 
-// Output schema also remains the same, as the frontend expects this structure.
+// Output schema defines the data structure expected back from the Cloudflare Worker.
 const GenerateImageOutputSchema = z.object({
   imageUrls: z.array(z.string()).describe('A list of data URIs of the generated images.'),
   error: z.string().optional().describe('An error message if the generation failed.'),
