@@ -10,7 +10,7 @@
 
 import { z } from 'zod';
 import { ai } from '@/ai/genkit';
-import { HuggingFaceInference } from '@huggingface/inference';
+import { HfInference } from '@huggingface/inference';
 import { ALL_MODEL_VALUES, GOOGLE_MODELS } from '@/lib/constants';
 
 // --- Helper function to find available Hugging Face API keys ---
@@ -74,7 +74,7 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
   
   // Pick a random key from the available ones to distribute the load.
   const apiKey = hfKeys[Math.floor(Math.random() * hfKeys.length)];
-  const hf = new HuggingFaceInference(apiKey);
+  const hf = new HfInference(apiKey);
 
   try {
     const blob = await hf.textToImage({
