@@ -15,12 +15,11 @@ import { ALL_MODEL_VALUES, GOOGLE_MODELS, STABLE_HORDE_MODELS } from '@/lib/cons
 
 // Helper to parse aspect ratio into width and height.
 // Stable Horde and HF models work best with dimensions that are multiples of 64.
-const parseAspectRatio = (ratio: string): { width: number, height: number } => {
+const parseAspectRatio = (ratio: string, baseSize: number = 1024): { width: number, height: number } => {
     try {
         const [w, h] = ratio.split(':').map(Number);
-        if (isNaN(w) || isNaN(h)) return { width: 1024, height: 1024 };
+        if (isNaN(w) || isNaN(h)) return { width: baseSize, height: baseSize };
 
-        const baseSize = 1024;
         let width, height;
 
         if (w > h) {
@@ -37,7 +36,7 @@ const parseAspectRatio = (ratio: string): { width: number, height: number } => {
             height: Math.round(height / 64) * 64
         };
     } catch (error) {
-        return { width: 1024, height: 1024 }; // Default to square on error
+        return { width: baseSize, height: baseSize }; // Default to square on error
     }
 };
 
@@ -88,7 +87,8 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
  */
 async function generateWithStableHorde(input: GenerateImageInput): Promise<GenerateImageOutput> {
   const apiKey = process.env.HORDE_API_KEY || '0000000000';
-  const { width, height } = parseAspectRatio(input.aspectRatio);
+  // Use a smaller base size for Stable Horde to stay within free-tier kudos limits.
+  const { width, height } = parseAspectRatio(input.aspectRatio, 512);
 
   try {
     // Step 1: Asynchronously request image generation
@@ -100,16 +100,16 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
         'Client-Agent': 'VisionForgeAI:1.0:https://imagenbrainai.in',
       },
       body: JSON.stringify({
-        prompt: `${input.prompt} ### high quality, masterpiece`,
+        prompt: `${input.prompt} ### masterpiece, high quality`,
         params: {
-          sampler_name: 'k_euler_a', // Changed to a more Kudos-friendly sampler to avoid cost errors.
+          sampler_name: 'k_euler_a',
           cfg_scale: 7.0,
           width,
           height,
-          steps: 25,
+          steps: 20, // Reduced steps to be more kudos-friendly
           n: input.numberOfImages,
         },
-        models: ['stable_diffusion'], // Use the broader, faster pool of SD 1.5 models.
+        models: ['stable_diffusion'],
         nsfw: false,
       }),
     });
