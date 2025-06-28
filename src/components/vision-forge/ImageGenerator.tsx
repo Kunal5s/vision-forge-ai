@@ -25,7 +25,7 @@ import type { GeneratedImageHistoryItem } from '@/types';
 import { ImageDisplay } from './ImageDisplay';
 import { UsageHistory } from './UsageHistory';
 import { FuturisticPanel } from './FuturisticPanel';
-import { Wand2, ThumbsUp, ThumbsDown, Gem, RefreshCw, AlertTriangle, Sparkles } from 'lucide-react';
+import { Wand2, ThumbsUp, ThumbsDown, Gem, AlertTriangle, Sparkles } from 'lucide-react';
 import { LoadingSpinner } from './LoadingSpinner';
 import { useSubscription } from '@/hooks/use-subscription';
 import Link from 'next/link';
@@ -41,7 +41,7 @@ export function ImageGenerator() {
   const { toast } = useToast();
   const { subscription, useCredit, isLoading: isSubLoading, canGenerate } = useSubscription();
   
-  const [activeModel, setActiveModel] = useState<string>(MODEL_GROUPS.find(g => !g.premium)?.models[0].value || 'stable-diffusion-3-medium');
+  const [activeModel, setActiveModel] = useState<string>(MODEL_GROUPS[0].models[0].value);
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>(ASPECT_RATIOS[0].value);
   const [selectedStyle, setSelectedStyle] = useState<string>(STYLES[0]);
   const [selectedMood, setSelectedMood] = useState<string>(MOODS[0]);
@@ -63,14 +63,7 @@ export function ImageGenerator() {
   });
   const currentPrompt = watch('prompt');
 
-  const isPremiumModel = MODEL_GROUPS.find(g => g.premium)?.models.some(m => m.value === activeModel) ?? false;
-
-  useEffect(() => {
-    // If user is on free plan and a premium model is selected, switch to a standard model
-    if (subscription?.plan === 'free' && isPremiumModel) {
-      setActiveModel(MODEL_GROUPS.find(g => !g.premium)?.models[0].value || 'stable-diffusion-3-medium');
-    }
-  }, [subscription?.plan, isPremiumModel]);
+  const isPremiumModel = true; // All models are now premium.
 
   const createThumbnail = useCallback((dataUrl: string, width = 128, height = 128): Promise<string> => {
     return new Promise((resolve) => {
@@ -150,12 +143,12 @@ export function ImageGenerator() {
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     if (!canGenerate(isPremiumModel)) {
         toast({
-          title: 'Out of Credits',
+          title: 'Upgrade Required',
           description: (
             <span>
               Please{' '}
               <Link href="/pricing" className="text-primary underline">upgrade your plan</Link>
-              {' '} to get more credits and access premium models.
+              {' '} to generate images with Google AI models.
             </span>
           ),
           variant: 'destructive',
@@ -170,7 +163,7 @@ export function ImageGenerator() {
 
     const creditUsed = useCredit(isPremiumModel);
     if (!creditUsed) {
-      toast({ title: 'Credit Error', description: 'Could not use credits. Please try again.', variant: 'destructive' });
+      toast({ title: 'Out of Credits', description: 'Please upgrade your plan for more credits.', variant: 'destructive' });
       setIsLoading(false);
       return;
     }
@@ -302,38 +295,18 @@ export function ImageGenerator() {
     const planInfo = <span className="font-semibold">Plan: {planName}</span>;
     let creditInfo = null;
 
-    if (isPremiumModel) {
-      if (plan === 'free') {
-        creditInfo = <span className="font-semibold text-destructive">Upgrade to use</span>;
-      } else {
-        creditInfo = (
-          <div className="flex items-center gap-2">
-            <Gem size={16} />
-            <span className="font-semibold">{`${credits.google} Google Credits`}</span>
-          </div>
-        );
-      }
-    } else { // Standard model
-       if (plan === 'free') {
-         creditInfo = (
-          <div className="flex items-center gap-2">
-            <RefreshCw size={16} />
-            <span className="font-semibold">{`${credits.pollinations === Infinity ? 'Unlimited' : credits.pollinations} Daily Credits`}</span>
-          </div>
-        );
-       } else {
-         creditInfo = (
-            <div className="flex items-center gap-2">
-              <Wand2 size={16} />
-              <span className="font-semibold">Unlimited Standard</span>
-            </div>
-         );
-       }
+    if (plan === 'free') {
+      creditInfo = <span className="font-semibold text-destructive">Upgrade to use Google Models</span>;
+    } else {
+      creditInfo = (
+        <div className="flex items-center gap-2">
+          <Gem size={16} />
+          <span className="font-semibold">{`${credits.google} Google Credits`}</span>
+        </div>
+      );
     }
     
-    const themeClass = isPremiumModel && plan !== 'free' 
-      ? "text-primary bg-primary/10 border-primary/20" 
-      : "text-accent bg-accent/10 border-accent/20";
+    const themeClass = "text-primary bg-primary/10 border-primary/20";
 
     creditDisplayNode = (
       <div className={`flex justify-between items-center text-sm p-2 rounded-md border ${themeClass}`}>
@@ -490,11 +463,11 @@ export function ImageGenerator() {
                 <div className="text-center text-sm text-destructive bg-destructive/10 p-3 rounded-md flex items-center justify-center gap-2">
                     <AlertTriangle size={16} />
                     <div>
-                        You've used all your credits. Please{' '}
+                        You must{' '}
                         <Link href="/pricing" className="underline font-semibold">
                             upgrade your plan
                         </Link>
-                        {' '}to continue.
+                        {' '}to generate images.
                     </div>
                 </div>
               )}

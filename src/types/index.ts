@@ -17,7 +17,6 @@ export type Plan = 'free' | 'pro' | 'mega';
 
 export interface Credits {
   google: number;
-  pollinations: number;
 }
 
 export interface Subscription {

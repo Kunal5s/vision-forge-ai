@@ -7,36 +7,15 @@ export const GOOGLE_MODELS = [
   { value: "google-simulacra-qr", label: "Simulacra QR Art" },
 ];
 
-export const HUGGING_FACE_MODELS = [
-  { value: "stabilityai/stable-diffusion-3-medium", label: "Stable Diffusion 3 Medium" },
-  { value: "stabilityai/stable-diffusion-xl-base-1.0", label: "Stable Diffusion XL 1.5+" },
-  { value: "prompthero/openjourney", label: "OpenJourney V4 Pro" },
-  { value: "openskyml/OpenDalle-V1.1", label: "OpenDalle V1.1" },
-  { value: "cagliostrolab/animagine-xl-3.0", label: "Animagine XL 3.0" },
-  { value: "digiplay/spellbrew-v2", label: "Spellbrew V2 Fantasy" },
-  { value: "SG161222/RealVisXL_V4.0", label: "RealVisXL V4.0 UHD" },
-  { value: "Lykon/DreamShaper", label: "DreamShaper 8" },
-  { value: "timbrooks/instruct-pix2pix", label: "Instruct Pix2Pix" },
-  { value: "playgroundai/playground-v2.5-1024px-aesthetic", label: "Playground V2.5 Ultra" },
-  { value: "Lykon/dreamshaper-xl-turbo", label: "DreamShaper XL Turbo" },
-  { value: "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS", label: "PixArt-Σ Ultra" },
-  { value: "kandinsky-community/kandinsky-3", label: "Kandinsky 3.0 Elite" },
-];
-
 export const MODEL_GROUPS = [
   {
     label: "Premium Models (Google AI)",
     models: GOOGLE_MODELS,
     premium: true,
-  },
-  {
-    label: "Stable Diffusion & Community Models",
-    models: HUGGING_FACE_MODELS,
-    premium: false,
   }
 ];
 
-export const ALL_MODEL_VALUES = MODEL_GROUPS.flatMap(g => g.models.map(m => m.value)) as [string, ...string[]];
+export const ALL_MODEL_VALUES = GOOGLE_MODELS.map(m => m.value) as [string, ...string[]];
 
 export const ASPECT_RATIOS = [
   { label: "1:1 (Square)", value: "1:1" },

@@ -6,9 +6,9 @@ import type { Subscription, Plan, Credits } from '@/types';
 import { useToast } from './use-toast';
 
 const PLAN_CREDITS: Record<Plan, Credits> = {
-  free: { google: 0, pollinations: Infinity },
-  pro: { google: 5000, pollinations: Infinity },
-  mega: { google: 15000, pollinations: Infinity },
+  free: { google: 0 },
+  pro: { google: 5000 },
+  mega: { google: 15000 },
 };
 
 // SIMULATED DATABASE of purchased emails.
@@ -17,11 +17,11 @@ const MOCK_PURCHASED_EMAILS: Record<string, Plan> = {
   'mega@example.com': 'mega',
 };
 
-// Define credit cost per generation. Pro/Mega generate 2 images.
-const PLAN_CREDIT_COST: Record<Plan, { google: number; pollinations: number; }> = {
-  free: { google: 0, pollinations: 10 }, 
-  pro: { google: 100, pollinations: 0 },
-  mega: { google: 200, pollinations: 0 },
+// Define credit cost per generation.
+const PLAN_CREDIT_COST: Record<Plan, { google: number }> = {
+  free: { google: 0 }, 
+  pro: { google: 100 },
+  mega: { google: 200 },
 };
 
 const PLAN_VALIDITY_DAYS = 30;
@@ -68,11 +68,6 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
       let parsedSub: Subscription | null = storedSub ? JSON.parse(storedSub) : null;
 
       if (parsedSub) {
-        // Force update the credits for the free plan on every load to apply the temporary unlimited credits.
-        if (parsedSub.plan === 'free') {
-          parsedSub.credits = PLAN_CREDITS.free;
-        }
-        
         // Handle plan expiry for paid plans
         if (parsedSub && (parsedSub.plan === 'pro' || parsedSub.plan === 'mega')) {
             const purchaseDate = new Date(parsedSub.purchaseDate);
@@ -86,17 +81,6 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
                     variant: 'destructive',
                 });
                 parsedSub = createFreePlan();
-            }
-        }
-        
-        // Handle daily reset for free users - this is less relevant for Infinity but good to keep
-        if (parsedSub && parsedSub.plan === 'free') {
-            const lastResetDate = new Date(parsedSub.lastReset);
-            const now = new Date();
-            const diffHours = (now.getTime() - lastResetDate.getTime()) / (1000 * 60 * 60);
-            if (diffHours >= 24) {
-              parsedSub.credits = PLAN_CREDITS.free; // Will be Infinity
-              parsedSub.lastReset = now.toISOString();
             }
         }
         
@@ -142,17 +126,17 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 
   const useCredit = useCallback((isPremium: boolean) => {
     if (isLoading || !subscription) return false;
-
-    if (!isPremium && subscription.plan !== 'free') {
-      return true; // Unlimited standard for paid plans
+    
+    // Free plan cannot generate
+    if (subscription.plan === 'free') {
+      return false;
     }
 
-    const modelType = isPremium ? 'google' : 'pollinations';
-    const cost = PLAN_CREDIT_COST[subscription.plan][modelType];
-    const currentCredits = subscription.credits[modelType];
+    const cost = PLAN_CREDIT_COST[subscription.plan].google;
+    const currentCredits = subscription.credits.google;
 
     if (currentCredits >= cost) {
-        const newCredits = { ...subscription.credits, [modelType]: currentCredits - cost };
+        const newCredits = { ...subscription.credits, google: currentCredits - cost };
         const newSub = { ...subscription, credits: newCredits };
         saveSubscription(newSub);
         return true;
@@ -164,15 +148,10 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   const canGenerate = useCallback((isPremium: boolean) => {
     if (isLoading || !subscription) return false;
 
-    if (isPremium) {
-      if (subscription.plan === 'free') return false; // Free plan cannot use premium
-      const modelType = 'google';
-      return subscription.credits[modelType] >= PLAN_CREDIT_COST[subscription.plan][modelType];
-    } else { // Standard model
-      if (subscription.plan !== 'free') return true; // Paid plans have unlimited standard
-      const modelType = 'pollinations';
-      return subscription.credits[modelType] >= PLAN_CREDIT_COST[subscription.plan][modelType];
-    }
+    // Free plan cannot use any models
+    if (subscription.plan === 'free') return false;
+
+    return subscription.credits.google >= PLAN_CREDIT_COST[subscription.plan].google;
   }, [subscription, isLoading]);
 
   return (
