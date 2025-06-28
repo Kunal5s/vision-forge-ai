@@ -37,37 +37,27 @@ export type GenerateImageOutput = z.infer<typeof GenerateImageOutputSchema>;
  * @returns An object containing the calculated width and height.
  */
 function calculateDimensions(aspectRatio: string, plan: 'free' | 'pro' | 'mega'): { width: number, height: number } {
-    const [aspectW, aspectH] = (aspectRatio.split(':').map(Number) || [1, 1]);
+    const [aspectW, aspectH] = aspectRatio.split(':').map(Number);
     const maxDimension = (plan === 'pro' || plan === 'mega') ? 1024 : 512;
-    const maxBlocks = maxDimension / 64;
 
-    let width: number;
-    let height: number;
+    if (isNaN(aspectW) || isNaN(aspectH) || aspectW <= 0 || aspectH <= 0) {
+        return { width: maxDimension, height: maxDimension };
+    }
 
-    if (aspectW && aspectH && !isNaN(aspectW) && !isNaN(aspectH) && aspectW > 0 && aspectH > 0) {
-        const ratio = aspectW / aspectH;
-        if (ratio > 1) { // Landscape
-            const widthBlocks = maxBlocks;
-            const heightBlocks = Math.round(widthBlocks / ratio);
-            width = widthBlocks * 64;
-            height = Math.max(64, heightBlocks * 64);
-        } else if (ratio < 1) { // Portrait
-            const heightBlocks = maxBlocks;
-            const widthBlocks = Math.round(heightBlocks * ratio);
-            height = heightBlocks * 64;
-            width = Math.max(64, widthBlocks * 64);
-        } else { // Square
-            width = maxDimension;
-            height = maxDimension;
-        }
-    } else {
+    const ratio = aspectW / aspectH;
+    let width: number, height: number;
+
+    if (ratio > 1) { // Landscape
         width = maxDimension;
+        height = Math.round(width / ratio);
+    } else { // Portrait or Square
         height = maxDimension;
+        width = Math.round(height * ratio);
     }
 
     // Ensure final dimensions are multiples of 64
-    width = Math.round(width / 64) * 64;
-    height = Math.round(height / 64) * 64;
+    width = Math.max(64, Math.round(width / 64) * 64);
+    height = Math.max(64, Math.round(height / 64) * 64);
     
     return { width, height };
 }
@@ -101,12 +91,10 @@ const generateImageFlow = ai.defineFlow(
           }
           
           const isMega = input.plan === 'mega';
+          const candidates = isMega ? 4 : 2; // Mega users get 4 variations
           
-          const promptEnhancement = isMega
-            ? "Masterpiece, best quality, professional photograph, cinematic lighting, ultra-high resolution, 8k."
-            : "Photorealistic, highly detailed, professional quality, 4k.";
-            
-          const enhancedPrompt = `${input.prompt}. Style: ${promptEnhancement}`;
+          // Prepend a quality modifier to the already detailed prompt from the frontend
+          const enhancedPrompt = `Masterpiece, best quality, cinematic, ultra-high resolution. ${input.prompt}`;
 
           const { width, height } = calculateDimensions(input.aspectRatio, input.plan);
 
@@ -115,7 +103,7 @@ const generateImageFlow = ai.defineFlow(
             prompt: enhancedPrompt,
             config: { 
                 responseModalities: ['TEXT', 'IMAGE'],
-                candidates: 2,
+                candidates: candidates, // Use dynamic candidate count
                 height: height,
                 width: width,
             },

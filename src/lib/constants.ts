@@ -12,20 +12,20 @@ export const ASPECT_RATIOS = [
 ];
 
 export const STYLES = [
-  "None", "Photorealistic", "3D Render", "Anime", "Abstract", "Cartoon", "Oil Painting", "Cyberpunk", "Vintage", "Minimalist"
-] as const;
+  "None", "3D", "8-bit", "Analogue", "Anime", "Cartoon", "Collage", "Cookie", "Crayon", "Doodle", "Dough", "Felt", "Illustrated", "Marker", "Mechanical", "Painting", "Paper", "Pin", "Plushie", "Realistic", "Tattoo", "Woodblock"
+];
 
 export const MOODS = [
-  "None", "Cinematic", "Dramatic", "Dreamy", "Eerie", "Energetic", "Mysterious", "Peaceful", "Romantic", "Whimsical"
-] as const;
+  "None", "Sweets", "Classical", "Cyberpunk", "Dreamy", "Glowy", "Gothic", "Kawaii", "Mystical", "Trippy", "Tropical", "Steampunk", "Wasteland"
+];
 
 export const LIGHTING_OPTIONS = [
-  "None", "Soft Lighting", "Bright", "Dark", "Dramatic Lighting", "Neon", "Studio Lighting", "Sunset", "Golden Hour"
-] as const;
+  "None", "Bright", "Dark", "Neon", "Sunset", "Misty", "Ethereal"
+];
 
 export const COLOR_OPTIONS = [
-  "None", "Vibrant", "Monochromatic", "Pastel", "Cool Tones", "Warm Tones", "Black and White"
-] as const;
+  "None", "Cool", "Earthy", "Indigo", "Infrared", "Pastel", "Warm"
+];
 
 export type StyleType = typeof STYLES[number];
 export type MoodType = typeof MOODS[number];

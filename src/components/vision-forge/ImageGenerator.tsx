@@ -48,7 +48,7 @@ export function ImageGenerator() {
   const { subscription, useCredit, isLoading: isSubLoading, canGenerate } = useSubscription();
   
   const [activeModel, setActiveModel] = useState<'pollinations' | 'google'>('pollinations');
-  const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>(aspectRatiosWithText[0].value);
+  const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>(ASPECT_RATIOS[0].value);
   const [selectedStyle, setSelectedStyle] = useState<string>(STYLES[0]);
   const [selectedMood, setSelectedMood] = useState<string>(MOODS[0]);
   const [selectedLighting, setSelectedLighting] = useState<string>(LIGHTING_OPTIONS[0]);
@@ -156,7 +156,7 @@ export function ImageGenerator() {
           title: 'Out of Daily Credits',
           description: (
             <span>
-              Please {' '}
+              Please{' '}
               <Link href="/pricing" className="text-primary underline">upgrade your plan</Link>
               {' '} to get more credits and access premium models.
             </span>
@@ -178,26 +178,13 @@ export function ImageGenerator() {
       return;
     }
 
-    let finalPrompt = data.prompt;
-    if (activeModel === 'pollinations') {
-        const promptParts = [data.prompt];
-        if (selectedStyle !== 'None') promptParts.push(selectedStyle);
-        if (selectedMood !== 'None') promptParts.push(`${selectedMood} mood`);
-        if (selectedLighting !== 'None') promptParts.push(selectedLighting);
-        if (selectedColor !== 'None') promptParts.push(`${selectedColor} color palette`);
-        finalPrompt = promptParts.join(', ');
-    }
-    
-    if (activeModel === 'google') {
-        const promptParts = [data.prompt];
-        if (selectedStyle !== 'None') promptParts.push(selectedStyle);
-        if (selectedMood !== 'None') promptParts.push(`${selectedMood} mood`);
-        if (selectedLighting !== 'None') promptParts.push(selectedLighting);
-        if (selectedColor !== 'None') promptParts.push(`${selectedColor} color palette`);
-        const aspectRatioTextHint = aspectRatiosWithText.find(ar => ar.value === selectedAspectRatio)?.textHint || '';
-        if (aspectRatioTextHint) promptParts.push(aspectRatioTextHint);
-        finalPrompt = promptParts.join(', ');
-    }
+    // Construct a detailed prompt for both models.
+    const promptParts = [data.prompt];
+    if (selectedStyle !== 'None') promptParts.push(selectedStyle);
+    if (selectedMood !== 'None') promptParts.push(`${selectedMood} mood`);
+    if (selectedLighting !== 'None') promptParts.push(selectedLighting);
+    if (selectedColor !== 'None') promptParts.push(`${selectedColor} color palette`);
+    const finalPrompt = promptParts.join(', ');
 
     const generationParams: GenerateImageInput = { 
         prompt: finalPrompt,
@@ -486,7 +473,7 @@ export function ImageGenerator() {
                     <SelectValue placeholder="Select aspect ratio" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border">
-                    {aspectRatiosWithText.map((ratio) => (
+                    {ASPECT_RATIOS.map((ratio) => (
                       <SelectItem key={ratio.value} value={ratio.value}>
                         {ratio.label}
                       </SelectItem>
