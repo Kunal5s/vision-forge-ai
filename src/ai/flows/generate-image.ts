@@ -66,11 +66,6 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
  */
 async function generateWithHuggingFace(input: GenerateImageInput): Promise<GenerateImageOutput> {
   let hfKeys = getHuggingFaceKeys();
-  if (hfKeys.length === 0) {
-    const errorMsg = "No Hugging Face API keys are configured on the server. For site administrators, please set the HF_API_KEY environment variable in your deployment settings.";
-    console.error(errorMsg);
-    return { imageUrls: [], error: errorMsg };
-  }
   
   // Shuffle keys to distribute load and not always hit the same key first on retries.
   hfKeys = hfKeys.sort(() => Math.random() - 0.5);
@@ -121,7 +116,9 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
   
   // This part is reached only if all keys have failed
   console.error("All available Hugging Face API keys failed.", allErrors);
-  const finalError = `We tried all available API keys, but none succeeded in generating an image. This could be due to high traffic, exhausted credits on all keys, or the model being temporarily unavailable. Please try again later.`;
+  const finalError = hfKeys.length === 0
+    ? "No Hugging Face API keys were found. For site administrators, please ensure HF_API_KEY or HF_API_KEY_1, etc. are set in your deployment environment."
+    : `We tried all available API keys, but none succeeded in generating an image. This could be due to high traffic, exhausted credits on all keys, or the model being temporarily unavailable. Please try again later.`;
   return { imageUrls: [], error: finalError };
 }
 
@@ -130,8 +127,13 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
  * Generates images using Google AI (Gemini).
  */
 async function generateWithGoogleAI(input: GenerateImageInput): Promise<GenerateImageOutput> {
-  // We will let the Genkit client handle API key errors from the environment.
-  // The GOOGLE_API_KEY or GEMINI_API_KEY must be set in the deployment environment.
+  // Check for the Gemini API key. Use GOOGLE_API_KEY as a fallback.
+  if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_API_KEY) {
+    const errorMsg = "The Google/Gemini API key is not configured on the server. For site administrators, please set the GEMINI_API_KEY environment variable in your deployment settings.";
+    console.error(errorMsg);
+    return { imageUrls: [], error: errorMsg };
+  }
+
   try {
     // Mega plan gets 4 variations, Pro gets 1. Free plan gets 0.
     const generationCount = input.plan === 'mega' ? 4 : input.plan === 'pro' ? 1 : 0;
