@@ -1,32 +1,37 @@
 
+
+export const GOOGLE_MODELS = [
+  { value: "google-imagen-3", label: "Google Imagen 3 XL Pro" },
+  { value: "google-parti-cinema", label: "Google Parti Cinema" },
+  { value: "google-flux-schnell", label: "FLUX 1-schnell MAX" },
+  { value: "google-simulacra-qr", label: "Simulacra QR Art" },
+];
+
+export const HUGGING_FACE_MODELS = [
+  { value: "stabilityai/stable-diffusion-3-medium", label: "Stable Diffusion 3 Medium" },
+  { value: "stabilityai/stable-diffusion-xl-base-1.0", label: "Stable Diffusion XL 1.5+" },
+  { value: "prompthero/openjourney", label: "OpenJourney V4 Pro" },
+  { value: "openskyml/OpenDalle-V1.1", label: "OpenDalle V1.1" },
+  { value: "cagliostrolab/animagine-xl-3.0", label: "Animagine XL 3.0" },
+  { value: "digiplay/spellbrew-v2", label: "Spellbrew V2 Fantasy" },
+  { value: "SG161222/RealVisXL_V4.0", label: "RealVisXL V4.0 UHD" },
+  { value: "Lykon/DreamShaper", label: "DreamShaper 8" },
+  { value: "timbrooks/instruct-pix2pix", label: "Instruct Pix2Pix" },
+  { value: "playgroundai/playground-v2.5-1024px-aesthetic", label: "Playground V2.5 Ultra" },
+  { value: "Lykon/dreamshaper-xl-turbo", label: "DreamShaper XL Turbo" },
+  { value: "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS", label: "PixArt-Σ Ultra" },
+  { value: "kandinsky-community/kandinsky-3", label: "Kandinsky 3.0 Elite" },
+];
+
 export const MODEL_GROUPS = [
   {
     label: "Premium Models (Google AI)",
-    models: [
-      { value: "google-imagen-3", label: "Google Imagen 3 XL Pro" },
-      { value: "google-parti-cinema", label: "Google Parti Cinema" },
-      { value: "google-flux-schnell", label: "FLUX 1-schnell MAX" },
-      { value: "google-simulacra-qr", label: "Simulacra QR Art" },
-    ],
+    models: GOOGLE_MODELS,
     premium: true,
   },
   {
     label: "Stable Diffusion & Community Models",
-    models: [
-      { value: "stable-diffusion-3-medium", label: "Stable Diffusion 3 Medium" },
-      { value: "stable-diffusion-xl-1.5", label: "Stable Diffusion XL 1.5+" },
-      { value: "openjourney-v4-pro", label: "OpenJourney V4 Pro" },
-      { value: "opendalle-v1.1", label: "OpenDalle V1.1" },
-      { value: "animagine-xl-3.0", label: "Animagine XL 3.0" },
-      { value: "spellbrew-v2-fantasy", label: "Spellbrew V2 Fantasy" },
-      { value: "realvisxl-v4-uhd", label: "RealVisXL V4.0 UHD" },
-      { value: "dreamshaper-8", label: "DreamShaper 8" },
-      { value: "instruct-pix2pix", label: "Instruct Pix2Pix" },
-      { value: "playground-v2.5-ultra", label: "Playground V2.5 Ultra" },
-      { value: "dreamshaper-xl-turbo", label: "DreamShaper XL Turbo" },
-      { value: "pixart-sigma-ultra", label: "PixArt-Σ Ultra" },
-      { value: "kandinsky-3.0-elite", label: "Kandinsky 3.0 Elite" },
-    ],
+    models: HUGGING_FACE_MODELS,
     premium: false,
   }
 ];
