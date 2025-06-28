@@ -87,7 +87,7 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
  * Generates images using the community-powered Stable Horde network.
  */
 async function generateWithStableHorde(input: GenerateImageInput): Promise<GenerateImageOutput> {
-  const apiKey = process.env.STABLE_HORDE_API_KEY || '0000000000';
+  const apiKey = process.env.HORDE_API_KEY || '0000000000';
   const { width, height } = parseAspectRatio(input.aspectRatio);
 
   try {
