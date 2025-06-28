@@ -126,7 +126,7 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
     const pollTimeout = 180000; // 3-minute timeout
 
     while (Date.now() - pollStartTime < pollTimeout) {
-      await sleep(3000); // Wait 3 seconds between each poll
+      await sleep(2500); // Wait 2.5 seconds between each poll
 
       const statusResponse = await fetch(`https://stablehorde.net/api/v2/generate/status/${id}`);
       if (!statusResponse.ok) {
