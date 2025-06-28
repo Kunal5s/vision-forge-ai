@@ -160,11 +160,15 @@ async function generateWithGoogleAI(input: GenerateImageInput): Promise<Generate
   } catch (e: any) {
     console.error("Google AI generation failed:", e);
     
-    let detailedError = `An error occurred with the Google AI service: ${e.message}.`;
-    if (e.message && (e.message.includes('API key not valid') || e.message.includes('API_KEY_INVALID'))) {
-        detailedError = 'The configured Google/Gemini API key is invalid or not found. For site administrators, please check your GEMINI_API_KEY environment variable and ensure the Generative Language API is enabled in your Google Cloud project.';
-    } else if (e.message && e.message.includes('permission denied')) {
-        detailedError = "The Google AI service returned a 'permission denied' error. Please ensure the Generative Language API is enabled in your Google Cloud project and that your API key is correct.";
+    let detailedError = `An error occurred with the Google AI service.`;
+    if (e.message) {
+      if (e.message.includes('API key not valid') || e.message.includes('API_KEY_INVALID')) {
+          detailedError = 'The configured Google/Gemini API key is invalid. Please verify the key in your environment settings and ensure it is active.';
+      } else if (e.message.includes('permission denied') || e.message.includes('Forbidden') || e.message.includes('are blocked')) {
+          detailedError = "The Google AI service blocked the request. This is often due to the 'Generative Language API' not being enabled in your Google Cloud project, or billing not being set up. Please verify your Google Cloud project configuration.";
+      } else {
+          detailedError = `An unexpected error occurred: ${e.message}`;
+      }
     }
     
     return { imageUrls: [], error: detailedError };
