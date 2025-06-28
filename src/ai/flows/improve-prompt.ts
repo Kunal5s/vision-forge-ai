@@ -55,13 +55,6 @@ const improvePromptFlow = ai.defineFlow(
     outputSchema: ImprovePromptOutputSchema,
   },
   async (input): Promise<ImprovePromptOutput> => {
-    // Check for either GEMINI_API_KEY or the older GOOGLE_API_KEY
-    if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_API_KEY) {
-      const errorMsg = "The site administrator has not configured the Gemini API Key. This is required for premium features. Please add the GEMINI_API_KEY to your deployment environment's settings.";
-      console.error(errorMsg);
-      return { improvedPrompt: '', reasoning: '', error: errorMsg };
-    }
-
     try {
         const {output} = await improvePromptPrompt(input);
         if (!output?.improvedPrompt) {
@@ -74,7 +67,10 @@ const improvePromptFlow = ai.defineFlow(
         };
     } catch (e: any) {
         console.error("Improve prompt API call failed:", e);
-        const detailedMessage = "An unexpected error occurred with the prompt enhancement service. For site administrators, please check:\n1. Your GEMINI_API_KEY is set correctly in your deployment environment.\n2. Billing is enabled for your Google Cloud project.\n3. The 'Generative Language API' is enabled in your project.";
+        let detailedMessage = `An unexpected error occurred with the prompt enhancement service. ${e.message}`;
+        if (e.message && (e.message.includes('API key not valid') || e.message.includes('API_KEY_INVALID'))) {
+            detailedMessage = "The prompt enhancement service failed due to an invalid API key. (For site admins) Please check your GEMINI_API_KEY is set correctly, billing is enabled for your Google Cloud project, and the 'Generative Language API' is enabled.";
+        }
         return { improvedPrompt: '', reasoning: '', error: detailedMessage };
     }
   }

@@ -61,12 +61,6 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
         process.env.HF_API_KEY_10,
     ].filter((key): key is string => !!key);
 
-    if (apiKeys.length === 0) {
-        const errorMsg = "No Hugging Face API keys were found on the server. For site administrators, please ensure HF_API_KEY_1, HF_API_KEY_2, etc., are set correctly in your deployment environment settings.";
-        console.error(errorMsg);
-        return { imageUrls: [], error: errorMsg };
-    }
-
     const allErrors: string[] = [];
     for (const apiKey of apiKeys) {
         const hf = new HfInference(apiKey);
@@ -111,7 +105,7 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
     }
 
     // This part is reached if the loop completes without a successful return.
-    const finalError = `We tried all ${apiKeys.length} of your API keys, but none succeeded. This could be due to high traffic, exhausted credits on all keys, or the model being temporarily unavailable. Please try again later.`;
+    const finalError = `We tried all available API keys, but none succeeded. This could be due to high traffic, exhausted credits on all keys, or a model being temporarily unavailable. Please verify your API keys are correctly configured and try again.`;
     console.error("All available Hugging Face API keys failed.", allErrors);
     return { imageUrls: [], error: finalError };
 }
@@ -121,14 +115,8 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
  * Generates images using Google AI (Gemini).
  */
 async function generateWithGoogleAI(input: GenerateImageInput): Promise<GenerateImageOutput> {
-  const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-  if (!geminiApiKey) {
-     const detailedError = 'The configured Google/Gemini API key is not found on the server. For site administrators, please check your GEMINI_API_KEY environment variable.';
-     console.error(detailedError);
-     return { imageUrls: [], error: detailedError };
-  }
-    
   try {
+    // This check is now only about plan level, not API key existence.
     const generationCount = input.plan === 'mega' ? 4 : input.plan === 'pro' ? 1 : 0;
     if (generationCount === 0) {
       return { imageUrls: [], error: "Your current plan does not support premium model generation." };
@@ -159,6 +147,8 @@ async function generateWithGoogleAI(input: GenerateImageInput): Promise<Generate
     let detailedError = `An error occurred with the Google AI service: ${e.message}.`;
     if (e.message && (e.message.includes('API key not valid') || e.message.includes('API_KEY_INVALID'))) {
         detailedError = 'The configured Google/Gemini API key is invalid or not found. For site administrators, please check your GEMINI_API_KEY environment variable and ensure the Generative Language API is enabled in your Google Cloud project.';
+    } else if (e.message && e.message.includes('permission denied')) {
+        detailedError = "The Google AI service returned a 'permission denied' error. Please ensure the Generative Language API is enabled in your Google Cloud project and that your API key is correct.";
     }
     
     return { imageUrls: [], error: detailedError };
