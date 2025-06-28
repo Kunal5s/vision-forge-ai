@@ -3,13 +3,11 @@
 // A curated list of reliable and high-quality Hugging Face models.
 export const HF_MODELS = [
   { value: 'stabilityai/stable-diffusion-xl-base-1.0', label: 'Stable Diffusion XL' },
-  { value: 'stabilityai/stable-diffusion-3-medium-diffusers', label: 'Stable Diffusion 3' },
   { value: 'playgroundai/playground-v2.5-1024px-aesthetic', label: 'Playground v2.5' },
   { value: 'lykon/dreamshaper-8', label: 'DreamShaper 8' },
   { value: 'cagliostrolab/animagine-xl-3.0', label: 'Animagine XL (Anime)' },
   { value: 'prompthero/openjourney-v4', label: 'OpenJourney v4' },
   { value: 'kandinsky-community/kandinsky-3', label: 'Kandinsky 3' },
-  { value: 'dataautogpt3/OpenDalleV1.1', label: 'OpenDalle v1.1' },
 ];
 
 
