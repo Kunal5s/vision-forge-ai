@@ -102,7 +102,7 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
       body: JSON.stringify({
         prompt: `${input.prompt} ### high quality, masterpiece`,
         params: {
-          sampler_name: 'k_dpmpp_2s_a',
+          sampler_name: 'k_euler_a', // Changed to a more Kudos-friendly sampler to avoid cost errors.
           cfg_scale: 7.0,
           width,
           height,
