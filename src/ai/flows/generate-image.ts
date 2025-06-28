@@ -120,7 +120,6 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
  */
 async function generateWithGoogleAI(input: GenerateImageInput): Promise<GenerateImageOutput> {
   try {
-    // This check is now only about plan level, not API key existence.
     const generationCount = input.plan === 'mega' ? 4 : input.plan === 'pro' ? 1 : 0;
     if (generationCount === 0) {
       return { imageUrls: [], error: "Your current plan does not support premium model generation." };
