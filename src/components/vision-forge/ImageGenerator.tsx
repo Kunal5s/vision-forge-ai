@@ -336,6 +336,11 @@ export function ImageGenerator() {
                     ))}
                   </SelectContent>
                 </Select>
+                {!isPremiumModel && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Note: Free models can sometimes face high demand. For guaranteed uptime, please use our Premium Google Models.
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2 !mt-4">
