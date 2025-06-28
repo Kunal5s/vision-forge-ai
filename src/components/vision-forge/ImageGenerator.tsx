@@ -95,19 +95,19 @@ export function ImageGenerator() {
           try {
             localStorage.setItem('imagenBrainAiHistory', JSON.stringify(history));
           } catch (e: any) {
-            if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+            if (e instanceof DOMException && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
                 toast({
-                  title: "Could not save history",
-                  description: "Your browser storage is full. Some older items may be removed.",
+                  title: "History Storage Full",
+                  description: "Your browser storage is full. Removing oldest history item to make space.",
                   variant: "destructive"
                 });
-                // If quota is exceeded, trim history and try again
-                const trimmedHistory = history.slice(0, 10);
-                setHistory(trimmedHistory);
-                localStorage.setItem('imagenBrainAiHistory', JSON.stringify(trimmedHistory));
+                // If storage is full, remove the oldest item (which is at the end of the array)
+                // and let this effect run again on the next render with the smaller array.
+                setHistory(prev => prev.slice(0, -1));
             }
           }
         } else {
+          // If history is empty, ensure localStorage is also empty
           localStorage.removeItem('imagenBrainAiHistory');
         }
     }
