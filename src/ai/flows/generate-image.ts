@@ -13,23 +13,6 @@ import { ai } from '@/ai/genkit';
 import { HfInference } from '@huggingface/inference';
 import { ALL_MODEL_VALUES, GOOGLE_MODELS } from '@/lib/constants';
 
-// --- Helper function to find available Hugging Face API keys ---
-function getHuggingFaceKeys(): string[] {
-  const keys: string[] = [];
-  // Check for rotating keys HF_API_KEY_1, HF_API_KEY_2, ...
-  for (let i = 1; i <= 10; i++) {
-    const key = process.env[`HF_API_KEY_${i}`];
-    if (key) {
-      keys.push(key);
-    }
-  }
-  // Fallback to a single key if no rotating keys are found
-  if (keys.length === 0 && process.env.HF_API_KEY) {
-    keys.push(process.env.HF_API_KEY);
-  }
-  return keys;
-}
-
 // Input schema defines the data structure sent from the frontend.
 const GenerateImageInputSchema = z.object({
   prompt: z.string().describe('The prompt for generating the image.'),
@@ -65,46 +48,50 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
  * Generates images using Hugging Face Inference API with a robust key rotation and retry mechanism.
  */
 async function generateWithHuggingFace(input: GenerateImageInput): Promise<GenerateImageOutput> {
-  let hfKeys = getHuggingFaceKeys();
-  
-  // Shuffle keys to distribute load and not always hit the same key first on retries.
-  hfKeys = hfKeys.sort(() => Math.random() - 0.5);
-
   const allErrors: string[] = [];
+  let keysFound = 0;
 
-  for (const apiKey of hfKeys) {
+  // Loop through all potential API keys from the environment.
+  for (let i = 1; i <= 10; i++) {
+    const apiKey = process.env[`HF_API_KEY_${i}`];
+
+    // If a key for this index doesn't exist in the environment, just skip it.
+    if (!apiKey) {
+      continue;
+    }
+    
+    keysFound++;
     const hf = new HfInference(apiKey);
+
     try {
-      console.log(`Attempting image generation with a new key for model: ${input.model}`);
+      console.log(`Attempting image generation with key #${i} for model: ${input.model}`);
       const blob = await hf.textToImage({
         model: input.model,
         inputs: input.prompt,
         parameters: {
           negative_prompt: 'blurry, ugly, distorted, watermark, signature',
-          num_inference_steps: 30, // More steps for better quality
+          num_inference_steps: 30,
         },
       }, {
-        wait_for_model: true, // Wait if the model is loading
-        timeout: 30000, // 30-second timeout
+        wait_for_model: true,
+        timeout: 30000,
       });
 
-      // Convert Blob to a data URI to send to the frontend
       const buffer = Buffer.from(await blob.arrayBuffer());
       const dataUri = `data:${blob.type};base64,${buffer.toString('base64')}`;
 
-      // Success! Return the image.
-      console.log(`Successfully generated image for model: ${input.model}`);
+      console.log(`Successfully generated image with key #${i} for model: ${input.model}`);
       return { imageUrls: [dataUri] };
 
     } catch (e: any) {
       const keyIdentifier = `...${apiKey.slice(-4)}`;
-      let errorMessage = `API key ending in ${keyIdentifier} failed.`;
+      let errorMessage = `API key #${i} (ending in ${keyIdentifier}) failed.`;
 
       if (e.message) {
         if (e.message.includes('is currently loading')) {
           errorMessage = `The model '${input.model}' is still loading. This is a temporary issue.`;
         } else if (e.message.includes('401') || e.message.includes('authorization')) {
-          errorMessage = `API key ending in ${keyIdentifier} is invalid or has insufficient credits.`;
+          errorMessage = `API key #${i} (ending in ${keyIdentifier}) is invalid or has insufficient credits.`;
         } else {
           errorMessage = `An unexpected error occurred with key ${keyIdentifier}: ${e.message}`;
         }
@@ -113,25 +100,25 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
       allErrors.push(errorMessage);
     }
   }
-  
-  // This part is reached only if all keys have failed or no keys were provided.
-  console.error("All available Hugging Face API keys failed or no keys were provided.", allErrors);
-  const finalError = `We tried all available API keys, but none succeeded in generating an image. This could be due to high traffic, exhausted credits on all keys, or the model being temporarily unavailable. Please try again later. For site admins, please ensure HF_API_KEYs are set correctly in your deployment environment.`;
-  return { imageUrls: [], error: finalError };
+
+  // This part is reached if the loop completes without a successful return.
+  if (keysFound > 0 && allErrors.length === keysFound) {
+    const finalError = `We tried all ${keysFound} of your API keys, but none succeeded. This could be due to high traffic, exhausted credits on all keys, or the model being temporarily unavailable. Please try again later.`;
+    console.error("All available Hugging Face API keys failed.", allErrors);
+    return { imageUrls: [], error: finalError };
+  } else {
+    // This case means the loop ran, but no keys were found at all.
+    const errorMsg = "No Hugging Face API keys were found on the server. For site administrators, please ensure HF_API_KEY_1, HF_API_KEY_2, etc., are set correctly in your deployment environment settings.";
+    console.error(errorMsg);
+    return { imageUrls: [], error: errorMsg };
+  }
 }
 
 
 /**
- * Generates images using Google AI (Gemini).
+ * Generates images using Google AI (Gemini). This function now relies on Genkit to throw a specific error if the key is missing/invalid.
  */
 async function generateWithGoogleAI(input: GenerateImageInput): Promise<GenerateImageOutput> {
-  // Check for the Gemini API key. Use GOOGLE_API_KEY as a fallback.
-  if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_API_KEY) {
-    const errorMsg = "The Google/Gemini API key is not configured on the server. For site administrators, please set the GEMINI_API_KEY environment variable in your deployment settings.";
-    console.error(errorMsg);
-    return { imageUrls: [], error: errorMsg };
-  }
-
   try {
     // Mega plan gets 4 variations, Pro gets 1. Free plan gets 0.
     const generationCount = input.plan === 'mega' ? 4 : input.plan === 'pro' ? 1 : 0;
@@ -160,10 +147,12 @@ async function generateWithGoogleAI(input: GenerateImageInput): Promise<Generate
 
   } catch (e: any) {
     console.error("Google AI generation failed:", e);
-    // Provide a more helpful error message for administrators.
-    if (e.message && e.message.includes('API key not valid')) {
-        return { imageUrls: [], error: 'The configured Google/Gemini API key is invalid. For site administrators, please check your API key and ensure the Generative Language API is enabled in your Google Cloud project.' };
+    
+    let detailedError = `An error occurred with the Google AI service: ${e.message}.`;
+    if (e.message && (e.message.includes('API key not valid') || e.message.includes('API_KEY_INVALID'))) {
+        detailedError = 'The configured Google/Gemini API key is invalid or not found. For site administrators, please check your GEMINI_API_KEY environment variable and ensure the Generative Language API is enabled in your Google Cloud project.';
     }
-    return { imageUrls: [], error: `An error occurred with the Google AI service: ${e.message}. For site administrators, ensure your API key is valid and the Generative Language API is enabled.` };
+    
+    return { imageUrls: [], error: detailedError };
   }
 }
