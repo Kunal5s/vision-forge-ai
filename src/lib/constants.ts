@@ -2,8 +2,6 @@
 export interface StyleOption {
   value: string;
   label: string;
-  imageUrl: string;
-  dataAiHint: string;
 }
 
 export const GOOGLE_AI_MODELS = [
@@ -77,46 +75,44 @@ export const ASPECT_RATIOS = [
   { label: "21:9 (Cinematic)", value: "21:9" },
 ];
 
-const placeholderUrl = 'https://placehold.co/100x100/f5f5f5/f5f5f5.png';
-
 export const STYLES: StyleOption[] = [
-  { value: 'photographic', label: 'Photographic', imageUrl: placeholderUrl, dataAiHint: 'photograph' },
-  { value: 'cinematic', label: 'Cinematic', imageUrl: placeholderUrl, dataAiHint: 'cinematic still' },
-  { value: 'anime', label: 'Anime', imageUrl: placeholderUrl, dataAiHint: 'anime art' },
-  { value: 'fantasy art', label: 'Fantasy', imageUrl: placeholderUrl, dataAiHint: 'fantasy art' },
-  { value: '3d render', label: '3D Render', imageUrl: placeholderUrl, dataAiHint: '3d render' },
-  { value: 'pixel art', label: 'Pixel Art', imageUrl: placeholderUrl, dataAiHint: 'pixel art' },
-  { value: 'watercolor', label: 'Watercolor', imageUrl: placeholderUrl, dataAiHint: 'watercolor painting' },
-  { value: 'line art', label: 'Line Art', imageUrl: placeholderUrl, dataAiHint: 'line art' },
-  { value: 'comic book', label: 'Comic Book', imageUrl: placeholderUrl, dataAiHint: 'comic book panel' },
-  { value: 'low poly', label: 'Low Poly', imageUrl: placeholderUrl, dataAiHint: 'low poly' },
-  { value: 'origami', label: 'Origami', imageUrl: placeholderUrl, dataAiHint: 'origami' },
-  { value: 'sticker', label: 'Sticker', imageUrl: placeholderUrl, dataAiHint: 'sticker design' },
+  { value: 'photographic', label: 'Photographic' },
+  { value: 'cinematic', label: 'Cinematic' },
+  { value: 'anime', label: 'Anime' },
+  { value: 'fantasy art', label: 'Fantasy' },
+  { value: '3d render', label: '3D Render' },
+  { value: 'pixel art', label: 'Pixel Art' },
+  { value: 'watercolor', label: 'Watercolor' },
+  { value: 'line art', label: 'Line Art' },
+  { value: 'comic book', label: 'Comic Book' },
+  { value: 'low poly', label: 'Low Poly' },
+  { value: 'origami', label: 'Origami' },
+  { value: 'sticker', label: 'Sticker' },
 ];
 
 export const MOODS: StyleOption[] = [
-  { value: 'dramatic', label: 'Dramatic', imageUrl: placeholderUrl, dataAiHint: 'dramatic' },
-  { value: 'dreamy', label: 'Dreamy', imageUrl: placeholderUrl, dataAiHint: 'dreamy ethereal' },
-  { value: 'energetic', label: 'Energetic', imageUrl: placeholderUrl, dataAiHint: 'energetic vibrant' },
-  { value: 'mysterious', label: 'Mysterious', imageUrl: placeholderUrl, dataAiHint: 'mysterious fog' },
-  { value: 'cheerful', label: 'Cheerful', imageUrl: placeholderUrl, dataAiHint: 'cheerful bright' },
-  { value: 'eerie', label: 'Eerie', imageUrl: placeholderUrl, dataAiHint: 'eerie spooky' },
+  { value: 'dramatic', label: 'Dramatic' },
+  { value: 'dreamy', label: 'Dreamy' },
+  { value: 'energetic', label: 'Energetic' },
+  { value: 'mysterious', label: 'Mysterious' },
+  { value: 'cheerful', label: 'Cheerful' },
+  { value: 'eerie', label: 'Eerie' },
 ];
 
 export const LIGHTING: StyleOption[] = [
-  { value: 'soft', label: 'Soft', imageUrl: placeholderUrl, dataAiHint: 'soft light' },
-  { value: 'studio', label: 'Studio', imageUrl: placeholderUrl, dataAiHint: 'studio lighting' },
-  { value: 'neon', label: 'Neon', imageUrl: placeholderUrl, dataAiHint: 'neon lights' },
-  { value: 'dramatic', label: 'Dramatic', imageUrl: placeholderUrl, dataAiHint: 'dramatic lighting' },
-  { value: 'golden hour', label: 'Golden Hour', imageUrl: placeholderUrl, dataAiHint: 'golden hour sunset' },
-  { value: 'backlit', label: 'Backlit', imageUrl: placeholderUrl, dataAiHint: 'backlit silhouette' },
+  { value: 'soft', label: 'Soft' },
+  { value: 'studio', label: 'Studio' },
+  { value: 'neon', label: 'Neon' },
+  { value: 'dramatic lighting', label: 'Dramatic' },
+  { value: 'golden hour', label: 'Golden Hour' },
+  { value: 'backlit', label: 'Backlit' },
 ];
 
 export const COLOURS: StyleOption[] = [
-  { value: 'vibrant', label: 'Vibrant', imageUrl: placeholderUrl, dataAiHint: 'vibrant colors' },
-  { value: 'monochromatic', label: 'Monochromatic', imageUrl: placeholderUrl, dataAiHint: 'monochromatic black white' },
-  { value: 'pastel', label: 'Pastel', imageUrl: placeholderUrl, dataAiHint: 'pastel colors' },
-  { value: 'earthy', label: 'Earthy', imageUrl: placeholderUrl, dataAiHint: 'earth tones' },
-  { value: 'warm', label: 'Warm', imageUrl: placeholderUrl, dataAiHint: 'warm colors' },
-  { value: 'cool', label: 'Cool', imageUrl: placeholderUrl, dataAiHint: 'cool colors' },
+  { value: 'vibrant', label: 'Vibrant' },
+  { value: 'monochromatic', label: 'Monochromatic' },
+  { value: 'pastel', label: 'Pastel' },
+  { value: 'earthy', label: 'Earthy' },
+  { value: 'warm', label: 'Warm' },
+  { value: 'cool', label: 'Cool' },
 ];
