@@ -1,16 +1,17 @@
+
 'use server';
 
 /**
  * @fileOverview Universal image generation flow that routes to different services.
  * This file has been rewritten for maximum robustness and provides clear, actionable error messages.
- * - Routes to Pexels, Pollinations, and Stable Horde.
+ * - Routes to Pexels, Pollinations, Stable Horde and Hugging Face.
  * - generateImage - A function that handles the image generation process.
  * - GenerateImageInput - The input type for the generateImage function.
  * - GenerateImageOutput - The return type for the generateImage function.
  */
 
 import { z } from 'zod';
-import { ALL_MODEL_VALUES, POLLINATIONS_MODELS, STABLE_HORDE_MODELS } from '@/lib/constants';
+import { ALL_MODEL_VALUES, HUGGING_FACE_MODELS, POLLINATIONS_MODELS, STABLE_HORDE_MODELS } from '@/lib/constants';
 
 // Input schema defines the data structure sent from the frontend.
 const GenerateImageInputSchema = z.object({
@@ -44,6 +45,8 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
     return generateWithPollinations(input);
   } else if (STABLE_HORDE_MODELS.some(m => m.value === model)) {
     return generateWithStableHorde(input);
+  } else if (HUGGING_FACE_MODELS.some(m => m.value === model)) {
+    return generateWithHuggingFace(input);
   } else {
     return { imageUrls: [], error: `Unknown model selected: ${model}` };
   }
@@ -204,4 +207,106 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
       console.error("Stable Horde generation failed:", e);
       return { imageUrls: [], error: `Stable Horde Error: ${e.message}` };
   }
+}
+
+/**
+ * Generates images using various models from the Hugging Face Inference API.
+ * This function now includes robust key rotation and detailed error handling.
+ * @param input The generation parameters from the frontend.
+ * @returns A promise that resolves to the generation output.
+ */
+async function generateWithHuggingFace(input: GenerateImageInput): Promise<GenerateImageOutput> {
+    const MAX_KEYS = 10;
+    const keys = [];
+    for (let i = 1; i <= MAX_KEYS; i++) {
+        const key = process.env['HF_API_KEY_' + i];
+        if (key) keys.push(key);
+    }
+
+    if (keys.length === 0) {
+        return {
+            imageUrls: [],
+            error: "As the site administrator, please go to your Cloudflare project settings, find 'Environment variables', add at least one variable named 'HF_API_KEY_1' with your key, and then redeploy your project. You can add up to 10 keys (HF_API_KEY_1 to HF_API_KEY_10)."
+        };
+    }
+
+    const imageUrls: string[] = [];
+    let lastError: string | null = null;
+    let keyIndex = 0;
+
+    const fullPrompt = `(best quality, masterpiece, highres, photorealistic), ${input.prompt}`;
+    const negativePrompt = "(deformed, blurry, bad anatomy, low quality, worst quality, watermark, signature, ugly)";
+
+    for (let i = 0; i < input.numberOfImages; i++) {
+        let attempts = 0;
+        let success = false;
+        while (attempts < keys.length && !success) {
+            const currentKey = keys[keyIndex];
+            try {
+                const response = await fetch(
+                    `https://api-inference.huggingface.co/models/${input.model}`,
+                    {
+                        headers: { Authorization: `Bearer ${currentKey}` },
+                        method: "POST",
+                        body: JSON.stringify({
+                            inputs: fullPrompt,
+                            parameters: { negative_prompt: negativePrompt },
+                            options: { wait_for_model: true }
+                        }),
+                    }
+                );
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    if (blob.type.startsWith('image/')) {
+                        const dataUrl = await new Promise<string>((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onloadend = () => resolve(reader.result as string);
+                            reader.onerror = reject;
+                            reader.readAsDataURL(blob);
+                        });
+                        imageUrls.push(dataUrl);
+                        success = true;
+                    } else {
+                        // Handle cases where the API returns a JSON error instead of an image
+                        const errorJson = JSON.parse(await blob.text());
+                        throw new Error(errorJson.error || "API returned non-image data.");
+                    }
+                } else {
+                     if (response.status === 401) {
+                        lastError = `Hugging Face error (401 Unauthorized): The API key is invalid or your account doesn't have access to this model. Please check your HF_API_KEY variables in Cloudflare. For some models (like Stable Diffusion), you may need to accept the terms on the Hugging Face model page first.`;
+                    } else if (response.status === 404) {
+                        lastError = `Model not found (404). The model '${input.model}' may be offline, invalid, or requires a Pro subscription on Hugging Face. Please try a different model.`;
+                    } else if (response.status === 429) {
+                        lastError = `Hugging Face rate limit hit for key #${keyIndex + 1}. Trying next key.`;
+                    } else if (response.status === 503) {
+                        lastError = `The model '${input.model}' is currently loading on Hugging Face. This can take a few minutes. Please try again shortly.`;
+                    } else {
+                         try {
+                            const errorText = await response.text();
+                            lastError = `Hugging Face API Error on model '${input.model}': API returned status ${response.status} with response: ${errorText}`;
+                        } catch (e) {
+                             lastError = `Hugging Face API Error on model '${input.model}': API returned status ${response.status} with non-JSON response.`;
+                        }
+                    }
+                    throw new Error(lastError);
+                }
+            } catch (e: any) {
+                lastError = e.message;
+                console.error(`Attempt with key ${keyIndex + 1} failed for image ${i + 1}:`, lastError);
+                keyIndex = (keyIndex + 1) % keys.length; // Rotate to the next key
+                attempts++;
+            }
+        }
+        if (!success) {
+            // If all keys failed for one image, stop trying for more images
+            return { imageUrls, error: `Failed to generate image after trying all ${keys.length} API keys. Last error: ${lastError}` };
+        }
+    }
+
+    if (imageUrls.length > 0) {
+        return { imageUrls };
+    } else {
+        return { imageUrls: [], error: lastError || 'An unknown error occurred with Hugging Face.' };
+    }
 }

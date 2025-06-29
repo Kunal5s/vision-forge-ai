@@ -17,6 +17,19 @@ export const STABLE_HORDE_MODELS = [
     { value: 'stable_horde', label: 'Stable Horde (Community)' }
 ];
 
+export const HUGGING_FACE_MODELS = [
+  { value: 'stabilityai/sdxl-turbo', label: 'SDXL Turbo' },
+  { value: 'SG161222/Realistic_Vision_V5.1_noVAE', label: 'Realistic Vision V5.1' },
+  { value: 'prompthero/openjourney', label: 'OpenJourney' },
+  { value: 'stablediffusionapi/anything-v3', label: 'Anything V3' },
+  { value: 'Lykon/dreamshaper-8', label: 'DreamShaper 8' },
+  { value: 'nitrosocke/Arcane-Diffusion', label: 'Arcane Diffusion' },
+  { value: 'cagliostrolab/animagine-xl-3.0', label: 'Animagine XL 3.0' },
+  { value: 'andite/anything-v4.0', label: 'Anything V4.0' },
+  { value: 'wavymulder/Analog-Diffusion', label: 'Analog Diffusion' },
+  { value: 'dreamlike-art/dreamlike-photoreal-2.0', label: 'Dreamlike Photoreal' },
+];
+
 export const MODEL_GROUPS = [
   {
     // Changed group label for clarity
@@ -29,6 +42,7 @@ export const MODEL_GROUPS = [
     models: [
         ...POLLINATIONS_MODELS,
         ...STABLE_HORDE_MODELS,
+        ...HUGGING_FACE_MODELS,
     ],
     premium: false,
   }
@@ -39,6 +53,7 @@ export const ALL_MODEL_VALUES = [
   ...PEXELS_MODELS.map(m => m.value),
   ...POLLINATIONS_MODELS.map(m => m.value),
   ...STABLE_HORDE_MODELS.map(m => m.value),
+  ...HUGGING_FACE_MODELS.map(m => m.value),
 ] as [string, ...string[]];
 
 export const ASPECT_RATIOS = [
