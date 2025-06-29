@@ -90,7 +90,7 @@ async function generateWithGenkit(input: GenerateImageInput): Promise<GenerateIm
     console.error("Genkit generation failed:", e);
     let detailedMessage = `An unexpected error occurred with the AI model. ${e.message || ''}`;
     if (e.message && (e.message.includes('API key not valid') || e.message.includes('API_KEY_INVALID'))) {
-        detailedMessage = "Google AI API key is invalid or not configured for this environment. The local '.env' file is not used on the server. (For admins) Please set 'GEMINI_API_KEY' in your hosting provider's secrets, and ensure billing is enabled for your Google Cloud project and the 'Generative Language API' is active.";
+        detailedMessage = "Google AI API key is invalid or not configured. Please set 'GEMINI_API_KEY' in your hosting provider's environment variables, and ensure billing is enabled for your Google Cloud project.";
     }
     return { imageUrls: [], error: detailedMessage };
   }
@@ -105,10 +105,10 @@ async function generateWithGenkit(input: GenerateImageInput): Promise<GenerateIm
 async function generateWithPexels(input: GenerateImageInput): Promise<GenerateImageOutput> {
   const PEXELS_API_KEY = process.env.PEXELS_API_KEY;
 
-  if (!PEXELS_API_KEY || PEXELS_API_KEY === "YOUR_PEXELS_API_KEY_HERE" || PEXELS_API_KEY === "") {
+  if (!PEXELS_API_KEY || PEXELS_API_KEY === "YOUR_PEXELS_API_KEY_HERE" || PEXELS_API_KEY.trim() === "") {
     return { 
       imageUrls: [], 
-      error: "Pexels API key is not configured for this environment. The local '.env' file is not used on the server. For site administrators, please add your PEXELS_API_KEY to your hosting provider's secret manager or environment variables." 
+      error: "Pexels API key is not configured. Please set the 'PEXELS_API_KEY' environment variable in your hosting provider's settings (e.g., Cloudflare)."
     };
   }
 
@@ -181,7 +181,7 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
   if (!API_KEY || API_KEY === "YOUR_STABLE_HORDE_API_KEY_HERE" || API_KEY.trim() === "" || API_KEY === "5K1zxHm8MAC1gENuac0EeA") {
     return {
       imageUrls: [],
-      error: "The Stable Horde API key is not configured for this environment. The local '.env' file is not used on the server. For site administrators, please add STABLE_HORDE_API_KEY to your hosting provider's secrets. A key of '0000000000' can be used for anonymous testing."
+      error: "The Stable Horde API key is not configured. Please set 'STABLE_HORDE_API_KEY' in your hosting provider's settings. A key of '0000000000' can be used for anonymous testing."
     };
   }
 
@@ -250,7 +250,7 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
     if (keys.length === 0) {
         return { 
             imageUrls: [], 
-            error: "No Hugging Face API keys are configured for this environment. The local '.env' file is not used on the server. For site administrators, please add 'HF_API_KEY_...' variables to your hosting provider's secret manager." 
+            error: "No Hugging Face API keys are configured. Please set 'HF_API_KEY_...' environment variables in your hosting provider's settings."
         };
     }
 
