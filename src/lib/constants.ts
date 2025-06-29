@@ -1,26 +1,13 @@
 
+
 export interface StyleOption {
   value: string;
   label: string;
 }
 
-export const POLLINATIONS_MODELS = [
-    { value: 'pollinations', label: 'Pollinations (Fast & Free)' }
-];
-
-export const MODEL_GROUPS = [
-  {
-    label: "AI Generation Models",
-    models: POLLINATIONS_MODELS,
-    premium: false,
-  }
-];
-
-// This needs to include all possible model values for Zod validation.
-export const ALL_MODEL_VALUES = [
-  ...POLLINATIONS_MODELS.map(m => m.value),
-] as [string, ...string[]];
-
+// All model constants are removed as the app now uses a single,
+// reliable backend flow via a Cloudflare function.
+export const ALL_MODEL_VALUES = ['stable_horde'] as [string, ...string[]];
 
 export const ASPECT_RATIOS = [
   { label: "1:1 (Square)", value: "1:1" },
@@ -77,5 +64,3 @@ export const COLOURS: StyleOption[] = [
   { value: 'warm', label: 'Warm' },
   { value: 'cool', label: 'Cool' },
 ];
-
-    

@@ -43,8 +43,8 @@ export function ImageGenerator() {
   const { subscription } = useSubscription();
   const generationCancelled = useRef(false);
   
-  // App is simplified to only use Pollinations model.
-  const activeModel = 'pollinations';
+  // The app now uses a single, reliable backend model flow.
+  const activeModel = 'stable_horde';
   const isPremiumFeature = false;
   const showAdvancedOptions = true;
   
@@ -167,8 +167,8 @@ export function ImageGenerator() {
                     Model
                   </Label>
                   <div className="flex items-center justify-between w-full p-3 bg-muted rounded-md border">
-                      <span className="font-semibold text-foreground/90">Pollinations</span>
-                      <Badge variant="secondary">Fast & Free</Badge>
+                      <span className="font-semibold text-foreground/90">Stable Horde</span>
+                      <Badge variant="secondary">Community Powered</Badge>
                   </div>
                 </div>
 
