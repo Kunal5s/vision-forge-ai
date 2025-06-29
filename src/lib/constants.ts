@@ -19,11 +19,11 @@ export const STABLE_HORDE_MODELS = [
 
 // Curated list of more reliable Hugging Face models for text-to-image
 export const HF_MODELS = [
-  { value: 'stabilityai/sdxl-turbo', label: 'SDXL Turbo' },
+  { value: 'stabilityai/stable-diffusion-xl-base-1.0', label: 'Stable Diffusion XL' },
+  { value: 'runwayml/stable-diffusion-v1-5', label: 'Stable Diffusion 1.5' },
   { value: 'prompthero/openjourney', label: 'OpenJourney (Artistic)' },
-  { value: 'SG161222/Realistic_Vision_V5.1', label: 'Realistic Vision v5.1' },
-  { value: 'runwayml/stable-diffusion-v1-5', label: 'Stable Diffusion v1.5' },
-  { value: 'cagliostrolab/animagine-xl-3.0', label: 'Animagine XL (Anime)' },
+  { value: 'Lykon/dreamshaper-xl-turbo', label: 'DreamShaper XL Turbo' },
+  { value: 'emilianJR/epiCRealism', label: 'EpiCRealism (Realistic)' },
 ];
 
 
