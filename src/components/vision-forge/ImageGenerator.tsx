@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { generateImage, type GenerateImageInput } from '@/ai/flows/generate-image';
-import { ASPECT_RATIOS, MODEL_GROUPS, STYLES, MOODS, LIGHTING, COLOURS, HF_MODELS } from '@/lib/constants';
+import { ASPECT_RATIOS, MODEL_GROUPS, STYLES, MOODS, LIGHTING, COLOURS } from '@/lib/constants';
 import { ImageDisplay } from './ImageDisplay';
 import { FuturisticPanel } from './FuturisticPanel';
 import { Gem, ImageIcon as ImageIconIcon, RefreshCcw, XCircle, Lightbulb } from 'lucide-react';
@@ -71,10 +71,10 @@ export function ImageGenerator() {
     const group = MODEL_GROUPS.find(g => g.models.some(m => m.value === activeModel));
     return group?.premium ?? false;
   }, [activeModel]);
-
+  
+  // Show advanced options for all models except Pexels photo search
   const showAdvancedOptions = useMemo(() => {
-    const isHfModel = HF_MODELS.some(m => m.value === activeModel);
-    return isHfModel;
+    return activeModel !== 'imagen-brain-ai';
   }, [activeModel]);
   
   const isFreePlan = subscription?.plan === 'free';

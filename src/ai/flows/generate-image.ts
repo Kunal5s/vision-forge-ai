@@ -68,6 +68,8 @@ async function generateWithPexels(input: GenerateImageInput): Promise<GenerateIm
   }
 
   try {
+    // The Pexels API only supports 'landscape', 'portrait', or 'square'.
+    // We map the user's selected aspect ratio to the closest Pexels orientation.
     const orientationMap: Record<string, string> = {
       '1:1': 'square',
       '16:9': 'landscape', '21:9': 'landscape', '3:2': 'landscape', '4:3': 'landscape', '2:1': 'landscape', '3:1': 'landscape',
@@ -117,6 +119,7 @@ async function generateWithPollinations(input: GenerateImageInput): Promise<Gene
 
         const imageUrls = Array(input.numberOfImages).fill(0).map(() => {
             const seed = Math.floor(Math.random() * 10000); // Random seed for variation
+            // The user's prompt already includes styles, moods, etc.
             const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(input.prompt)}?width=${finalWidth}&height=${finalHeight}&seed=${seed}&nologo=true`;
             return url;
         });
@@ -150,7 +153,8 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
     const finalWidth = Math.round(w * scale / 64) * 64;
     const finalHeight = Math.round(h * scale / 64) * 64;
 
-    // Improved prompt structure for better results with Stable Diffusion models
+    // Improved prompt structure for better results with Stable Diffusion models.
+    // The input.prompt already contains styles, moods, etc. from the UI.
     const fullPrompt = `(best quality, masterpiece, highres, photorealistic), ${input.prompt} ### (deformed, blurry, bad anatomy, low quality, worst quality, watermark, signature)`;
 
     const imageUrls: string[] = [];
@@ -162,7 +166,7 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
                 prompt: fullPrompt,
                 params: { sampler_name: "k_euler_a", steps: 25, n: 1, width: finalWidth, height: finalHeight, cfg_scale: 7.5 },
                 models: ["Deliberate", "dreamshaper_8", "rev_animated"], // A good mix of reliable models
-                kudasai: true, // Use a kudos-accepting worker
+                kudosai: true, // Use a kudos-accepting worker
             })
         });
 
@@ -226,12 +230,15 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
 
     try {
         const imageUrls: string[] = [];
+        // Add prompt wrapper for better results with SD-based models.
+        const fullPrompt = `${input.prompt}, high quality, detailed, (masterpiece)`;
+        
         for (let i = 0; i < input.numberOfImages; i++) {
             const key = keys[i % keys.length]; // Rotate keys
             const response = await fetch(`https://api-inference.huggingface.co/models/${input.model}`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json", "x-wait-for-model": "true" },
-                body: JSON.stringify({ "inputs": `${input.prompt}, aspect ratio ${input.aspectRatio}` }),
+                body: JSON.stringify({ "inputs": fullPrompt }), // Send the enhanced prompt
             });
             
             if (!response.ok) {
