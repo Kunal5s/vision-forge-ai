@@ -1,36 +1,62 @@
 
-export const PREMIUM_MODELS = [
+export const GOOGLE_AI_MODELS = [
   { value: 'googleai/gemini-2.0-flash-preview-image-generation', label: 'Google Imagen 3' },
 ];
 
-export const FREE_MODELS = [
+export const PEXELS_MODELS = [
   { value: 'imagen-brain-ai', label: 'Imagen Brain AI' },
 ];
 
+export const POLLINATIONS_MODELS = [
+    { value: 'pollinations', label: 'Pollinations' }
+];
+
+export const STABLE_HORDE_MODELS = [
+    { value: 'stable_horde', label: 'Stable Horde (Community)' }
+];
+
+export const HF_MODELS = [
+  { value: 'runwayml/stable-diffusion-v1-5', label: 'Stable Diffusion v1.5' },
+  { value: 'stabilityai/sdxl-turbo', label: 'SDXL Turbo' },
+  { value: 'prompthero/openjourney', label: 'OpenJourney (Artistic)' },
+  { value: 'Linaqruf/anything-v3.0', label: 'Anything v3 (Anime)' },
+  { value: 'SG161222/Realistic_Vision_V5.1', label: 'Realistic Vision v5.1' },
+];
+
+
 export const MODEL_GROUPS = [
   {
-    label: "Free Models (Powered by Pexels)",
-    models: FREE_MODELS,
+    label: "Recommended",
+    models: GOOGLE_AI_MODELS,
+    premium: false, // As requested, free for testing
+  },
+  {
+    label: "Realistic Photos (Powered by Pexels)",
+    models: PEXELS_MODELS,
     premium: false,
   },
   {
-    label: "Premium Models (Subscribers Only)",
-    models: PREMIUM_MODELS,
-    premium: true,
+    label: "Community Models (Free)",
+    models: [
+        ...POLLINATIONS_MODELS,
+        ...STABLE_HORDE_MODELS,
+    ],
+    premium: false,
+  },
+  {
+    label: "Hugging Face Models (Free)",
+    models: HF_MODELS,
+    premium: false,
   }
 ];
 
 // This needs to include all possible model values for Zod validation.
 export const ALL_MODEL_VALUES = [
-  ...FREE_MODELS.map(m => m.value),
-  ...PREMIUM_MODELS.map(m => m.value),
-  // Keep old values here for compatibility
-  'runwayml/stable-diffusion-v1-5',
-  'stabilityai/sdxl-turbo',
-  'prompthero/openjourney',
-  'Linaqruf/anything-v3.0',
-  'SG161222/Realistic_Vision_V5.1',
-  'pollinations',
+  ...GOOGLE_AI_MODELS.map(m => m.value),
+  ...PEXELS_MODELS.map(m => m.value),
+  ...POLLINATIONS_MODELS.map(m => m.value),
+  ...STABLE_HORDE_MODELS.map(m => m.value),
+  ...HF_MODELS.map(m => m.value),
 ] as [string, ...string[]];
 
 export const ASPECT_RATIOS = [

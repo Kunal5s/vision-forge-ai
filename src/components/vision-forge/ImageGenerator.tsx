@@ -20,7 +20,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { generateImage, type GenerateImageInput } from '@/ai/flows/generate-image';
 import { improvePrompt, type ImprovePromptInput, type ImprovePromptOutput } from '@/ai/flows/improve-prompt';
-import { ASPECT_RATIOS, MODEL_GROUPS, PREMIUM_MODELS } from '@/lib/constants';
+import { ASPECT_RATIOS, MODEL_GROUPS, GOOGLE_AI_MODELS, HF_MODELS } from '@/lib/constants';
 import { ImageDisplay } from './ImageDisplay';
 import { FuturisticPanel } from './FuturisticPanel';
 import { Gem, AlertTriangle, ImageIcon as ImageIconIcon, RefreshCcw, XCircle, Sparkles, Lightbulb } from 'lucide-react';
@@ -67,12 +67,22 @@ export function ImageGenerator() {
   
   const currentPrompt = watch('prompt');
 
-  const isPremiumModel = useMemo(() => PREMIUM_MODELS.some(m => m.value === activeModel), [activeModel]);
+  const isPremiumFeature = useMemo(() => {
+    const group = MODEL_GROUPS.find(g => g.models.some(m => m.value === activeModel));
+    return group?.premium ?? false;
+  }, [activeModel]);
+  
+  const showAdvancedOptions = useMemo(() => {
+    const isGoogleModel = GOOGLE_AI_MODELS.some(m => m.value === activeModel);
+    const isHfModel = HF_MODELS.some(m => m.value === activeModel);
+    return isGoogleModel || isHfModel;
+  }, [activeModel]);
+  
   const isFreePlan = subscription?.plan === 'free';
 
   const constructFinalPrompt = (data: FormData): string => {
     let finalPrompt = data.prompt;
-    if (isPremiumModel) {
+    if (showAdvancedOptions) {
         if (data.style) finalPrompt += `, in the style of ${data.style}`;
         if (data.mood) finalPrompt += `, ${data.mood} mood`;
         if (data.lighting) finalPrompt += `, ${data.lighting} lighting`;
@@ -82,10 +92,10 @@ export function ImageGenerator() {
   };
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
-    if (isPremiumModel && isFreePlan) {
+    if (isPremiumFeature && isFreePlan) {
       toast({
         title: 'Upgrade Required',
-        description: 'You need a Pro or Mega plan to use premium models. Please upgrade your plan.',
+        description: 'You need a Pro or Mega plan to use this model. Please upgrade your plan.',
         variant: 'destructive',
       });
       return;
@@ -223,9 +233,6 @@ export function ImageGenerator() {
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground mt-2">
-                    {isPremiumModel ? 'High-quality AI generation for subscribers.' : 'Powered by the Pexels API for realistic photos.'}
-                </p>
               </div>
 
               <div>
@@ -233,7 +240,7 @@ export function ImageGenerator() {
                     <Label htmlFor="prompt" className="text-lg font-semibold text-foreground/90">
                       Enter Your Vision
                     </Label>
-                    <Button type="button" variant="ghost" size="sm" onClick={handleImprovePrompt} disabled={isImproving || isGenerating || isFreePlan || !isPremiumModel}>
+                    <Button type="button" variant="ghost" size="sm" onClick={handleImprovePrompt} disabled={isImproving || isGenerating || !showAdvancedOptions || isFreePlan}>
                         {isImproving ? <LoadingSpinner size={16}/> : <Sparkles size={16} className="text-primary" />}
                         <span className="ml-2">Improve</span>
                     </Button>
@@ -251,7 +258,7 @@ export function ImageGenerator() {
                 {errors.prompt && <p className="text-sm text-destructive mt-1">{errors.prompt.message}</p>}
               </div>
 
-              {isPremiumModel && (
+              {showAdvancedOptions && (
                 <div>
                   <Label className="text-lg font-semibold mb-2 block text-foreground/90">
                     Advanced Options
@@ -293,7 +300,7 @@ export function ImageGenerator() {
                         </SelectTrigger>
                         <SelectContent>
                             {imageCountOptions.map((opt) => (
-                                <SelectItem key={opt.value} value={String(opt.value)} disabled={isPremiumModel && isFreePlan && opt.value > 1}>{opt.label}</SelectItem>
+                                <SelectItem key={opt.value} value={String(opt.value)} disabled={isPremiumFeature && isFreePlan && opt.value > 1}>{opt.label}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
@@ -323,7 +330,7 @@ export function ImageGenerator() {
                     </Button>
                     <Button
                       type="submit"
-                      disabled={isSubLoading || (isPremiumModel && isFreePlan)}
+                      disabled={isSubLoading || (isPremiumFeature && isFreePlan)}
                       className="w-full text-lg py-3 bg-primary hover:bg-primary/90 text-primary-foreground transition-shadow hover:shadow-xl hover:shadow-primary/20"
                     >
                       <ImageIconIcon size={20} className="mr-2" />
@@ -332,10 +339,10 @@ export function ImageGenerator() {
                   </>
                 )}
               </div>
-              {isPremiumModel && isFreePlan && (
+              {isPremiumFeature && isFreePlan && (
                 <div className='text-center text-sm p-2 bg-muted rounded-md'>
                     <Lightbulb size={16} className="inline-block mr-2 text-primary" />
-                    To use premium models, please{' '}
+                    To use this model, please{' '}
                     <Link href="/pricing" className="underline text-primary">upgrade your plan</Link>.
                 </div>
               )}
