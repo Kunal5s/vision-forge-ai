@@ -61,11 +61,20 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
  * @returns A promise that resolves to the generation output.
  */
 async function generateWithGenkit(input: GenerateImageInput): Promise<GenerateImageOutput> {
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+  if (!GEMINI_API_KEY || GEMINI_API_KEY.trim() === "") {
+    return { 
+      imageUrls: [], 
+      error: "Google AI API key is not configured. Please go to your Cloudflare project settings, find 'Environment variables', and add a variable named 'GEMINI_API_KEY' with your key. Then, redeploy your project."
+    };
+  }
+
   try {
     const generationPromises = Array(input.numberOfImages).fill(0).map(() => 
       ai.generate({
         model: input.model as any,
-        prompt: input.prompt,
+        prompt: `${input.prompt}, aspect ratio ${input.aspectRatio}`,
         config: {
           responseModalities: ['TEXT', 'IMAGE'],
         },
@@ -86,8 +95,8 @@ async function generateWithGenkit(input: GenerateImageInput): Promise<GenerateIm
   } catch (e: any) {
     console.error("Genkit generation failed:", e);
     let detailedMessage = `An unexpected error occurred with the AI model. ${e.message || ''}`;
-    if (e.message && (e.message.includes('API key not valid') || e.message.includes('API_KEY_INVALID'))) {
-        detailedMessage = "Google AI API key is invalid or not configured. Please go to your Cloudflare project settings, find 'Environment variables', and add a variable named 'GEMINI_API_KEY' with your key. Also, ensure billing is enabled for your Google Cloud project, then redeploy.";
+     if (e.message && (e.message.includes('API key not valid') || e.message.includes('API_KEY_INVALID'))) {
+        detailedMessage = "The Google AI API key is invalid or not configured. Please go to your Cloudflare project settings, find 'Environment variables', and add a variable named 'GEMINI_API_KEY' with your key. Also, ensure billing is enabled for your Google Cloud project, then redeploy.";
     }
     return { imageUrls: [], error: detailedMessage };
   }
@@ -150,6 +159,7 @@ async function generateWithPexels(input: GenerateImageInput): Promise<GenerateIm
 async function generateWithPollinations(input: GenerateImageInput): Promise<GenerateImageOutput> {
     try {
         const [width, height] = input.aspectRatio.split(':').map(Number);
+        // Using a common base resolution like 1024 for one dimension
         const scaleFactor = 1024 / Math.max(width, height);
         const finalWidth = Math.round(width * scaleFactor);
         const finalHeight = Math.round(height * scaleFactor);
@@ -175,16 +185,19 @@ async function generateWithPollinations(input: GenerateImageInput): Promise<Gene
 async function generateWithStableHorde(input: GenerateImageInput): Promise<GenerateImageOutput> {
   const API_KEY = process.env.STABLE_HORDE_API_KEY;
 
-  if (!API_KEY || API_KEY.trim() === "") {
+  if (!API_KEY || API_KEY.trim() === "" || API_KEY.trim() === "0000000000") {
     return {
       imageUrls: [],
-      error: "The Stable Horde API key is not configured. Please go to your Cloudflare project settings, find 'Environment variables', and add a variable named 'STABLE_HORDE_API_KEY'. A key of '0000000000' can be used for anonymous testing. Remember to redeploy after adding the key."
+      error: "The Stable Horde API key is not configured. Please go to your Cloudflare project settings, find 'Environment variables', and add a variable named 'STABLE_HORDE_API_KEY'. Remember to redeploy after adding the key."
     };
   }
 
   try {
     const [w, h] = input.aspectRatio.split(':').map(Number);
-    const scale = Math.sqrt(512 * 768 / (w * h));
+    // Aim for a pixel area close to a standard SD 1.5 resolution (512*768)
+    const targetArea = 512 * 768;
+    const scale = Math.sqrt(targetArea / (w * h));
+    // Ensure dimensions are multiples of 64 for compatibility with SD models
     const finalWidth = Math.round(w * scale / 64) * 64;
     const finalHeight = Math.round(h * scale / 64) * 64;
 
@@ -258,7 +271,7 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
             const response = await fetch(`https://api-inference.huggingface.co/models/${input.model}`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json", "x-wait-for-model": "true" },
-                body: JSON.stringify({ "inputs": input.prompt }),
+                body: JSON.stringify({ "inputs": `${input.prompt}, aspect ratio ${input.aspectRatio}` }),
             });
             
             if (!response.ok) {

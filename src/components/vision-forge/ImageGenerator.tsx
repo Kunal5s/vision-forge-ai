@@ -8,7 +8,6 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -19,22 +18,18 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { generateImage, type GenerateImageInput } from '@/ai/flows/generate-image';
-import { improvePrompt, type ImprovePromptInput, type ImprovePromptOutput } from '@/ai/flows/improve-prompt';
-import { ASPECT_RATIOS, MODEL_GROUPS, GOOGLE_AI_MODELS, HF_MODELS } from '@/lib/constants';
+import { ASPECT_RATIOS, MODEL_GROUPS, STYLES, MOODS, LIGHTING, COLOURS, GOOGLE_AI_MODELS, HF_MODELS } from '@/lib/constants';
 import { ImageDisplay } from './ImageDisplay';
 import { FuturisticPanel } from './FuturisticPanel';
-import { Gem, AlertTriangle, ImageIcon as ImageIconIcon, RefreshCcw, XCircle, Sparkles, Lightbulb } from 'lucide-react';
+import { Gem, ImageIcon as ImageIconIcon, RefreshCcw, XCircle, Lightbulb } from 'lucide-react';
 import { useSubscription } from '@/hooks/use-subscription';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { LoadingSpinner } from './LoadingSpinner';
+import { StyleSelector } from './StyleSelector';
+import { ScrollArea } from '../ui/scroll-area';
 
 const formSchema = z.object({
   prompt: z.string().min(1, 'Prompt cannot be empty. Let your imagination flow!').max(2000, 'Prompt is too long.'),
-  style: z.string().max(200, 'Style is too long.').optional(),
-  mood: z.string().max(200, 'Mood is too long.').optional(),
-  lighting: z.string().max(200, 'Lighting is too long.').optional(),
-  color: z.string().max(200, 'Color is too long.').optional(),
 });
 type FormData = z.infer<typeof formSchema>;
 
@@ -57,12 +52,17 @@ export function ImageGenerator() {
   
   const [generatedImageUrls, setGeneratedImageUrls] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isImproving, setIsImproving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // New state for visual selectors
+  const [selectedStyle, setSelectedStyle] = useState<string>('');
+  const [selectedMood, setSelectedMood] = useState<string>('');
+  const [selectedLighting, setSelectedLighting] = useState<string>('');
+  const [selectedColour, setSelectedColour] = useState<string>('');
   
   const { register, handleSubmit, watch, setValue: setFormValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: { prompt: '', style: '', mood: '', lighting: '', color: '' },
+    defaultValues: { prompt: '' },
   });
   
   const currentPrompt = watch('prompt');
@@ -71,7 +71,7 @@ export function ImageGenerator() {
     const group = MODEL_GROUPS.find(g => g.models.some(m => m.value === activeModel));
     return group?.premium ?? false;
   }, [activeModel]);
-  
+
   const showAdvancedOptions = useMemo(() => {
     const isGoogleModel = GOOGLE_AI_MODELS.some(m => m.value === activeModel);
     const isHfModel = HF_MODELS.some(m => m.value === activeModel);
@@ -83,10 +83,10 @@ export function ImageGenerator() {
   const constructFinalPrompt = (data: FormData): string => {
     let finalPrompt = data.prompt;
     if (showAdvancedOptions) {
-        if (data.style) finalPrompt += `, in the style of ${data.style}`;
-        if (data.mood) finalPrompt += `, ${data.mood} mood`;
-        if (data.lighting) finalPrompt += `, ${data.lighting} lighting`;
-        if (data.color) finalPrompt += `, color palette based on ${data.color}`;
+        if (selectedStyle) finalPrompt += `, ${selectedStyle} style`;
+        if (selectedMood) finalPrompt += `, ${selectedMood} mood`;
+        if (selectedLighting) finalPrompt += `, ${selectedLighting} lighting`;
+        if (selectedColour) finalPrompt += `, ${selectedColour} color palette`;
     }
     return finalPrompt;
   };
@@ -137,29 +137,6 @@ export function ImageGenerator() {
     }
   };
 
-  const handleImprovePrompt = async () => {
-    if (!currentPrompt) {
-        toast({ title: 'Prompt is empty', description: 'Please enter a prompt to improve.', variant: 'destructive' });
-        return;
-    }
-
-    if (isFreePlan) {
-      toast({ title: 'Upgrade Required', description: 'Prompt Improvement is a premium feature. Please upgrade.', variant: 'destructive'});
-      return;
-    }
-
-    setIsImproving(true);
-    const result: ImprovePromptOutput = await improvePrompt({ prompt: currentPrompt });
-    setIsImproving(false);
-
-    if (result.error) {
-        toast({ title: 'Failed to Improve Prompt', description: result.error, variant: 'destructive' });
-    } else if (result.improvedPrompt) {
-        setFormValue('prompt', result.improvedPrompt);
-        toast({ title: 'Prompt Improved!', description: result.reasoning });
-    }
-  };
-
   const handleRegenerate = () => {
      if(currentPrompt) {
         handleSubmit(onSubmit)();
@@ -177,10 +154,10 @@ export function ImageGenerator() {
   
   const handleReset = () => {
     setFormValue('prompt', '');
-    setFormValue('style', '');
-    setFormValue('mood', '');
-    setFormValue('lighting', '');
-    setFormValue('color', '');
+    setSelectedStyle('');
+    setSelectedMood('');
+    setSelectedLighting('');
+    setSelectedColour('');
     setActiveModel(MODEL_GROUPS[0].models[0].value);
     setSelectedAspectRatio(ASPECT_RATIOS[0].value);
     setDisplayAspectRatio(ASPECT_RATIOS[0].value);
@@ -206,146 +183,141 @@ export function ImageGenerator() {
         <div className="lg:col-span-5 space-y-6">
           <FuturisticPanel>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              <div>
-                <Label htmlFor="model-select" className="text-lg font-semibold mb-2 block text-foreground/90">
-                  Model
-                </Label>
-                <Select value={activeModel} onValueChange={setActiveModel} disabled={isSubLoading || isGenerating}>
-                  <SelectTrigger id="model-select" className="w-full bg-background hover:bg-muted/50">
-                    <SelectValue placeholder="Select a model" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MODEL_GROUPS.map(group => (
-                      <SelectGroup key={group.label}>
-                        <Label className='px-2 text-xs text-muted-foreground'>{group.label}</Label>
-                        {group.models.map(model => (
-                          <SelectItem key={model.value} value={model.value} disabled={group.premium && isFreePlan}>
-                            <div className="flex items-center justify-between w-full">
-                              <span className="flex items-center gap-2">
-                                {model.label}
-                                {group.premium && <Gem size={14} className="text-primary" />}
-                              </span>
-                              {group.premium && isFreePlan && <Badge variant="secondary">Upgrade</Badge>}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                    <Label htmlFor="prompt" className="text-lg font-semibold text-foreground/90">
-                      Enter Your Vision
-                    </Label>
-                    <Button type="button" variant="ghost" size="sm" onClick={handleImprovePrompt} disabled={isImproving || isGenerating || !showAdvancedOptions || isFreePlan}>
-                        {isImproving ? <LoadingSpinner size={16}/> : <Sparkles size={16} className="text-primary" />}
-                        <span className="ml-2">Improve</span>
-                    </Button>
-                </div>
-                <div className="relative">
-                  <Textarea
-                    id="prompt"
-                    {...register('prompt')}
-                    placeholder="e.g., A futuristic cityscape at sunset, neon lights reflecting on wet streets..."
-                    rows={4}
-                    className="bg-background border-input focus:border-primary focus:ring-primary text-base resize-none"
-                    disabled={isGenerating}
-                  />
-                </div>
-                {errors.prompt && <p className="text-sm text-destructive mt-1">{errors.prompt.message}</p>}
-              </div>
-
-              {showAdvancedOptions && (
+              <ScrollArea className="h-[calc(100vh-200px)] pr-4">
+              <div className="space-y-6">
                 <div>
-                  <Label className="text-lg font-semibold mb-2 block text-foreground/90">
-                    Advanced Options
+                  <Label htmlFor="model-select" className="text-lg font-semibold mb-2 block text-foreground/90">
+                    Model
                   </Label>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Input {...register('style')} placeholder="Artistic Style (e.g., cyberpunk)" disabled={isGenerating} />
-                    <Input {...register('mood')} placeholder="Mood (e.g., mysterious)" disabled={isGenerating} />
-                    <Input {...register('lighting')} placeholder="Lighting (e.g., cinematic)" disabled={isGenerating} />
-                    <Input {...register('color')} placeholder="Color Palette (e.g., neon blue)" disabled={isGenerating} />
-                  </div>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="aspect-ratio" className="text-sm font-semibold mb-1 block text-foreground/80">Aspect Ratio</Label>
-                  <Select value={selectedAspectRatio} onValueChange={setSelectedAspectRatio} disabled={isGenerating}>
-                    <SelectTrigger id="aspect-ratio" className="w-full bg-background hover:bg-muted/50">
-                      <SelectValue placeholder="Select aspect ratio" />
+                  <Select value={activeModel} onValueChange={setActiveModel} disabled={isSubLoading || isGenerating}>
+                    <SelectTrigger id="model-select" className="w-full bg-background hover:bg-muted/50">
+                      <SelectValue placeholder="Select a model" />
                     </SelectTrigger>
-                    <SelectContent className="bg-popover border-border">
-                      {ASPECT_RATIOS.map((ratio) => (
-                        <SelectItem key={ratio.value} value={ratio.value}>
-                          {ratio.label}
-                        </SelectItem>
+                    <SelectContent>
+                      {MODEL_GROUPS.map(group => (
+                        <SelectGroup key={group.label}>
+                          <Label className='px-2 text-xs text-muted-foreground'>{group.label}</Label>
+                          {group.models.map(model => (
+                            <SelectItem key={model.value} value={model.value} disabled={group.premium && isFreePlan}>
+                              <div className="flex items-center justify-between w-full">
+                                <span className="flex items-center gap-2">
+                                  {model.label}
+                                  {group.premium && <Gem size={14} className="text-primary" />}
+                                </span>
+                                {group.premium && isFreePlan && <Badge variant="secondary">Upgrade</Badge>}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
+
                 <div>
-                    <Label htmlFor="num-images" className="text-sm font-semibold mb-1 block text-foreground/80">Number of Images</Label>
-                    <Select 
-                        value={String(numberOfImages)} 
-                        onValueChange={(val) => setNumberOfImages(Number(val))}
-                        disabled={isGenerating}
-                    >
-                        <SelectTrigger id="num-images" className="w-full bg-background hover:bg-muted/50">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {imageCountOptions.map((opt) => (
-                                <SelectItem key={opt.value} value={String(opt.value)} disabled={isPremiumFeature && isFreePlan && opt.value > 1}>{opt.label}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                  <div className="flex justify-between items-center mb-2">
+                      <Label htmlFor="prompt" className="text-lg font-semibold text-foreground/90">
+                        Enter Your Vision
+                      </Label>
+                  </div>
+                  <div className="relative">
+                    <Textarea
+                      id="prompt"
+                      {...register('prompt')}
+                      placeholder="e.g., A futuristic cityscape at sunset, neon lights reflecting on wet streets..."
+                      rows={4}
+                      className="bg-background border-input focus:border-primary focus:ring-primary text-base resize-none"
+                      disabled={isGenerating}
+                    />
+                  </div>
+                  {errors.prompt && <p className="text-sm text-destructive mt-1">{errors.prompt.message}</p>}
                 </div>
-              </div>
+
+                {showAdvancedOptions && (
+                  <div className='space-y-4'>
+                    <StyleSelector title="Styles" options={STYLES} selectedValue={selectedStyle} onSelect={setSelectedStyle} />
+                    <StyleSelector title="Moods" options={MOODS} selectedValue={selectedMood} onSelect={setSelectedMood} />
+                    <StyleSelector title="Lighting" options={LIGHTING} selectedValue={selectedLighting} onSelect={setSelectedLighting} />
+                    <StyleSelector title="Colours" options={COLOURS} selectedValue={selectedColour} onSelect={setSelectedColour} />
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="aspect-ratio" className="text-sm font-semibold mb-1 block text-foreground/80">Aspect Ratio</Label>
+                    <Select value={selectedAspectRatio} onValueChange={setSelectedAspectRatio} disabled={isGenerating}>
+                      <SelectTrigger id="aspect-ratio" className="w-full bg-background hover:bg-muted/50">
+                        <SelectValue placeholder="Select aspect ratio" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border">
+                        {ASPECT_RATIOS.map((ratio) => (
+                          <SelectItem key={ratio.value} value={ratio.value}>
+                            {ratio.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                      <Label htmlFor="num-images" className="text-sm font-semibold mb-1 block text-foreground/80">Number of Images</Label>
+                      <Select 
+                          value={String(numberOfImages)} 
+                          onValueChange={(val) => setNumberOfImages(Number(val))}
+                          disabled={isGenerating}
+                      >
+                          <SelectTrigger id="num-images" className="w-full bg-background hover:bg-muted/50">
+                              <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                              {imageCountOptions.map((opt) => (
+                                  <SelectItem key={opt.value} value={String(opt.value)} disabled={isPremiumFeature && isFreePlan && opt.value > 1}>{opt.label}</SelectItem>
+                              ))}
+                          </SelectContent>
+                      </Select>
+                  </div>
+                </div>
               
-              <div className="flex w-full items-center gap-2">
-                {isGenerating ? (
-                  <Button
-                    type="button"
-                    onClick={handleStopGeneration}
-                    variant="destructive"
-                    className="w-full text-lg py-3"
-                  >
-                    <XCircle size={20} className="mr-2" /> Stop
-                  </Button>
-                ) : (
-                  <>
+                <div className="flex w-full items-center gap-2 pt-4">
+                  {isGenerating ? (
                     <Button
                       type="button"
-                      onClick={handleReset}
-                      variant="outline"
-                      className="text-lg py-3"
-                      title="Reset all settings to default"
+                      onClick={handleStopGeneration}
+                      variant="destructive"
+                      className="w-full text-lg py-3"
                     >
-                      <RefreshCcw size={20} />
+                      <XCircle size={20} className="mr-2" /> Stop
                     </Button>
-                    <Button
-                      type="submit"
-                      disabled={isSubLoading || (isPremiumFeature && isFreePlan)}
-                      className="w-full text-lg py-3 bg-primary hover:bg-primary/90 text-primary-foreground transition-shadow hover:shadow-xl hover:shadow-primary/20"
-                    >
-                      <ImageIconIcon size={20} className="mr-2" />
-                      Forge Vision
-                    </Button>
-                  </>
+                  ) : (
+                    <>
+                      <Button
+                        type="button"
+                        onClick={handleReset}
+                        variant="outline"
+                        className="text-lg py-3"
+                        title="Reset all settings to default"
+                      >
+                        <RefreshCcw size={20} />
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={isSubLoading || (isPremiumFeature && isFreePlan)}
+                        className="w-full text-lg py-3 bg-primary hover:bg-primary/90 text-primary-foreground transition-shadow hover:shadow-xl hover:shadow-primary/20"
+                      >
+                        <ImageIconIcon size={20} className="mr-2" />
+                        Forge Vision
+                      </Button>
+                    </>
+                  )}
+                </div>
+                {isPremiumFeature && isFreePlan && (
+                  <div className='text-center text-sm p-2 bg-muted rounded-md'>
+                      <Lightbulb size={16} className="inline-block mr-2 text-primary" />
+                      To use this model, please{' '}
+                      <Link href="/pricing" className="underline text-primary">upgrade your plan</Link>.
+                  </div>
                 )}
               </div>
-              {isPremiumFeature && isFreePlan && (
-                <div className='text-center text-sm p-2 bg-muted rounded-md'>
-                    <Lightbulb size={16} className="inline-block mr-2 text-primary" />
-                    To use this model, please{' '}
-                    <Link href="/pricing" className="underline text-primary">upgrade your plan</Link>.
-                </div>
-              )}
+              </ScrollArea>
             </form>
           </FuturisticPanel>
         </div>

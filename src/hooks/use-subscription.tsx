@@ -13,8 +13,8 @@ const PLAN_CREDITS: Record<Plan, Credits> = {
 
 // SIMULATED DATABASE of purchased emails.
 const MOCK_PURCHASED_EMAILS: Record<string, Plan> = {
-  'pro@example.com': 'pro',
-  'mega@example.com': 'mega',
+  'pro@gmail.com': 'pro',
+  'mega@yahoo.com': 'mega',
 };
 
 // Define credit cost per generation.

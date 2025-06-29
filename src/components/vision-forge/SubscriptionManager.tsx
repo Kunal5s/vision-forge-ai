@@ -36,6 +36,18 @@ export function SubscriptionManager() {
       });
       return;
     }
+
+    const allowedDomains = ['gmail.com', 'yahoo.com'];
+    const domain = email.split('@')[1];
+    if (!allowedDomains.includes(domain.toLowerCase())) {
+      toast({
+        title: 'Invalid Email Provider',
+        description: 'For activation, please use a Gmail or Yahoo email address to prevent spam.',
+        variant: 'destructive',
+        duration: 7000,
+      });
+      return;
+    }
     
     const success = activateSubscription(email);
 
@@ -99,7 +111,7 @@ export function SubscriptionManager() {
           <DialogDescription>
             {subscription && !isFreePlan
               ? "View your current plan details or deactivate your subscription."
-              : "To access the premium VisionForge AI model and get more credits, please purchase a plan and activate it with your email."}
+              : "To access premium features, please purchase a plan and activate it with your Gmail or Yahoo email."}
           </DialogDescription>
         </DialogHeader>
         
@@ -114,12 +126,12 @@ export function SubscriptionManager() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                placeholder="you@gmail.com"
                 className="col-span-3"
               />
             </div>
             <p className="text-xs text-center text-muted-foreground px-4">
-              For this prototype, use 'pro@example.com' for Pro or 'mega@example.com' for the Mega plan to test activation.
+              For this prototype, use 'pro@gmail.com' or 'mega@yahoo.com' to test activation.
             </p>
              <p className="text-xs text-center text-muted-foreground px-4 mt-2">
               Ready to upgrade?{' '}

@@ -1,4 +1,11 @@
 
+export interface StyleOption {
+  value: string;
+  label: string;
+  imageUrl: string;
+  dataAiHint: string;
+}
+
 export const GOOGLE_AI_MODELS = [
   { value: 'googleai/gemini-2.0-flash-preview-image-generation', label: 'Google Imagen 3' },
 ];
@@ -68,4 +75,46 @@ export const ASPECT_RATIOS = [
   { label: "3:2 (Photography)", value: "3:2" },
   { label: "2:3 (Portrait)", value: "2:3" },
   { label: "21:9 (Cinematic)", value: "21:9" },
+];
+
+export const STYLES: StyleOption[] = [
+  { value: 'photographic', label: 'Photographic', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'photograph' },
+  { value: 'cinematic', label: 'Cinematic', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'cinematic still' },
+  { value: 'anime', label: 'Anime', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'anime art' },
+  { value: 'fantasy art', label: 'Fantasy', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'fantasy art' },
+  { value: '3d render', label: '3D Render', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: '3d render' },
+  { value: 'pixel art', label: 'Pixel Art', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'pixel art' },
+  { value: 'watercolor', label: 'Watercolor', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'watercolor painting' },
+  { value: 'line art', label: 'Line Art', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'line art' },
+  { value: 'comic book', label: 'Comic Book', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'comic book panel' },
+  { value: 'low poly', label: 'Low Poly', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'low poly' },
+  { value: 'origami', label: 'Origami', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'origami' },
+  { value: 'sticker', label: 'Sticker', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'sticker design' },
+];
+
+export const MOODS: StyleOption[] = [
+  { value: 'dramatic', label: 'Dramatic', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'dramatic' },
+  { value: 'dreamy', label: 'Dreamy', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'dreamy ethereal' },
+  { value: 'energetic', label: 'Energetic', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'energetic vibrant' },
+  { value: 'mysterious', label: 'Mysterious', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'mysterious fog' },
+  { value: 'cheerful', label: 'Cheerful', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'cheerful bright' },
+  { value: 'eerie', label: 'Eerie', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'eerie spooky' },
+];
+
+export const LIGHTING: StyleOption[] = [
+  { value: 'soft', label: 'Soft', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'soft light' },
+  { value: 'studio', label: 'Studio', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'studio lighting' },
+  { value: 'neon', label: 'Neon', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'neon lights' },
+  { value: 'dramatic', label: 'Dramatic', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'dramatic lighting' },
+  { value: 'golden hour', label: 'Golden Hour', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'golden hour sunset' },
+  { value: 'backlit', label: 'Backlit', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'backlit silhouette' },
+];
+
+export const COLOURS: StyleOption[] = [
+  { value: 'vibrant', label: 'Vibrant', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'vibrant colors' },
+  { value: 'monochromatic', label: 'Monochromatic', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'monochromatic black white' },
+  { value: 'pastel', label: 'Pastel', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'pastel colors' },
+  { value: 'earthy', label: 'Earthy', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'earth tones' },
+  { value: 'warm', label: 'Warm', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'warm colors' },
+  { value: 'cool', label: 'Cool', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'cool colors' },
 ];
