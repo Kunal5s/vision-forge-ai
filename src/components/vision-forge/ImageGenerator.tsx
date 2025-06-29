@@ -184,7 +184,7 @@ export function ImageGenerator() {
           timestamp: new Date(),
           plan: subscription.plan,
         };
-        setHistory(prev => [historyItem, ...prev.slice(0, 19)]);
+        setHistory(prev => [historyItem, ...prev]);
       }
 
       toast({ title: 'Vision Forged!', description: `Your image(s) have been successfully generated.` });
