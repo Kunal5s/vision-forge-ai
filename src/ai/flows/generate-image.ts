@@ -10,7 +10,6 @@
 
 import { z } from 'zod';
 import { ai } from '@/ai/genkit';
-import { HfInference } from '@huggingface/inference';
 import { ALL_MODEL_VALUES, GOOGLE_MODELS, POLLINATIONS_MODELS, HF_MODELS } from '@/lib/constants';
 
 // Helper to parse aspect ratio into width and height for Hugging Face.
@@ -279,29 +278,52 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
     let keyIndex = 0; 
 
     // This function attempts to generate a single image, trying all keys if necessary.
-    // It returns the image URL or the last error encountered.
     const tryGenerateOneImage = async (): Promise<{ url: string | null; error: string | null }> => {
         let lastError: string | null = null;
         for (let j = 0; j < apiKeys.length; j++) {
             const currentApiKey = apiKeys[keyIndex % apiKeys.length];
             keyIndex++;
-            const hf = new HfInference(currentApiKey);
             const keyIdentifier = `...${currentApiKey.slice(-4)}`;
+            const apiUrl = `https://api-inference.huggingface.co/models/${input.model}`;
 
             try {
-                console.log(`Attempting image with key ${keyIdentifier} for model: ${input.model}`);
-                const blob = await hf.textToImage({
-                    model: input.model,
-                    inputs: input.prompt,
-                    parameters: {
-                        width,
-                        height,
+                console.log(`Attempting image with key ${keyIdentifier} for model: ${input.model} at ${apiUrl}`);
+                const response = await fetch(apiUrl, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${currentApiKey}`,
+                        "Content-Type": "application/json",
+                        "x-wait-for-model": "true" // Wait for model to be ready
                     },
-                }, {
-                    wait_for_model: true,
-                    timeout: 90000, 
+                    body: JSON.stringify({
+                        inputs: input.prompt,
+                        parameters: {
+                            width,
+                            height,
+                        },
+                    }),
                 });
 
+                if (!response.ok) {
+                    let errorBody = "Unknown error";
+                    try {
+                        // Try to parse error as JSON, which is common for HF API
+                        const errorJson = await response.json();
+                        errorBody = errorJson.error || JSON.stringify(errorJson);
+                    } catch (parseError) {
+                        // If not JSON, maybe it's plain text
+                        errorBody = await response.text();
+                    }
+                    // This will be caught by the outer catch block
+                    throw new Error(errorBody);
+                }
+
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.startsWith('image')) {
+                    throw new Error(`Expected an image response, but got ${contentType}.`);
+                }
+
+                const blob = await response.blob();
                 const buffer = Buffer.from(await blob.arrayBuffer());
                 const dataUri = `data:${blob.type};base64,${buffer.toString('base64')}`;
                 console.log(`Successfully generated image with key ${keyIdentifier}`);
@@ -313,7 +335,11 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
                     // This error is fatal for this model at this time, so we throw to stop all parallel attempts for it.
                     throw new Error(`The model '${input.model}' is still loading on the Hugging Face servers. This can take a few minutes. Please try again shortly or select a different model.`);
                 }
-                console.error(`API key (${keyIdentifier}) failed. Error: ${lastError}. Trying next key.`);
+                 if (lastError.includes('Rate limit reached')) {
+                    console.error(`API key (${keyIdentifier}) hit rate limit. Trying next key.`);
+                 } else {
+                    console.error(`API key (${keyIdentifier}) failed. Error: ${lastError}. Trying next key.`);
+                 }
             }
         }
         // If all keys fail for this image generation attempt
@@ -337,8 +363,10 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
         if (errors.length > 0) {
             // Provide a more direct and informative error to the user.
             let userFriendlyError = `Hugging Face API Error: ${errors[0]}`;
-            if (errors[0].includes("Rate limit reached")) {
-                userFriendlyError = "Hugging Face models are currently under very high demand. Please try again in a moment.";
+            if (errors[0].includes("Rate limit reached") || errors[0].includes("estimated_time")) {
+                userFriendlyError = "Hugging Face models are currently under very high demand or loading. Please try again in a moment.";
+            } else if (errors[0].includes("is currently loading")) {
+                 userFriendlyError = `The model '${input.model}' is still loading on the Hugging Face servers. This can take a few minutes. Please try again shortly or select a different model.`;
             }
             return { imageUrls: [], error: userFriendlyError };
         }
