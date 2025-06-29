@@ -61,8 +61,6 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
  * @returns A promise that resolves to the generation output.
  */
 async function generateWithGenkit(input: GenerateImageInput): Promise<GenerateImageOutput> {
-  // Check is done via environment variables, which is standard for serverless.
-  // The process.env object is populated by the Cloudflare environment.
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
   if (!GEMINI_API_KEY || GEMINI_API_KEY.trim() === "") {
@@ -110,7 +108,7 @@ async function generateWithGenkit(input: GenerateImageInput): Promise<GenerateIm
 
 
 /**
- * Fetches images from Pexels API based on the user's prompt and desired aspect ratio.
+ * Fetches real photos from Pexels based on the user's prompt. This is a search, not an AI generation.
  * @param input The generation parameters from the frontend.
  * @returns A promise that resolves to the generation output.
  */
@@ -144,7 +142,7 @@ async function generateWithPexels(input: GenerateImageInput): Promise<GenerateIm
     const data = await response.json();
 
     if (!data.photos || data.photos.length === 0) {
-      return { imageUrls: [], error: `No photos found for "${input.prompt}". Try a different search term.` };
+      return { imageUrls: [], error: `We couldn't find any real photos matching "${input.prompt}". Try a different search term.` };
     }
     
     const imageUrls = data.photos.slice(0, input.numberOfImages).map((photo: any) => photo.src.large2x);
@@ -153,7 +151,7 @@ async function generateWithPexels(input: GenerateImageInput): Promise<GenerateIm
 
   } catch (e: any) {
     console.error("Pexels fetch failed:", e);
-    return { imageUrls: [], error: e.message || 'An unknown error occurred while fetching images from Pexels.' };
+    return { imageUrls: [], error: e.message || 'An unknown error occurred while searching for photos on Pexels.' };
   }
 }
 
@@ -178,7 +176,7 @@ async function generateWithPollinations(input: GenerateImageInput): Promise<Gene
         return { imageUrls };
     } catch (e: any) {
         console.error("Pollinations generation failed:", e);
-        return { imageUrls: [], error: `An unexpected error occurred with Pollinations: ${e.message}` };
+        return { imageUrls: [], error: `An unexpected error occurred with the Pollinations service: ${e.message}. The service may be temporarily down.` };
     }
 }
 
@@ -193,16 +191,19 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
   if (!API_KEY || API_KEY.trim() === "" || API_KEY.trim() === "0000000000") {
     return {
       imageUrls: [],
-      error: "As the site administrator, please go to your Cloudflare project settings, find 'Environment variables', add a variable named 'STABLE_HORDE_API_KEY', and then redeploy your project."
+      error: "As the site administrator, please go to your Cloudflare project settings, find 'Environment variables', add a variable named 'STABLE_HORDE_API_KEY' with your key, and then redeploy your project."
     };
   }
 
   try {
     const [w, h] = input.aspectRatio.split(':').map(Number);
-    const targetArea = 512 * 768;
+    const targetArea = 512 * 768; // Target ~0.4 megapixels
     const scale = Math.sqrt(targetArea / (w * h));
     const finalWidth = Math.round(w * scale / 64) * 64;
     const finalHeight = Math.round(h * scale / 64) * 64;
+
+    // Improved prompt structure for better results with Stable Diffusion models
+    const fullPrompt = `(best quality, masterpiece, highres, photorealistic), ${input.prompt} ### (deformed, blurry, bad anatomy, low quality, worst quality, watermark, signature)`;
 
     const imageUrls: string[] = [];
     for (let i = 0; i < input.numberOfImages; i++) {
@@ -210,16 +211,16 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
             method: "POST",
             headers: { "Content-Type": "application/json", "apikey": API_KEY, "Client-Agent": "ImagenBrainAI:1.0:tech@firebase.com" },
             body: JSON.stringify({
-                prompt: `${input.prompt} ### Steps: 20, Sampler: k_euler_a, CFG Scale: 7`,
-                params: { sampler_name: "k_euler_a", steps: 20, n: 1, width: finalWidth, height: finalHeight, cfg_scale: 7 },
-                models: ["deliberate", "rev_animated", "dreamshaper", "realisticvision"],
-                kudasai: true,
+                prompt: fullPrompt,
+                params: { sampler_name: "k_euler_a", steps: 25, n: 1, width: finalWidth, height: finalHeight, cfg_scale: 7.5 },
+                models: ["Deliberate", "dreamshaper_8", "rev_animated"], // A good mix of reliable models
+                kudasai: true, // Use a kudos-accepting worker
             })
         });
 
         if (!asyncResponse.ok) {
             const errorData = await asyncResponse.json();
-            throw new Error(`Stable Horde submission failed: ${errorData.message}`);
+            throw new Error(`Stable Horde submission failed: ${errorData.message || 'Unknown error'}`);
         }
         
         const asyncData = await asyncResponse.json();
@@ -236,13 +237,18 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
             if (checkData.done) {
                 const statusResponse = await fetch(`https://stablehorde.net/api/v2/generate/status/${id}`);
                 const statusData = await statusResponse.json();
-                finalResult = statusData.generations[0].img;
+                if (statusData.generations && statusData.generations.length > 0) {
+                    finalResult = statusData.generations[0].img;
+                }
                 break;
             }
         }
         
-        if (finalResult) imageUrls.push(finalResult);
-        else throw new Error(`Image generation timed out after 90 seconds. The Stable Horde network is likely very busy.`);
+        if (finalResult) {
+            imageUrls.push(finalResult);
+        } else {
+            throw new Error(`Image generation timed out after 90 seconds. The Stable Horde network is likely very busy or could not complete your request.`);
+        }
     }
     return { imageUrls };
 
@@ -280,10 +286,12 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
             if (!response.ok) {
                 let errorText;
                 try {
+                    // Try to parse JSON error first
                     const errorJson = await response.json();
                     errorText = errorJson.error || `API returned status ${response.status}`;
                 } catch (e) {
-                    errorText = `API returned status ${response.status} with non-JSON response. The model may be offline or invalid.`;
+                    // If response is not JSON
+                    errorText = `API returned status ${response.status} with non-JSON response. The model may be offline, invalid, or requires a Pro subscription on Hugging Face.`;
                 }
                 throw new Error(errorText);
             }
@@ -300,8 +308,7 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
 
         return { imageUrls };
 
-    } catch (e: any)
-      {
+    } catch (e: any) {
         console.error("Hugging Face generation failed:", e);
         return { imageUrls: [], error: `Hugging Face API Error on model '${input.model}': ${e.message}` };
     }

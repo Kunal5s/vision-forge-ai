@@ -8,8 +8,9 @@ export const GOOGLE_AI_MODELS = [
   { value: 'googleai/gemini-2.0-flash-preview-image-generation', label: 'Google Imagen 3' },
 ];
 
+// Changed label for clarity to indicate it's a search for real photos
 export const PEXELS_MODELS = [
-  { value: 'imagen-brain-ai', label: 'Imagen Brain AI' },
+  { value: 'imagen-brain-ai', label: 'Pexels (Real Photos)' },
 ];
 
 export const POLLINATIONS_MODELS = [
@@ -37,7 +38,8 @@ export const MODEL_GROUPS = [
     premium: false, // As requested, free for testing
   },
   {
-    label: "Realistic Photos (Powered by Pexels)",
+    // Changed group label for clarity
+    label: "Real Photos (Powered by Pexels)",
     models: PEXELS_MODELS,
     premium: false,
   },
