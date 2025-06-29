@@ -256,16 +256,16 @@ How to fix:
 2. Log in to your Hugging Face account and visit the page for the model '${input.model}' to accept its terms of service.
                     `;
                 } else if (response.status === 404) {
-                     errorText = `Model not found (404): The model '${input.model}' may be offline or the name is incorrect. Please try a different model.`;
+                     errorText = `Hugging Face API Error: Model not found (404). The model '${input.model}' may be offline, invalid, or requires a Pro subscription on Hugging Face. Please try a different model.`;
                 } else if (response.status === 503) {
                      errorText = `Model is loading (503): The model '${input.model}' is currently loading. Please try again in a few moments.`;
                 }
                 else {
                     try {
                         const errorJson = await response.json();
-                        errorText = errorJson.error || `API returned status ${response.status}`;
+                        errorText = errorJson.error || `API returned status ${response.status} with non-JSON response.`;
                     } catch (e) {
-                        errorText = `API returned status ${response.status}. The model may be offline or experiencing issues.`;
+                        errorText = `API returned status ${response.status} with non-JSON response. The model may be offline, invalid, or requires a Pro subscription on Hugging Face.`;
                     }
                 }
                 throw new Error(errorText);
