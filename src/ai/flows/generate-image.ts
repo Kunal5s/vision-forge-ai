@@ -11,7 +11,7 @@
 import { z } from 'zod';
 import { ai } from '@/ai/genkit';
 import { HfInference } from '@huggingface/inference';
-import { ALL_MODEL_VALUES, GOOGLE_MODELS, POLLINATIONS_MODELS, STABLE_HORDE_MODELS } from '@/lib/constants';
+import { ALL_MODEL_VALUES, GOOGLE_MODELS, POLLINATIONS_MODELS, HF_MODELS } from '@/lib/constants';
 
 // Helper to parse aspect ratio into width and height for Hugging Face.
 // Hugging Face models work best with dimensions that are multiples of 64.
@@ -80,16 +80,18 @@ export type GenerateImageOutput = z.infer<typeof GenerateImageOutputSchema>;
 export async function generateImage(input: GenerateImageInput): Promise<GenerateImageOutput> {
   const isGoogleModel = GOOGLE_MODELS.some(m => m.value === input.model);
   const isPollinationsModel = POLLINATIONS_MODELS.some(m => m.value === input.model);
-  const isStableHordeModel = STABLE_HORDE_MODELS.some(m => m.value === input.model);
+  const isHuggingFaceModel = HF_MODELS.some(m => m.value === input.model);
 
+  // If the model is not any of the above, it must be Stable Horde
   if (isGoogleModel) {
     return generateWithGoogleAI(input);
   } else if (isPollinationsModel) {
     return generateWithPollinations(input);
-  } else if (isStableHordeModel) {
-    return generateWithStableHorde(input);
-  } else {
+  } else if (isHuggingFaceModel) {
     return generateWithHuggingFace(input);
+  } else {
+    // Default to Stable Horde if no other match
+    return generateWithStableHorde(input);
   }
 }
 
@@ -109,22 +111,22 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
 
   try {
     const { width, height } = getHordeDimensions(input.aspectRatio);
-    const fullPrompt = `${input.prompt}, masterpiece, best quality, high quality, intricate details`;
+    const fullPrompt = `${input.prompt}, masterpiece, best quality`;
     
     const payload = {
         prompt: fullPrompt,
         params: {
-            sampler_name: "k_dpmpp_2s_a", // Good quality, fast sampler
+            sampler_name: "k_euler_a", // User-suggested fast sampler
             cfg_scale: 7,
-            steps: 25,
+            steps: 20, // User-suggested steps for speed
             n: input.numberOfImages,
             width,
             height,
         },
         nsfw: false,
         censor_nsfw: true,
-        trusted_workers: false, // Use any available worker for speed
-        models: ["stable_diffusion_2.1"], // A fast, general-purpose model
+        trusted_workers: false,
+        models: ["deliberate", "rev_animated"], // User-suggested fast models
         r2: true, // Use R2 for faster image delivery
     };
 
