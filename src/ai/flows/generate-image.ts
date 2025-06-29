@@ -66,7 +66,7 @@ async function generateWithGenkit(input: GenerateImageInput): Promise<GenerateIm
   if (!GEMINI_API_KEY || GEMINI_API_KEY.trim() === "") {
     return { 
       imageUrls: [], 
-      error: "Google AI API key is not configured. Please go to your Cloudflare project settings, find 'Environment variables', and add a variable named 'GEMINI_API_KEY' with your key. Then, redeploy your project."
+      error: "Google AI API key is not configured. As the site administrator, please go to your Cloudflare project settings, find 'Environment variables', add a variable named 'GEMINI_API_KEY' with your key, and then redeploy your project."
     };
   }
 
@@ -96,7 +96,7 @@ async function generateWithGenkit(input: GenerateImageInput): Promise<GenerateIm
     console.error("Genkit generation failed:", e);
     let detailedMessage = `An unexpected error occurred with the AI model. ${e.message || ''}`;
      if (e.message && (e.message.includes('API key not valid') || e.message.includes('API_KEY_INVALID'))) {
-        detailedMessage = "The Google AI API key is invalid or not configured. Please go to your Cloudflare project settings, find 'Environment variables', and add a variable named 'GEMINI_API_KEY' with your key. Also, ensure billing is enabled for your Google Cloud project, then redeploy.";
+        detailedMessage = "The Google AI API key is invalid or not configured. As the site administrator, please go to your Cloudflare project settings, verify your 'GEMINI_API_KEY' variable, ensure billing is enabled for your Google Cloud project, then redeploy.";
     }
     return { imageUrls: [], error: detailedMessage };
   }
@@ -114,7 +114,7 @@ async function generateWithPexels(input: GenerateImageInput): Promise<GenerateIm
   if (!PEXELS_API_KEY || PEXELS_API_KEY.trim() === "") {
     return { 
       imageUrls: [], 
-      error: "Pexels API key is not configured. Please go to your Cloudflare project settings, find 'Environment variables', and add a variable named 'PEXELS_API_KEY' with your key. Then, redeploy your project."
+      error: "Pexels API key is not configured. As the site administrator, please go to your Cloudflare project settings, find 'Environment variables', add a variable named 'PEXELS_API_KEY' with your key, and then redeploy your project."
     };
   }
 
@@ -188,7 +188,7 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
   if (!API_KEY || API_KEY.trim() === "" || API_KEY.trim() === "0000000000") {
     return {
       imageUrls: [],
-      error: "The Stable Horde API key is not configured. Please go to your Cloudflare project settings, find 'Environment variables', and add a variable named 'STABLE_HORDE_API_KEY'. Remember to redeploy after adding the key."
+      error: "The Stable Horde API key is not configured. As the site administrator, please go to your Cloudflare project settings, find 'Environment variables', add a variable named 'STABLE_HORDE_API_KEY', and then redeploy your project."
     };
   }
 
@@ -260,7 +260,7 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
     if (keys.length === 0) {
         return { 
             imageUrls: [], 
-            error: "No Hugging Face API keys are configured. Please go to your Cloudflare project settings, find 'Environment variables', and add variables named 'HF_API_KEY_...' with your keys. Then, redeploy your project."
+            error: "No Hugging Face API keys are configured. As the site administrator, please go to your Cloudflare project settings, find 'Environment variables', add variables named 'HF_API_KEY_...', and then redeploy your project."
         };
     }
 

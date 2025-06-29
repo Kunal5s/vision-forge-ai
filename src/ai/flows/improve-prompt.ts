@@ -55,6 +55,12 @@ const improvePromptFlow = ai.defineFlow(
     outputSchema: ImprovePromptOutputSchema,
   },
   async (input): Promise<ImprovePromptOutput> => {
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+    if (!GEMINI_API_KEY || GEMINI_API_KEY.trim() === "") {
+        const failureReason = "The AI prompt enhancer requires an API key. As the site administrator, please go to your Cloudflare project settings, find 'Environment variables', add a variable named 'GEMINI_API_KEY' with your key, and then redeploy your project.";
+        return { improvedPrompt: '', reasoning: '', error: failureReason };
+    }
+
     try {
         const {output} = await improvePromptPrompt(input);
         if (!output?.improvedPrompt) {
