@@ -3,6 +3,7 @@
 
 /**
  * @fileOverview Universal image generation flow that routes to different services.
+ * This file has been rewritten for maximum robustness and provides clear, actionable error messages.
  * - Routes to Pexels, Pollinations, Stable Horde, and Hugging Face.
  * - generateImage - A function that handles the image generation process.
  * - GenerateImageInput - The input type for the generateImage function.
@@ -68,8 +69,6 @@ async function generateWithPexels(input: GenerateImageInput): Promise<GenerateIm
   }
 
   try {
-    // The Pexels API only supports 'landscape', 'portrait', or 'square'.
-    // We map the user's selected aspect ratio to the closest Pexels orientation.
     const orientationMap: Record<string, string> = {
       '1:1': 'square',
       '16:9': 'landscape', '21:9': 'landscape', '3:2': 'landscape', '4:3': 'landscape', '2:1': 'landscape', '3:1': 'landscape',
@@ -82,10 +81,10 @@ async function generateWithPexels(input: GenerateImageInput): Promise<GenerateIm
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
       if (response.status === 401) {
           throw new Error(`Pexels API error (401 Unauthorized): The API key is invalid or has a typo. Please go to your Cloudflare project settings, double-check the value of 'PEXELS_API_KEY', and redeploy.`);
       }
+      const errorText = await response.text();
       throw new Error(`Pexels API returned an error: ${response.statusText} - ${errorText}`);
     }
 
@@ -118,8 +117,7 @@ async function generateWithPollinations(input: GenerateImageInput): Promise<Gene
         const finalHeight = Math.round(height * scaleFactor);
 
         const imageUrls = Array(input.numberOfImages).fill(0).map(() => {
-            const seed = Math.floor(Math.random() * 10000); // Random seed for variation
-            // The user's prompt already includes styles, moods, etc.
+            const seed = Math.floor(Math.random() * 10000);
             const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(input.prompt)}?width=${finalWidth}&height=${finalHeight}&seed=${seed}&nologo=true`;
             return url;
         });
@@ -148,13 +146,11 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
 
   try {
     const [w, h] = input.aspectRatio.split(':').map(Number);
-    const targetArea = 512 * 768; // Target ~0.4 megapixels
+    const targetArea = 512 * 768;
     const scale = Math.sqrt(targetArea / (w * h));
     const finalWidth = Math.round(w * scale / 64) * 64;
     const finalHeight = Math.round(h * scale / 64) * 64;
 
-    // Improved prompt structure for better results with Stable Diffusion models.
-    // The input.prompt already contains styles, moods, etc. from the UI.
     const fullPrompt = `(best quality, masterpiece, highres, photorealistic), ${input.prompt} ### (deformed, blurry, bad anatomy, low quality, worst quality, watermark, signature)`;
 
     const imageUrls: string[] = [];
@@ -165,16 +161,16 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
             body: JSON.stringify({
                 prompt: fullPrompt,
                 params: { sampler_name: "k_euler_a", steps: 25, n: 1, width: finalWidth, height: finalHeight, cfg_scale: 7.5 },
-                models: ["Deliberate", "dreamshaper_8", "rev_animated"], // A good mix of reliable models
-                kudosai: true, // Use a kudos-accepting worker
+                models: ["Deliberate", "dreamshaper_8", "rev_animated"],
+                kudosai: true,
             })
         });
 
         if (!asyncResponse.ok) {
-            const errorData = await asyncResponse.json();
-             if (asyncResponse.status === 401) {
+            if (asyncResponse.status === 401) {
                 throw new Error(`Stable Horde error (401 Unauthorized): The API key is invalid. Please go to your Cloudflare project settings, check the value of 'STABLE_HORDE_API_KEY', and redeploy.`);
             }
+            const errorData = await asyncResponse.json();
             throw new Error(`Stable Horde submission failed: ${errorData.message || 'Unknown error'}`);
         }
         
@@ -219,29 +215,34 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
  * @returns A promise that resolves to the generation output.
  */
 async function generateWithHuggingFace(input: GenerateImageInput): Promise<GenerateImageOutput> {
-    const keys = Object.entries(process.env).filter(([k]) => k.startsWith('HF_API_KEY_')).map(([, v]) => v).filter(Boolean) as string[];
+    // Simplified and more robust key retrieval
+    const keys: string[] = [];
+    for (let i = 1; i <= 10; i++) {
+        const key = process.env[`HF_API_KEY_${i}`];
+        if (key && key.trim() !== '') {
+            keys.push(key);
+        }
+    }
 
     if (keys.length === 0) {
         return { 
             imageUrls: [], 
-            error: "As the site administrator, please go to your Cloudflare project settings, find 'Environment variables', add variables named 'HF_API_KEY_...', and then redeploy your project."
+            error: "As the site administrator, please go to your Cloudflare project settings, find 'Environment variables', add variables named 'HF_API_KEY_1', 'HF_API_KEY_2', etc., and then redeploy your project."
         };
     }
 
     try {
         const imageUrls: string[] = [];
-        // Add prompt wrapper and negative prompt for better results with SD-based models.
         const fullPrompt = `${input.prompt}, high quality, detailed, (masterpiece)`;
         const negativePrompt = "blurry, bad anatomy, worst quality, low quality, watermark, signature, text, error, ugly";
         
         for (let i = 0; i < input.numberOfImages; i++) {
-            const key = keys[i % keys.length]; // Rotate keys
+            const key = keys[i % keys.length];
             const response = await fetch(`https://api-inference.huggingface.co/models/${input.model}`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json", "x-wait-for-model": "true" },
                 body: JSON.stringify({ 
                     "inputs": fullPrompt,
-                    // Including a negative prompt helps improve image quality by avoiding common flaws.
                     "negative_prompt": negativePrompt,
                 }),
             });
@@ -249,23 +250,21 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
             if (!response.ok) {
                 let errorText;
                 if (response.status === 401) {
-                    errorText = `Hugging Face error (401 Unauthorized): The API key is invalid or your account doesn't have access to this model. 
+                    errorText = `Hugging Face error (401 Unauthorized) on model '${input.model}'. 
                     
 How to fix:
-1. Double-check your HF_API_KEY variables in your Cloudflare project settings.
-2. Log in to your Hugging Face account and visit the page for the model '${input.model}' to accept its terms of service.
-                    `;
+1. Double-check your HF_API_KEY variables in your Cloudflare project settings for typos.
+2. Log in to your Hugging Face account and visit the page for this model to accept its terms of service. Some models require this.`;
                 } else if (response.status === 404) {
-                     errorText = `Hugging Face API Error: Model not found (404). This can happen if the model '${input.model}' is temporarily offline or has been moved. This is common with free community models. Please try a different model from the list. You can also check the model's page on the Hugging Face website to see its status.`;
+                     errorText = `Hugging Face API Error: Model not found (404). This can happen if the model '${input.model}' is temporarily offline or has been moved. This is common with free community models. Please try a different model from the list.`;
                 } else if (response.status === 503) {
-                     errorText = `Model is loading (503): The model '${input.model}' is currently loading. Please try again in a few moments.`;
-                }
-                else {
+                     errorText = `Model is loading (503): The model '${input.model}' is currently loading on Hugging Face's servers. Please try again in a few moments.`;
+                } else {
                     try {
                         const errorJson = await response.json();
-                        errorText = errorJson.error || `API returned status ${response.status} with non-JSON response.`;
+                        errorText = errorJson.error || `API returned status ${response.status}. The model may be offline or you might have exhausted your free tier for the month.`;
                     } catch (e) {
-                        errorText = `API returned status ${response.status} with non-JSON response. The model may be offline or invalid. Please try a different model.`;
+                        errorText = `API returned status ${response.status} with a non-JSON response. The model is likely offline or invalid. Please try a different model.`;
                     }
                 }
                 throw new Error(errorText);
@@ -274,7 +273,7 @@ How to fix:
             const blob = await response.blob();
             if (!blob.type.startsWith('image/')) {
                  const errorText = await blob.text();
-                 throw new Error(`Invalid response from API. Expected an image, but received text: ${errorText.substring(0, 100)}...`);
+                 throw new Error(`Invalid response from API. Expected an image for model '${input.model}', but received text: ${errorText.substring(0, 100)}...`);
             }
             const buffer = Buffer.from(await blob.arrayBuffer());
             const dataUri = `data:${blob.type};base64,${buffer.toString('base64')}`;
@@ -284,7 +283,7 @@ How to fix:
         return { imageUrls };
 
     } catch (e: any) {
-        console.error("Hugging Face generation failed:", e);
+        console.error(`Hugging Face generation failed for model ${input.model}:`, e);
         return { imageUrls: [], error: `Hugging Face API Error: ${e.message}` };
     }
 }
