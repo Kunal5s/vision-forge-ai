@@ -178,7 +178,7 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
   if (!API_KEY || API_KEY === "YOUR_STABLE_HORDE_API_KEY_HERE" || API_KEY.trim() === "") {
     return {
       imageUrls: [],
-      error: "Stable Horde API key is not configured. For site administrators, please add your STABLE_HORDE_API_KEY to the environment variables."
+      error: "The Stable Horde API key is not configured. For site administrators, please add your STABLE_HORDE_API_KEY to the environment variables. A key of '0000000000' can be used for anonymous access with lower priority."
     };
   }
 
