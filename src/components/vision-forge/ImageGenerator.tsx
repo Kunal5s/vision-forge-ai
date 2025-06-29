@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -22,7 +22,6 @@ import { ImageDisplay } from './ImageDisplay';
 import { FuturisticPanel } from './FuturisticPanel';
 import { ImageIcon as ImageIconIcon, RefreshCcw, XCircle } from 'lucide-react';
 import { useSubscription } from '@/hooks/use-subscription';
-import { Badge } from '@/components/ui/badge';
 import { StyleSelector } from './StyleSelector';
 import { ScrollArea } from '../ui/scroll-area';
 
@@ -86,9 +85,7 @@ export function ImageGenerator() {
 
     const generationParams: GenerateImageInput = { 
         prompt: finalPrompt,
-        plan: subscription?.plan || 'free',
         aspectRatio: selectedAspectRatio,
-        model: 'pollinations', // Only one model now
         numberOfImages: numberOfImages,
      };
     const result = await generateImage(generationParams);
@@ -96,7 +93,9 @@ export function ImageGenerator() {
     if (generationCancelled.current) {
         console.log("Generation was cancelled by the user. Results ignored.");
         // Also clean up any URLs that might have been created before cancellation
-        result.imageUrls.forEach(url => URL.revokeObjectURL(url));
+        if (result.imageUrls) {
+          result.imageUrls.forEach(url => URL.revokeObjectURL(url));
+        }
         return;
     }
 

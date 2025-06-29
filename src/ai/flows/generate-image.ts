@@ -16,8 +16,6 @@ const GenerateImageInputSchema = z.object({
   prompt: z.string().describe('The search query for fetching images.'),
   aspectRatio: z.string().describe("The desired aspect ratio, e.g., '16:9'."),
   numberOfImages: z.number().min(1).max(6).describe('The number of images to generate.'),
-  plan: z.string(),
-  model: z.string().describe('The AI model to use for generation.'),
 });
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
 

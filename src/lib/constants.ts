@@ -5,10 +5,6 @@ export interface StyleOption {
   label: string;
 }
 
-export const MODELS = [
-  { label: 'Pollinations AI (Fast & Free)', value: 'pollinations' },
-];
-
 export const ASPECT_RATIOS = [
   { label: "1:1 (Square)", value: "1:1" },
   { label: "16:9 (Widescreen)", value: "16:9" },

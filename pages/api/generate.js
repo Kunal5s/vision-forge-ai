@@ -1,4 +1,3 @@
-
 // pages/api/generate.js
 
 // This tells Vercel/Netlify/Cloudflare to use the Edge Runtime, which is faster and cheaper.
