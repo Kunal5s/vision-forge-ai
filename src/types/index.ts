@@ -1,17 +1,4 @@
 
-export interface GeneratedImageParams {
-  prompt: string;
-  aspectRatio: string;
-  plan: Plan;
-  model: string;
-  numberOfImages: number;
-}
-
-export interface GeneratedImageHistoryItem extends GeneratedImageParams {
-  id: string;
-  imageUrl: string;
-  timestamp: Date;
-}
 
 // New types for subscription
 export type Plan = 'free' | 'pro' | 'mega';

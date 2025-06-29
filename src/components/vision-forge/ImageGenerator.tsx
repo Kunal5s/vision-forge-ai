@@ -21,9 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { generateImage, type GenerateImageInput } from '@/ai/flows/generate-image';
 import { improvePrompt, type ImprovePromptOutput } from '@/ai/flows/improve-prompt';
 import { ASPECT_RATIOS, STYLES, MOODS, LIGHTING_OPTIONS, COLOR_OPTIONS, MODEL_GROUPS, STABLE_HORDE_MODELS } from '@/lib/constants';
-import type { GeneratedImageHistoryItem } from '@/types';
 import { ImageDisplay } from './ImageDisplay';
-import { UsageHistory } from './UsageHistory';
 import { FuturisticPanel } from './FuturisticPanel';
 import { Wand2, ThumbsUp, ThumbsDown, Gem, AlertTriangle, Sparkles, Image as ImageIconIcon, RefreshCcw, XCircle } from 'lucide-react';
 import { LoadingSpinner } from './LoadingSpinner';
@@ -63,7 +61,6 @@ export function ImageGenerator() {
   const [isImprovingPrompt, setIsImprovingPrompt] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  const [history, setHistory] = useState<GeneratedImageHistoryItem[]>([]);
   const [improvedPromptSuggestion, setImprovedPromptSuggestion] = useState<StrippedImprovePromptOutput | null>(null);
   const [showImprovePromptDialog, setShowImprovePromptDialog] = useState(false);
 
@@ -76,42 +73,6 @@ export function ImageGenerator() {
   const activeModelGroup = MODEL_GROUPS.find(g => g.models.some(m => m.value === activeModel));
   const isPremiumModel = activeModelGroup?.premium ?? false;
   const isCommunityModel = activeModelGroup?.label.includes('Community') ?? false;
-  
-  useEffect(() => {
-    if (subscription?.plan === 'pro' || subscription?.plan === 'mega') {
-      const storedHistory = localStorage.getItem('imagenBrainAiHistory');
-      if (storedHistory) {
-        try {
-          setHistory(JSON.parse(storedHistory).map((item:GeneratedImageHistoryItem) => ({...item, timestamp: new Date(item.timestamp)})));
-        } catch (e) {
-          localStorage.removeItem('imagenBrainAiHistory');
-        }
-      }
-    } else {
-      setHistory([]);
-    }
-  }, [subscription?.plan]);
-
-  useEffect(() => {
-    if (subscription?.plan === 'pro' || subscription?.plan === 'mega') {
-        if (history.length > 0) {
-          try {
-            localStorage.setItem('imagenBrainAiHistory', JSON.stringify(history));
-          } catch (e: any) {
-            if (e instanceof DOMException && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
-                toast({
-                  title: "History Storage Full",
-                  description: "Your browser storage is full. Removing oldest history item to make space.",
-                  variant: "destructive"
-                });
-                setHistory(prev => prev.slice(0, -1));
-            }
-          }
-        } else {
-          localStorage.removeItem('imagenBrainAiHistory');
-        }
-    }
-  }, [history, toast, subscription?.plan]);
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     if (!canGenerate(isPremiumModel)) {
@@ -180,20 +141,6 @@ export function ImageGenerator() {
       setGeneratedImageUrls(result.imageUrls);
       setDisplayAspectRatio(selectedAspectRatio);
       
-      if (subscription && (subscription.plan === 'pro' || subscription.plan === 'mega')) {
-        const historyItem: GeneratedImageHistoryItem = {
-          id: new Date().toISOString() + Math.random().toString(36).substring(2,9),
-          prompt: data.prompt,
-          aspectRatio: selectedAspectRatio,
-          model: activeModel,
-          numberOfImages: generationParams.numberOfImages,
-          imageUrl: result.imageUrls[0], 
-          timestamp: new Date(),
-          plan: subscription.plan,
-        };
-        setHistory(prev => [historyItem, ...prev]);
-      }
-
       toast({ title: 'Vision Forged!', description: `Your image(s) have been successfully generated.` });
     } else {
       setError('The AI returned no images. This can happen with very complex or unsafe prompts. Please try simplifying your request.');
@@ -249,31 +196,6 @@ export function ImageGenerator() {
     if (!currentPrompt) return;
     navigator.clipboard.writeText(currentPrompt);
     toast({ title: 'Prompt Copied!', description: 'The current prompt is copied to your clipboard.' });
-  };
-
-  const handleSelectHistoryItem = (item: GeneratedImageHistoryItem) => {
-    setActiveModel(item.model);
-    setFormValue('prompt', item.prompt);
-    setSelectedAspectRatio(item.aspectRatio);
-    setNumberOfImages(item.numberOfImages || 1);
-    setSelectedStyle(STYLES[0]);
-    setSelectedMood(MOODS[0]);
-    setSelectedLighting(LIGHTING_OPTIONS[0]);
-    setSelectedColor(COLOR_OPTIONS[0]);
-    setGeneratedImageUrls([]);
-    setError(null);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    toast({ title: 'History Item Loaded', description: 'Parameters loaded. Click "Forge Vision" to regenerate.' });
-  };
-
-  const handleDeleteHistoryItem = (id: string) => {
-    setHistory(prev => prev.filter(item => item.id !== id));
-    toast({ title: 'History Item Deleted' });
-  };
-
-  const handleClearHistory = () => {
-    setHistory([]);
-    toast({ title: 'History Cleared' });
   };
   
   const handleReset = () => {
@@ -569,17 +491,6 @@ export function ImageGenerator() {
         </div>
       </div>
       
-      {(subscription?.plan === 'pro' || subscription?.plan === 'mega') && (
-        <div className="mt-12">
-          <UsageHistory 
-              history={history} 
-              onSelectHistoryItem={handleSelectHistoryItem}
-              onDeleteHistoryItem={handleDeleteHistoryItem}
-              onClearHistory={handleClearHistory}
-            />
-        </div>
-      )}
-
       {improvedPromptSuggestion && (
         <Dialog open={showImprovePromptDialog} onOpenChange={setShowImprovePromptDialog}>
           <DialogContent className="sm:max-w-lg">
