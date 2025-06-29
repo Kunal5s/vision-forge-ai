@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -25,7 +25,7 @@ import type { GeneratedImageHistoryItem } from '@/types';
 import { ImageDisplay } from './ImageDisplay';
 import { UsageHistory } from './UsageHistory';
 import { FuturisticPanel } from './FuturisticPanel';
-import { Wand2, ThumbsUp, ThumbsDown, Gem, AlertTriangle, Sparkles, Image as ImageIconIcon } from 'lucide-react';
+import { Wand2, ThumbsUp, ThumbsDown, Gem, AlertTriangle, Sparkles, Image as ImageIconIcon, RefreshCcw, XCircle } from 'lucide-react';
 import { LoadingSpinner } from './LoadingSpinner';
 import { useSubscription } from '@/hooks/use-subscription';
 import Link from 'next/link';
@@ -47,6 +47,7 @@ const imageCountOptions = [
 export function ImageGenerator() {
   const { toast } = useToast();
   const { subscription, useCredit, isLoading: isSubLoading, canGenerate } = useSubscription();
+  const generationCancelled = useRef(false);
   
   const [activeModel, setActiveModel] = useState<string>(MODEL_GROUPS[0].models[0].value);
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>(ASPECT_RATIOS[0].value);
@@ -129,6 +130,7 @@ export function ImageGenerator() {
         return;
       }
 
+    generationCancelled.current = false;
     setIsLoading(true);
     setError(null);
 
@@ -163,6 +165,11 @@ export function ImageGenerator() {
         numberOfImages: subscription?.plan === 'pro' ? 1 : numberOfImages,
      };
     const result = await generateImage(generationParams);
+    
+    if (generationCancelled.current) {
+        console.log("Generation was cancelled by the user. Results ignored.");
+        return;
+    }
 
     setIsLoading(false);
 
@@ -269,6 +276,33 @@ export function ImageGenerator() {
     toast({ title: 'History Cleared' });
   };
   
+  const handleReset = () => {
+    setFormValue('prompt', '');
+    setActiveModel(MODEL_GROUPS[0].models[0].value);
+    setSelectedAspectRatio(ASPECT_RATIOS[0].value);
+    setDisplayAspectRatio(ASPECT_RATIOS[0].value);
+    setSelectedStyle(STYLES[0]);
+    setSelectedMood(MOODS[0]);
+    setSelectedLighting(LIGHTING_OPTIONS[0]);
+    setSelectedColor(COLOR_OPTIONS[0]);
+    setNumberOfImages(1);
+    setGeneratedImageUrls([]);
+    setError(null);
+    setImprovedPromptSuggestion(null);
+    toast({ title: 'Form Reset', description: 'All settings have been reset to their defaults.' });
+  };
+
+  const handleStopGeneration = () => {
+    generationCancelled.current = true;
+    setIsLoading(false);
+    setError("Image generation was cancelled by the user.");
+    toast({
+        title: 'Generation Cancelled',
+        description: 'The image generation process has been stopped.',
+    });
+  };
+
+
   let creditDisplayNode = null;
   if (!isSubLoading && subscription) {
     const { plan, credits } = subscription;
@@ -472,11 +506,40 @@ export function ImageGenerator() {
                 </div>
               </div>
               
-              <Button type="submit" disabled={isLoading || isSubLoading || !canGenerate(isPremiumModel)} className="w-full text-lg py-3 bg-primary hover:bg-primary/90 text-primary-foreground transition-shadow hover:shadow-xl hover:shadow-primary/20">
-                {isLoading ? <LoadingSpinner size={24} className="mr-2"/> : <ImageIconIcon size={20} className="mr-2" />}
-                Forge Vision
-              </Button>
-              {!isSubLoading && !canGenerate(isPremiumModel) && (
+              <div className="flex w-full items-center gap-2">
+                {isLoading ? (
+                  <Button
+                    type="button"
+                    onClick={handleStopGeneration}
+                    variant="destructive"
+                    className="w-full text-lg py-3"
+                  >
+                    <XCircle size={20} className="mr-2" /> Stop
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      type="button"
+                      onClick={handleReset}
+                      variant="outline"
+                      className="text-lg py-3"
+                      title="Reset all settings to default"
+                    >
+                      <RefreshCcw size={20} />
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={isSubLoading || !canGenerate(isPremiumModel)}
+                      className="w-full text-lg py-3 bg-primary hover:bg-primary/90 text-primary-foreground transition-shadow hover:shadow-xl hover:shadow-primary/20"
+                    >
+                      <ImageIconIcon size={20} className="mr-2" />
+                      Forge Vision
+                    </Button>
+                  </>
+                )}
+              </div>
+
+              {!isSubLoading && !canGenerate(isPremiumModel) && !isLoading && (
                 <div className="text-center text-sm text-destructive bg-destructive/10 p-3 rounded-md flex items-center justify-center gap-2">
                     <AlertTriangle size={16} />
                     <div>
