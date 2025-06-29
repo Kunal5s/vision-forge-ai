@@ -17,14 +17,10 @@ export const POLLINATIONS_MODELS = [
   { value: 'pollinations', label: 'Pollinations AI (Fast)' },
 ];
 
-export const STABLE_HORDE_MODELS = [
-  { value: 'stable_horde', label: 'Stable Horde (Community)' },
-];
-
 export const MODEL_GROUPS = [
   {
     label: "Community Models (Free)",
-    models: [...POLLINATIONS_MODELS, ...STABLE_HORDE_MODELS],
+    models: [...POLLINATIONS_MODELS],
     premium: false,
   },
   {
@@ -41,7 +37,6 @@ export const MODEL_GROUPS = [
 
 export const ALL_MODEL_VALUES = [
     ...POLLINATIONS_MODELS.map(m => m.value),
-    ...STABLE_HORDE_MODELS.map(m => m.value),
     ...HF_MODELS.map(m => m.value), 
     ...GOOGLE_MODELS.map(m => m.value)
 ] as [string, ...string[]];

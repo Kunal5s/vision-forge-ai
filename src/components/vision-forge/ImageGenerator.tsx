@@ -20,7 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { useToast } from '@/hooks/use-toast';
 import { generateImage, type GenerateImageInput } from '@/ai/flows/generate-image';
 import { improvePrompt, type ImprovePromptOutput } from '@/ai/flows/improve-prompt';
-import { ASPECT_RATIOS, STYLES, MOODS, LIGHTING_OPTIONS, COLOR_OPTIONS, MODEL_GROUPS, STABLE_HORDE_MODELS } from '@/lib/constants';
+import { ASPECT_RATIOS, STYLES, MOODS, LIGHTING_OPTIONS, COLOR_OPTIONS, MODEL_GROUPS } from '@/lib/constants';
 import { ImageDisplay } from './ImageDisplay';
 import { FuturisticPanel } from './FuturisticPanel';
 import { Wand2, ThumbsUp, ThumbsDown, Gem, AlertTriangle, Sparkles, Image as ImageIconIcon, RefreshCcw, XCircle } from 'lucide-react';
