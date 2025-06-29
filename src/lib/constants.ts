@@ -17,18 +17,14 @@ export const STABLE_HORDE_MODELS = [
     { value: 'stable_horde', label: 'Stable Horde (Community)' }
 ];
 
-// Curated list of more reliable and active Hugging Face models for text-to-image
+// Curated list of highly reliable and active Hugging Face models for text-to-image
 export const HF_MODELS = [
   { value: 'stabilityai/sdxl-turbo', label: 'SDXL Turbo' },
   { value: 'SG161222/Realistic_Vision_V5.1_noVAE', label: 'Realistic Vision V5.1' },
   { value: 'prompthero/openjourney', label: 'OpenJourney' },
-  { value: 'stablediffusionapi/anything-v3', label: 'Anything V3' },
   { value: 'Lykon/dreamshaper-8', label: 'Dreamshaper 8' },
-  { value: 'nitrosocke/Arcane-Diffusion', label: 'Arcane Diffusion' },
   { value: 'cagliostrolab/animagine-xl-3.0', label: 'Animagine XL 3.0' },
-  { value: 'andite/anything-v4.0', label: 'Anything V4' },
-  { value: 'wavymulder/Analog-Diffusion', label: 'Analog Diffusion' },
-  { value: 'dreamlike-art/dreamlike-photoreal-2.0', label: 'Dreamlike Photoreal 2.0' },
+  { value: 'runwayml/stable-diffusion-v1-5', label: 'Stable Diffusion 1.5' },
 ];
 
 

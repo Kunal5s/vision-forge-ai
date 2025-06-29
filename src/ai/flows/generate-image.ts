@@ -256,7 +256,7 @@ How to fix:
 2. Log in to your Hugging Face account and visit the page for the model '${input.model}' to accept its terms of service.
                     `;
                 } else if (response.status === 404) {
-                     errorText = `Hugging Face API Error: Model not found (404). The model '${input.model}' may be offline, invalid, or requires a Pro subscription on Hugging Face. Please try a different model.`;
+                     errorText = `Hugging Face API Error: Model not found (404). This can happen if the model '${input.model}' is temporarily offline or has been moved. This is common with free community models. Please try a different model from the list. You can also check the model's page on the Hugging Face website to see its status.`;
                 } else if (response.status === 503) {
                      errorText = `Model is loading (503): The model '${input.model}' is currently loading. Please try again in a few moments.`;
                 }
@@ -265,7 +265,7 @@ How to fix:
                         const errorJson = await response.json();
                         errorText = errorJson.error || `API returned status ${response.status} with non-JSON response.`;
                     } catch (e) {
-                        errorText = `API returned status ${response.status} with non-JSON response. The model may be offline, invalid, or requires a Pro subscription on Hugging Face.`;
+                        errorText = `API returned status ${response.status} with non-JSON response. The model may be offline or invalid. Please try a different model.`;
                     }
                 }
                 throw new Error(errorText);
