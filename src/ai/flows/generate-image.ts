@@ -141,7 +141,7 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
         'Client-Agent': 'ImagenBrainAI/1.0 (https://imagenbrainai.in)',
       },
       body: JSON.stringify({
-        prompt: `${input.prompt} ### masterpiece, high quality, high resolution`,
+        prompt: `${input.prompt} ### masterpiece, high quality`,
         params: {
           sampler_name: 'k_dpmpp_2m',
           cfg_scale: 8.0,
@@ -150,7 +150,7 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
           steps: 30,
           n: input.numberOfImages,
         },
-        models: ["juggernautXL", "realvisXL_V4", "epicrealismXL", "DreamShaper XL"],
+        models: ["stable_diffusion"],
         nsfw: false,
         trusted_workers: true,
       }),
