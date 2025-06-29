@@ -31,7 +31,7 @@ export function PreFooterCallToAction() {
                 <div>
                   <h3 className="text-xl font-semibold text-foreground mb-1">Advanced AI Technology</h3>
                   <p className="text-sm text-muted-foreground">
-                    Leverage sophisticated AI models for high-quality image generation and intelligent prompt assistance. We continuously innovate to bring you the best.
+                    Leverage a diverse range of sophisticated AI models for high-quality image generation. We continuously innovate to bring you the best creative tools.
                   </p>
                 </div>
               </div>

@@ -28,21 +28,21 @@ export default function AboutPage() {
               At Imagen BrainAi, our mission is to democratize creativity by providing an intuitive and powerful AI art generator that enables anyone to bring their imaginative visions to life. We believe that text-to-image technology should serve as a catalyst for innovation, breaking down barriers and opening up new possibilities for artists, designers, marketers, and dreamers alike.
             </p>
             <p className="text-lg text-foreground/80">
-              We strive to build a platform that is not only technologically advanced, leveraging the cutting-edge capabilities of models like Google's Imagen 3, but also user-friendly and accessible. Our goal is to empower you to create stunning, unique AI-generated images with unprecedented ease and control.
+              We strive to build a platform that is not only technologically advanced, leveraging the cutting-edge capabilities of multiple AI models, but also user-friendly and accessible. Our goal is to empower you to create stunning, unique AI-generated images with unprecedented ease and control.
             </p>
           </div>
         </section>
 
         <section className="bg-muted p-8 rounded-xl">
           <h2 className="text-3xl font-semibold text-foreground mb-6 text-center">What Our AI Image Generator Offers</h2>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <div className="flex flex-col items-center text-center p-4">
               <div className="p-3 bg-primary/10 rounded-full mb-4">
                 <Sparkles className="h-10 w-10 text-primary" />
               </div>
               <h3 className="text-xl font-semibold text-foreground mb-2">Stunning Image Generation</h3>
               <p className="text-sm text-muted-foreground">
-                Leverage the power of Google's Imagen 3 to generate high-quality, diverse, and coherent images from simple text prompts. From photorealistic scenes to fantastical illustrations, your imagination is the only limit.
+                Leverage the power of multiple AI models to generate high-quality, diverse, and coherent images from simple text prompts. From photorealistic scenes to fantastical illustrations, your imagination is the only limit.
               </p>
             </div>
             <div className="flex flex-col items-center text-center p-4">
@@ -52,15 +52,6 @@ export default function AboutPage() {
               <h3 className="text-xl font-semibold text-foreground mb-2">Advanced Customization</h3>
               <p className="text-sm text-muted-foreground">
                 Fine-tune your AI-generated creations with a wide array of options including aspect ratios, artistic styles, moods, lighting, and color palettes. Our intuitive interface gives you precise control.
-              </p>
-            </div>
-            <div className="flex flex-col items-center text-center p-4">
-              <div className="p-3 bg-primary/10 rounded-full mb-4">
-                 <Lightbulb className="h-10 w-10 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">AI-Powered Prompt Assistance</h3>
-              <p className="text-sm text-muted-foreground">
-                Our AI-powered prompt improvement feature helps you refine your text descriptions to achieve more accurate and compelling results, unlocking the full potential of the text-to-image AI model.
               </p>
             </div>
           </div>

@@ -87,13 +87,6 @@ export default function HomePage() {
             iconBgClass="bg-accent/10"
             iconTextClass="text-accent"
           />
-           <FeatureCard
-            icon={<Wand2 className="h-10 w-10 text-primary" />}
-            title="AI-Powered Prompt Enhancement"
-            description="Stuck for ideas? Let our AI assistant analyze your prompt and suggest improvements to unlock more creative and vivid results from our AI image creator."
-            iconBgClass="bg-primary/10"
-            iconTextClass="text-primary"
-          />
           <FeatureCard
             icon={<Grid className="h-10 w-10 text-accent" />}
             title="Rapid Quad-Variations"

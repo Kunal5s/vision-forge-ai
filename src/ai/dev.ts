@@ -1,2 +1,1 @@
-import '@/ai/flows/improve-prompt.ts';
-import '@/ai/flows/generate-image.ts';
+// This file is intentionally left blank as Genkit functionality has been removed.
