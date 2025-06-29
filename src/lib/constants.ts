@@ -1,48 +1,28 @@
 
-// A curated list of reliable and high-quality Hugging Face models.
-export const HF_MODELS = [
-  { value: 'runwayml/stable-diffusion-v1-5', label: 'Stable Diffusion v1.5' },
-  { value: 'stabilityai/sdxl-turbo', label: 'SDXL Turbo (Ultra-fast)' },
-  { value: 'prompthero/openjourney', label: 'OpenJourney (Artistic)' },
-  { value: 'Linaqruf/anything-v3.0', label: 'Anything v3 (Anime)' },
-  { value: 'SG161222/Realistic_Vision_V5.1', label: 'Realistic Vision v5.1' },
-];
-
-export const GOOGLE_MODELS = [
-  { value: "googleai/gemini-2.0-flash-preview-image-generation", label: "Google AI (Premium)" },
-];
-
-export const POLLINATIONS_MODELS = [
-  { value: 'pollinations', label: 'Pollinations AI (Fast)' },
-];
-
-export const STABLE_HORDE_MODELS = [
-  { value: 'stable_horde', label: 'Stable Horde (Community)' },
+export const IMAGEN_BRAIN_AI_MODEL = [
+  { value: 'imagen-brain-ai', label: 'Imagen Brain AI' },
 ];
 
 export const MODEL_GROUPS = [
   {
-    label: "Community Models (Free)",
-    models: [...POLLINATIONS_MODELS, ...STABLE_HORDE_MODELS],
+    label: "Available Models",
+    models: IMAGEN_BRAIN_AI_MODEL,
     premium: false,
-  },
-  {
-    label: "Standard Models (Hugging Face)",
-    models: HF_MODELS,
-    premium: false,
-  },
-  {
-    label: "Premium Models (Google AI)",
-    models: GOOGLE_MODELS,
-    premium: true,
   }
 ];
 
+// This needs to include all possible model values for Zod validation.
 export const ALL_MODEL_VALUES = [
-    ...POLLINATIONS_MODELS.map(m => m.value),
-    ...STABLE_HORDE_MODELS.map(m => m.value),
-    ...HF_MODELS.map(m => m.value), 
-    ...GOOGLE_MODELS.map(m => m.value)
+  'imagen-brain-ai',
+  // Keep old values here to prevent validation errors from history items if any exist,
+  // but they won't be shown in the UI.
+  "googleai/gemini-2.0-flash-preview-image-generation",
+  'runwayml/stable-diffusion-v1-5',
+  'stabilityai/sdxl-turbo',
+  'prompthero/openjourney',
+  'Linaqruf/anything-v3.0',
+  'SG161222/Realistic_Vision_V5.1',
+  'pollinations',
 ] as [string, ...string[]];
 
 export const ASPECT_RATIOS = [
@@ -55,24 +35,3 @@ export const ASPECT_RATIOS = [
   { label: "2:3 (Portrait)", value: "2:3" },
   { label: "21:9 (Cinematic)", value: "21:9" },
 ];
-
-export const STYLES = [
-  "None", "3D", "8-bit", "Analogue", "Anime", "Cartoon", "Collage", "Cookie", "Crayon", "Doodle", "Dough", "Felt", "Illustrated", "Marker", "Mechanical", "Painting", "Paper", "Pin", "Plushie", "Realistic", "Tattoo", "Woodblock"
-];
-
-export const MOODS = [
-  "None", "Sweets", "Classical", "Cyberpunk", "Dreamy", "Glowy", "Gothic", "Kawaii", "Mystical", "Trippy", "Tropical", "Steampunk", "Wasteland"
-];
-
-export const LIGHTING_OPTIONS = [
-  "None", "Bright", "Dark", "Neon", "Sunset", "Misty", "Ethereal"
-];
-
-export const COLOR_OPTIONS = [
-  "None", "Cool", "Earthy", "Indigo", "Infrared", "Pastel", "Warm"
-];
-
-export type StyleType = typeof STYLES[number];
-export type MoodType = typeof MOODS[number];
-export type LightingType = typeof LIGHTING_OPTIONS[number];
-export type ColorType = typeof COLOR_OPTIONS[number];

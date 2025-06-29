@@ -62,7 +62,7 @@ export function Footer() {
         
         <div className="text-center text-xs text-muted-foreground border-t pt-8">
           <p>&copy; {new Date().getFullYear()} Imagen BrainAi. All Rights Reserved.</p>
-          <p className="mt-1">Crafted with <span role="img" aria-label="heart">❤️</span> and powered by Google AI & Firebase.</p>
+          <p className="mt-1">Crafted with <span role="img" aria-label="heart">❤️</span> and powered by Google AI & Firebase. Photos provided by <a href="https://www.pexels.com" target="_blank" rel="noopener noreferrer" className="hover:underline">Pexels</a>.</p>
         </div>
       </div>
     </footer>
