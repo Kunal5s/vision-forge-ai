@@ -58,7 +58,7 @@ const improvePromptFlow = ai.defineFlow(
     try {
         const {output} = await improvePromptPrompt(input);
         if (!output?.improvedPrompt) {
-            const failureReason = "The AI could not generate a suggestion. This could be due to a few reasons:\n1. Your prompt may have triggered a safety filter.\n2. There might be a temporary issue with the AI service.\n3. (For site admins) Ensure your Google Cloud project has billing enabled, the 'Generative Language API' is active, and your API key is correctly configured in your deployment environment.";
+            const failureReason = "The AI could not generate a suggestion. This could be due to a safety filter or a temporary issue with the AI service. If you are the site admin, please ensure your GEMINI_API_KEY is set correctly in your Cloudflare environment variables and that your Google Cloud project has billing enabled.";
             return { improvedPrompt: '', reasoning: '', error: failureReason };
         }
         return {
@@ -69,7 +69,7 @@ const improvePromptFlow = ai.defineFlow(
         console.error("Improve prompt API call failed:", e);
         let detailedMessage = `An unexpected error occurred with the prompt enhancement service. ${e.message}`;
         if (e.message && (e.message.includes('API key not valid') || e.message.includes('API_KEY_INVALID'))) {
-            detailedMessage = "The prompt enhancement service failed due to an invalid API key. (For site admins) Please check your GEMINI_API_KEY is set correctly, billing is enabled for your Google Cloud project, and the 'Generative Language API' is enabled.";
+            detailedMessage = "The prompt enhancement service failed. Please go to your Cloudflare project settings, find 'Environment variables', and add a variable named 'GEMINI_API_KEY'. Also ensure billing is enabled for your Google Cloud project and the 'Generative Language API' is active, then redeploy.";
         }
         return { improvedPrompt: '', reasoning: '', error: detailedMessage };
     }

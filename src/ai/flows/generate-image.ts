@@ -1,9 +1,6 @@
 
 'use server';
 
-import { config } from 'dotenv';
-config();
-
 /**
  * @fileOverview Universal image generation flow that routes to different services.
  * - Routes to Pexels, Google, Pollinations, Stable Horde, and Hugging Face.
@@ -90,7 +87,7 @@ async function generateWithGenkit(input: GenerateImageInput): Promise<GenerateIm
     console.error("Genkit generation failed:", e);
     let detailedMessage = `An unexpected error occurred with the AI model. ${e.message || ''}`;
     if (e.message && (e.message.includes('API key not valid') || e.message.includes('API_KEY_INVALID'))) {
-        detailedMessage = "Google AI API key is invalid or not configured. Please set 'GEMINI_API_KEY' in your hosting provider's environment variables, and ensure billing is enabled for your Google Cloud project.";
+        detailedMessage = "Google AI API key is invalid or not configured. Please go to your Cloudflare project settings, find 'Environment variables', and add a variable named 'GEMINI_API_KEY' with your key. Also, ensure billing is enabled for your Google Cloud project, then redeploy.";
     }
     return { imageUrls: [], error: detailedMessage };
   }
@@ -108,7 +105,7 @@ async function generateWithPexels(input: GenerateImageInput): Promise<GenerateIm
   if (!PEXELS_API_KEY || PEXELS_API_KEY === "YOUR_PEXELS_API_KEY_HERE" || PEXELS_API_KEY.trim() === "") {
     return { 
       imageUrls: [], 
-      error: "Pexels API key is not configured. Please set the 'PEXELS_API_KEY' environment variable in your hosting provider's settings (e.g., Cloudflare)."
+      error: "Pexels API key is not configured. Please go to your Cloudflare project settings, find 'Environment variables', and add a variable named 'PEXELS_API_KEY' with your key. Then, redeploy your project."
     };
   }
 
@@ -181,7 +178,7 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
   if (!API_KEY || API_KEY === "YOUR_STABLE_HORDE_API_KEY_HERE" || API_KEY.trim() === "" || API_KEY === "5K1zxHm8MAC1gENuac0EeA") {
     return {
       imageUrls: [],
-      error: "The Stable Horde API key is not configured. Please set 'STABLE_HORDE_API_KEY' in your hosting provider's settings. A key of '0000000000' can be used for anonymous testing."
+      error: "The Stable Horde API key is not configured. Please go to your Cloudflare project settings, find 'Environment variables', and add a variable named 'STABLE_HORDE_API_KEY'. A key of '0000000000' can be used for anonymous testing. Remember to redeploy after adding the key."
     };
   }
 
@@ -250,7 +247,7 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
     if (keys.length === 0) {
         return { 
             imageUrls: [], 
-            error: "No Hugging Face API keys are configured. Please set 'HF_API_KEY_...' environment variables in your hosting provider's settings."
+            error: "No Hugging Face API keys are configured. Please go to your Cloudflare project settings, find 'Environment variables', and add variables named 'HF_API_KEY_...' with your keys. Then, redeploy your project."
         };
     }
 
