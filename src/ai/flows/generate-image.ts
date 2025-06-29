@@ -193,8 +193,8 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
         const dataUriPromises = generatedImages.map(async (gen: any) => {
             if (!gen.img) return null;
             const imageResponse = await fetch(gen.img);
-            if (!imageResponse.ok) {
-                console.error(`Failed to fetch generated image from ${gen.img}`);
+            if (!imageResponse.ok || !imageResponse.headers.get('content-type')?.startsWith('image')) {
+                console.error(`Failed to fetch a valid image from Horde URL: ${gen.img}`);
                 return null;
             }
             const blob = await imageResponse.blob();
