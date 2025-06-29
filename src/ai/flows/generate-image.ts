@@ -82,7 +82,6 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
   const isPollinationsModel = POLLINATIONS_MODELS.some(m => m.value === input.model);
   const isHuggingFaceModel = HF_MODELS.some(m => m.value === input.model);
 
-  // If the model is not any of the above, it must be Stable Horde
   if (isGoogleModel) {
     return generateWithGoogleAI(input);
   } else if (isPollinationsModel) {
@@ -157,7 +156,7 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
         throw new Error("Stable Horde did not return a job ID.");
     }
 
-    const MAX_POLL_ATTEMPTS = 30;
+    const MAX_POLL_ATTEMPTS = 30; // 30 attempts * 3s = 90 seconds timeout
     const POLL_INTERVAL_MS = 3000;
 
     for (let i = 0; i < MAX_POLL_ATTEMPTS; i++) {
@@ -280,7 +279,9 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
     let keyIndex = 0; 
 
     // This function attempts to generate a single image, trying all keys if necessary.
-    const tryGenerateOneImage = async (): Promise<string | null> => {
+    // It returns the image URL or the last error encountered.
+    const tryGenerateOneImage = async (): Promise<{ url: string | null; error: string | null }> => {
+        let lastError: string | null = null;
         for (let j = 0; j < apiKeys.length; j++) {
             const currentApiKey = apiKeys[keyIndex % apiKeys.length];
             keyIndex++;
@@ -304,35 +305,49 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
                 const buffer = Buffer.from(await blob.arrayBuffer());
                 const dataUri = `data:${blob.type};base64,${buffer.toString('base64')}`;
                 console.log(`Successfully generated image with key ${keyIdentifier}`);
-                return dataUri;
+                return { url: dataUri, error: null };
 
             } catch (e: any) {
-                const errorMessage = e.message || '';
-                if (errorMessage.includes('is currently loading')) {
+                lastError = e.message || 'An unknown API error occurred.';
+                if (lastError.includes('is currently loading')) {
                     // This error is fatal for this model at this time, so we throw to stop all parallel attempts for it.
                     throw new Error(`The model '${input.model}' is still loading on the Hugging Face servers. This can take a few minutes. Please try again shortly or select a different model.`);
                 }
-                console.error(`API key (${keyIdentifier}) failed. Error: ${errorMessage}. Trying next key.`);
+                console.error(`API key (${keyIdentifier}) failed. Error: ${lastError}. Trying next key.`);
             }
         }
         // If all keys fail for this image generation attempt
-        console.error(`Failed to generate an image with any of the available API keys.`);
-        return null;
+        console.error(`Failed to generate an image with any of the available API keys. Last error: ${lastError}`);
+        return { url: null, error: lastError };
     };
 
     try {
         const generationPromises = Array.from({ length: input.numberOfImages }).map(() => tryGenerateOneImage());
         const results = await Promise.all(generationPromises);
-        const successfulUrls = results.filter((url): url is string => !!url);
 
-        if (successfulUrls.length === 0) {
-            return { imageUrls: [], error: `The model '${input.model}' is facing high demand or a temporary issue. Please select a different model or try again in a few minutes.` };
+        const successfulUrls = results.map(r => r.url).filter((url): url is string => !!url);
+        const errors = results.map(r => r.error).filter((err): err is string => !!err);
+
+        if (successfulUrls.length > 0) {
+             // Even if some failed, we return the successful ones. The user will see which ones failed to load.
+             return { imageUrls: successfulUrls };
         }
 
-        return { imageUrls: successfulUrls };
+        // If all attempts failed, return the first captured error message for clarity.
+        if (errors.length > 0) {
+            // Provide a more direct and informative error to the user.
+            let userFriendlyError = `Hugging Face API Error: ${errors[0]}`;
+            if (errors[0].includes("Rate limit reached")) {
+                userFriendlyError = "Hugging Face models are currently under very high demand. Please try again in a moment.";
+            }
+            return { imageUrls: [], error: userFriendlyError };
+        }
+
+        // Fallback for an unexpected case where there are no successes and no errors.
+        return { imageUrls: [], error: "An unknown error occurred during image generation with Hugging Face." };
 
     } catch (e: any) {
-        // This catches the fatal error thrown from `tryGenerateOneImage`
+        // This catches the fatal "model is loading" error thrown from `tryGenerateOneImage`
         return { imageUrls: [], error: e.message };
     }
 }
