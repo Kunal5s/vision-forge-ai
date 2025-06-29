@@ -1,12 +1,11 @@
 
 // A curated list of reliable and high-quality Hugging Face models.
 export const HF_MODELS = [
-  { value: 'stabilityai/stable-diffusion-xl-base-1.0', label: 'Stable Diffusion XL 1.0' },
-  { value: 'playgroundai/playground-v2.5-1024px-aesthetic', label: 'Playground v2.5' },
-  { value: 'RunDiffusion/Juggernaut-XL-v9', label: 'Juggernaut XL v9 (New)' },
-  { value: 'cagliostrolab/animagine-xl-3.1', label: 'Animagine XL 3.1 (Anime)' },
-  { value: 'segmind/SSD-1B', label: 'Segmind SSD-1B (Fast)' },
-  { value: 'kandinsky-community/kandinsky-3', label: 'Kandinsky 3' },
+  { value: 'runwayml/stable-diffusion-v1-5', label: 'Stable Diffusion v1.5' },
+  { value: 'stabilityai/sdxl-turbo', label: 'SDXL Turbo (Ultra-fast)' },
+  { value: 'prompthero/openjourney', label: 'OpenJourney (Artistic)' },
+  { value: 'Linaqruf/anything-v3.0', label: 'Anything v3 (Anime)' },
+  { value: 'SG161222/Realistic_Vision_V5.1', label: 'Realistic Vision v5.1' },
 ];
 
 export const GOOGLE_MODELS = [

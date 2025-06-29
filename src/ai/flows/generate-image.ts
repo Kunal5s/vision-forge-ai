@@ -291,11 +291,8 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
                 console.log(`Attempting image with key ${keyIdentifier} for model: ${input.model}`);
                 const blob = await hf.textToImage({
                     model: input.model,
-                    inputs: `masterpiece, best quality, ${input.prompt}`,
+                    inputs: input.prompt,
                     parameters: {
-                        negative_prompt: 'low quality, worst quality, bad hands, extra limbs, jpeg artifacts, blurry, ugly, distorted, watermark, signature',
-                        num_inference_steps: 30,
-                        guidance_scale: 7.0,
                         width,
                         height,
                     },
