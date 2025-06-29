@@ -1,17 +1,16 @@
-
 'use server';
 
 /**
  * @fileOverview Universal image generation flow that routes to different services.
  * This file has been rewritten for maximum robustness and provides clear, actionable error messages.
- * - Routes to Pexels, Pollinations, Stable Horde, and Hugging Face.
+ * - Routes to Pexels, Pollinations, and Stable Horde.
  * - generateImage - A function that handles the image generation process.
  * - GenerateImageInput - The input type for the generateImage function.
  * - GenerateImageOutput - The return type for the generateImage function.
  */
 
 import { z } from 'zod';
-import { ALL_MODEL_VALUES, HF_MODELS, POLLINATIONS_MODELS, STABLE_HORDE_MODELS } from '@/lib/constants';
+import { ALL_MODEL_VALUES, POLLINATIONS_MODELS, STABLE_HORDE_MODELS } from '@/lib/constants';
 
 // Input schema defines the data structure sent from the frontend.
 const GenerateImageInputSchema = z.object({
@@ -45,8 +44,6 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
     return generateWithPollinations(input);
   } else if (STABLE_HORDE_MODELS.some(m => m.value === model)) {
     return generateWithStableHorde(input);
-  } else if (HF_MODELS.some(m => m.value === model)) {
-    return generateWithHuggingFace(input);
   } else {
     return { imageUrls: [], error: `Unknown model selected: ${model}` };
   }
@@ -207,83 +204,4 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
       console.error("Stable Horde generation failed:", e);
       return { imageUrls: [], error: `Stable Horde Error: ${e.message}` };
   }
-}
-
-/**
- * Generates images using the Hugging Face Inference API with key rotation.
- * @param input The generation parameters from the frontend.
- * @returns A promise that resolves to the generation output.
- */
-async function generateWithHuggingFace(input: GenerateImageInput): Promise<GenerateImageOutput> {
-    // Simplified and more robust key retrieval
-    const keys: string[] = [];
-    for (let i = 1; i <= 10; i++) {
-        const key = process.env[`HF_API_KEY_${i}`];
-        if (key && key.trim() !== '') {
-            keys.push(key);
-        }
-    }
-
-    if (keys.length === 0) {
-        return { 
-            imageUrls: [], 
-            error: "As the site administrator, please go to your Cloudflare project settings, find 'Environment variables', add variables named 'HF_API_KEY_1', 'HF_API_KEY_2', etc., and then redeploy your project."
-        };
-    }
-
-    try {
-        const imageUrls: string[] = [];
-        const fullPrompt = `${input.prompt}, high quality, detailed, (masterpiece)`;
-        const negativePrompt = "blurry, bad anatomy, worst quality, low quality, watermark, signature, text, error, ugly";
-        
-        for (let i = 0; i < input.numberOfImages; i++) {
-            const key = keys[i % keys.length];
-            const response = await fetch(`https://api-inference.huggingface.co/models/${input.model}`, {
-                method: "POST",
-                headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json", "x-wait-for-model": "true" },
-                body: JSON.stringify({ 
-                    "inputs": fullPrompt,
-                    "negative_prompt": negativePrompt,
-                }),
-            });
-            
-            if (!response.ok) {
-                let errorText;
-                if (response.status === 401) {
-                    errorText = `Hugging Face error (401 Unauthorized) on model '${input.model}'. 
-                    
-How to fix:
-1. Double-check your HF_API_KEY variables in your Cloudflare project settings for typos.
-2. Log in to your Hugging Face account and visit the page for this model to accept its terms of service. Some models require this.`;
-                } else if (response.status === 404) {
-                     errorText = `Hugging Face API Error: Model not found (404). This can happen if the model '${input.model}' is temporarily offline or has been moved. This is common with free community models. Please try a different model from the list.`;
-                } else if (response.status === 503) {
-                     errorText = `Model is loading (503): The model '${input.model}' is currently loading on Hugging Face's servers. Please try again in a few moments.`;
-                } else {
-                    try {
-                        const errorJson = await response.json();
-                        errorText = errorJson.error || `API returned status ${response.status}. The model may be offline or you might have exhausted your free tier for the month.`;
-                    } catch (e) {
-                        errorText = `API returned status ${response.status} with a non-JSON response. The model is likely offline or invalid. Please try a different model.`;
-                    }
-                }
-                throw new Error(errorText);
-            }
-
-            const blob = await response.blob();
-            if (!blob.type.startsWith('image/')) {
-                 const errorText = await blob.text();
-                 throw new Error(`Invalid response from API. Expected an image for model '${input.model}', but received text: ${errorText.substring(0, 100)}...`);
-            }
-            const buffer = Buffer.from(await blob.arrayBuffer());
-            const dataUri = `data:${blob.type};base64,${buffer.toString('base64')}`;
-            imageUrls.push(dataUri);
-        }
-
-        return { imageUrls };
-
-    } catch (e: any) {
-        console.error(`Hugging Face generation failed for model ${input.model}:`, e);
-        return { imageUrls: [], error: `Hugging Face API Error: ${e.message}` };
-    }
 }

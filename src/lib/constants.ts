@@ -17,17 +17,6 @@ export const STABLE_HORDE_MODELS = [
     { value: 'stable_horde', label: 'Stable Horde (Community)' }
 ];
 
-// Curated list of highly reliable and active Hugging Face models for text-to-image
-export const HF_MODELS = [
-  { value: 'stabilityai/sdxl-turbo', label: 'SDXL Turbo' },
-  { value: 'SG161222/Realistic_Vision_V5.1_noVAE', label: 'Realistic Vision V5.1' },
-  { value: 'prompthero/openjourney', label: 'OpenJourney' },
-  { value: 'Lykon/dreamshaper-8', label: 'Dreamshaper 8' },
-  { value: 'cagliostrolab/animagine-xl-3.0', label: 'Animagine XL 3.0' },
-  { value: 'runwayml/stable-diffusion-v1-5', label: 'Stable Diffusion 1.5' },
-];
-
-
 export const MODEL_GROUPS = [
   {
     // Changed group label for clarity
@@ -42,11 +31,6 @@ export const MODEL_GROUPS = [
         ...STABLE_HORDE_MODELS,
     ],
     premium: false,
-  },
-  {
-    label: "Hugging Face Models (Free)",
-    models: HF_MODELS,
-    premium: false,
   }
 ];
 
@@ -55,7 +39,6 @@ export const ALL_MODEL_VALUES = [
   ...PEXELS_MODELS.map(m => m.value),
   ...POLLINATIONS_MODELS.map(m => m.value),
   ...STABLE_HORDE_MODELS.map(m => m.value),
-  ...HF_MODELS.map(m => m.value),
 ] as [string, ...string[]];
 
 export const ASPECT_RATIOS = [
