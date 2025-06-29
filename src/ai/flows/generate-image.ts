@@ -40,6 +40,24 @@ const parseAspectRatio = (ratio: string, baseSize: number = 1024): { width: numb
     }
 };
 
+// Specific dimensions for Stable Horde to optimize for the free tier.
+const getHordeDimensions = (ratio: string): { width: number; height: number } => {
+    const map: { [key: string]: [number, number] } = {
+        '1:1': [512, 512],
+        '16:9': [704, 384],
+        '9:16': [384, 704],
+        '4:3': [512, 384],
+        '3:4': [384, 512],
+        '3:2': [640, 448],
+        '2:3': [448, 640],
+        '21:9': [768, 320],
+    };
+    return {
+        width: map[ratio]?.[0] || 512,
+        height: map[ratio]?.[1] || 512
+    };
+};
+
 
 // Input schema defines the data structure sent from the frontend.
 const GenerateImageInputSchema = z.object({
@@ -128,8 +146,7 @@ async function generateWithPollinations(input: GenerateImageInput): Promise<Gene
  */
 async function generateWithStableHorde(input: GenerateImageInput): Promise<GenerateImageOutput> {
   const apiKey = process.env.HORDE_API_KEY || '0000000000';
-  // Use a smaller base size for Stable Horde to stay within free-tier kudos limits.
-  const { width, height } = parseAspectRatio(input.aspectRatio, 768);
+  const { width, height } = getHordeDimensions(input.aspectRatio);
 
   try {
     // Step 1: Asynchronously request image generation
@@ -141,18 +158,19 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
         'Client-Agent': 'ImagenBrainAI/1.0 (https://imagenbrainai.in)',
       },
       body: JSON.stringify({
-        prompt: `${input.prompt} ### masterpiece, high quality`,
+        prompt: input.prompt,
         params: {
-          sampler_name: 'k_dpmpp_2m',
+          sampler_name: 'k_euler',
           cfg_scale: 8.0,
           width,
           height,
           steps: 30,
           n: input.numberOfImages,
         },
-        models: ["stable_diffusion"],
+        models: ["deliberate", "stable_diffusion"],
         nsfw: false,
         trusted_workers: true,
+        r2: true,
       }),
     });
 
@@ -192,6 +210,7 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
         
         const dataUriPromises = generatedImages.map(async (gen: any) => {
             if (!gen.img) return null;
+            // The 'r2' flag means the URL is already a public cloudflare URL.
             const imageResponse = await fetch(gen.img);
             if (!imageResponse.ok || !imageResponse.headers.get('content-type')?.startsWith('image')) {
                 console.error(`Failed to fetch a valid image from Horde URL: ${gen.img}`);
