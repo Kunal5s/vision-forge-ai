@@ -306,13 +306,15 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
 
                 if (!response.ok) {
                     let errorBody = "Unknown error";
+                    // Read the response body once as text to avoid "body already read" errors.
+                    const errorText = await response.text();
                     try {
-                        // Try to parse error as JSON, which is common for HF API
-                        const errorJson = await response.json();
+                        // Try to parse the text as JSON, which is common for HF API
+                        const errorJson = JSON.parse(errorText);
                         errorBody = errorJson.error || JSON.stringify(errorJson);
                     } catch (parseError) {
-                        // If not JSON, maybe it's plain text
-                        errorBody = await response.text();
+                        // If not JSON, use the raw text as the error message.
+                        errorBody = errorText;
                     }
                     // This will be caught by the outer catch block
                     throw new Error(errorBody);
