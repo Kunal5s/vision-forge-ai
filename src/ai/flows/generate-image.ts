@@ -11,10 +11,10 @@
 import { z } from 'zod';
 import { ai } from '@/ai/genkit';
 import { HfInference } from '@huggingface/inference';
-import { ALL_MODEL_VALUES, GOOGLE_MODELS, STABLE_HORDE_MODELS, POLLINATIONS_MODELS } from '@/lib/constants';
+import { ALL_MODEL_VALUES, GOOGLE_MODELS, POLLINATIONS_MODELS } from '@/lib/constants';
 
 // Helper to parse aspect ratio into width and height.
-// Stable Horde and HF models work best with dimensions that are multiples of 64.
+// Hugging Face models work best with dimensions that are multiples of 64.
 const parseAspectRatio = (ratio: string, baseSize: number = 1024): { width: number, height: number } => {
     try {
         const [w, h] = ratio.split(':').map(Number);
@@ -38,24 +38,6 @@ const parseAspectRatio = (ratio: string, baseSize: number = 1024): { width: numb
     } catch (error) {
         return { width: baseSize, height: baseSize }; // Default to square on error
     }
-};
-
-// Specific dimensions for Stable Horde to optimize for the free tier.
-const getHordeDimensions = (ratio: string): { width: number; height: number } => {
-    const map: { [key: string]: [number, number] } = {
-        '1:1': [512, 512],
-        '16:9': [704, 384],
-        '9:16': [384, 704],
-        '4:3': [512, 384],
-        '3:4': [384, 512],
-        '3:2': [640, 448],
-        '2:3': [448, 640],
-        '21:9': [768, 320],
-    };
-    return {
-        width: map[ratio]?.[0] || 512,
-        height: map[ratio]?.[1] || 512
-    };
 };
 
 
@@ -83,15 +65,12 @@ export type GenerateImageOutput = z.infer<typeof GenerateImageOutputSchema>;
  */
 export async function generateImage(input: GenerateImageInput): Promise<GenerateImageOutput> {
   const isGoogleModel = GOOGLE_MODELS.some(m => m.value === input.model);
-  const isStableHordeModel = STABLE_HORDE_MODELS.some(m => m.value === input.model);
   const isPollinationsModel = POLLINATIONS_MODELS.some(m => m.value === input.model);
 
   if (isGoogleModel) {
     return generateWithGoogleAI(input);
   } else if (isPollinationsModel) {
     return generateWithPollinations(input);
-  } else if (isStableHordeModel) {
-    return generateWithStableHorde(input);
   } else {
     return generateWithHuggingFace(input);
   }
@@ -138,106 +117,6 @@ async function generateWithPollinations(input: GenerateImageInput): Promise<Gene
   } catch (e: any) {
     console.error("Pollinations AI generation failed:", e);
     return { imageUrls: [], error: e.message || 'An unknown error occurred with the Pollinations AI service.' };
-  }
-}
-
-/**
- * Generates images using the community-powered Stable Horde network.
- */
-async function generateWithStableHorde(input: GenerateImageInput): Promise<GenerateImageOutput> {
-  const apiKey = process.env.HORDE_API_KEY || '0000000000';
-  const { width, height } = getHordeDimensions(input.aspectRatio);
-
-  try {
-    // Step 1: Asynchronously request image generation
-    const asyncResponse = await fetch('https://stablehorde.net/api/v2/generate/async', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': apiKey,
-        'Client-Agent': 'ImagenBrainAI/1.0 (https://imagenbrainai.in)',
-      },
-      body: JSON.stringify({
-        prompt: `masterpiece, best quality, ${input.prompt}`,
-        params: {
-          sampler_name: 'k_euler',
-          cfg_scale: 8.0,
-          width,
-          height,
-          steps: 30,
-          n: input.numberOfImages,
-          negative_prompt: 'low quality, worst quality, bad hands, extra limbs, jpeg artifacts, blurry, ugly, distorted, watermark, signature',
-        },
-        models: ["deliberate", "stable_diffusion"],
-        nsfw: false,
-        trusted_workers: true,
-        r2: true,
-      }),
-    });
-
-    if (!asyncResponse.ok) {
-      const errorBody = await asyncResponse.json().catch(() => ({ message: asyncResponse.statusText }));
-      throw new Error(`Stable Horde request failed: ${errorBody.message}`);
-    }
-
-    const { id } = await asyncResponse.json();
-
-    // Step 2: Poll for the result until it's done or timed out
-    const pollStartTime = Date.now();
-    const pollTimeout = 90000; // 90-second timeout
-
-    while (Date.now() - pollStartTime < pollTimeout) {
-      await sleep(2500); // Wait 2.5 seconds between each poll
-
-      const statusResponse = await fetch(`https://stablehorde.net/api/v2/generate/status/${id}`);
-      if (!statusResponse.ok) {
-        console.warn(`Polling failed for ID ${id}, retrying...`);
-        continue;
-      }
-      
-      const statusData = await statusResponse.json();
-
-      if (statusData.faulted) {
-        throw new Error('Image generation failed on the Horde network. This can happen occasionally.');
-      }
-
-      if (statusData.done) {
-        // Step 3: Generation complete, fetch and process the images
-        const generatedImages = statusData.generations;
-        
-        if (!generatedImages || generatedImages.length === 0) {
-           throw new Error('Generation finished, but the Horde did not return any images.');
-        }
-        
-        const dataUriPromises = generatedImages.map(async (gen: any) => {
-            if (!gen.img) return null;
-            // The 'r2' flag means the URL is already a public cloudflare URL.
-            const imageResponse = await fetch(gen.img);
-            if (!imageResponse.ok || !imageResponse.headers.get('content-type')?.startsWith('image')) {
-                console.error(`Failed to fetch a valid image from Horde URL: ${gen.img}`);
-                return null;
-            }
-            const blob = await imageResponse.blob();
-            const buffer = Buffer.from(await blob.arrayBuffer());
-            return `data:${blob.type};base64,${buffer.toString('base64')}`;
-        });
-
-        const successfulDataUris = (await Promise.all(dataUriPromises)).filter((url): url is string => !!url);
-        
-        if (successfulDataUris.length === 0) {
-            return { imageUrls: [], error: 'Could not fetch the generated images from the Horde network servers.' };
-        }
-
-        return { imageUrls: successfulDataUris };
-      }
-    }
-
-    // If the loop finishes, it means we timed out
-    throw new Error('Image generation timed out. The Horde is very busy. Please try again in a few moments or use a different model.');
-
-  } catch (e: any) {
-    console.error("Stable Horde generation process failed:", e);
-    return { imageUrls: [], error: e.message || 'An unknown error occurred with the Stable Horde service.' };
   }
 }
 
