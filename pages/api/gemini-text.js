@@ -1,19 +1,25 @@
 
-// This function handles future text generation requests using Google's Gemini Pro model.
-// It is structured for Cloudflare Pages and reads the API key from environment variables.
+// pages/api/gemini-text.js
 
-export async function onRequestPost(context) {
+// This tells Vercel/Netlify/Cloudflare to use the Edge Runtime.
+export const config = { runtime: "experimental-edge" };
+
+export default async function handler(req) {
+  if (req.method !== "POST") {
+    return new Response("Method Not Allowed", { status: 405 });
+  }
+
   try {
-    // Get the prompt from the request body.
-    const { prompt } = await context.request.json();
-    // Safely get the API key from Cloudflare's environment variable bindings.
-    const GEMINI_API_KEY = context.env.GEMINI_API_KEY;
+    const { prompt } = await req.json();
+    
+    // In next-on-pages (for Cloudflare), environment variables are available on process.env
+    // This requires setting the variable in the Cloudflare Pages dashboard.
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
     if (!GEMINI_API_KEY) {
-        throw new Error("GEMINI_API_KEY is not configured in Cloudflare Pages bindings.");
+        throw new Error("GEMINI_API_KEY is not configured in the deployment environment variables.");
     }
 
-    // Call the Gemini API.
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: {
@@ -32,13 +38,13 @@ export async function onRequestPost(context) {
         throw new Error(data?.error?.message || "Failed to fetch response from Gemini API.");
     }
     
-    // Return the generated text to the client.
     return new Response(JSON.stringify(data), {
+      status: 200,
       headers: { "Content-Type": "application/json" }
     });
 
   } catch (err) {
-    // Return any errors in a standard format.
+    console.error("Gemini text API error:", err);
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
       headers: { "Content-Type": "application/json" }

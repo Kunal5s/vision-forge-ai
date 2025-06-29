@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { generateImage, type GenerateImageInput } from '@/ai/flows/generate-image';
-import { ASPECT_RATIOS, STYLES, MOODS, LIGHTING, COLOURS, MODELS } from '@/lib/constants';
+import { ASPECT_RATIOS, STYLES, MOODS, LIGHTING, COLOURS } from '@/lib/constants';
 import { ImageDisplay } from './ImageDisplay';
 import { FuturisticPanel } from './FuturisticPanel';
 import { ImageIcon as ImageIconIcon, RefreshCcw, XCircle } from 'lucide-react';
@@ -42,9 +42,6 @@ export function ImageGenerator() {
   const { toast } = useToast();
   const { subscription } = useSubscription();
   const generationCancelled = useRef(false);
-  
-  const [activeModel, setActiveModel] = useState<string>(MODELS[0].value);
-  const showAdvancedOptions = true;
   
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>(ASPECT_RATIOS[0].value);
   const [displayAspectRatio, setDisplayAspectRatio] = useState<string>(ASPECT_RATIOS[0].value);
@@ -80,6 +77,9 @@ export function ImageGenerator() {
     generationCancelled.current = false;
     setIsGenerating(true);
     setError(null);
+    
+    // Clean up old blob URLs to prevent memory leaks
+    generatedImageUrls.forEach(url => URL.revokeObjectURL(url));
     setGeneratedImageUrls([]);
 
     const finalPrompt = constructFinalPrompt(data);
@@ -88,13 +88,15 @@ export function ImageGenerator() {
         prompt: finalPrompt,
         plan: subscription?.plan || 'free',
         aspectRatio: selectedAspectRatio,
-        model: activeModel,
+        model: 'pollinations', // Only one model now
         numberOfImages: numberOfImages,
      };
     const result = await generateImage(generationParams);
     
     if (generationCancelled.current) {
         console.log("Generation was cancelled by the user. Results ignored.");
+        // Also clean up any URLs that might have been created before cancellation
+        result.imageUrls.forEach(url => URL.revokeObjectURL(url));
         return;
     }
 
@@ -112,6 +114,14 @@ export function ImageGenerator() {
       setGeneratedImageUrls([]);
     }
   };
+  
+  // Cleanup blob URLs on component unmount
+  useEffect(() => {
+    return () => {
+      generatedImageUrls.forEach(url => URL.revokeObjectURL(url));
+    }
+  }, [generatedImageUrls]);
+
 
   const handleRegenerate = () => {
      if(currentPrompt) {
@@ -161,24 +171,6 @@ export function ImageGenerator() {
               <ScrollArea className="h-[calc(100vh-200px)] pr-4">
               <div className="space-y-6">
                 <div>
-                  <Label className="text-lg font-semibold mb-2 block text-foreground/90">
-                    Model
-                  </Label>
-                   <Select value={activeModel} onValueChange={setActiveModel} disabled={isGenerating}>
-                      <SelectTrigger id="model" className="w-full bg-background hover:bg-muted/50">
-                        <SelectValue placeholder="Select a model" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-popover border-border">
-                        {MODELS.map((model) => (
-                          <SelectItem key={model.value} value={model.value}>
-                            {model.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                </div>
-
-                <div>
                   <div className="flex justify-between items-center mb-2">
                       <Label htmlFor="prompt" className="text-lg font-semibold text-foreground/90">
                         Enter Your Vision
@@ -197,14 +189,12 @@ export function ImageGenerator() {
                   {errors.prompt && <p className="text-sm text-destructive mt-1">{errors.prompt.message}</p>}
                 </div>
 
-                {showAdvancedOptions && (
-                  <div className='space-y-4'>
+                <div className='space-y-4'>
                     <StyleSelector title="Styles" options={STYLES} selectedValue={selectedStyle} onSelect={setSelectedStyle} />
                     <StyleSelector title="Moods" options={MOODS} selectedValue={selectedMood} onSelect={setSelectedMood} />
                     <StyleSelector title="Lighting" options={LIGHTING} selectedValue={selectedLighting} onSelect={setSelectedLighting} />
                     <StyleSelector title="Colours" options={COLOURS} selectedValue={selectedColour} onSelect={setSelectedColour} />
-                  </div>
-                )}
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>

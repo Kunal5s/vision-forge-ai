@@ -7,7 +7,6 @@ export interface StyleOption {
 
 export const MODELS = [
   { label: 'Pollinations AI (Fast & Free)', value: 'pollinations' },
-  { label: 'Stable Horde (Community)', value: 'stable_horde' },
 ];
 
 export const ASPECT_RATIOS = [
