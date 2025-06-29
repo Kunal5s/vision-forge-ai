@@ -9,6 +9,13 @@ export async function onRequestPost(context) {
   try {
     // Get the prompt and other parameters from the request body.
     const { prompt, numberOfImages, aspectRatio } = await context.request.json();
+    
+    // Safely get the API key from Cloudflare's environment variable bindings.
+    const STABLE_HORDE_API_KEY = context.env.STABLE_HORDE_API_KEY;
+
+    if (!STABLE_HORDE_API_KEY) {
+        throw new Error("STABLE_HORDE_API_KEY is not configured in Cloudflare Pages bindings.");
+    }
 
     // Stable Horde requires image dimensions to be multiples of 64.
     const [aspectW, aspectH] = aspectRatio.split(':').map(Number);
@@ -47,7 +54,7 @@ export async function onRequestPost(context) {
       headers: {
         "Content-Type": "application/json",
         "Client-Agent": "imagenbrainai.in/1.0 (https://imagenbrainai.in)",
-        "apikey": "0000000000" // Use the anonymous key for the free community tier.
+        "apikey": STABLE_HORDE_API_KEY
       },
       body: JSON.stringify(payload)
     });
@@ -87,7 +94,7 @@ export async function onRequestPost(context) {
     }
 
     // If the loop finishes without the image being done, it's a timeout.
-    throw new Error("Image generation timed out. The community network might be busy. Please try again later.");
+    throw new Error("Image generation timed out. The community network might be busy or your API key has low priority. Please try again later.");
 
   } catch (err) {
     // Return any errors in a standard format.

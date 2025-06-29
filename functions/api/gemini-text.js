@@ -6,11 +6,11 @@ export async function onRequestPost(context) {
   try {
     // Get the prompt from the request body.
     const { prompt } = await context.request.json();
-    // Safely get the API key from Cloudflare's environment variables.
+    // Safely get the API key from Cloudflare's environment variable bindings.
     const GEMINI_API_KEY = context.env.GEMINI_API_KEY;
 
     if (!GEMINI_API_KEY) {
-        throw new Error("GEMINI_API_KEY is not configured in Cloudflare Pages environment variables.");
+        throw new Error("GEMINI_API_KEY is not configured in Cloudflare Pages bindings.");
     }
 
     // Call the Gemini API.
