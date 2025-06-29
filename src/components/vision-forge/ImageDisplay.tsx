@@ -206,7 +206,7 @@ export function ImageDisplay({
           <div className={cn(
             "w-full h-full grid gap-2",
             imageUrls.length === 1 ? 'grid-cols-1' : 'grid-cols-2',
-            imageUrls.length > 2 && 'md:grid-cols-3',
+            imageUrls.length > 4 && 'md:grid-cols-3',
             )}>
             {imageUrls.map((url, index) => {
                 const key = `${url}-${index}`;

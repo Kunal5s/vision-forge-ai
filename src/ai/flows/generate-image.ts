@@ -138,10 +138,10 @@ async function generateWithPollinations(input: GenerateImageInput): Promise<Gene
 async function generateWithStableHorde(input: GenerateImageInput): Promise<GenerateImageOutput> {
   const API_KEY = process.env.STABLE_HORDE_API_KEY;
 
-  if (!API_KEY || API_KEY.trim() === "") {
+  if (!API_KEY || API_KEY.trim() === "" || API_KEY === '0000000000') {
     return {
       imageUrls: [],
-      error: "As the site administrator, please go to your Cloudflare project settings, find 'Environment variables', add a variable named 'STABLE_HORDE_API_KEY' with your key (or '0000000000' for anonymous mode), and then redeploy your project."
+      error: "As the site administrator, please go to your Cloudflare project settings, find 'Environment variables', add a variable named 'STABLE_HORDE_API_KEY' with your key, and then redeploy your project. Anonymous mode is not recommended due to very long wait times."
     };
   }
 
@@ -175,8 +175,6 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
                 },
                 // Using a broad range of popular models to increase success rate.
                 models: ["Deliberate", "dreamshaper_8", "rev_animated", "AnythingV5", "animevae"], 
-                // kudosai is deprecated, using kudos directly is preferred.
-                // kudos: 1, // Example, could be dynamic
             })
         });
 
