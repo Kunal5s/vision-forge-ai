@@ -173,7 +173,14 @@ async function generateWithPollinations(input: GenerateImageInput): Promise<Gene
  * @returns A promise that resolves to the generation output.
  */
 async function generateWithStableHorde(input: GenerateImageInput): Promise<GenerateImageOutput> {
-  const API_KEY = process.env.STABLE_HORDE_API_KEY || '5K1zxHm8MAC1gENuac0EeA';
+  const API_KEY = process.env.STABLE_HORDE_API_KEY;
+
+  if (!API_KEY || API_KEY === "YOUR_STABLE_HORDE_API_KEY_HERE" || API_KEY.trim() === "") {
+    return {
+      imageUrls: [],
+      error: "Stable Horde API key is not configured. For site administrators, please add your STABLE_HORDE_API_KEY to the environment variables."
+    };
+  }
 
   try {
     const [w, h] = input.aspectRatio.split(':').map(Number);
@@ -194,9 +201,12 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
             })
         });
 
-        const asyncData = await asyncResponse.json();
-        if (!asyncResponse.ok) throw new Error(`Stable Horde submission failed: ${asyncData.message}`);
+        if (!asyncResponse.ok) {
+            const errorData = await asyncResponse.json();
+            throw new Error(`Stable Horde submission failed: ${errorData.message}`);
+        }
         
+        const asyncData = await asyncResponse.json();
         const { id } = asyncData;
         if (!id) throw new Error("Stable Horde did not return a job ID.");
         
@@ -249,14 +259,20 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
             });
             
             if (!response.ok) {
-                let errorText = await response.text();
+                let errorText;
                 try {
-                    errorText = JSON.parse(errorText).error || errorText;
-                } catch {}
-                throw new Error(`API returned ${response.status}: ${errorText}`);
+                    const errorJson = await response.json();
+                    errorText = errorJson.error || `API returned status ${response.status}`;
+                } catch (e) {
+                    errorText = await response.text();
+                }
+                throw new Error(errorText);
             }
 
             const blob = await response.blob();
+            if (!blob.type.startsWith('image/')) {
+                 throw new Error("Invalid response from API. Expected an image blob.");
+            }
             const buffer = Buffer.from(await blob.arrayBuffer());
             const dataUri = `data:${blob.type};base64,${buffer.toString('base64')}`;
             imageUrls.push(dataUri);
@@ -264,7 +280,8 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
 
         return { imageUrls };
 
-    } catch (e: any) {
+    } catch (e: any)
+      {
         console.error("Hugging Face generation failed:", e);
         return { imageUrls: [], error: `Hugging Face API Error: ${e.message}` };
     }
