@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { generateImage, type GenerateImageInput } from '@/ai/flows/generate-image';
-import { ASPECT_RATIOS, MODEL_GROUPS, STYLES, MOODS, LIGHTING, COLOURS, GOOGLE_AI_MODELS, HF_MODELS } from '@/lib/constants';
+import { ASPECT_RATIOS, MODEL_GROUPS, STYLES, MOODS, LIGHTING, COLOURS, HF_MODELS } from '@/lib/constants';
 import { ImageDisplay } from './ImageDisplay';
 import { FuturisticPanel } from './FuturisticPanel';
 import { Gem, ImageIcon as ImageIconIcon, RefreshCcw, XCircle, Lightbulb } from 'lucide-react';
@@ -73,9 +73,8 @@ export function ImageGenerator() {
   }, [activeModel]);
 
   const showAdvancedOptions = useMemo(() => {
-    const isGoogleModel = GOOGLE_AI_MODELS.some(m => m.value === activeModel);
     const isHfModel = HF_MODELS.some(m => m.value === activeModel);
-    return isGoogleModel || isHfModel;
+    return isHfModel;
   }, [activeModel]);
   
   const isFreePlan = subscription?.plan === 'free';

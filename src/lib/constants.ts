@@ -4,10 +4,6 @@ export interface StyleOption {
   label: string;
 }
 
-export const GOOGLE_AI_MODELS = [
-  { value: 'googleai/gemini-2.0-flash-preview-image-generation', label: 'Google Imagen 3' },
-];
-
 // Changed label for clarity to indicate it's a search for real photos
 export const PEXELS_MODELS = [
   { value: 'imagen-brain-ai', label: 'Pexels (Real Photos)' },
@@ -33,11 +29,6 @@ export const HF_MODELS = [
 
 export const MODEL_GROUPS = [
   {
-    label: "Recommended",
-    models: GOOGLE_AI_MODELS,
-    premium: false, // As requested, free for testing
-  },
-  {
     // Changed group label for clarity
     label: "Real Photos (Powered by Pexels)",
     models: PEXELS_MODELS,
@@ -60,7 +51,6 @@ export const MODEL_GROUPS = [
 
 // This needs to include all possible model values for Zod validation.
 export const ALL_MODEL_VALUES = [
-  ...GOOGLE_AI_MODELS.map(m => m.value),
   ...PEXELS_MODELS.map(m => m.value),
   ...POLLINATIONS_MODELS.map(m => m.value),
   ...STABLE_HORDE_MODELS.map(m => m.value),

@@ -3,15 +3,14 @@
 
 /**
  * @fileOverview Universal image generation flow that routes to different services.
- * - Routes to Pexels, Google, Pollinations, Stable Horde, and Hugging Face.
+ * - Routes to Pexels, Pollinations, Stable Horde, and Hugging Face.
  * - generateImage - A function that handles the image generation process.
  * - GenerateImageInput - The input type for the generateImage function.
  * - GenerateImageOutput - The return type for the generateImage function.
  */
 
 import { z } from 'zod';
-import { ai } from '@/ai/genkit';
-import { ALL_MODEL_VALUES, GOOGLE_AI_MODELS, HF_MODELS, POLLINATIONS_MODELS, STABLE_HORDE_MODELS } from '@/lib/constants';
+import { ALL_MODEL_VALUES, HF_MODELS, POLLINATIONS_MODELS, STABLE_HORDE_MODELS } from '@/lib/constants';
 
 // Input schema defines the data structure sent from the frontend.
 const GenerateImageInputSchema = z.object({
@@ -39,9 +38,7 @@ export type GenerateImageOutput = z.infer<typeof GenerateImageOutputSchema>;
 export async function generateImage(input: GenerateImageInput): Promise<GenerateImageOutput> {
   const model = input.model;
 
-  if (GOOGLE_AI_MODELS.some(m => m.value === model)) {
-    return generateWithGenkit(input);
-  } else if (model === 'imagen-brain-ai') {
+  if (model === 'imagen-brain-ai') {
     return generateWithPexels(input);
   } else if (POLLINATIONS_MODELS.some(m => m.value === model)) {
     return generateWithPollinations(input);
@@ -51,58 +48,6 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
     return generateWithHuggingFace(input);
   } else {
     return { imageUrls: [], error: `Unknown model selected: ${model}` };
-  }
-}
-
-/**
- * Generates images using Genkit and a Google AI model.
- * Per user request, this model is temporarily free for testing.
- * @param input The generation parameters from the frontend.
- * @returns A promise that resolves to the generation output.
- */
-async function generateWithGenkit(input: GenerateImageInput): Promise<GenerateImageOutput> {
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
-  if (!GEMINI_API_KEY || GEMINI_API_KEY.trim() === "") {
-    return { 
-      imageUrls: [], 
-      error: "As the site administrator, please go to your Cloudflare project settings, find 'Environment variables', add a variable named 'GEMINI_API_KEY' with your key, and then redeploy your project."
-    };
-  }
-
-  try {
-    const generationPromises = Array(input.numberOfImages).fill(0).map(() => 
-      ai.generate({
-        model: input.model as any,
-        prompt: `${input.prompt}, aspect ratio ${input.aspectRatio}`,
-        config: {
-          responseModalities: ['TEXT', 'IMAGE'],
-        },
-      })
-    );
-
-    const results = await Promise.all(generationPromises);
-    
-    const imageUrls = results.map(result => {
-        if (!result.media?.url) {
-            throw new Error("AI model did not return an image.");
-        }
-        return result.media.url; // This will be a data URI
-    });
-    
-    return { imageUrls };
-
-  } catch (e: any) {
-    console.error("Genkit generation failed:", e);
-    let detailedMessage = `An unexpected error occurred with the AI model. ${e.message || ''}`;
-     
-    if (e.message && (e.message.includes('API_KEY_SERVICE_BLOCKED') || e.message.includes('blocked.'))) {
-        detailedMessage = "Your Google AI API key is being blocked by Google. This is NOT a problem with your website code or API key.\n\nTo fix this permanently, please go to your Google Cloud Console:\n1. Ensure you have selected the correct project.\n2. Make sure Billing is enabled for this project.\n3. In the search bar, find and ENABLE the 'Generative Language API'.\n\nAfter making these changes in Google Cloud, your app will start working automatically.";
-    } else if (e.message && (e.message.includes('API key not valid') || e.message.includes('API_KEY_INVALID'))) {
-        detailedMessage = "The Google AI API key is invalid. As the site administrator, please go to your Cloudflare project settings, verify your 'GEMINI_API_KEY' variable, and then redeploy.";
-    }
-    
-    return { imageUrls: [], error: detailedMessage };
   }
 }
 
