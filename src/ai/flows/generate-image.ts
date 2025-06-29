@@ -2,22 +2,25 @@
 'use server';
 
 /**
- * @fileOverview Image generation flow that securely calls the Pexels API to find real photos matching a prompt.
- * - generateImage - A function that fetches images from Pexels based on a prompt and aspect ratio.
+ * @fileOverview Universal image generation flow that routes to different services.
+ * - Routes to Pexels for the 'Imagen Brain AI' model.
+ * - Routes to Google's Imagen model for premium generation.
+ * - generateImage - A function that handles the image generation process.
  * - GenerateImageInput - The input type for the generateImage function.
  * - GenerateImageOutput - The return type for the generateImage function.
  */
 
 import { z } from 'zod';
+import { ai } from '@/ai/genkit';
 import { ALL_MODEL_VALUES } from '@/lib/constants';
 
 // Input schema defines the data structure sent from the frontend.
 const GenerateImageInputSchema = z.object({
-  prompt: z.string().describe('The search query for fetching images from Pexels.'),
-  plan: z.enum(['free', 'pro', 'mega']).describe("The user's current subscription plan (ignored for Pexels)."),
+  prompt: z.string().describe('The search query for fetching images.'),
+  plan: z.enum(['free', 'pro', 'mega']).describe("The user's current subscription plan."),
   aspectRatio: z.string().describe("The desired aspect ratio, e.g., '16:9'."),
-  model: z.enum(ALL_MODEL_VALUES).describe('The selected model identifier (will always be "imagen-brain-ai").'),
-  numberOfImages: z.number().min(1).max(6).describe('The number of images to fetch.'),
+  model: z.enum(ALL_MODEL_VALUES).describe('The selected model identifier.'),
+  numberOfImages: z.number().min(1).max(6).describe('The number of images to generate.'),
 });
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
 
@@ -28,6 +31,67 @@ const GenerateImageOutputSchema = z.object({
 });
 export type GenerateImageOutput = z.infer<typeof GenerateImageOutputSchema>;
 
+
+/**
+ * Main function to delegate image generation based on the selected model.
+ * @param input The generation parameters from the frontend.
+ * @returns A promise that resolves to the generation output.
+ */
+export async function generateImage(input: GenerateImageInput): Promise<GenerateImageOutput> {
+  if (input.model === 'imagen-brain-ai') {
+    return generateWithPexels(input);
+  } else {
+    // All other models are assumed to be premium Genkit models for now.
+    return generateWithGenkit(input);
+  }
+}
+
+/**
+ * Generates images using Genkit and a Google AI model.
+ * @param input The generation parameters from the frontend.
+ * @returns A promise that resolves to the generation output.
+ */
+async function generateWithGenkit(input: GenerateImageInput): Promise<GenerateImageOutput> {
+  if (input.plan === 'free') {
+    return {
+      imageUrls: [],
+      error: "You need a Pro or Mega plan to use premium AI models. Please upgrade your plan.",
+    };
+  }
+
+  try {
+    const generationPromises = Array(input.numberOfImages).fill(0).map(() => 
+      ai.generate({
+        model: input.model as any,
+        prompt: input.prompt,
+        config: {
+          responseModalities: ['TEXT', 'IMAGE'],
+        },
+      })
+    );
+
+    const results = await Promise.all(generationPromises);
+    
+    const imageUrls = results.map(result => {
+        if (!result.media?.url) {
+            throw new Error("AI model did not return an image.");
+        }
+        return result.media.url; // This will be a data URI
+    });
+    
+    return { imageUrls };
+
+  } catch (e: any) {
+    console.error("Genkit generation failed:", e);
+    let detailedMessage = `An unexpected error occurred with the AI model. ${e.message || ''}`;
+    if (e.message && (e.message.includes('API key not valid') || e.message.includes('API_KEY_INVALID'))) {
+        detailedMessage = "Image generation failed due to an invalid API key. (For site admins) Please check your GEMINI_API_KEY, ensure billing is enabled for your Google Cloud project, and that the 'Generative Language API' is enabled.";
+    }
+    return { imageUrls: [], error: detailedMessage };
+  }
+}
+
+
 /**
  * Fetches images from Pexels API based on the user's prompt and desired aspect ratio.
  * @param input The generation parameters from the frontend.
@@ -36,7 +100,7 @@ export type GenerateImageOutput = z.infer<typeof GenerateImageOutputSchema>;
 async function generateWithPexels(input: GenerateImageInput): Promise<GenerateImageOutput> {
   const PEXELS_API_KEY = process.env.PEXELS_API_KEY;
 
-  if (!PEXELS_API_KEY || PEXELS_API_KEY === "YOUR_PEXELS_API_KEY_HERE") {
+  if (!PEXELS_API_KEY || PEXELS_API_KEY === "YOUR_PEXELS_API_KEY_HERE" || PEXELS_API_KEY === "") {
     return { 
       imageUrls: [], 
       error: "Pexels API key is not configured. For site administrators, please add your PEXELS_API_KEY to the environment variables." 
@@ -76,8 +140,6 @@ async function generateWithPexels(input: GenerateImageInput): Promise<GenerateIm
       };
     }
     
-    // Although we filter by orientation, we can do a secondary check for a closer aspect ratio match if needed.
-    // For now, we trust Pexels' orientation filter and take the first results.
     const imageUrls = data.photos.slice(0, input.numberOfImages).map((photo: any) => photo.src.large2x);
 
     return { imageUrls };
@@ -86,13 +148,4 @@ async function generateWithPexels(input: GenerateImageInput): Promise<GenerateIm
     console.error("Pexels fetch failed:", e);
     return { imageUrls: [], error: e.message || 'An unknown error occurred while fetching images from Pexels.' };
   }
-}
-
-/**
- * Main function to delegate image generation to the Pexels service.
- * @param input The generation parameters from the frontend.
- * @returns A promise that resolves to the generation output.
- */
-export async function generateImage(input: GenerateImageInput): Promise<GenerateImageOutput> {
-  return generateWithPexels(input);
 }

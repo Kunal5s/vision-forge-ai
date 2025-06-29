@@ -46,23 +46,13 @@ const createFreePlan = (): Subscription => ({
   lastReset: new Date().toISOString(),
 });
 
-const createMegaPlan = (): Subscription => ({
-  email: 'mega@example.com',
-  plan: 'mega',
-  status: 'active',
-  credits: PLAN_CREDITS.mega,
-  purchaseDate: new Date().toISOString(),
-  lastReset: new Date().toISOString(),
-});
-
-
 export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
   const saveSubscription = useCallback((sub: Subscription | null) => {
-    const subToSave = sub || createMegaPlan();
+    const subToSave = sub || createFreePlan();
     setSubscription(subToSave);
     try {
         localStorage.setItem('imagenBrainAiSubscription', JSON.stringify(subToSave));
@@ -73,11 +63,39 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     setIsLoading(true);
-    // For this request, we will always default to the Mega plan to unlock premium features.
-    // This will override any existing plan in localStorage on every page load.
-    saveSubscription(createMegaPlan());
-    setIsLoading(false);
-  }, [saveSubscription]);
+    try {
+      const storedSub = localStorage.getItem('imagenBrainAiSubscription');
+      if (storedSub) {
+        const parsedSub: Subscription = JSON.parse(storedSub);
+        
+        // Check if the plan has expired
+        const purchaseDate = new Date(parsedSub.purchaseDate);
+        const expiryDate = new Date(purchaseDate);
+        expiryDate.setDate(purchaseDate.getDate() + PLAN_VALIDITY_DAYS);
+
+        if (new Date() > expiryDate && parsedSub.plan !== 'free') {
+          // Plan expired, revert to free
+          toast({
+            title: 'Subscription Expired',
+            description: `Your ${parsedSub.plan} plan has expired. You are now on the Free plan.`,
+            variant: 'destructive',
+          });
+          saveSubscription(createFreePlan());
+        } else {
+          setSubscription(parsedSub);
+        }
+      } else {
+        // No subscription found, create a new free one
+        saveSubscription(createFreePlan());
+      }
+    } catch (e) {
+      console.error("Failed to load subscription from localStorage:", e);
+      // Fallback to a free plan if there's an error
+      saveSubscription(createFreePlan());
+    } finally {
+      setIsLoading(false);
+    }
+  }, [saveSubscription, toast]);
 
   const activateSubscription = useCallback((email: string): boolean => {
     const purchasedPlan = MOCK_PURCHASED_EMAILS[email.toLowerCase()];

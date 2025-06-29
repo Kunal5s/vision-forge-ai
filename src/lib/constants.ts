@@ -1,22 +1,30 @@
 
-export const IMAGEN_BRAIN_AI_MODEL = [
+export const PREMIUM_MODELS = [
+  { value: 'googleai/gemini-2.0-flash-preview-image-generation', label: 'Google Imagen 3' },
+];
+
+export const FREE_MODELS = [
   { value: 'imagen-brain-ai', label: 'Imagen Brain AI' },
 ];
 
 export const MODEL_GROUPS = [
   {
-    label: "Available Models",
-    models: IMAGEN_BRAIN_AI_MODEL,
+    label: "Free Models (Powered by Pexels)",
+    models: FREE_MODELS,
     premium: false,
+  },
+  {
+    label: "Premium Models (Subscribers Only)",
+    models: PREMIUM_MODELS,
+    premium: true,
   }
 ];
 
 // This needs to include all possible model values for Zod validation.
 export const ALL_MODEL_VALUES = [
-  'imagen-brain-ai',
-  // Keep old values here to prevent validation errors from history items if any exist,
-  // but they won't be shown in the UI.
-  "googleai/gemini-2.0-flash-preview-image-generation",
+  ...FREE_MODELS.map(m => m.value),
+  ...PREMIUM_MODELS.map(m => m.value),
+  // Keep old values here for compatibility
   'runwayml/stable-diffusion-v1-5',
   'stabilityai/sdxl-turbo',
   'prompthero/openjourney',

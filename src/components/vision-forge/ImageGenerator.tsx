@@ -1,13 +1,14 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -18,15 +19,22 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { generateImage, type GenerateImageInput } from '@/ai/flows/generate-image';
-import { ASPECT_RATIOS, MODEL_GROUPS } from '@/lib/constants';
+import { improvePrompt, type ImprovePromptInput, type ImprovePromptOutput } from '@/ai/flows/improve-prompt';
+import { ASPECT_RATIOS, MODEL_GROUPS, PREMIUM_MODELS } from '@/lib/constants';
 import { ImageDisplay } from './ImageDisplay';
 import { FuturisticPanel } from './FuturisticPanel';
-import { Gem, AlertTriangle, ImageIcon as ImageIconIcon, RefreshCcw, XCircle } from 'lucide-react';
+import { Gem, AlertTriangle, ImageIcon as ImageIconIcon, RefreshCcw, XCircle, Sparkles, Lightbulb } from 'lucide-react';
 import { useSubscription } from '@/hooks/use-subscription';
 import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
+import { LoadingSpinner } from './LoadingSpinner';
 
 const formSchema = z.object({
-  prompt: z.string().min(1, 'Prompt cannot be empty. Let your imagination flow!').max(1000, 'Prompt is too long.'),
+  prompt: z.string().min(1, 'Prompt cannot be empty. Let your imagination flow!').max(2000, 'Prompt is too long.'),
+  style: z.string().max(200, 'Style is too long.').optional(),
+  mood: z.string().max(200, 'Mood is too long.').optional(),
+  lighting: z.string().max(200, 'Lighting is too long.').optional(),
+  color: z.string().max(200, 'Color is too long.').optional(),
 });
 type FormData = z.infer<typeof formSchema>;
 
@@ -48,22 +56,50 @@ export function ImageGenerator() {
   const [numberOfImages, setNumberOfImages] = useState<number>(1);
   
   const [generatedImageUrls, setGeneratedImageUrls] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isImproving, setIsImproving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   const { register, handleSubmit, watch, setValue: setFormValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: { prompt: '' },
+    defaultValues: { prompt: '', style: '', mood: '', lighting: '', color: '' },
   });
+  
   const currentPrompt = watch('prompt');
 
+  const isPremiumModel = useMemo(() => PREMIUM_MODELS.some(m => m.value === activeModel), [activeModel]);
+  const isFreePlan = subscription?.plan === 'free';
+
+  const constructFinalPrompt = (data: FormData): string => {
+    let finalPrompt = data.prompt;
+    if (isPremiumModel) {
+        if (data.style) finalPrompt += `, in the style of ${data.style}`;
+        if (data.mood) finalPrompt += `, ${data.mood} mood`;
+        if (data.lighting) finalPrompt += `, ${data.lighting} lighting`;
+        if (data.color) finalPrompt += `, color palette based on ${data.color}`;
+    }
+    return finalPrompt;
+  };
+
   const onSubmit: SubmitHandler<FormData> = async (data) => {
+    if (isPremiumModel && isFreePlan) {
+      toast({
+        title: 'Upgrade Required',
+        description: 'You need a Pro or Mega plan to use premium models. Please upgrade your plan.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     generationCancelled.current = false;
-    setIsLoading(true);
+    setIsGenerating(true);
     setError(null);
+    setGeneratedImageUrls([]);
+
+    const finalPrompt = constructFinalPrompt(data);
 
     const generationParams: GenerateImageInput = { 
-        prompt: data.prompt,
+        prompt: finalPrompt,
         plan: subscription?.plan || 'free',
         aspectRatio: selectedAspectRatio,
         model: activeModel,
@@ -76,7 +112,7 @@ export function ImageGenerator() {
         return;
     }
 
-    setIsLoading(false);
+    setIsGenerating(false);
 
     if (result.error) {
       setError(result.error);
@@ -84,11 +120,33 @@ export function ImageGenerator() {
     } else if (result.imageUrls && result.imageUrls.length > 0) {
       setGeneratedImageUrls(result.imageUrls);
       setDisplayAspectRatio(selectedAspectRatio);
-      
       toast({ title: 'Vision Forged!', description: `Your image(s) have been successfully generated.` });
     } else {
       setError('The API returned no images. This can happen with very specific or unusual search terms.');
       setGeneratedImageUrls([]);
+    }
+  };
+
+  const handleImprovePrompt = async () => {
+    if (!currentPrompt) {
+        toast({ title: 'Prompt is empty', description: 'Please enter a prompt to improve.', variant: 'destructive' });
+        return;
+    }
+
+    if (isFreePlan) {
+      toast({ title: 'Upgrade Required', description: 'Prompt Improvement is a premium feature. Please upgrade.', variant: 'destructive'});
+      return;
+    }
+
+    setIsImproving(true);
+    const result: ImprovePromptOutput = await improvePrompt({ prompt: currentPrompt });
+    setIsImproving(false);
+
+    if (result.error) {
+        toast({ title: 'Failed to Improve Prompt', description: result.error, variant: 'destructive' });
+    } else if (result.improvedPrompt) {
+        setFormValue('prompt', result.improvedPrompt);
+        toast({ title: 'Prompt Improved!', description: result.reasoning });
     }
   };
 
@@ -101,13 +159,18 @@ export function ImageGenerator() {
   };
 
   const handleCopyPrompt = () => {
-    if (!currentPrompt) return;
-    navigator.clipboard.writeText(currentPrompt);
-    toast({ title: 'Prompt Copied!', description: 'The current prompt is copied to your clipboard.' });
+    const finalPrompt = constructFinalPrompt(watch());
+    if (!finalPrompt) return;
+    navigator.clipboard.writeText(finalPrompt);
+    toast({ title: 'Prompt Copied!', description: 'The final constructed prompt is copied to your clipboard.' });
   };
   
   const handleReset = () => {
     setFormValue('prompt', '');
+    setFormValue('style', '');
+    setFormValue('mood', '');
+    setFormValue('lighting', '');
+    setFormValue('color', '');
     setActiveModel(MODEL_GROUPS[0].models[0].value);
     setSelectedAspectRatio(ASPECT_RATIOS[0].value);
     setDisplayAspectRatio(ASPECT_RATIOS[0].value);
@@ -119,7 +182,7 @@ export function ImageGenerator() {
 
   const handleStopGeneration = () => {
     generationCancelled.current = true;
-    setIsLoading(false);
+    setIsGenerating(false);
     setError("Image generation was cancelled by the user.");
     toast({
         title: 'Generation Cancelled',
@@ -137,17 +200,22 @@ export function ImageGenerator() {
                 <Label htmlFor="model-select" className="text-lg font-semibold mb-2 block text-foreground/90">
                   Model
                 </Label>
-                <Select value={activeModel} onValueChange={setActiveModel}>
+                <Select value={activeModel} onValueChange={setActiveModel} disabled={isSubLoading || isGenerating}>
                   <SelectTrigger id="model-select" className="w-full bg-background hover:bg-muted/50">
                     <SelectValue placeholder="Select a model" />
                   </SelectTrigger>
                   <SelectContent>
                     {MODEL_GROUPS.map(group => (
                       <SelectGroup key={group.label}>
+                        <Label className='px-2 text-xs text-muted-foreground'>{group.label}</Label>
                         {group.models.map(model => (
-                          <SelectItem key={model.value} value={model.value}>
-                            <div className="flex items-center gap-2">
-                              {model.label}
+                          <SelectItem key={model.value} value={model.value} disabled={group.premium && isFreePlan}>
+                            <div className="flex items-center justify-between w-full">
+                              <span className="flex items-center gap-2">
+                                {model.label}
+                                {group.premium && <Gem size={14} className="text-primary" />}
+                              </span>
+                              {group.premium && isFreePlan && <Badge variant="secondary">Upgrade</Badge>}
                             </div>
                           </SelectItem>
                         ))}
@@ -156,14 +224,20 @@ export function ImageGenerator() {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Powered by the Pexels API.
+                    {isPremiumModel ? 'High-quality AI generation for subscribers.' : 'Powered by the Pexels API for realistic photos.'}
                 </p>
               </div>
 
               <div>
-                <Label htmlFor="prompt" className="text-lg font-semibold mb-2 block text-foreground/90">
-                  Enter Your Vision
-                </Label>
+                <div className="flex justify-between items-center mb-2">
+                    <Label htmlFor="prompt" className="text-lg font-semibold text-foreground/90">
+                      Enter Your Vision
+                    </Label>
+                    <Button type="button" variant="ghost" size="sm" onClick={handleImprovePrompt} disabled={isImproving || isGenerating || isFreePlan || !isPremiumModel}>
+                        {isImproving ? <LoadingSpinner size={16}/> : <Sparkles size={16} className="text-primary" />}
+                        <span className="ml-2">Improve</span>
+                    </Button>
+                </div>
                 <div className="relative">
                   <Textarea
                     id="prompt"
@@ -171,15 +245,30 @@ export function ImageGenerator() {
                     placeholder="e.g., A futuristic cityscape at sunset, neon lights reflecting on wet streets..."
                     rows={4}
                     className="bg-background border-input focus:border-primary focus:ring-primary text-base resize-none"
+                    disabled={isGenerating}
                   />
                 </div>
                 {errors.prompt && <p className="text-sm text-destructive mt-1">{errors.prompt.message}</p>}
               </div>
 
+              {isPremiumModel && (
+                <div>
+                  <Label className="text-lg font-semibold mb-2 block text-foreground/90">
+                    Advanced Options
+                  </Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input {...register('style')} placeholder="Artistic Style (e.g., cyberpunk)" disabled={isGenerating} />
+                    <Input {...register('mood')} placeholder="Mood (e.g., mysterious)" disabled={isGenerating} />
+                    <Input {...register('lighting')} placeholder="Lighting (e.g., cinematic)" disabled={isGenerating} />
+                    <Input {...register('color')} placeholder="Color Palette (e.g., neon blue)" disabled={isGenerating} />
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="aspect-ratio" className="text-sm font-semibold mb-1 block text-foreground/80">Aspect Ratio</Label>
-                  <Select value={selectedAspectRatio} onValueChange={setSelectedAspectRatio}>
+                  <Select value={selectedAspectRatio} onValueChange={setSelectedAspectRatio} disabled={isGenerating}>
                     <SelectTrigger id="aspect-ratio" className="w-full bg-background hover:bg-muted/50">
                       <SelectValue placeholder="Select aspect ratio" />
                     </SelectTrigger>
@@ -197,13 +286,14 @@ export function ImageGenerator() {
                     <Select 
                         value={String(numberOfImages)} 
                         onValueChange={(val) => setNumberOfImages(Number(val))}
+                        disabled={isGenerating}
                     >
                         <SelectTrigger id="num-images" className="w-full bg-background hover:bg-muted/50">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                             {imageCountOptions.map((opt) => (
-                                <SelectItem key={opt.value} value={String(opt.value)}>{opt.label}</SelectItem>
+                                <SelectItem key={opt.value} value={String(opt.value)} disabled={isPremiumModel && isFreePlan && opt.value > 1}>{opt.label}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
@@ -211,7 +301,7 @@ export function ImageGenerator() {
               </div>
               
               <div className="flex w-full items-center gap-2">
-                {isLoading ? (
+                {isGenerating ? (
                   <Button
                     type="button"
                     onClick={handleStopGeneration}
@@ -233,7 +323,7 @@ export function ImageGenerator() {
                     </Button>
                     <Button
                       type="submit"
-                      disabled={isSubLoading}
+                      disabled={isSubLoading || (isPremiumModel && isFreePlan)}
                       className="w-full text-lg py-3 bg-primary hover:bg-primary/90 text-primary-foreground transition-shadow hover:shadow-xl hover:shadow-primary/20"
                     >
                       <ImageIconIcon size={20} className="mr-2" />
@@ -242,6 +332,13 @@ export function ImageGenerator() {
                   </>
                 )}
               </div>
+              {isPremiumModel && isFreePlan && (
+                <div className='text-center text-sm p-2 bg-muted rounded-md'>
+                    <Lightbulb size={16} className="inline-block mr-2 text-primary" />
+                    To use premium models, please{' '}
+                    <Link href="/pricing" className="underline text-primary">upgrade your plan</Link>.
+                </div>
+              )}
             </form>
           </FuturisticPanel>
         </div>
@@ -249,9 +346,9 @@ export function ImageGenerator() {
         <div className="lg:col-span-7">
           <ImageDisplay
             imageUrls={generatedImageUrls}
-            prompt={currentPrompt}
+            prompt={constructFinalPrompt(watch())}
             aspectRatio={displayAspectRatio}
-            isLoading={isLoading}
+            isLoading={isGenerating}
             error={error}
             onRegenerate={handleRegenerate}
             onCopyPrompt={handleCopyPrompt}
