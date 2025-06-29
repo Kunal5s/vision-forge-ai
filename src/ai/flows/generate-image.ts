@@ -81,6 +81,9 @@ async function generateWithPexels(input: GenerateImageInput): Promise<GenerateIm
 
     if (!response.ok) {
       const errorText = await response.text();
+      if (response.status === 401) {
+          throw new Error(`Pexels API error (401 Unauthorized): The API key is invalid or has a typo. Please go to your Cloudflare project settings, double-check the value of 'PEXELS_API_KEY', and redeploy.`);
+      }
       throw new Error(`Pexels API returned an error: ${response.statusText} - ${errorText}`);
     }
 
@@ -165,6 +168,9 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
 
         if (!asyncResponse.ok) {
             const errorData = await asyncResponse.json();
+             if (asyncResponse.status === 401) {
+                throw new Error(`Stable Horde error (401 Unauthorized): The API key is invalid. Please go to your Cloudflare project settings, check the value of 'STABLE_HORDE_API_KEY', and redeploy.`);
+            }
             throw new Error(`Stable Horde submission failed: ${errorData.message || 'Unknown error'}`);
         }
         
@@ -230,13 +236,15 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
             
             if (!response.ok) {
                 let errorText;
-                try {
-                    // Try to parse JSON error first
-                    const errorJson = await response.json();
-                    errorText = errorJson.error || `API returned status ${response.status}`;
-                } catch (e) {
-                    // If response is not JSON
-                    errorText = `API returned status ${response.status} with non-JSON response. The model may be offline, invalid, or requires a Pro subscription on Hugging Face.`;
+                if (response.status === 401) {
+                    errorText = "Hugging Face error (401 Unauthorized): The API key is invalid or your account doesn't have access to this model. Please check your HF_API_KEY variables in Cloudflare.";
+                } else {
+                    try {
+                        const errorJson = await response.json();
+                        errorText = errorJson.error || `API returned status ${response.status}`;
+                    } catch (e) {
+                        errorText = `API returned status ${response.status} with non-JSON response. The model may be offline, invalid, or requires a Pro subscription on Hugging Face.`;
+                    }
                 }
                 throw new Error(errorText);
             }

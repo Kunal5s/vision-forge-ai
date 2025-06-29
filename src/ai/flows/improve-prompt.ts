@@ -75,7 +75,9 @@ const improvePromptFlow = ai.defineFlow(
         console.error("Improve prompt API call failed:", e);
         let detailedMessage = `An unexpected error occurred with the prompt enhancement service. ${e.message}`;
         if (e.message && (e.message.includes('API key not valid') || e.message.includes('API_KEY_INVALID'))) {
-            detailedMessage = "The prompt enhancement service failed. Please go to your Cloudflare project settings, find 'Environment variables', and add a variable named 'GEMINI_API_KEY'. Also ensure billing is enabled for your Google Cloud project and the 'Generative Language API' is active, then redeploy.";
+            detailedMessage = "The prompt enhancement service failed because the API key is invalid. Please go to your Cloudflare project settings, find 'Environment variables', check 'GEMINI_API_KEY', and then redeploy.";
+        } else if (e.message && e.message.includes('API_KEY_SERVICE_BLOCKED')) {
+            detailedMessage = `Google AI error (403 Forbidden): The 'Generative Language API' is likely disabled in your Google Cloud project. Please go to your Google Cloud Console, enable the 'Generative Language API' for your project, ensure billing is active, and then redeploy on Cloudflare.`;
         }
         return { improvedPrompt: '', reasoning: '', error: detailedMessage };
     }
