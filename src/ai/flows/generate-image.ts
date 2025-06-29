@@ -138,10 +138,10 @@ async function generateWithPollinations(input: GenerateImageInput): Promise<Gene
 async function generateWithStableHorde(input: GenerateImageInput): Promise<GenerateImageOutput> {
   const API_KEY = process.env.STABLE_HORDE_API_KEY;
 
-  if (!API_KEY || API_KEY.trim() === "" || API_KEY.trim() === "0000000000") {
+  if (!API_KEY || API_KEY.trim() === "") {
     return {
       imageUrls: [],
-      error: "As the site administrator, please go to your Cloudflare project settings, find 'Environment variables', add a variable named 'STABLE_HORDE_API_KEY' with your key (even '0000000000' for anonymous mode), and then redeploy your project."
+      error: "As the site administrator, please go to your Cloudflare project settings, find 'Environment variables', add a variable named 'STABLE_HORDE_API_KEY' with your key (or '0000000000' for anonymous mode), and then redeploy your project."
     };
   }
 
@@ -175,7 +175,8 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
                 },
                 // Using a broad range of popular models to increase success rate.
                 models: ["Deliberate", "dreamshaper_8", "rev_animated", "AnythingV5", "animevae"], 
-                kudosai: true,
+                // kudosai is deprecated, using kudos directly is preferred.
+                // kudos: 1, // Example, could be dynamic
             })
         });
 
@@ -194,8 +195,8 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
         let finalResult = null;
         const startTime = Date.now();
         // Polling logic to wait for the image to be generated.
-        while (Date.now() - startTime < 90000) { // 90 second timeout per image
-            await new Promise(resolve => setTimeout(resolve, 5000)); // Check every 5 seconds
+        while (Date.now() - startTime < 60000) { // 60 second timeout per image
+            await new Promise(resolve => setTimeout(resolve, 4000)); // Check every 4 seconds
             const checkResponse = await fetch(`https://stablehorde.net/api/v2/generate/check/${id}`);
             const checkData = await checkResponse.json();
 
@@ -215,7 +216,7 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
             imageUrls.push(finalResult);
         } else {
             // This is a critical error message for the user.
-            throw new Error(`Image generation timed out after 90 seconds. Stable Horde is a free, community-run service and is likely experiencing high traffic. Please try again in a few minutes or select a different model like Pollinations for faster results.`);
+            throw new Error(`Image generation timed out after 60 seconds. This often happens because the free, community-run Stable Horde network is experiencing high traffic, or your API key has low 'kudos' (priority points). Please try again in a few minutes or select a different model like Pollinations for faster results.`);
         }
     }
     return { imageUrls };
@@ -226,5 +227,3 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
       return { imageUrls: [], error: `Stable Horde Error: ${e.message}` };
   }
 }
-
-    
