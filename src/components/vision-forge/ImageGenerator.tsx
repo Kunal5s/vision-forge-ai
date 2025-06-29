@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { generateImage, type GenerateImageInput } from '@/ai/flows/generate-image';
-import { ASPECT_RATIOS, STYLES, MOODS, LIGHTING, COLOURS } from '@/lib/constants';
+import { ASPECT_RATIOS, STYLES, MOODS, LIGHTING, COLOURS, MODELS } from '@/lib/constants';
 import { ImageDisplay } from './ImageDisplay';
 import { FuturisticPanel } from './FuturisticPanel';
 import { ImageIcon as ImageIconIcon, RefreshCcw, XCircle } from 'lucide-react';
@@ -43,9 +43,7 @@ export function ImageGenerator() {
   const { subscription } = useSubscription();
   const generationCancelled = useRef(false);
   
-  // The app now uses a single, reliable backend model flow.
-  const activeModel = 'stable_horde';
-  const isPremiumFeature = false;
+  const [activeModel, setActiveModel] = useState<string>(MODELS[0].value);
   const showAdvancedOptions = true;
   
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>(ASPECT_RATIOS[0].value);
@@ -166,10 +164,18 @@ export function ImageGenerator() {
                   <Label className="text-lg font-semibold mb-2 block text-foreground/90">
                     Model
                   </Label>
-                  <div className="flex items-center justify-between w-full p-3 bg-muted rounded-md border">
-                      <span className="font-semibold text-foreground/90">Stable Horde</span>
-                      <Badge variant="secondary">Community Powered</Badge>
-                  </div>
+                   <Select value={activeModel} onValueChange={setActiveModel} disabled={isGenerating}>
+                      <SelectTrigger id="model" className="w-full bg-background hover:bg-muted/50">
+                        <SelectValue placeholder="Select a model" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border">
+                        {MODELS.map((model) => (
+                          <SelectItem key={model.value} value={model.value}>
+                            {model.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                 </div>
 
                 <div>
@@ -258,7 +264,6 @@ export function ImageGenerator() {
                       </Button>
                       <Button
                         type="submit"
-                        disabled={isPremiumFeature}
                         className="w-full text-lg py-3 bg-primary hover:bg-primary/90 text-primary-foreground transition-shadow hover:shadow-xl hover:shadow-primary/20"
                       >
                         <ImageIconIcon size={20} className="mr-2" />

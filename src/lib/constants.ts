@@ -5,9 +5,10 @@ export interface StyleOption {
   label: string;
 }
 
-// All model constants are removed as the app now uses a single,
-// reliable backend flow via a Cloudflare function.
-export const ALL_MODEL_VALUES = ['stable_horde'] as [string, ...string[]];
+export const MODELS = [
+  { label: 'Pollinations AI (Fast & Free)', value: 'pollinations' },
+  { label: 'Stable Horde (Community)', value: 'stable_horde' },
+];
 
 export const ASPECT_RATIOS = [
   { label: "1:1 (Square)", value: "1:1" },
