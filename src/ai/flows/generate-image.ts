@@ -129,7 +129,7 @@ async function generateWithPollinations(input: GenerateImageInput): Promise<Gene
 async function generateWithStableHorde(input: GenerateImageInput): Promise<GenerateImageOutput> {
   const apiKey = process.env.HORDE_API_KEY || '0000000000';
   // Use a smaller base size for Stable Horde to stay within free-tier kudos limits.
-  const { width, height } = parseAspectRatio(input.aspectRatio, 512);
+  const { width, height } = parseAspectRatio(input.aspectRatio, 768);
 
   try {
     // Step 1: Asynchronously request image generation
@@ -138,20 +138,21 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
       headers: {
         'Content-Type': 'application/json',
         'apikey': apiKey,
-        'Client-Agent': 'VisionForgeAI:1.0:https://imagenbrainai.in',
+        'Client-Agent': 'ImagenBrainAI/1.0 (https://imagenbrainai.in)',
       },
       body: JSON.stringify({
-        prompt: `${input.prompt} ### masterpiece, high quality`,
+        prompt: `${input.prompt} ### masterpiece, high quality, high resolution`,
         params: {
-          sampler_name: 'k_euler_a',
-          cfg_scale: 7.0,
+          sampler_name: 'k_dpmpp_2m',
+          cfg_scale: 8.0,
           width,
           height,
-          steps: 20, // Reduced steps to be more kudos-friendly
+          steps: 30,
           n: input.numberOfImages,
         },
-        models: ['stable_diffusion'],
+        models: ["juggernautXL", "realvisXL_V4", "epicrealismXL", "DreamShaper XL"],
         nsfw: false,
+        trusted_workers: true,
       }),
     });
 
