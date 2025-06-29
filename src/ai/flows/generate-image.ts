@@ -1,6 +1,9 @@
 
 'use server';
 
+import { config } from 'dotenv';
+config();
+
 /**
  * @fileOverview Universal image generation flow that routes to different services.
  * - Routes to Pexels, Google, Pollinations, Stable Horde, and Hugging Face.
@@ -264,6 +267,7 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
                     const errorJson = await response.json();
                     errorText = errorJson.error || `API returned status ${response.status}`;
                 } catch (e) {
+                    // If parsing JSON fails, fall back to plain text
                     errorText = await response.text();
                 }
                 throw new Error(errorText);
@@ -271,7 +275,8 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
 
             const blob = await response.blob();
             if (!blob.type.startsWith('image/')) {
-                 throw new Error("Invalid response from API. Expected an image blob.");
+                 const errorText = await blob.text();
+                 throw new Error(`Invalid response from API. Expected an image blob, but received: ${errorText}`);
             }
             const buffer = Buffer.from(await blob.arrayBuffer());
             const dataUri = `data:${blob.type};base64,${buffer.toString('base64')}`;
