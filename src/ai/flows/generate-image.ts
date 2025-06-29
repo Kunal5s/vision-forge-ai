@@ -158,7 +158,7 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
         'Client-Agent': 'ImagenBrainAI/1.0 (https://imagenbrainai.in)',
       },
       body: JSON.stringify({
-        prompt: input.prompt,
+        prompt: `masterpiece, best quality, ${input.prompt}`,
         params: {
           sampler_name: 'k_euler',
           cfg_scale: 8.0,
@@ -166,6 +166,7 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
           height,
           steps: 30,
           n: input.numberOfImages,
+          negative_prompt: 'low quality, worst quality, bad hands, extra limbs, jpeg artifacts, blurry, ugly, distorted, watermark, signature',
         },
         models: ["deliberate", "stable_diffusion"],
         nsfw: false,
@@ -183,7 +184,7 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
 
     // Step 2: Poll for the result until it's done or timed out
     const pollStartTime = Date.now();
-    const pollTimeout = 180000; // 3-minute timeout
+    const pollTimeout = 90000; // 90-second timeout
 
     while (Date.now() - pollStartTime < pollTimeout) {
       await sleep(2500); // Wait 2.5 seconds between each poll
@@ -232,7 +233,7 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
     }
 
     // If the loop finishes, it means we timed out
-    throw new Error('Image generation timed out. The Horde is very busy. Please try again in a few moments.');
+    throw new Error('Image generation timed out. The Horde is very busy. Please try again in a few moments or use a different model.');
 
   } catch (e: any) {
     console.error("Stable Horde generation process failed:", e);
