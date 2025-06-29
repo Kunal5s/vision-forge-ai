@@ -61,12 +61,14 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
  * @returns A promise that resolves to the generation output.
  */
 async function generateWithGenkit(input: GenerateImageInput): Promise<GenerateImageOutput> {
+  // Check is done via environment variables, which is standard for serverless.
+  // The process.env object is populated by the Cloudflare environment.
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
   if (!GEMINI_API_KEY || GEMINI_API_KEY.trim() === "") {
     return { 
       imageUrls: [], 
-      error: "Google AI API key is not configured. As the site administrator, please go to your Cloudflare project settings, find 'Environment variables', add a variable named 'GEMINI_API_KEY' with your key, and then redeploy your project."
+      error: "As the site administrator, please go to your Cloudflare project settings, find 'Environment variables', add a variable named 'GEMINI_API_KEY' with your key, and then redeploy your project."
     };
   }
 
@@ -95,9 +97,13 @@ async function generateWithGenkit(input: GenerateImageInput): Promise<GenerateIm
   } catch (e: any) {
     console.error("Genkit generation failed:", e);
     let detailedMessage = `An unexpected error occurred with the AI model. ${e.message || ''}`;
-     if (e.message && (e.message.includes('API key not valid') || e.message.includes('API_KEY_INVALID'))) {
-        detailedMessage = "The Google AI API key is invalid or not configured. As the site administrator, please go to your Cloudflare project settings, verify your 'GEMINI_API_KEY' variable, ensure billing is enabled for your Google Cloud project, then redeploy.";
+     
+    if (e.message && (e.message.includes('API_KEY_SERVICE_BLOCKED') || e.message.includes('blocked.'))) {
+        detailedMessage = "Your Google AI API key is being blocked by Google. This is NOT a problem with your website code or API key.\n\nTo fix this permanently, please go to your Google Cloud Console:\n1. Ensure you have selected the correct project.\n2. Make sure Billing is enabled for this project.\n3. In the search bar, find and ENABLE the 'Generative Language API'.\n\nAfter making these changes in Google Cloud, your app will start working automatically.";
+    } else if (e.message && (e.message.includes('API key not valid') || e.message.includes('API_KEY_INVALID'))) {
+        detailedMessage = "The Google AI API key is invalid. As the site administrator, please go to your Cloudflare project settings, verify your 'GEMINI_API_KEY' variable, and then redeploy.";
     }
+    
     return { imageUrls: [], error: detailedMessage };
   }
 }
@@ -114,15 +120,15 @@ async function generateWithPexels(input: GenerateImageInput): Promise<GenerateIm
   if (!PEXELS_API_KEY || PEXELS_API_KEY.trim() === "") {
     return { 
       imageUrls: [], 
-      error: "Pexels API key is not configured. As the site administrator, please go to your Cloudflare project settings, find 'Environment variables', add a variable named 'PEXELS_API_KEY' with your key, and then redeploy your project."
+      error: "As the site administrator, please go to your Cloudflare project settings, find 'Environment variables', add a variable named 'PEXELS_API_KEY' with your key, and then redeploy your project."
     };
   }
 
   try {
     const orientationMap: Record<string, string> = {
-      '16:9': 'landscape', '21:9': 'landscape', '3:2': 'landscape', '4:3': 'landscape',
-      '9:16': 'portrait', '2:3': 'portrait', '3:4': 'portrait',
       '1:1': 'square',
+      '16:9': 'landscape', '21:9': 'landscape', '3:2': 'landscape', '4:3': 'landscape', '2:1': 'landscape', '3:1': 'landscape',
+      '9:16': 'portrait', '2:3': 'portrait', '3:4': 'portrait', '5:4': 'portrait',
     };
     const orientation = orientationMap[input.aspectRatio] || 'landscape';
 
@@ -159,7 +165,6 @@ async function generateWithPexels(input: GenerateImageInput): Promise<GenerateIm
 async function generateWithPollinations(input: GenerateImageInput): Promise<GenerateImageOutput> {
     try {
         const [width, height] = input.aspectRatio.split(':').map(Number);
-        // Using a common base resolution like 1024 for one dimension
         const scaleFactor = 1024 / Math.max(width, height);
         const finalWidth = Math.round(width * scaleFactor);
         const finalHeight = Math.round(height * scaleFactor);
@@ -188,16 +193,14 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
   if (!API_KEY || API_KEY.trim() === "" || API_KEY.trim() === "0000000000") {
     return {
       imageUrls: [],
-      error: "The Stable Horde API key is not configured. As the site administrator, please go to your Cloudflare project settings, find 'Environment variables', add a variable named 'STABLE_HORDE_API_KEY', and then redeploy your project."
+      error: "As the site administrator, please go to your Cloudflare project settings, find 'Environment variables', add a variable named 'STABLE_HORDE_API_KEY', and then redeploy your project."
     };
   }
 
   try {
     const [w, h] = input.aspectRatio.split(':').map(Number);
-    // Aim for a pixel area close to a standard SD 1.5 resolution (512*768)
     const targetArea = 512 * 768;
     const scale = Math.sqrt(targetArea / (w * h));
-    // Ensure dimensions are multiples of 64 for compatibility with SD models
     const finalWidth = Math.round(w * scale / 64) * 64;
     const finalHeight = Math.round(h * scale / 64) * 64;
 
@@ -260,7 +263,7 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
     if (keys.length === 0) {
         return { 
             imageUrls: [], 
-            error: "No Hugging Face API keys are configured. As the site administrator, please go to your Cloudflare project settings, find 'Environment variables', add variables named 'HF_API_KEY_...', and then redeploy your project."
+            error: "As the site administrator, please go to your Cloudflare project settings, find 'Environment variables', add variables named 'HF_API_KEY_...', and then redeploy your project."
         };
     }
 
@@ -280,7 +283,7 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
                     const errorJson = await response.json();
                     errorText = errorJson.error || `API returned status ${response.status}`;
                 } catch (e) {
-                    errorText = `API returned status ${response.status} with non-JSON response.`;
+                    errorText = `API returned status ${response.status} with non-JSON response. The model may be offline or invalid.`;
                 }
                 throw new Error(errorText);
             }
@@ -300,6 +303,6 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
     } catch (e: any)
       {
         console.error("Hugging Face generation failed:", e);
-        return { imageUrls: [], error: `Hugging Face API Error: ${e.message}` };
+        return { imageUrls: [], error: `Hugging Face API Error on model '${input.model}': ${e.message}` };
     }
 }

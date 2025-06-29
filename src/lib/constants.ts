@@ -20,12 +20,13 @@ export const STABLE_HORDE_MODELS = [
     { value: 'stable_horde', label: 'Stable Horde (Community)' }
 ];
 
+// Curated list of more reliable Hugging Face models for text-to-image
 export const HF_MODELS = [
-  { value: 'runwayml/stable-diffusion-v1-5', label: 'Stable Diffusion v1.5' },
   { value: 'stabilityai/sdxl-turbo', label: 'SDXL Turbo' },
   { value: 'prompthero/openjourney', label: 'OpenJourney (Artistic)' },
-  { value: 'Linaqruf/anything-v3.0', label: 'Anything v3 (Anime)' },
   { value: 'SG161222/Realistic_Vision_V5.1', label: 'Realistic Vision v5.1' },
+  { value: 'runwayml/stable-diffusion-v1-5', label: 'Stable Diffusion v1.5' },
+  { value: 'cagliostrolab/animagine-xl-3.0', label: 'Animagine XL (Anime)' },
 ];
 
 
@@ -73,6 +74,9 @@ export const ASPECT_RATIOS = [
   { label: "3:2 (Photography)", value: "3:2" },
   { label: "2:3 (Portrait)", value: "2:3" },
   { label: "21:9 (Cinematic)", value: "21:9" },
+  { label: "2:1 (Wide)", value: "2:1" },
+  { label: "3:1 (Panorama)", value: "3:1" },
+  { label: "5:4 (Photo)", value: "5:4" },
 ];
 
 export const STYLES: StyleOption[] = [
