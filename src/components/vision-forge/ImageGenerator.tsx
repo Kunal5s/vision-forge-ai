@@ -14,16 +14,14 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  SelectGroup,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { generateImage, type GenerateImageInput } from '@/ai/flows/generate-image';
-import { ASPECT_RATIOS, MODEL_GROUPS, STYLES, MOODS, LIGHTING, COLOURS } from '@/lib/constants';
+import { ASPECT_RATIOS, STYLES, MOODS, LIGHTING, COLOURS } from '@/lib/constants';
 import { ImageDisplay } from './ImageDisplay';
 import { FuturisticPanel } from './FuturisticPanel';
-import { Gem, ImageIcon as ImageIconIcon, RefreshCcw, XCircle, Lightbulb } from 'lucide-react';
+import { ImageIcon as ImageIconIcon, RefreshCcw, XCircle } from 'lucide-react';
 import { useSubscription } from '@/hooks/use-subscription';
-import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { StyleSelector } from './StyleSelector';
 import { ScrollArea } from '../ui/scroll-area';
@@ -42,10 +40,14 @@ const imageCountOptions = [
 
 export function ImageGenerator() {
   const { toast } = useToast();
-  const { subscription, isLoading: isSubLoading } = useSubscription();
+  const { subscription } = useSubscription();
   const generationCancelled = useRef(false);
   
-  const [activeModel, setActiveModel] = useState<string>(MODEL_GROUPS[0].models[0].value);
+  // App is simplified to only use Pollinations model.
+  const activeModel = 'pollinations';
+  const isPremiumFeature = false;
+  const showAdvancedOptions = true;
+  
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>(ASPECT_RATIOS[0].value);
   const [displayAspectRatio, setDisplayAspectRatio] = useState<string>(ASPECT_RATIOS[0].value);
   const [numberOfImages, setNumberOfImages] = useState<number>(1);
@@ -67,39 +69,16 @@ export function ImageGenerator() {
   
   const currentPrompt = watch('prompt');
 
-  const isPremiumFeature = useMemo(() => {
-    const group = MODEL_GROUPS.find(g => g.models.some(m => m.value === activeModel));
-    return group?.premium ?? false;
-  }, [activeModel]);
-  
-  // Show advanced options for all models except Pexels photo search
-  const showAdvancedOptions = useMemo(() => {
-    return activeModel !== 'imagen-brain-ai';
-  }, [activeModel]);
-  
-  const isFreePlan = subscription?.plan === 'free';
-
   const constructFinalPrompt = (data: FormData): string => {
     let finalPrompt = data.prompt;
-    if (showAdvancedOptions) {
-        if (selectedStyle) finalPrompt += `, ${selectedStyle} style`;
-        if (selectedMood) finalPrompt += `, ${selectedMood} mood`;
-        if (selectedLighting) finalPrompt += `, ${selectedLighting} lighting`;
-        if (selectedColour) finalPrompt += `, ${selectedColour} color palette`;
-    }
+    if (selectedStyle) finalPrompt += `, ${selectedStyle} style`;
+    if (selectedMood) finalPrompt += `, ${selectedMood} mood`;
+    if (selectedLighting) finalPrompt += `, ${selectedLighting} lighting`;
+    if (selectedColour) finalPrompt += `, ${selectedColour} color palette`;
     return finalPrompt;
   };
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
-    if (isPremiumFeature && isFreePlan) {
-      toast({
-        title: 'Upgrade Required',
-        description: 'You need a Pro or Mega plan to use this model. Please upgrade your plan.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
     generationCancelled.current = false;
     setIsGenerating(true);
     setError(null);
@@ -157,7 +136,6 @@ export function ImageGenerator() {
     setSelectedMood('');
     setSelectedLighting('');
     setSelectedColour('');
-    setActiveModel(MODEL_GROUPS[0].models[0].value);
     setSelectedAspectRatio(ASPECT_RATIOS[0].value);
     setDisplayAspectRatio(ASPECT_RATIOS[0].value);
     setNumberOfImages(1);
@@ -185,32 +163,13 @@ export function ImageGenerator() {
               <ScrollArea className="h-[calc(100vh-200px)] pr-4">
               <div className="space-y-6">
                 <div>
-                  <Label htmlFor="model-select" className="text-lg font-semibold mb-2 block text-foreground/90">
+                  <Label className="text-lg font-semibold mb-2 block text-foreground/90">
                     Model
                   </Label>
-                  <Select value={activeModel} onValueChange={setActiveModel} disabled={isSubLoading || isGenerating}>
-                    <SelectTrigger id="model-select" className="w-full bg-background hover:bg-muted/50">
-                      <SelectValue placeholder="Select a model" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {MODEL_GROUPS.map(group => (
-                        <SelectGroup key={group.label}>
-                          <Label className='px-2 text-xs text-muted-foreground'>{group.label}</Label>
-                          {group.models.map(model => (
-                            <SelectItem key={model.value} value={model.value} disabled={group.premium && isFreePlan}>
-                              <div className="flex items-center justify-between w-full">
-                                <span className="flex items-center gap-2">
-                                  {model.label}
-                                  {group.premium && <Gem size={14} className="text-primary" />}
-                                </span>
-                                {group.premium && isFreePlan && <Badge variant="secondary">Upgrade</Badge>}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center justify-between w-full p-3 bg-muted rounded-md border">
+                      <span className="font-semibold text-foreground/90">Pollinations</span>
+                      <Badge variant="secondary">Fast & Free</Badge>
+                  </div>
                 </div>
 
                 <div>
@@ -269,7 +228,7 @@ export function ImageGenerator() {
                           </SelectTrigger>
                           <SelectContent>
                               {imageCountOptions.map((opt) => (
-                                  <SelectItem key={opt.value} value={String(opt.value)} disabled={isPremiumFeature && isFreePlan && opt.value > 1}>{opt.label}</SelectItem>
+                                  <SelectItem key={opt.value} value={String(opt.value)}>{opt.label}</SelectItem>
                               ))}
                           </SelectContent>
                       </Select>
@@ -299,7 +258,7 @@ export function ImageGenerator() {
                       </Button>
                       <Button
                         type="submit"
-                        disabled={isSubLoading || (isPremiumFeature && isFreePlan)}
+                        disabled={isPremiumFeature}
                         className="w-full text-lg py-3 bg-primary hover:bg-primary/90 text-primary-foreground transition-shadow hover:shadow-xl hover:shadow-primary/20"
                       >
                         <ImageIconIcon size={20} className="mr-2" />
@@ -308,13 +267,6 @@ export function ImageGenerator() {
                     </>
                   )}
                 </div>
-                {isPremiumFeature && isFreePlan && (
-                  <div className='text-center text-sm p-2 bg-muted rounded-md'>
-                      <Lightbulb size={16} className="inline-block mr-2 text-primary" />
-                      To use this model, please{' '}
-                      <Link href="/pricing" className="underline text-primary">upgrade your plan</Link>.
-                  </div>
-                )}
               </div>
               </ScrollArea>
             </form>

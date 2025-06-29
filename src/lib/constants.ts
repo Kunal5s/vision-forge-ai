@@ -4,42 +4,23 @@ export interface StyleOption {
   label: string;
 }
 
-// Changed label for clarity to indicate it's a search for real photos
-export const PEXELS_MODELS = [
-  { value: 'imagen-brain-ai', label: 'Pexels (Real Photos)' },
-];
-
 export const POLLINATIONS_MODELS = [
-    { value: 'pollinations', label: 'Pollinations' }
-];
-
-export const STABLE_HORDE_MODELS = [
-    { value: 'stable_horde', label: 'Stable Horde (Community)' }
+    { value: 'pollinations', label: 'Pollinations (Fast & Free)' }
 ];
 
 export const MODEL_GROUPS = [
   {
-    // Changed group label for clarity
-    label: "Real Photos (Powered by Pexels)",
-    models: PEXELS_MODELS,
-    premium: false,
-  },
-  {
-    label: "Community Models (Free)",
-    models: [
-        ...POLLINATIONS_MODELS,
-        ...STABLE_HORDE_MODELS,
-    ],
+    label: "AI Generation Models",
+    models: POLLINATIONS_MODELS,
     premium: false,
   }
 ];
 
 // This needs to include all possible model values for Zod validation.
 export const ALL_MODEL_VALUES = [
-  ...PEXELS_MODELS.map(m => m.value),
   ...POLLINATIONS_MODELS.map(m => m.value),
-  ...STABLE_HORDE_MODELS.map(m => m.value),
 ] as [string, ...string[]];
+
 
 export const ASPECT_RATIOS = [
   { label: "1:1 (Square)", value: "1:1" },
