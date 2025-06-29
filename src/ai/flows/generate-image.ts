@@ -230,27 +230,42 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
 
     try {
         const imageUrls: string[] = [];
-        // Add prompt wrapper for better results with SD-based models.
+        // Add prompt wrapper and negative prompt for better results with SD-based models.
         const fullPrompt = `${input.prompt}, high quality, detailed, (masterpiece)`;
+        const negativePrompt = "blurry, bad anatomy, worst quality, low quality, watermark, signature, text, error, ugly";
         
         for (let i = 0; i < input.numberOfImages; i++) {
             const key = keys[i % keys.length]; // Rotate keys
             const response = await fetch(`https://api-inference.huggingface.co/models/${input.model}`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json", "x-wait-for-model": "true" },
-                body: JSON.stringify({ "inputs": fullPrompt }), // Send the enhanced prompt
+                body: JSON.stringify({ 
+                    "inputs": fullPrompt,
+                    // Including a negative prompt helps improve image quality by avoiding common flaws.
+                    "negative_prompt": negativePrompt,
+                }),
             });
             
             if (!response.ok) {
                 let errorText;
                 if (response.status === 401) {
-                    errorText = "Hugging Face error (401 Unauthorized): The API key is invalid or your account doesn't have access to this model. Please check your HF_API_KEY variables in Cloudflare.";
-                } else {
+                    errorText = `Hugging Face error (401 Unauthorized): The API key is invalid or your account doesn't have access to this model. 
+                    
+How to fix:
+1. Double-check your HF_API_KEY variables in your Cloudflare project settings.
+2. Log in to your Hugging Face account and visit the page for the model '${input.model}' to accept its terms of service.
+                    `;
+                } else if (response.status === 404) {
+                     errorText = `Model not found (404): The model '${input.model}' may be offline or the name is incorrect. Please try a different model.`;
+                } else if (response.status === 503) {
+                     errorText = `Model is loading (503): The model '${input.model}' is currently loading. Please try again in a few moments.`;
+                }
+                else {
                     try {
                         const errorJson = await response.json();
                         errorText = errorJson.error || `API returned status ${response.status}`;
                     } catch (e) {
-                        errorText = `API returned status ${response.status} with non-JSON response. The model may be offline, invalid, or requires a Pro subscription on Hugging Face.`;
+                        errorText = `API returned status ${response.status}. The model may be offline or experiencing issues.`;
                     }
                 }
                 throw new Error(errorText);
@@ -259,7 +274,7 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
             const blob = await response.blob();
             if (!blob.type.startsWith('image/')) {
                  const errorText = await blob.text();
-                 throw new Error(`Invalid response from API. Expected an image blob, but received: ${errorText}`);
+                 throw new Error(`Invalid response from API. Expected an image, but received text: ${errorText.substring(0, 100)}...`);
             }
             const buffer = Buffer.from(await blob.arrayBuffer());
             const dataUri = `data:${blob.type};base64,${buffer.toString('base64')}`;
@@ -270,6 +285,6 @@ async function generateWithHuggingFace(input: GenerateImageInput): Promise<Gener
 
     } catch (e: any) {
         console.error("Hugging Face generation failed:", e);
-        return { imageUrls: [], error: `Hugging Face API Error on model '${input.model}': ${e.message}` };
+        return { imageUrls: [], error: `Hugging Face API Error: ${e.message}` };
     }
 }
