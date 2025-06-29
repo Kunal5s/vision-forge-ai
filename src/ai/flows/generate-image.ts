@@ -106,7 +106,6 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
  * Generates images using Stable Horde with polling and timeout.
  */
 async function generateWithStableHorde(input: GenerateImageInput): Promise<GenerateImageOutput> {
-  // Use the API key provided by the user. Fallback to anonymous for safety.
   const HORDE_API_KEY = process.env.STABLE_HORDE_API_KEY || '5K1zxHm8MAC1gENuac0EeA';
 
   try {
@@ -116,9 +115,9 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
     const payload = {
         prompt: fullPrompt,
         params: {
-            sampler_name: "k_euler_a", // User-suggested fast sampler
+            sampler_name: "k_euler_a",
             cfg_scale: 7,
-            steps: 20, // User-suggested steps for speed
+            steps: 20,
             n: input.numberOfImages,
             width,
             height,
@@ -126,8 +125,8 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
         nsfw: false,
         censor_nsfw: true,
         trusted_workers: false,
-        models: ["deliberate", "rev_animated"], // User-suggested fast models
-        r2: true, // Use R2 for faster image delivery
+        models: ["deliberate", "rev_animated"],
+        r2: true,
     };
 
     const initialResponse = await fetch("https://stablehorde.net/api/v2/generate/async", {
@@ -146,6 +145,11 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
         throw new Error(`Stable Horde API returned an error: ${initialResponse.statusText}. Check your API key or network status.`);
     }
 
+    const contentType = initialResponse.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      throw new Error(`Stable Horde returned an unexpected content type: ${contentType}`);
+    }
+    
     const jobRequest = await initialResponse.json();
     const jobId = jobRequest.id;
 
@@ -153,14 +157,23 @@ async function generateWithStableHorde(input: GenerateImageInput): Promise<Gener
         throw new Error("Stable Horde did not return a job ID.");
     }
 
-    const MAX_POLL_ATTEMPTS = 30; // 30 attempts * 3 seconds = 90 seconds timeout
+    const MAX_POLL_ATTEMPTS = 30;
     const POLL_INTERVAL_MS = 3000;
 
     for (let i = 0; i < MAX_POLL_ATTEMPTS; i++) {
         await sleep(POLL_INTERVAL_MS);
 
         const statusResponse = await fetch(`https://stablehorde.net/api/v2/generate/status/${jobId}`);
-        if (!statusResponse.ok) continue; // Ignore transient errors and keep polling
+        if (!statusResponse.ok) {
+             console.warn(`Stable Horde status poll failed with status: ${statusResponse.status}. Retrying...`);
+             continue;
+        }
+
+        const statusContentType = statusResponse.headers.get("content-type");
+        if (!statusContentType || !statusContentType.includes("application/json")) {
+            console.warn(`Stable Horde status check returned non-JSON content type: ${statusContentType}. Retrying...`);
+            continue;
+        }
         
         const statusResult = await statusResponse.json();
 
@@ -214,6 +227,7 @@ async function generateWithPollinations(input: GenerateImageInput): Promise<Gene
     const encodedPrompt = encodeURIComponent(input.prompt);
 
     const generationPromises = Array.from({ length: input.numberOfImages }).map(async (_, i) => {
+      try {
         const seed = Date.now() + i;
         const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
         
@@ -226,6 +240,10 @@ async function generateWithPollinations(input: GenerateImageInput): Promise<Gene
         const blob = await response.blob();
         const buffer = Buffer.from(await blob.arrayBuffer());
         return `data:${blob.type};base64,${buffer.toString('base64')}`;
+      } catch (e) {
+        console.error("A single Pollinations AI request failed:", e);
+        return null;
+      }
     });
 
     const results = await Promise.all(generationPromises);
