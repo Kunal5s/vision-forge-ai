@@ -102,7 +102,7 @@ async function generateWithGenkit(input: GenerateImageInput): Promise<GenerateIm
 async function generateWithPexels(input: GenerateImageInput): Promise<GenerateImageOutput> {
   const PEXELS_API_KEY = process.env.PEXELS_API_KEY;
 
-  if (!PEXELS_API_KEY || PEXELS_API_KEY === "YOUR_PEXELS_API_KEY_HERE" || PEXELS_API_KEY.trim() === "") {
+  if (!PEXELS_API_KEY || PEXELS_API_KEY.trim() === "") {
     return { 
       imageUrls: [], 
       error: "Pexels API key is not configured. Please go to your Cloudflare project settings, find 'Environment variables', and add a variable named 'PEXELS_API_KEY' with your key. Then, redeploy your project."
@@ -175,7 +175,7 @@ async function generateWithPollinations(input: GenerateImageInput): Promise<Gene
 async function generateWithStableHorde(input: GenerateImageInput): Promise<GenerateImageOutput> {
   const API_KEY = process.env.STABLE_HORDE_API_KEY;
 
-  if (!API_KEY || API_KEY === "YOUR_STABLE_HORDE_API_KEY_HERE" || API_KEY.trim() === "" || API_KEY === "5K1zxHm8MAC1gENuac0EeA") {
+  if (!API_KEY || API_KEY.trim() === "") {
     return {
       imageUrls: [],
       error: "The Stable Horde API key is not configured. Please go to your Cloudflare project settings, find 'Environment variables', and add a variable named 'STABLE_HORDE_API_KEY'. A key of '0000000000' can be used for anonymous testing. Remember to redeploy after adding the key."
