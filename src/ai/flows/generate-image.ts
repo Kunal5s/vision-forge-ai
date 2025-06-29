@@ -11,7 +11,7 @@
 import { z } from 'zod';
 import { ai } from '@/ai/genkit';
 import { HfInference } from '@huggingface/inference';
-import { ALL_MODEL_VALUES, GOOGLE_MODELS, STABLE_HORDE_MODELS } from '@/lib/constants';
+import { ALL_MODEL_VALUES, GOOGLE_MODELS, STABLE_HORDE_MODELS, POLLINATIONS_MODELS } from '@/lib/constants';
 
 // Helper to parse aspect ratio into width and height.
 // Stable Horde and HF models work best with dimensions that are multiples of 64.
@@ -66,9 +66,12 @@ export type GenerateImageOutput = z.infer<typeof GenerateImageOutputSchema>;
 export async function generateImage(input: GenerateImageInput): Promise<GenerateImageOutput> {
   const isGoogleModel = GOOGLE_MODELS.some(m => m.value === input.model);
   const isStableHordeModel = STABLE_HORDE_MODELS.some(m => m.value === input.model);
+  const isPollinationsModel = POLLINATIONS_MODELS.some(m => m.value === input.model);
 
   if (isGoogleModel) {
     return generateWithGoogleAI(input);
+  } else if (isPollinationsModel) {
+    return generateWithPollinations(input);
   } else if (isStableHordeModel) {
     return generateWithStableHorde(input);
   } else {
@@ -81,6 +84,44 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
  * @param ms Milliseconds to wait.
  */
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * Generates images using the free Pollinations AI service.
+ */
+async function generateWithPollinations(input: GenerateImageInput): Promise<GenerateImageOutput> {
+  try {
+    const { width, height } = parseAspectRatio(input.aspectRatio);
+    const encodedPrompt = encodeURIComponent(input.prompt);
+
+    const generationPromises = Array.from({ length: input.numberOfImages }).map(async (_, i) => {
+        const seed = Date.now() + i;
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
+        
+        const response = await fetch(imageUrl);
+        if (!response.ok || !response.headers.get('content-type')?.startsWith('image')) {
+            console.warn(`Pollinations AI failed to return a valid image for prompt: ${input.prompt}`);
+            return null;
+        }
+
+        const blob = await response.blob();
+        const buffer = Buffer.from(await blob.arrayBuffer());
+        return `data:${blob.type};base64,${buffer.toString('base64')}`;
+    });
+
+    const results = await Promise.all(generationPromises);
+    const imageUrls = results.filter((url): url is string => !!url);
+
+    if (imageUrls.length === 0) {
+      throw new Error('Pollinations AI failed to generate any images. It might be busy or the prompt was disallowed.');
+    }
+
+    return { imageUrls };
+
+  } catch (e: any) {
+    console.error("Pollinations AI generation failed:", e);
+    return { imageUrls: [], error: e.message || 'An unknown error occurred with the Pollinations AI service.' };
+  }
+}
 
 /**
  * Generates images using the community-powered Stable Horde network.
