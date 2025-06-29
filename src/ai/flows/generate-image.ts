@@ -44,47 +44,50 @@ const getDimensionsForRatio = (ratio: string) => {
 };
 
 /**
- * Generates images by calling Pollinations API directly from a server action.
+ * Generates images by calling Pollinations API sequentially to avoid rate-limiting.
  * @param input The generation parameters from the frontend.
  * @returns A promise that resolves to the generation output with base64 data URLs.
  */
 export async function generateImage(input: GenerateImageInput): Promise<GenerateImageOutput> {
     try {
-        const imagePromises: Promise<string>[] = [];
+        const dataUrls: string[] = [];
 
-        // Create all fetch promises to be run in parallel
+        // Generate images sequentially to avoid rate-limiting (HTTP 429 error).
         for (let i = 0; i < input.numberOfImages; i++) {
-            const promise = (async () => {
-                const { width, height } = getDimensionsForRatio(input.aspectRatio);
-                const seed = Math.floor(Math.random() * 1000000); // Add randomness
-                const pollinationUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(input.prompt)}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
+            const { width, height } = getDimensionsForRatio(input.aspectRatio);
+            const seed = Math.floor(Math.random() * 1000000); // Add randomness
+            const pollinationUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(input.prompt)}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
 
-                const response = await fetch(pollinationUrl, {
-                    headers: { 'Content-Type': 'image/png' }
-                });
+            const response = await fetch(pollinationUrl, {
+                headers: { 'Content-Type': 'image/png' }
+            });
 
-                if (!response.ok) {
-                    throw new Error(`Pollinations API request failed with status ${response.status}`);
+            if (!response.ok) {
+                if (response.status === 429) {
+                     throw new Error(`Pollinations API rate limit hit (status 429). Please wait a moment and try again, or request fewer images.`);
                 }
-                
-                const blob = await response.blob();
-                
-                // Convert blob to base64 data URL to send to the client
-                const buffer = await blob.arrayBuffer();
-                const base64 = Buffer.from(buffer).toString('base64');
-                const dataUrl = `data:${blob.type};base64,${base64}`;
-                
-                return dataUrl;
-            })();
-            imagePromises.push(promise);
-        }
+                throw new Error(`Pollinations API request failed with status ${response.status}. Please try again later.`);
+            }
+            
+            const blob = await response.blob();
+            
+            // Convert blob to base64 data URL to send to the client
+            const buffer = await blob.arrayBuffer();
+            const base64 = Buffer.from(buffer).toString('base64');
+            const dataUrl = `data:${blob.type};base64,${base64}`;
+            
+            dataUrls.push(dataUrl);
 
-        const dataUrls = await Promise.all(imagePromises);
+            // Add a small delay between requests to be polite to the API, especially if generating many images.
+            if (input.numberOfImages > 1 && i < input.numberOfImages - 1) {
+                await new Promise(resolve => setTimeout(resolve, 250));
+            }
+        }
 
         return { imageUrls: dataUrls };
 
     } catch (e: any) {
         console.error("Image generation failed:", e);
-        return { imageUrls: [], error: `An unexpected error occurred during image generation: ${e.message}. Please try again later.` };
+        return { imageUrls: [], error: e.message };
     }
 }
