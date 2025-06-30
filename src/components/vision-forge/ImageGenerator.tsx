@@ -66,7 +66,6 @@ export function ImageGenerator() {
     if (selectedMood) finalPrompt += `, ${selectedMood} mood`;
     if (selectedLighting) finalPrompt += `, ${selectedLighting} lighting`;
     if (selectedColour) finalPrompt += `, ${selectedColour} color palette`;
-    if (selectedAspectRatio !== '1:1') finalPrompt += `, aspect ratio ${selectedAspectRatio}`;
     return finalPrompt;
   };
 
@@ -81,6 +80,7 @@ export function ImageGenerator() {
     const payload = {
       prompt: constructedPrompt,
       model: selectedModel,
+      aspectRatio: selectedAspectRatio,
     };
 
     try {

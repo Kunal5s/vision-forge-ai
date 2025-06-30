@@ -12,6 +12,28 @@ function arrayBufferToBase64(buffer) {
   return btoa(binary);
 }
 
+// Helper to get dimensions from an aspect ratio string
+function getDimensionsFromRatio(ratio = '1:1') {
+  // Use a base size for the largest dimension for consistency
+  const baseSize = 1024; 
+  try {
+    const [w, h] = ratio.split(':').map(Number);
+    if (isNaN(w) || isNaN(h) || w === 0 || h === 0) {
+      return { width: baseSize, height: baseSize };
+    }
+    
+    if (w > h) {
+      return { width: baseSize, height: Math.round(baseSize * (h / w)) };
+    } else {
+      return { width: Math.round(baseSize * (w / h)), height: baseSize };
+    }
+  } catch (e) {
+    // Fallback to square if ratio is invalid
+    return { width: baseSize, height: baseSize };
+  }
+}
+
+
 export default async function handler(req) {
   try {
     if (req.method !== 'POST') {
@@ -21,20 +43,26 @@ export default async function handler(req) {
       });
     }
 
-    const { prompt, model } = await req.json();
+    // Destructure aspectRatio from the request body
+    const { prompt: userPrompt, model, aspectRatio } = await req.json();
 
-    if (!prompt || !model) {
+    if (!userPrompt || !model) {
       return new Response(JSON.stringify({ error: 'Prompt and model are required' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
     }
+    
+    // Enhance prompt to discourage watermarks and improve quality
+    const enhancedPrompt = `${userPrompt}, high quality, no watermark, watermark removed, signature removed`;
 
     let imageUrl = '';
 
     if (model === 'pollinations') {
-      // Pollinations model is free and constructs the URL directly from the prompt
-      imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
+      const { width, height } = getDimensionsFromRatio(aspectRatio);
+      // Add width, height, and nofeed parameters to the Pollinations URL
+      const urlPrompt = encodeURIComponent(enhancedPrompt);
+      imageUrl = `https://image.pollinations.ai/prompt/${urlPrompt}?width=${width}&height=${height}&nofeed=true`;
 
     } else if (model === 'huggingface') {
       const apiKey = process.env.NEXT_PUBLIC_HUGGINGFACE_KEY;
@@ -48,7 +76,7 @@ export default async function handler(req) {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ inputs: prompt }),
+        body: JSON.stringify({ inputs: enhancedPrompt }), // Use enhanced prompt
       });
 
       if (!response.ok) {
@@ -72,7 +100,7 @@ export default async function handler(req) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: { text: prompt },
+          prompt: { text: enhancedPrompt }, // Use enhanced prompt
           number_of_images: 1,
         }),
       });
