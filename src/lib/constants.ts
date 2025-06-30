@@ -6,7 +6,6 @@ export interface StyleOption {
 }
 
 export const MODELS = [
-  { type: 'google', value: 'google', label: 'Google Imagen 2', description: 'Premium quality & speed. API key required.' },
   { type: 'pollinations', value: 'pollinations', label: 'Pollinations', description: 'Fast & free for creative explorations.' },
   { type: 'huggingface', value: 'runwayml/stable-diffusion-v1-5', label: 'Stable Diffusion 1.5', description: 'Classic & reliable (Hugging Face).' },
   { type: 'huggingface', value: 'stabilityai/stable-diffusion-xl-base-1.0', label: 'Stable Diffusion XL', description: 'High-quality large model (Hugging Face).' },

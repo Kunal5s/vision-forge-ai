@@ -1,1 +1,2 @@
-// This file is intentionally left blank as the Google-based prompt improvement feature has been removed.
+// This file is intentionally left blank as its functionality is not currently used.
+// It can be safely removed.

@@ -6,17 +6,15 @@ This is a Next.js application built with Firebase Studio. It is a powerful AI im
 
 - **Frontend**: Next.js, React, Tailwind CSS, ShadCN UI
 - **Multi-Model Image Generation**: 
-  - **Google Gemini**: For premium, high-quality results.
   - **Pollinations**: A fast, free model for creative exploration.
-  - **Hugging Face**: An alternative creative model.
+  - **Hugging Face**: Multiple alternative creative models (Stable Diffusion, OpenJourney, etc.).
 - **Deployment**: Ready for Netlify, Vercel, or Cloudflare Pages.
 
 ## Environment Variables
 
-To use the premium models, you need to set up API keys as environment variables in your deployment platform (e.g., Cloudflare Pages, Vercel).
+To use the Hugging Face models, you need to set up an API key as an environment variable in your deployment platform (e.g., Cloudflare Pages, Vercel).
 
-- `GOOGLE_API_KEY`: Your API key for Google AI Studio. Required for the **Google Gemini** model.
-- `HUGGINGFACE_KEY`: Your API key from Hugging Face. Required for the **Hugging Face** model.
+- `HUGGINGFACE_KEY`: Your API key from Hugging Face. Required for all **Hugging Face** models.
 
 The **Pollinations** model does not require an API key.
 
@@ -30,4 +28,4 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-The main application logic can be found in `src/app/page.tsx`. The image generation flow is handled in `src/ai/flows/generate-image.ts`.
+The main application logic can be found in `src/app/page.tsx`. The image generation flow is handled in the Edge-compatible API route at `pages/api/generate.js`.

@@ -1,17 +1,7 @@
 
-import { genkit } from 'genkit';
-import { googleAI } from '@genkit-ai/googleai';
+import { NextRequest } from 'next/server';
 
 export const config = { runtime: 'edge' };
-
-// Initialize Genkit AI within the API route to ensure it's server-only
-const ai = genkit({
-  plugins: [
-    googleAI({
-      // API key is read from GOOGLE_API_KEY env var
-    }),
-  ],
-});
 
 // Edge-compatible function to convert ArrayBuffer to Base64
 function arrayBufferToBase64(buffer) {
@@ -23,7 +13,6 @@ function arrayBufferToBase64(buffer) {
     }
     return btoa(binary);
 }
-
 
 // Helper to get image dimensions from an aspect ratio string
 function getDimensionsFromRatio(ratio, baseSize = 1024) {
@@ -38,55 +27,29 @@ function getDimensionsFromRatio(ratio, baseSize = 1024) {
   }
 }
 
-// Handler for Google's Gemini model
-async function handleGoogle(prompt, aspectRatio, numberOfImages) {
-  if (!process.env.GOOGLE_API_KEY) {
-    throw new Error('Google API key is missing. Please set GOOGLE_API_KEY in your environment variables.');
-  }
-
-  const fullPrompt = `${prompt}, aspect ratio ${aspectRatio}`;
-  const generationPromises = Array.from({ length: numberOfImages }, () =>
-    ai.generate({
-      model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: fullPrompt,
-      config: { responseModalities: ['TEXT', 'IMAGE'] },
-    })
-  );
-
-  const results = await Promise.all(generationPromises);
-  return results.map(result => {
-    if (!result.media?.url) {
-      throw new Error('Image generation failed, possibly due to a safety policy violation. Try a different prompt.');
-    }
-    return result.media.url;
-  });
-}
-
 // Handler for Pollinations model
 async function handlePollinations(prompt, aspectRatio, numberOfImages) {
   const imageUrls = [];
   const { width, height } = getDimensionsFromRatio(aspectRatio);
-  const baseUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
   
-  for (let i = 0; i < numberOfImages; i++) {
+  const generationPromises = Array.from({ length: numberOfImages }, (_, i) => {
     const seed = Math.floor(Math.random() * 100000);
-    const url = `${baseUrl}?width=${width}&height=${height}&seed=${seed}&nofeed=true`;
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed}&nofeed=true`;
     
-    // We don't need to convert to data URI for Pollinations as it returns a direct image link.
-    // However, to maintain consistency and avoid cross-origin issues on the client,
-    // we fetch and convert to a data URI on the server.
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Pollinations API returned status ${response.status}`);
-    }
-    
-    const buffer = await response.arrayBuffer();
-    const base64 = arrayBufferToBase64(buffer);
-    const mimeType = response.headers.get('content-type') || 'image/png';
-    imageUrls.push(`data:${mimeType};base64,${base64}`);
-  }
-  return imageUrls;
+    return fetch(url).then(async (response) => {
+      if (!response.ok) {
+        throw new Error(`Pollinations API returned status ${response.status}`);
+      }
+      const buffer = await response.arrayBuffer();
+      const base64 = arrayBufferToBase64(buffer);
+      const mimeType = response.headers.get('content-type') || 'image/png';
+      return `data:${mimeType};base64,${base64}`;
+    });
+  });
+
+  return Promise.all(generationPromises);
 }
+
 
 // Handler for Hugging Face models
 async function handleHuggingFace(prompt, model, aspectRatio, numberOfImages) {
@@ -95,34 +58,33 @@ async function handleHuggingFace(prompt, model, aspectRatio, numberOfImages) {
     throw new Error('Hugging Face API key is missing. Please set HUGGINGFACE_KEY in your environment variables.');
   }
 
-  const imageUrls = [];
   const fullPrompt = `${prompt}, aspect ratio ${aspectRatio}`;
 
-  for (let i = 0; i < numberOfImages; i++) {
-    const response = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
+  const generationPromises = Array.from({ length: numberOfImages }, () => 
+    fetch(`https://api-inference.huggingface.co/models/${model}`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ inputs: fullPrompt }),
-    });
-
-    if (response.status === 503) {
-      throw new Error(`Hugging Face model '${model}' is currently loading. Please try again in a moment.`);
-    }
-    if (!response.ok) {
-      const errorBody = await response.json();
-      throw new Error(`Hugging Face API Error: ${errorBody.error || `Status ${response.status}`}`);
-    }
-    
-    const buffer = await response.arrayBuffer();
-    const base64 = arrayBufferToBase64(buffer);
-    const mimeType = response.headers.get('content-type') || 'image/jpeg';
-    imageUrls.push(`data:${mimeType};base64,${base64}`);
-  }
-  return imageUrls;
+    }).then(async (response) => {
+        if (response.status === 503) {
+            throw new Error(`Hugging Face model '${model}' is currently loading. Please try again in a moment.`);
+        }
+        if (!response.ok) {
+            const errorBody = await response.json();
+            throw new Error(`Hugging Face API Error: ${errorBody.error || `Status ${response.status}`}`);
+        }
+        const buffer = await response.arrayBuffer();
+        const base64 = arrayBufferToBase64(buffer);
+        const mimeType = response.headers.get('content-type') || 'image/jpeg';
+        return `data:${mimeType};base64,${base64}`;
+    })
+  );
+  
+  return Promise.all(generationPromises);
 }
 
 // Main API handler for Edge Runtime
-export default async function handler(req) {
+export default async function handler(req: NextRequest) {
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
       status: 405,
@@ -131,12 +93,10 @@ export default async function handler(req) {
   }
 
   try {
-    const { prompt, model, aspectRatio, numberOfImages } = await req.json();
+    const { prompt, model, aspectRatio, numberOfImages = 1 } = await req.json();
     let imageUrls = [];
 
-    if (model === 'google') {
-      imageUrls = await handleGoogle(prompt, aspectRatio, numberOfImages);
-    } else if (model === 'pollinations') {
+    if (model === 'pollinations') {
       imageUrls = await handlePollinations(prompt, aspectRatio, numberOfImages);
     } else {
       // All other models are assumed to be from Hugging Face
@@ -148,7 +108,7 @@ export default async function handler(req) {
       headers: { 'Content-Type': 'application/json' },
     });
 
-  } catch (e) {
+  } catch (e: any) {
     console.error("API Error in /api/generate:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
     return new Response(JSON.stringify({ error: errorMessage }), {
