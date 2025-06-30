@@ -45,7 +45,7 @@ export default async function handler(req) {
     if (model === 'pollinations') {
       const { width, height } = getPollinationsDimensions(aspectRatio);
       const promises = Array.from({ length: numberOfImages }).map(() => 
-        fetch(`https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${Math.random()}&nofeed=true`)
+        fetch(`https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${Math.floor(Math.random() * Number.MAX_SAFE_INTEGER)}&nofeed=true`)
       );
       const responses = await Promise.all(promises);
       for(const res of responses) {
