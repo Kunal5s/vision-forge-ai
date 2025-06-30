@@ -12,27 +12,15 @@ function arrayBufferToBase64(buffer) {
     return btoa(binary);
 }
 
-// Helper to get image dimensions from an aspect ratio string
-function getDimensionsFromRatio(ratio, baseSize = 1024) {
-  const [w, h] = ratio.split(':').map(Number);
-  if (isNaN(w) || isNaN(h) || w === 0 || h === 0) {
-      return { width: 1024, height: 1024 }; // Default to square
-  }
-  if (w > h) {
-    return { width: baseSize, height: Math.round((baseSize * h) / w) };
-  } else {
-    return { width: Math.round((baseSize * w) / h), height: baseSize };
-  }
-}
-
 // Handler for Pollinations model (Sequential Generation)
-async function handlePollinations(prompt, aspectRatio, numberOfImages) {
+async function handlePollinations(prompt, numberOfImages) {
   const imageUrls = [];
-  const { width, height } = getDimensionsFromRatio(aspectRatio);
 
   for (let i = 0; i < numberOfImages; i++) {
+    // Generate a unique seed to get different images for the same prompt
     const seed = Math.floor(Math.random() * 100000);
-    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed}&nofeed=true`;
+    // The API prefers a simple URL. Appending the seed ensures we get variations.
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?seed=${seed}&nofeed=true`;
     
     const response = await fetch(url);
     if (!response.ok) {
@@ -131,7 +119,9 @@ export default async function handler(req) {
     if (model === 'google-imagen') {
       imageUrls = await handleGoogleImagen(finalPrompt);
     } else if (model === 'pollinations') {
-      imageUrls = await handlePollinations(finalPrompt, aspectRatio, numberOfImages);
+      // For Pollinations, also add aspect ratio to the prompt text.
+      const pollinationsPrompt = `${finalPrompt}, aspect ratio ${aspectRatio}`;
+      imageUrls = await handlePollinations(pollinationsPrompt, numberOfImages);
     } else {
       // For Hugging Face, add aspect ratio to the prompt text
       const hfPrompt = `${finalPrompt}, aspect ratio ${aspectRatio}`;
