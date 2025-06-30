@@ -59,17 +59,51 @@ async function generateWithGoogle(input: GenerateImageInput): Promise<string[]> 
 }
 
 /**
+ * Utility to calculate image dimensions from an aspect ratio string.
+ */
+function getDimensionsFromRatio(ratio: string, baseSize = 1024): { width: number; height: number } {
+  const [w, h] = ratio.split(':').map(Number);
+  // Default to square if ratio is invalid
+  if (isNaN(w) || isNaN(h) || w === 0 || h === 0) {
+      return { width: 1024, height: 1024 };
+  }
+
+  // Calculate dimensions based on the longest side being `baseSize`
+  if (w > h) {
+    return {
+      width: baseSize,
+      height: Math.round((baseSize * h) / w),
+    };
+  } else {
+    return {
+      width: Math.round((baseSize * w) / h),
+      height: baseSize,
+    };
+  }
+}
+
+/**
  * Generates images using the free Pollinations API.
  * This is a fast, key-less option for creative exploration.
  */
 async function generateWithPollinations(input: GenerateImageInput): Promise<string[]> {
   const imageUrls: string[] = [];
-  const fullPrompt = `${input.prompt}, aspect ratio ${input.aspectRatio}`;
-  
+  const { width, height } = getDimensionsFromRatio(input.aspectRatio);
+
+  // By adding width, height, and nofeed=true, we get better control and remove the watermark.
+  const baseUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(input.prompt)}`;
+
+  // This sequential loop prevents hitting rate limits (like 429 errors) when generating multiple images.
   for (let i = 0; i < input.numberOfImages; i++) {
-    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}`;
+    // Add a random seed for variation in each image
+    const seed = Math.floor(Math.random() * 100000);
+    const url = `${baseUrl}?width=${width}&height=${height}&seed=${seed}&nofeed=true`;
+    
     const response = await fetch(url);
-    if (!response.ok) throw new Error(`Pollinations API returned status ${response.status}`);
+    if (!response.ok) {
+        // Throw an error that will be caught by the main try-catch block
+        throw new Error(`Pollinations API returned status ${response.status} for image ${i + 1}`);
+    }
     
     // Convert image response to a base64 data URI to avoid client-side CORS issues.
     const buffer = await response.arrayBuffer();
@@ -84,7 +118,7 @@ async function generateWithPollinations(input: GenerateImageInput): Promise<stri
  * Generates images using the Hugging Face Inference API.
  * This provides an alternative creative model.
  */
-async function generateWithHuggingFace(input: GenerateImageInput): Promise<string[]> {
+async function generateWithHuggingFace(input: GenerateImageİnput): Promise<string[]> {
   const apiKey = process.env.HUGGINGFACE_KEY;
   if (!apiKey) {
     throw new Error('Hugging Face API key is missing. Please set HUGGINGFACE_KEY in your environment variables.');
