@@ -49,20 +49,19 @@ async function handlePollinations(prompt, aspectRatio, numberOfImages) {
 
 
 // Handler for Hugging Face models (Sequential Generation)
-async function handleHuggingFace(prompt, model, aspectRatio, numberOfImages) {
+async function handleHuggingFace(prompt, model, numberOfImages) {
   const apiKey = process.env.HUGGINGFACE_KEY;
   if (!apiKey) {
     throw new Error('Hugging Face API key is missing. Please set HUGGINGFACE_KEY in your environment variables.');
   }
 
   const imageUrls = [];
-  const fullPrompt = `${prompt}, aspect ratio ${aspectRatio}`;
-
+  
   for (let i = 0; i < numberOfImages; i++) {
     const response = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ inputs: fullPrompt }),
+      body: JSON.stringify({ inputs: prompt }),
     });
     
     if (response.status === 503) {
@@ -100,14 +99,31 @@ export default async function handler(req) {
   }
 
   try {
-    const { prompt, model, aspectRatio, numberOfImages = 1 } = await req.json();
+    const { 
+      prompt, 
+      model,
+      style,
+      mood,
+      lighting,
+      color,
+      aspectRatio, 
+      numberOfImages = 1 
+    } = await req.json();
+    
+    let finalPrompt = prompt;
+    if (style) finalPrompt += `, ${style} style`;
+    if (mood) finalPrompt += `, ${mood} mood`;
+    if (lighting) finalPrompt += `, ${lighting} lighting`;
+    if (color) finalPrompt += `, ${color} color palette`;
+
     let imageUrls = [];
 
     if (model === 'pollinations') {
-      imageUrls = await handlePollinations(prompt, aspectRatio, numberOfImages);
+      imageUrls = await handlePollinations(finalPrompt, aspectRatio, numberOfImages);
     } else {
-      // All other models are assumed to be from Hugging Face
-      imageUrls = await handleHuggingFace(prompt, model, aspectRatio, numberOfImages);
+      // For Hugging Face, add aspect ratio to the prompt text
+      const hfPrompt = `${finalPrompt}, aspect ratio ${aspectRatio}`;
+      imageUrls = await handleHuggingFace(hfPrompt, model, numberOfImages);
     }
 
     return new Response(JSON.stringify({ imageUrls }), {

@@ -62,8 +62,8 @@ export function ImageGenerator() {
   
   const currentPrompt = watch('prompt');
 
-  const constructFinalPrompt = (data: FormData): string => {
-    let finalPrompt = data.prompt;
+  const getConstructedPrompt = (): string => {
+    let finalPrompt = watch('prompt');
     if (selectedStyle) finalPrompt += `, ${selectedStyle} style`;
     if (selectedMood) finalPrompt += `, ${selectedMood} mood`;
     if (selectedLighting) finalPrompt += `, ${selectedLighting} lighting`;
@@ -77,18 +77,22 @@ export function ImageGenerator() {
     setError(null);
     setGeneratedImageUrls([]);
 
-    const finalPrompt = constructFinalPrompt(data);
+    const payload = {
+      prompt: data.prompt,
+      model: selectedModel,
+      style: selectedStyle,
+      mood: selectedMood,
+      lighting: selectedLighting,
+      color: selectedColour,
+      aspectRatio: selectedAspectRatio,
+      numberOfImages: numberOfImages,
+    };
 
     try {
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: finalPrompt,
-          model: selectedModel,
-          aspectRatio: selectedAspectRatio,
-          numberOfImages: numberOfImages,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (generationCancelled.current) {
@@ -131,7 +135,7 @@ export function ImageGenerator() {
   };
 
   const handleCopyPrompt = () => {
-    const finalPrompt = constructFinalPrompt(watch());
+    const finalPrompt = getConstructedPrompt();
     if (!finalPrompt) return;
     navigator.clipboard.writeText(finalPrompt);
     toast({ title: 'Prompt Copied!', description: 'The final constructed prompt is copied to your clipboard.' });
@@ -302,7 +306,7 @@ export function ImageGenerator() {
         <div className="lg:col-span-7">
           <ImageDisplay
             imageUrls={generatedImageUrls}
-            prompt={constructFinalPrompt(watch())}
+            prompt={getConstructedPrompt()}
             aspectRatio={displayAspectRatio}
             isLoading={isGenerating}
             error={error}
