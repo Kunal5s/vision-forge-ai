@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -16,7 +16,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { generateImage, type GenerateImageInput } from '@/ai/flows/generate-image';
 import { ASPECT_RATIOS, STYLES, MOODS, LIGHTING, COLOURS, MODELS } from '@/lib/constants';
 import { ImageDisplay } from './ImageDisplay';
 import { FuturisticPanel } from './FuturisticPanel';
@@ -76,36 +75,50 @@ export function ImageGenerator() {
     generationCancelled.current = false;
     setIsGenerating(true);
     setError(null);
-    
     setGeneratedImageUrls([]);
 
     const finalPrompt = constructFinalPrompt(data);
 
-    const generationParams: GenerateImageInput = { 
-        prompt: finalPrompt,
-        aspectRatio: selectedAspectRatio,
-        numberOfImages: numberOfImages,
-        model: selectedModel,
-     };
-    const result = await generateImage(generationParams);
-    
-    if (generationCancelled.current) {
-        console.log("Generation was cancelled by the user. Results ignored.");
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: finalPrompt,
+          model: selectedModel,
+          aspectRatio: selectedAspectRatio,
+          numberOfImages: numberOfImages,
+        }),
+      });
+
+      if (generationCancelled.current) {
+        console.log("Generation was cancelled by the user.");
         return;
-    }
+      }
 
-    setIsGenerating(false);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Request failed with status ${response.status}`);
+      }
+      
+      const result = await response.json();
 
-    if (result.error) {
-      setError(result.error);
-      toast({ title: 'Generation Failed', description: result.error, variant: 'destructive', duration: 9000 });
-    } else if (result.imageUrls && result.imageUrls.length > 0) {
-      setGeneratedImageUrls(result.imageUrls);
-      setDisplayAspectRatio(selectedAspectRatio);
-      toast({ title: 'Vision Forged!', description: `Your image(s) have been successfully generated.` });
-    } else {
-      setError('The API returned no images. This can happen with very specific or unusual search terms.');
-      setGeneratedImageUrls([]);
+      if (result.imageUrls && result.imageUrls.length > 0) {
+        setGeneratedImageUrls(result.imageUrls);
+        setDisplayAspectRatio(selectedAspectRatio);
+        toast({ title: 'Vision Forged!', description: `Your image(s) have been successfully generated.` });
+      } else {
+        throw new Error('The API returned no images. This can happen with very specific or unusual search terms.');
+      }
+
+    } catch (e: any) {
+      console.error("Image generation failed:", e);
+      setError(e.message);
+      toast({ title: 'Generation Failed', description: e.message, variant: 'destructive', duration: 9000 });
+    } finally {
+      if (!generationCancelled.current) {
+        setIsGenerating(false);
+      }
     }
   };
 
