@@ -61,10 +61,10 @@ async function handlePollinations(prompt, numberOfImages, width, height) {
 // Handler for Hugging Face models (Sequential Generation)
 async function handleHuggingFace(prompt, model, numberOfImages) {
   // This log helps confirm if the key is loaded in the environment. It does not expose the key itself.
-  console.log("Checking for Hugging Face key:", process.env.HUGGINGFACE_KEY ? "Found" : "Missing");
-  const apiKey = process.env.HUGGINGFACE_KEY;
+  console.log("Checking for Hugging Face key:", process.env.NEXT_PUBLIC_HUGGINGFACE_KEY ? "Found" : "Missing");
+  const apiKey = process.env.NEXT_PUBLIC_HUGGINGFACE_KEY;
   if (!apiKey) {
-    throw new Error('Hugging Face API key is missing. Please set HUGGINGFACE_KEY in your environment variables.');
+    throw new Error('Hugging Face API key is missing. Please set NEXT_PUBLIC_HUGGINGFACE_KEY in your environment variables.');
   }
 
   const imageUrls = [];
