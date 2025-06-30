@@ -10,22 +10,22 @@ body {
 @layer base {
   :root {
     --background: 56 100% 96%;
-    --foreground: 240 10% 3.9%;
+    --foreground: 20 14.3% 4.1%;
     
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card: 56 100% 98%;
+    --card-foreground: 20 14.3% 4.1%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
+    --popover-foreground: 20 14.3% 4.1%;
 
     --primary: 54 94% 56%;
     --primary-foreground: 54 94% 10%;
 
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
+    --secondary: 56 20% 94%;
+    --secondary-foreground: 20 5.9% 10%;
 
     --muted: 56 50% 95%;
-    --muted-foreground: 240 3.8% 46.1%;
+    --muted-foreground: 20 9.1% 42.1%;
 
     --accent: 145 63% 49%;
     --accent-foreground: 0 0% 100%;
