@@ -38,15 +38,21 @@ export default async function handler(req) {
     }
 
     // Enhance prompt for better quality and no watermarks
-    const prompt = `${rawPrompt}, high resolution, high quality, sharp focus, no watermark, photorealistic`;
+    const basePrompt = `${rawPrompt}, high resolution, high quality, sharp focus, no watermark, photorealistic`;
 
     let imageUrls = [];
 
     if (model === 'pollinations') {
       const { width, height } = getPollinationsDimensions(aspectRatio);
-      const promises = Array.from({ length: numberOfImages }).map(() => 
-        fetch(`https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${Math.floor(Math.random() * Number.MAX_SAFE_INTEGER)}&nofeed=true`)
-      );
+      
+      const promises = Array.from({ length: numberOfImages }).map(() => {
+        const uniqueSeed = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+        // Append a unique identifier to the prompt itself to force a new generation and break any caching
+        const uniquePrompt = `${basePrompt}, variation ID ${uniqueSeed}`; 
+        
+        return fetch(`https://image.pollinations.ai/prompt/${encodeURIComponent(uniquePrompt)}?width=${width}&height=${height}&seed=${uniqueSeed}&nofeed=true`);
+      });
+
       const responses = await Promise.all(promises);
       for(const res of responses) {
         if (!res.ok) throw new Error(`Pollinations API returned status ${res.status}`);
