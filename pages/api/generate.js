@@ -43,8 +43,8 @@ export default async function handler(req) {
       });
     }
 
-    // Destructure aspectRatio from the request body
-    const { prompt: userPrompt, model, aspectRatio } = await req.json();
+    // Destructure aspectRatio and numberOfImages from the request body
+    const { prompt: userPrompt, model, aspectRatio, numberOfImages = 1 } = await req.json();
 
     if (!userPrompt || !model) {
       return new Response(JSON.stringify({ error: 'Prompt and model are required' }), {
@@ -56,13 +56,22 @@ export default async function handler(req) {
     // Enhance prompt to discourage watermarks and improve quality
     const enhancedPrompt = `${userPrompt}, high quality, no watermark, watermark removed, signature removed`;
 
-    let imageUrl = '';
+    let imageUrls = [];
 
     if (model === 'pollinations') {
       const { width, height } = getDimensionsFromRatio(aspectRatio);
-      // Add width, height, and nofeed parameters to the Pollinations URL
       const urlPrompt = encodeURIComponent(enhancedPrompt);
-      imageUrl = `https://image.pollinations.ai/prompt/${urlPrompt}?width=${width}&height=${height}&nofeed=true`;
+      const basePollinationsUrl = `https://image.pollinations.ai/prompt/${urlPrompt}?width=${width}&height=${height}&nofeed=true`;
+
+      // Pollinations doesn't support batch generation, so we call it multiple times
+      const promises = Array.from({ length: numberOfImages }).map(async () => {
+        // Adding a random seed to get different images for the same prompt
+        const randomSeed = Math.floor(Math.random() * 100000);
+        const urlWithSeed = `${basePollinationsUrl}&seed=${randomSeed}`;
+        const res = await fetch(urlWithSeed);
+        return res.url; // The response URL is the image URL
+      });
+      imageUrls = await Promise.all(promises);
 
     } else if (model === 'huggingface') {
       const apiKey = process.env.NEXT_PUBLIC_HUGGINGFACE_KEY;
@@ -70,25 +79,34 @@ export default async function handler(req) {
         return new Response(JSON.stringify({ error: 'Hugging Face API key is missing. Please set NEXT_PUBLIC_HUGGINGFACE_KEY in your environment variables.' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
       }
       
-      const response = await fetch("https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2", {
-        method: "POST",
-        headers: {
+      const hfUrl = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2";
+      const hfHeaders = {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ inputs: enhancedPrompt }), // Use enhanced prompt
-      });
+        };
+      const hfBody = JSON.stringify({ inputs: enhancedPrompt });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Hugging Face API Error:", errorText);
-        throw new Error(`Hugging Face API Error: ${response.statusText} (${response.status})`);
-      }
-      
-      const blob = await response.blob();
-      const buffer = await blob.arrayBuffer();
-      const base64 = arrayBufferToBase64(buffer);
-      imageUrl = `data:${blob.type};base64,${base64}`;
+      // Hugging Face inference API doesn't support batching, call it in a loop
+      const promises = Array.from({ length: numberOfImages }).map(async () => {
+        const response = await fetch(hfUrl, {
+          method: "POST",
+          headers: hfHeaders,
+          body: hfBody,
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Hugging Face API Error:", errorText);
+          throw new Error(`Hugging Face API Error: ${response.statusText} (${response.status})`);
+        }
+        
+        const blob = await response.blob();
+        const buffer = await blob.arrayBuffer();
+        const base64 = arrayBufferToBase64(buffer);
+        return `data:${blob.type};base64,${base64}`;
+      });
+      imageUrls = await Promise.all(promises);
+
 
     } else if (model === 'gemini') {
       const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
@@ -101,7 +119,7 @@ export default async function handler(req) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: { text: enhancedPrompt }, // Use enhanced prompt
-          number_of_images: 1,
+          number_of_images: numberOfImages,
         }),
       });
 
@@ -112,11 +130,10 @@ export default async function handler(req) {
       }
 
       const geminiJson = await geminiRes.json();
-      const base64 = geminiJson.images?.[0]?.data;
-      if (!base64) {
+      imageUrls = geminiJson.images?.map((img) => `data:image/png;base64,${img.data}`) || [];
+      if (imageUrls.length === 0) {
         throw new Error("Gemini API did not return valid image data.");
       }
-      imageUrl = `data:image/png;base64,${base64}`;
 
     } else {
       return new Response(JSON.stringify({ error: `Invalid model specified: ${model}` }), {
@@ -125,8 +142,7 @@ export default async function handler(req) {
       });
     }
 
-    // The frontend expects the `imageUrls` property to be an array of strings.
-    return new Response(JSON.stringify({ imageUrls: [imageUrl] }), {
+    return new Response(JSON.stringify({ imageUrls }), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',

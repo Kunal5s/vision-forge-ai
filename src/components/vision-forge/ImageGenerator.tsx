@@ -31,6 +31,11 @@ type FormData = z.infer<typeof formSchema>;
 
 const imageCountOptions = [
     { label: '1 Image', value: 1 },
+    { label: '2 Images', value: 2 },
+    { label: '3 Images', value: 3 },
+    { label: '4 Images', value: 4 },
+    { label: '5 Images', value: 5 },
+    { label: '6 Images', value: 6 },
 ];
 
 export function ImageGenerator() {
@@ -81,6 +86,7 @@ export function ImageGenerator() {
       prompt: constructedPrompt,
       model: selectedModel,
       aspectRatio: selectedAspectRatio,
+      numberOfImages: numberOfImages,
     };
 
     try {
@@ -247,7 +253,7 @@ export function ImageGenerator() {
                       <Select 
                           value={String(numberOfImages)} 
                           onValueChange={(val) => setNumberOfImages(Number(val))}
-                          disabled={true}
+                          disabled={isGenerating}
                       >
                           <SelectTrigger id="num-images" className="w-full bg-background hover:bg-muted/50">
                               <SelectValue />
