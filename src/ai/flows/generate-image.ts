@@ -1,93 +1,72 @@
-
 'use server';
-
 /**
- * @fileOverview Image generation flow that now directly fetches from Pollinations
- *               on the server-side to avoid client-side and relative path issues.
- * - generateImage - A server action that calls the Pollinations API to generate images.
+ * @fileOverview A powerful image generation flow using Google's Gemini model.
+ * This provides a fast and high-quality alternative to free services.
+ * - generateImage - A server action that calls the Gemini API to generate images.
  * - GenerateImageInput - The input type for the generateImage function.
  * - GenerateImageOutput - The return type for the generateImage function.
  */
 
 import { z } from 'zod';
+import { ai } from '@/ai/genkit';
 
 const GenerateImageInputSchema = z.object({
-  prompt: z.string().describe('The search query for fetching images.'),
+  prompt: z.string().describe('The user-provided prompt for the image.'),
   aspectRatio: z.string().describe("The desired aspect ratio, e.g., '16:9'."),
-  numberOfImages: z.number().min(1).max(6).describe('The number of images to generate.'),
+  numberOfImages: z.number().min(1).max(4).describe('The number of images to generate (max 4).'),
 });
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
 
 const GenerateImageOutputSchema = z.object({
   imageUrls: z.array(z.string()).describe('A list of base64 data URIs of the generated images.'),
-  error: z.string().optional().describe('An error message if the fetch failed.'),
+  error: z.string().optional().describe('An error message if the generation failed.'),
 });
 export type GenerateImageOutput = z.infer<typeof GenerateImageOutputSchema>;
 
-
-// Helper function to get dimensions from aspect ratio string
-const getDimensionsForRatio = (ratio: string) => {
-    switch (ratio) {
-        case '1:1': return { width: 1024, height: 1024 };
-        case '16:9': return { width: 1280, height: 720 };
-        case '9:16': return { width: 720, height: 1280 };
-        case '4:3': return { width: 1024, height: 768 };
-        case '3:4': return { width: 768, height: 1024 };
-        case '3:2': return { width: 1280, height: 854 };
-        case '2:3': return { width: 854, height: 1280 };
-        case '21:9': return { width: 1536, height: 640 };
-        case '2:1': return { width: 1280, height: 640 };
-        case '3:1': return { width: 1536, height: 512 };
-        case '5:4': return { width: 1280, height: 1024 };
-        default: return { width: 1024, height: 1024 };
-    }
-};
-
 /**
- * Generates images by calling Pollinations API sequentially to avoid rate-limiting.
+ * Generates images by calling Google's Gemini model in parallel.
  * @param input The generation parameters from the frontend.
  * @returns A promise that resolves to the generation output with base64 data URLs.
  */
 export async function generateImage(input: GenerateImageInput): Promise<GenerateImageOutput> {
-    try {
-        const dataUrls: string[] = [];
+  // Add aspect ratio information directly into the prompt for the AI to follow.
+  const fullPrompt = `${input.prompt}, aspect ratio ${input.aspectRatio}`;
 
-        // Generate images sequentially to avoid rate-limiting (HTTP 429 error).
-        for (let i = 0; i < input.numberOfImages; i++) {
-            const { width, height } = getDimensionsForRatio(input.aspectRatio);
-            const seed = Math.floor(Math.random() * 1000000); // Add randomness
-            const pollinationUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(input.prompt)}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
+  try {
+    const generationPromises = Array.from({ length: input.numberOfImages }, () =>
+      ai.generate({
+        model: 'googleai/gemini-2.0-flash-preview-image-generation',
+        prompt: fullPrompt,
+        config: {
+          responseModalities: ['TEXT', 'IMAGE'],
+        },
+      })
+    );
 
-            const response = await fetch(pollinationUrl, {
-                headers: { 'Content-Type': 'image/png' }
-            });
+    const results = await Promise.all(generationPromises);
 
-            if (!response.ok) {
-                if (response.status === 429) {
-                     throw new Error(`Pollinations API rate limit hit (status 429). Please wait a moment and try again, or request fewer images.`);
-                }
-                throw new Error(`Pollinations API request failed with status ${response.status}. Please try again later.`);
-            }
-            
-            const blob = await response.blob();
-            
-            // Convert blob to base64 data URL to send to the client
-            const buffer = await blob.arrayBuffer();
-            const base64 = Buffer.from(buffer).toString('base64');
-            const dataUrl = `data:${blob.type};base64,${base64}`;
-            
-            dataUrls.push(dataUrl);
+    const imageUrls = results.map(result => {
+      if (!result.media?.url) {
+        // This can happen if the model refuses to generate the image due to safety policies.
+        throw new Error('Image generation succeeded but the result was empty. This may be due to a safety policy violation. Please try a different prompt.');
+      }
+      return result.media.url;
+    });
 
-            // Add a small delay between requests to be polite to the API, especially if generating many images.
-            if (input.numberOfImages > 1 && i < input.numberOfImages - 1) {
-                await new Promise(resolve => setTimeout(resolve, 250));
-            }
-        }
+    return { imageUrls };
 
-        return { imageUrls: dataUrls };
-
-    } catch (e: any) {
-        console.error("Image generation failed:", e);
-        return { imageUrls: [], error: e.message };
+  } catch (e: any) {
+    console.error("Image generation failed with Google Gemini:", e);
+    
+    let errorMessage = "An unexpected error occurred. Please try again later.";
+    if (e.message?.includes('API key')) {
+        errorMessage = "Image generation failed. The Google API key is invalid, missing, or has not been configured correctly in your environment variables.";
+    } else if (e.message?.includes('billing')) {
+        errorMessage = "Image generation failed. Please check if billing is enabled for your Google Cloud project.";
+    } else if (e.message?.includes('safety policy')) {
+        errorMessage = e.message;
     }
+
+    return { imageUrls: [], error: errorMessage };
+  }
 }

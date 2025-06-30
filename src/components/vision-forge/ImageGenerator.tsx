@@ -34,7 +34,6 @@ const imageCountOptions = [
     { label: '1 Image', value: 1 },
     { label: '2 Images', value: 2 },
     { label: '4 Images', value: 4 },
-    { label: '6 Images', value: 6 },
 ];
 
 export function ImageGenerator() {
