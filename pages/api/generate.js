@@ -1,4 +1,6 @@
 
+export const config = { runtime: 'edge' };
+
 import { ai } from '@/ai/genkit';
 
 // Helper to get image dimensions from an aspect ratio string
@@ -94,14 +96,17 @@ async function handleHuggingFace(prompt, model, aspectRatio, numberOfImages) {
   return imageUrls;
 }
 
-// Main API handler
-export default async function handler(req, res) {
+// Main API handler for Edge Runtime
+export default async function handler(req) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
+    return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   try {
-    const { prompt, model, aspectRatio, numberOfImages } = req.body;
+    const { prompt, model, aspectRatio, numberOfImages } = await req.json();
     let imageUrls = [];
 
     if (model === 'google') {
@@ -113,12 +118,17 @@ export default async function handler(req, res) {
       imageUrls = await handleHuggingFace(prompt, model, aspectRatio, numberOfImages);
     }
 
-    return res.status(200).json({ imageUrls });
+    return new Response(JSON.stringify({ imageUrls }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
 
   } catch (e) {
     console.error("API Error in /api/generate:", e);
-    // Ensure e.message is a string.
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
-    return res.status(500).json({ error: errorMessage });
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }
