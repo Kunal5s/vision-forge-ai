@@ -81,11 +81,11 @@ async function handleHuggingFace(prompt, model, numberOfImages) {
     }
     if (!response.ok) {
         let errorBodyText = await response.text();
-        let errorMessage = `Hugging Face API Error: Status ${response.status}`;
+        let errorMessage = `Hugging Face API Error for model '${model}': Status ${response.status}`;
         try {
             // Try to parse as JSON for a more specific error message
             const errorBodyJson = JSON.parse(errorBodyText);
-            errorMessage = `Hugging Face API Error: ${errorBodyJson.error || `Status ${response.status}`}`;
+            errorMessage = `Hugging Face API Error: ${errorBodyJson.error || `Status ${response.status} for model '${model}'`}`;
         } catch (e) {
             // If it's not JSON, include the raw text
             errorMessage += ` - ${errorBodyText}`;

@@ -12,7 +12,7 @@ export const MODELS = [
   { type: 'huggingface', value: 'stabilityai/stable-diffusion-xl-base-1.0', label: 'Stable Diffusion XL', description: 'High-quality large model (Hugging Face).' },
   { type: 'huggingface', value: 'prompthero/openjourney', label: 'OpenJourney', description: 'MidJourney aesthetic (Hugging Face).' },
   { type: 'huggingface', value: 'dreamlike-art/dreamlike-photoreal-2.0', label: 'Dreamlike Photoreal', description: 'For realistic images (Hugging Face).' },
-  { type: 'huggingface', value: 'SG161222/Realistic_Vision_V5.1_no_VAE', label: 'Realistic Vision 5.1', description: 'Focus on photorealism (Hugging Face).' },
+  { type: 'huggingface', value: 'stablediffusionapi/realistic-vision-v51', label: 'Realistic Vision 5.1', description: 'Focus on photorealism (Hugging Face).' },
 ];
 
 
