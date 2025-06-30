@@ -46,7 +46,7 @@ export function ImageGenerator() {
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>(ASPECT_RATIOS[0].value);
   const [displayAspectRatio, setDisplayAspectRatio] = useState<string>(ASPECT_RATIOS[0].value);
   const [numberOfImages, setNumberOfImages] = useState<number>(1);
-  const [selectedModel, setSelectedModel] = useState<string>(MODELS[0].value);
+  const [selectedModel] = useState<string>('pollinations');
   
   const [generatedImageUrls, setGeneratedImageUrls] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -103,7 +103,7 @@ export function ImageGenerator() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || `Request failed with status ${response.status}`);
+        throw new Error(errorData.details || errorData.error || `Request failed with status ${response.status}`);
       }
       
       const result = await response.json();
@@ -112,16 +112,7 @@ export function ImageGenerator() {
         setGeneratedImageUrls(result.imageUrls);
         setDisplayAspectRatio(selectedAspectRatio);
         toast({ title: 'Vision Forged!', description: `Your image(s) have been successfully generated.` });
-      } else if (result.image && typeof result.image === 'string') {
-        setGeneratedImageUrls([result.image]);
-        setDisplayAspectRatio(selectedAspectRatio);
-        toast({ title: 'Vision Forged!', description: `Your image has been successfully generated.` });
-      } else if (result.imageUrl && typeof result.imageUrl === 'string') {
-        setGeneratedImageUrls([result.imageUrl]);
-        setDisplayAspectRatio(selectedAspectRatio);
-        toast({ title: 'Vision Forged!', description: `Your image has been successfully generated.` });
-      }
-      else {
+      } else {
         throw new Error('The API returned no images. This can happen with very specific or unusual search terms.');
       }
 
@@ -160,7 +151,6 @@ export function ImageGenerator() {
     setSelectedAspectRatio(ASPECT_RATIOS[0].value);
     setDisplayAspectRatio(ASPECT_RATIOS[0].value);
     setNumberOfImages(1);
-    setSelectedModel(MODELS[0].value);
     setGeneratedImageUrls([]);
     setError(null);
     toast({ title: 'Form Reset', description: 'All settings have been reset to their defaults.' });
@@ -203,35 +193,6 @@ export function ImageGenerator() {
                     />
                   </div>
                   {errors.prompt && <p className="text-sm text-destructive mt-1">{errors.prompt.message}</p>}
-                </div>
-
-                <div>
-                  <Label htmlFor="model-selector" className="text-lg font-semibold text-foreground/90 mb-2 block">
-                    Choose Your Engine
-                  </Label>
-                   <Select value={selectedModel} onValueChange={setSelectedModel} disabled={isGenerating}>
-                      <SelectTrigger id="model-selector" className="w-full bg-background hover:bg-muted/50 h-auto">
-                        <SelectValue>
-                          <div className="flex items-center gap-3 py-1">
-                            <Bot className="h-5 w-5 text-primary" />
-                            <div className='text-left'>
-                              <p className="font-semibold text-foreground">{selectedModelData.label}</p>
-                              <p className="text-xs text-muted-foreground">{selectedModelData.description}</p>
-                            </div>
-                          </div>
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent className="bg-popover border-border">
-                        {MODELS.map((model) => (
-                          <SelectItem key={model.value} value={model.value}>
-                            <div className='flex flex-col'>
-                              <span className='font-semibold'>{model.label}</span>
-                              <span className='text-xs text-muted-foreground'>{model.description}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                 </div>
 
                 <div className='space-y-4'>

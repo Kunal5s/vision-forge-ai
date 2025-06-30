@@ -14,17 +14,6 @@ const getPollinationsDimensions = (aspectRatio) => {
   }
 };
 
-// Helper to convert ArrayBuffer to Base64 in an Edge-friendly way
-function arrayBufferToBase64(buffer) {
-  let binary = '';
-  const bytes = new Uint8Array(buffer);
-  const len = bytes.byteLength;
-  for (let i = 0; i < len; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary);
-}
-
 export default async function handler(req) {
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Only POST method is allowed' }), {
@@ -64,63 +53,8 @@ export default async function handler(req) {
         imageUrls.push(res.url);
       }
 
-    } else if (model === 'huggingface') {
-      const apiKey = process.env.NEXT_PUBLIC_HUGGINGFACE_KEY;
-      if (!apiKey) throw new Error('Hugging Face API key is not configured in Cloudflare environment variables.');
-      
-      const promises = Array.from({ length: numberOfImages }).map(() =>
-        fetch("https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ inputs: prompt }),
-        })
-      );
-      
-      const responses = await Promise.all(promises);
-      const blobPromises = responses.map(async (res) => {
-        if (!res.ok) {
-            const errorText = await res.text();
-            console.error('Hugging Face API Error:', errorText);
-            throw new Error(`Hugging Face API returned status ${res.status}. Check your API key and model identifier.`);
-        }
-        const blob = await res.blob();
-        const buffer = await res.arrayBuffer();
-        const base64 = arrayBufferToBase64(buffer);
-        return `data:${blob.type};base64,${base64}`;
-      });
-
-      imageUrls = await Promise.all(blobPromises);
-
-    } else if (model === 'gemini') {
-      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-      if (!apiKey) throw new Error('Gemini API key is not configured in Cloudflare environment variables.');
-      
-      const geminiApiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/imagegeneration:generateImage?key=${apiKey}`;
-
-      const response = await fetch(geminiApiEndpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: { text: prompt },
-          number_of_images: numberOfImages,
-          aspect_ratio: aspectRatio,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorJson = await response.json();
-        console.error('Gemini API Error:', errorJson);
-        throw new Error(errorJson.error?.message || 'Failed to generate image with Gemini. Check your API key.');
-      }
-
-      const result = await response.json();
-      imageUrls = result.images?.map(img => `data:image/png;base64,${img.imageData}`) || [];
-
     } else {
-      return new Response(JSON.stringify({ error: 'Invalid model specified' }), {
+      return new Response(JSON.stringify({ error: 'Invalid model specified. Only Pollinations is supported.' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });

@@ -5,9 +5,7 @@ export interface StyleOption {
 }
 
 export const MODELS = [
-  { type: 'google', value: 'gemini', label: 'Google Gemini', description: 'Advanced image generation by Google.' },
   { type: 'pollinations', value: 'pollinations', label: 'Pollinations', description: 'Fast & free for creative explorations.' },
-  { type: 'huggingface', value: 'huggingface', label: 'Hugging Face', description: 'Uses stabilityai/stable-diffusion-2 model.' },
 ];
 
 
