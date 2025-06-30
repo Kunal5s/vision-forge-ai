@@ -12,15 +12,38 @@ function arrayBufferToBase64(buffer) {
     return btoa(binary);
 }
 
+// Helper to calculate dimensions from an aspect ratio string
+function getDimensionsFromRatio(ratio, baseSize = 1024) {
+  if (!ratio || typeof ratio !== 'string' || !ratio.includes(':')) {
+    // Default to square if ratio is invalid
+    return { width: baseSize, height: baseSize };
+  }
+
+  const [w, h] = ratio.split(':').map(Number);
+  if (isNaN(w) || isNaN(h) || w === 0 || h === 0) {
+    return { width: baseSize, height: baseSize };
+  }
+
+  if (w > h) {
+    const width = baseSize;
+    const height = Math.round(width * (h / w));
+    return { width, height };
+  } else {
+    const height = baseSize;
+    const width = Math.round(height * (w / h));
+    return { width, height };
+  }
+}
+
 // Handler for Pollinations model (Sequential Generation)
-async function handlePollinations(prompt, numberOfImages) {
+async function handlePollinations(prompt, numberOfImages, width, height) {
   const imageUrls = [];
 
   for (let i = 0; i < numberOfImages; i++) {
     // Generate a unique seed to get different images for the same prompt
     const seed = Math.floor(Math.random() * 100000);
     // The API prefers a simple URL. Appending the seed ensures we get variations.
-    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?seed=${seed}&nofeed=true`;
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?seed=${seed}&width=${width}&height=${height}&nofeed=true`;
     
     const response = await fetch(url);
     if (!response.ok) {
@@ -119,11 +142,11 @@ export default async function handler(req) {
     if (model === 'google-imagen') {
       imageUrls = await handleGoogleImagen(finalPrompt);
     } else if (model === 'pollinations') {
-      // For Pollinations, also add aspect ratio to the prompt text.
-      const pollinationsPrompt = `${finalPrompt}, aspect ratio ${aspectRatio}`;
-      imageUrls = await handlePollinations(pollinationsPrompt, numberOfImages);
+      // Calculate dimensions from aspect ratio for Pollinations
+      const { width, height } = getDimensionsFromRatio(aspectRatio);
+      imageUrls = await handlePollinations(finalPrompt, numberOfImages, width, height);
     } else {
-      // For Hugging Face, add aspect ratio to the prompt text
+      // For Hugging Face, add aspect ratio to the prompt text as it does not support width/height params
       const hfPrompt = `${finalPrompt}, aspect ratio ${aspectRatio}`;
       imageUrls = await handleHuggingFace(hfPrompt, model, numberOfImages);
     }
