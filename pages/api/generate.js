@@ -1,6 +1,4 @@
 
-import { NextRequest } from 'next/server';
-
 export const config = { runtime: 'edge' };
 
 // Edge-compatible function to convert ArrayBuffer to Base64
@@ -27,64 +25,73 @@ function getDimensionsFromRatio(ratio, baseSize = 1024) {
   }
 }
 
-// Handler for Pollinations model
+// Handler for Pollinations model (Sequential Generation)
 async function handlePollinations(prompt, aspectRatio, numberOfImages) {
   const imageUrls = [];
   const { width, height } = getDimensionsFromRatio(aspectRatio);
-  
-  const generationPromises = Array.from({ length: numberOfImages }, (_, i) => {
+
+  for (let i = 0; i < numberOfImages; i++) {
     const seed = Math.floor(Math.random() * 100000);
     const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed}&nofeed=true`;
     
-    return fetch(url).then(async (response) => {
-      if (!response.ok) {
-        throw new Error(`Pollinations API returned status ${response.status}`);
-      }
-      const buffer = await response.arrayBuffer();
-      const base64 = arrayBufferToBase64(buffer);
-      const mimeType = response.headers.get('content-type') || 'image/png';
-      return `data:${mimeType};base64,${base64}`;
-    });
-  });
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Pollinations API returned status ${response.status} on image ${i + 1}`);
+    }
+    const buffer = await response.arrayBuffer();
+    const base64 = arrayBufferToBase64(buffer);
+    const mimeType = response.headers.get('content-type') || 'image/png';
+    imageUrls.push(`data:${mimeType};base64,${base64}`);
+  }
 
-  return Promise.all(generationPromises);
+  return imageUrls;
 }
 
 
-// Handler for Hugging Face models
+// Handler for Hugging Face models (Sequential Generation)
 async function handleHuggingFace(prompt, model, aspectRatio, numberOfImages) {
   const apiKey = process.env.HUGGINGFACE_KEY;
   if (!apiKey) {
     throw new Error('Hugging Face API key is missing. Please set HUGGINGFACE_KEY in your environment variables.');
   }
 
+  const imageUrls = [];
   const fullPrompt = `${prompt}, aspect ratio ${aspectRatio}`;
 
-  const generationPromises = Array.from({ length: numberOfImages }, () => 
-    fetch(`https://api-inference.huggingface.co/models/${model}`, {
+  for (let i = 0; i < numberOfImages; i++) {
+    const response = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ inputs: fullPrompt }),
-    }).then(async (response) => {
-        if (response.status === 503) {
-            throw new Error(`Hugging Face model '${model}' is currently loading. Please try again in a moment.`);
+    });
+    
+    if (response.status === 503) {
+        throw new Error(`Hugging Face model '${model}' is currently loading. Please try again in a moment.`);
+    }
+    if (!response.ok) {
+        let errorBodyText = await response.text();
+        let errorMessage = `Hugging Face API Error: Status ${response.status}`;
+        try {
+            // Try to parse as JSON for a more specific error message
+            const errorBodyJson = JSON.parse(errorBodyText);
+            errorMessage = `Hugging Face API Error: ${errorBodyJson.error || `Status ${response.status}`}`;
+        } catch (e) {
+            // If it's not JSON, include the raw text
+            errorMessage += ` - ${errorBodyText}`;
         }
-        if (!response.ok) {
-            const errorBody = await response.json();
-            throw new Error(`Hugging Face API Error: ${errorBody.error || `Status ${response.status}`}`);
-        }
-        const buffer = await response.arrayBuffer();
-        const base64 = arrayBufferToBase64(buffer);
-        const mimeType = response.headers.get('content-type') || 'image/jpeg';
-        return `data:${mimeType};base64,${base64}`;
-    })
-  );
+        throw new Error(errorMessage);
+    }
+    const buffer = await response.arrayBuffer();
+    const base64 = arrayBufferToBase64(buffer);
+    const mimeType = response.headers.get('content-type') || 'image/jpeg';
+    imageUrls.push(`data:${mimeType};base64,${base64}`);
+  }
   
-  return Promise.all(generationPromises);
+  return imageUrls;
 }
 
 // Main API handler for Edge Runtime
-export default async function handler(req: NextRequest) {
+export default async function handler(req) {
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
       status: 405,
@@ -108,7 +115,7 @@ export default async function handler(req: NextRequest) {
       headers: { 'Content-Type': 'application/json' },
     });
 
-  } catch (e: any) {
+  } catch (e) {
     console.error("API Error in /api/generate:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
     return new Response(JSON.stringify({ error: errorMessage }), {
