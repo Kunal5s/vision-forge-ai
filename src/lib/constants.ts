@@ -6,6 +6,7 @@ export interface StyleOption {
 }
 
 export const MODELS = [
+  { type: 'google', value: 'google-imagen', label: 'Google Imagen 3', description: 'Advanced image generation by Google.' },
   { type: 'pollinations', value: 'pollinations', label: 'Pollinations', description: 'Fast & free for creative explorations.' },
   { type: 'huggingface', value: 'runwayml/stable-diffusion-v1-5', label: 'Stable Diffusion 1.5', description: 'Classic & reliable (Hugging Face).' },
   { type: 'huggingface', value: 'stabilityai/stable-diffusion-xl-base-1.0', label: 'Stable Diffusion XL', description: 'High-quality large model (Hugging Face).' },

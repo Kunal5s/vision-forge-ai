@@ -47,7 +47,6 @@ async function handlePollinations(prompt, aspectRatio, numberOfImages) {
   return imageUrls;
 }
 
-
 // Handler for Hugging Face models (Sequential Generation)
 async function handleHuggingFace(prompt, model, numberOfImages) {
   // This log helps confirm if the key is loaded in the environment. It does not expose the key itself.
@@ -91,6 +90,15 @@ async function handleHuggingFace(prompt, model, numberOfImages) {
   return imageUrls;
 }
 
+// Handler for Google Imagen 3.
+async function handleGoogleImagen(prompt) {
+    // This is a placeholder. The user wants to add Google Imagen 3 to the UI.
+    // The actual API call requires a more complex setup (OAuth 2.0) than a simple API key from the Edge.
+    // To prevent crashes and guide the user, we throw a clear error.
+    throw new Error('Google Imagen 3 integration is not yet supported in this backend. A secure server-side proxy with OAuth2.0 authentication is required for this model.');
+}
+
+
 // Main API handler for Edge Runtime
 export default async function handler(req) {
   if (req.method !== 'POST') {
@@ -120,7 +128,9 @@ export default async function handler(req) {
 
     let imageUrls = [];
 
-    if (model === 'pollinations') {
+    if (model === 'google-imagen') {
+      imageUrls = await handleGoogleImagen(finalPrompt);
+    } else if (model === 'pollinations') {
       imageUrls = await handlePollinations(finalPrompt, aspectRatio, numberOfImages);
     } else {
       // For Hugging Face, add aspect ratio to the prompt text
