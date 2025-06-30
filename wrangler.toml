@@ -1,9 +1,0 @@
-name = "visionforgeai"
-type = "javascript"
-compatibility_date = "2025-06-30"
-
-[vars]
-NEXT_PUBLIC_GEMINI_API_KEY = "env:NEXT_PUBLIC_GEMINI_API_KEY"
-
-[observability.logs]
-enabled = true
