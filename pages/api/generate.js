@@ -61,6 +61,9 @@ async function handlePollinations(prompt, aspectRatio, numberOfImages) {
     const seed = Math.floor(Math.random() * 100000);
     const url = `${baseUrl}?width=${width}&height=${height}&seed=${seed}&nofeed=true`;
     
+    // We don't need to convert to data URI for Pollinations as it returns a direct image link.
+    // However, to maintain consistency and avoid cross-origin issues on the client,
+    // we fetch and convert to a data URI on the server.
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Pollinations API returned status ${response.status}`);

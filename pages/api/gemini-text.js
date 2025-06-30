@@ -1,3 +1,5 @@
+// This file is a placeholder and not currently in use.
+// It is configured for the Edge runtime to prevent build failures on Cloudflare.
 
 export const config = { runtime: 'edge' };
 
