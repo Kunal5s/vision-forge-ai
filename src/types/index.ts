@@ -15,3 +15,12 @@ export interface Subscription {
   purchaseDate: string; // ISO string to track plan start date
   lastReset: string; // ISO string to track daily credit reset for free plan
 }
+
+export interface GeneratedImageHistoryItem {
+  id: string;
+  imageUrl: string;
+  prompt: string;
+  timestamp: string;
+  aspectRatio: string;
+  plan: Plan;
+}
