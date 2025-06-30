@@ -1,12 +1,3 @@
-
-import {genkit} from 'genkit';
-import {googleAI} from '@genkit-ai/googleai';
-
-export const ai = genkit({
-  plugins: [
-    googleAI({
-      // The API key is read from the GOOGLE_API_KEY environment variable by default.
-      // It's recommended to set this in your deployment environment.
-    }),
-  ],
-});
+// This file's logic has been moved to pages/api/generate.js
+// to better support deployment on platforms like Cloudflare Pages.
+// This file can be safely removed.

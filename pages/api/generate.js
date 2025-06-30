@@ -1,7 +1,18 @@
 
+import { genkit } from 'genkit';
+import { googleAI } from '@genkit-ai/googleai';
+
 export const config = { runtime: 'edge' };
 
-import { ai } from '@/ai/genkit';
+// Initialize Genkit AI within the API route to ensure it's server-only
+const ai = genkit({
+  plugins: [
+    googleAI({
+      // API key is read from GOOGLE_API_KEY env var
+    }),
+  ],
+});
+
 
 // Helper to get image dimensions from an aspect ratio string
 function getDimensionsFromRatio(ratio, baseSize = 1024) {
