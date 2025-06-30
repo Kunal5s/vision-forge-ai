@@ -13,6 +13,17 @@ const ai = genkit({
   ],
 });
 
+// Edge-compatible function to convert ArrayBuffer to Base64
+function arrayBufferToBase64(buffer) {
+    let binary = '';
+    const bytes = new Uint8Array(buffer);
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+}
+
 
 // Helper to get image dimensions from an aspect ratio string
 function getDimensionsFromRatio(ratio, baseSize = 1024) {
@@ -70,7 +81,7 @@ async function handlePollinations(prompt, aspectRatio, numberOfImages) {
     }
     
     const buffer = await response.arrayBuffer();
-    const base64 = Buffer.from(buffer).toString('base64');
+    const base64 = arrayBufferToBase64(buffer);
     const mimeType = response.headers.get('content-type') || 'image/png';
     imageUrls.push(`data:${mimeType};base64,${base64}`);
   }
@@ -103,7 +114,7 @@ async function handleHuggingFace(prompt, model, aspectRatio, numberOfImages) {
     }
     
     const buffer = await response.arrayBuffer();
-    const base64 = Buffer.from(buffer).toString('base64');
+    const base64 = arrayBufferToBase64(buffer);
     const mimeType = response.headers.get('content-type') || 'image/jpeg';
     imageUrls.push(`data:${mimeType};base64,${base64}`);
   }
