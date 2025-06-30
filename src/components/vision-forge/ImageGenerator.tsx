@@ -112,7 +112,16 @@ export function ImageGenerator() {
         setGeneratedImageUrls(result.imageUrls);
         setDisplayAspectRatio(selectedAspectRatio);
         toast({ title: 'Vision Forged!', description: `Your image(s) have been successfully generated.` });
-      } else {
+      } else if (result.image && typeof result.image === 'string') {
+        setGeneratedImageUrls([result.image]);
+        setDisplayAspectRatio(selectedAspectRatio);
+        toast({ title: 'Vision Forged!', description: `Your image has been successfully generated.` });
+      } else if (result.imageUrl && typeof result.imageUrl === 'string') {
+        setGeneratedImageUrls([result.imageUrl]);
+        setDisplayAspectRatio(selectedAspectRatio);
+        toast({ title: 'Vision Forged!', description: `Your image has been successfully generated.` });
+      }
+      else {
         throw new Error('The API returned no images. This can happen with very specific or unusual search terms.');
       }
 
