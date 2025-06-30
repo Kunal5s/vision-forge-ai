@@ -5,6 +5,12 @@ export interface StyleOption {
   label: string;
 }
 
+export const MODELS = [
+  { value: 'google', label: 'Google Gemini', description: 'Highest quality and speed. API key required.' },
+  { value: 'pollinations', label: 'Pollinations', description: 'Fast and free for creative explorations.' },
+  { value: 'huggingface', label: 'Hugging Face', description: 'Alternative creative model. API key required.' },
+];
+
 export const ASPECT_RATIOS = [
   { label: "1:1 (Square)", value: "1:1" },
   { label: "16:9 (Widescreen)", value: "16:9" },

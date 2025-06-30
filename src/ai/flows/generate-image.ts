@@ -1,8 +1,8 @@
 'use server';
 /**
- * @fileOverview A powerful image generation flow using Google's Gemini model.
- * This provides a fast and high-quality alternative to free services.
- * - generateImage - A server action that calls the Gemini API to generate images.
+ * @fileOverview A powerful, multi-model image generation flow.
+ * It can route requests to Google Gemini, Pollinations, or Hugging Face.
+ * - generateImage - The core server action for image generation.
  * - GenerateImageInput - The input type for the generateImage function.
  * - GenerateImageOutput - The return type for the generateImage function.
  */
@@ -14,6 +14,7 @@ const GenerateImageInputSchema = z.object({
   prompt: z.string().describe('The user-provided prompt for the image.'),
   aspectRatio: z.string().describe("The desired aspect ratio, e.g., '16:9'."),
   numberOfImages: z.number().min(1).max(4).describe('The number of images to generate (max 4).'),
+  model: z.string().describe('The AI model to use for generation (e.g., google, pollinations).'),
 });
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
 
@@ -23,48 +24,136 @@ const GenerateImageOutputSchema = z.object({
 });
 export type GenerateImageOutput = z.infer<typeof GenerateImageOutputSchema>;
 
+
 /**
- * Generates images by calling Google's Gemini model in parallel.
- * @param input The generation parameters from the frontend.
- * @returns A promise that resolves to the generation output with base64 data URLs.
+ * Generates images using Google's Gemini model via Genkit.
+ * This is the premium, high-quality option.
  */
-export async function generateImage(input: GenerateImageInput): Promise<GenerateImageOutput> {
+async function generateWithGoogle(input: GenerateImageInput): Promise<string[]> {
   // Add aspect ratio information directly into the prompt for the AI to follow.
   const fullPrompt = `${input.prompt}, aspect ratio ${input.aspectRatio}`;
 
-  try {
-    const generationPromises = Array.from({ length: input.numberOfImages }, () =>
-      ai.generate({
-        model: 'googleai/gemini-2.0-flash-preview-image-generation',
-        prompt: fullPrompt,
-        config: {
-          responseModalities: ['TEXT', 'IMAGE'],
-        },
-      })
+  // Check for API key presence before making the call.
+  if (!process.env.GOOGLE_API_KEY) {
+    throw new Error('Google API key is missing. Please set GOOGLE_API_KEY in your environment variables to use this model.');
+  }
+
+  const generationPromises = Array.from({ length: input.numberOfImages }, () =>
+    ai.generate({
+      model: 'googleai/gemini-2.0-flash-preview-image-generation',
+      prompt: fullPrompt,
+      config: {
+        responseModalities: ['TEXT', 'IMAGE'],
+      },
+    })
+  );
+
+  const results = await Promise.all(generationPromises);
+
+  return results.map(result => {
+    if (!result.media?.url) {
+      throw new Error('Image generation succeeded but the result was empty. This may be due to a safety policy violation. Please try a different prompt.');
+    }
+    return result.media.url;
+  });
+}
+
+/**
+ * Generates images using the free Pollinations API.
+ * This is a fast, key-less option for creative exploration.
+ */
+async function generateWithPollinations(input: GenerateImageInput): Promise<string[]> {
+  const imageUrls: string[] = [];
+  const fullPrompt = `${input.prompt}, aspect ratio ${input.aspectRatio}`;
+  
+  for (let i = 0; i < input.numberOfImages; i++) {
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Pollinations API returned status ${response.status}`);
+    
+    // Convert image response to a base64 data URI to avoid client-side CORS issues.
+    const buffer = await response.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString('base64');
+    const mimeType = response.headers.get('content-type') || 'image/png';
+    imageUrls.push(`data:${mimeType};base64,${base64}`);
+  }
+  return imageUrls;
+}
+
+/**
+ * Generates images using the Hugging Face Inference API.
+ * This provides an alternative creative model.
+ */
+async function generateWithHuggingFace(input: GenerateImageInput): Promise<string[]> {
+  const apiKey = process.env.HUGGINGFACE_KEY;
+  if (!apiKey) {
+    throw new Error('Hugging Face API key is missing. Please set HUGGINGFACE_KEY in your environment variables.');
+  }
+
+  const imageUrls: string[] = [];
+  const fullPrompt = `${input.prompt}, aspect ratio ${input.aspectRatio}`;
+
+  for (let i = 0; i < input.numberOfImages; i++) {
+    const response = await fetch(
+      "https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5",
+      {
+        headers: { Authorization: `Bearer ${apiKey}` },
+        method: "POST",
+        body: JSON.stringify({ inputs: fullPrompt }),
+      }
     );
 
-    const results = await Promise.all(generationPromises);
+    if (response.status === 503) {
+      throw new Error('Hugging Face model is currently loading, please try again in a moment.');
+    }
+    if (!response.ok) {
+      const errorBody = await response.json();
+      throw new Error(`Hugging Face API Error: ${errorBody.error || `Status ${response.status}`}`);
+    }
+    
+    const buffer = await response.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString('base64');
+    const mimeType = response.headers.get('content-type') || 'image/jpeg';
+    imageUrls.push(`data:${mimeType};base64,${base64}`);
+  }
+  return imageUrls;
+}
 
-    const imageUrls = results.map(result => {
-      if (!result.media?.url) {
-        // This can happen if the model refuses to generate the image due to safety policies.
-        throw new Error('Image generation succeeded but the result was empty. This may be due to a safety policy violation. Please try a different prompt.');
-      }
-      return result.media.url;
-    });
+
+/**
+ * Main server action to generate images. It routes the request to the
+ * appropriate generation function based on the selected model.
+ * @param input The generation parameters from the frontend.
+ * @returns A promise that resolves to the generation output.
+ */
+export async function generateImage(input: GenerateImageInput): Promise<GenerateImageOutput> {
+  try {
+    let imageUrls: string[];
+
+    switch (input.model) {
+      case 'google':
+        imageUrls = await generateWithGoogle(input);
+        break;
+      case 'pollinations':
+        imageUrls = await generateWithPollinations(input);
+        break;
+      case 'huggingface':
+        imageUrls = await generateWithHuggingFace(input);
+        break;
+      default:
+        throw new Error(`Invalid model selected: ${input.model}`);
+    }
 
     return { imageUrls };
 
   } catch (e: any) {
-    console.error("Image generation failed with Google Gemini:", e);
+    console.error("Image generation failed:", e);
     
-    let errorMessage = "An unexpected error occurred. Please try again later.";
+    let errorMessage = e.message || "An unexpected error occurred. Please try again later.";
     if (e.message?.includes('API key')) {
-        errorMessage = "Image generation failed. The Google API key is invalid, missing, or has not been configured correctly in your environment variables.";
+        errorMessage = e.message;
     } else if (e.message?.includes('billing')) {
         errorMessage = "Image generation failed. Please check if billing is enabled for your Google Cloud project.";
-    } else if (e.message?.includes('safety policy')) {
-        errorMessage = e.message;
     }
 
     return { imageUrls: [], error: errorMessage };

@@ -17,10 +17,10 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { generateImage, type GenerateImageInput } from '@/ai/flows/generate-image';
-import { ASPECT_RATIOS, STYLES, MOODS, LIGHTING, COLOURS } from '@/lib/constants';
+import { ASPECT_RATIOS, STYLES, MOODS, LIGHTING, COLOURS, MODELS } from '@/lib/constants';
 import { ImageDisplay } from './ImageDisplay';
 import { FuturisticPanel } from './FuturisticPanel';
-import { ImageIcon as ImageIconIcon, RefreshCcw, XCircle } from 'lucide-react';
+import { ImageIcon as ImageIconIcon, RefreshCcw, XCircle, Bot } from 'lucide-react';
 import { useSubscription } from '@/hooks/use-subscription';
 import { StyleSelector } from './StyleSelector';
 import { ScrollArea } from '../ui/scroll-area';
@@ -44,6 +44,7 @@ export function ImageGenerator() {
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>(ASPECT_RATIOS[0].value);
   const [displayAspectRatio, setDisplayAspectRatio] = useState<string>(ASPECT_RATIOS[0].value);
   const [numberOfImages, setNumberOfImages] = useState<number>(1);
+  const [selectedModel, setSelectedModel] = useState<string>(MODELS[0].value);
   
   const [generatedImageUrls, setGeneratedImageUrls] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -76,8 +77,6 @@ export function ImageGenerator() {
     setIsGenerating(true);
     setError(null);
     
-    // Clean up old blob URLs to prevent memory leaks
-    generatedImageUrls.forEach(url => URL.revokeObjectURL(url));
     setGeneratedImageUrls([]);
 
     const finalPrompt = constructFinalPrompt(data);
@@ -86,15 +85,12 @@ export function ImageGenerator() {
         prompt: finalPrompt,
         aspectRatio: selectedAspectRatio,
         numberOfImages: numberOfImages,
+        model: selectedModel,
      };
     const result = await generateImage(generationParams);
     
     if (generationCancelled.current) {
         console.log("Generation was cancelled by the user. Results ignored.");
-        // Also clean up any URLs that might have been created before cancellation
-        if (result.imageUrls) {
-          result.imageUrls.forEach(url => URL.revokeObjectURL(url));
-        }
         return;
     }
 
@@ -112,14 +108,6 @@ export function ImageGenerator() {
       setGeneratedImageUrls([]);
     }
   };
-  
-  // Cleanup blob URLs on component unmount
-  useEffect(() => {
-    return () => {
-      generatedImageUrls.forEach(url => URL.revokeObjectURL(url));
-    }
-  }, [generatedImageUrls]);
-
 
   const handleRegenerate = () => {
      if(currentPrompt) {
@@ -145,6 +133,7 @@ export function ImageGenerator() {
     setSelectedAspectRatio(ASPECT_RATIOS[0].value);
     setDisplayAspectRatio(ASPECT_RATIOS[0].value);
     setNumberOfImages(1);
+    setSelectedModel(MODELS[0].value);
     setGeneratedImageUrls([]);
     setError(null);
     toast({ title: 'Form Reset', description: 'All settings have been reset to their defaults.' });
@@ -185,6 +174,35 @@ export function ImageGenerator() {
                     />
                   </div>
                   {errors.prompt && <p className="text-sm text-destructive mt-1">{errors.prompt.message}</p>}
+                </div>
+
+                <div>
+                  <Label htmlFor="model-selector" className="text-lg font-semibold text-foreground/90 mb-2 block">
+                    Choose Your Engine
+                  </Label>
+                   <Select value={selectedModel} onValueChange={setSelectedModel} disabled={isGenerating}>
+                      <SelectTrigger id="model-selector" className="w-full bg-background hover:bg-muted/50 h-auto">
+                        <SelectValue>
+                          <div className="flex items-center gap-3 py-1">
+                            <Bot className="h-5 w-5 text-primary" />
+                            <div className='text-left'>
+                              <p className="font-semibold text-foreground">{MODELS.find(m => m.value === selectedModel)?.label}</p>
+                              <p className="text-xs text-muted-foreground">{MODELS.find(m => m.value === selectedModel)?.description}</p>
+                            </div>
+                          </div>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border">
+                        {MODELS.map((model) => (
+                          <SelectItem key={model.value} value={model.value}>
+                            <div className='flex flex-col'>
+                              <span className='font-semibold'>{model.label}</span>
+                              <span className='text-xs text-muted-foreground'>{model.description}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                 </div>
 
                 <div className='space-y-4'>
