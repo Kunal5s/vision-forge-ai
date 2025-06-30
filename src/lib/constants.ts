@@ -5,13 +5,9 @@ export interface StyleOption {
 }
 
 export const MODELS = [
-  { type: 'google', value: 'google-imagen', label: 'Google Imagen 3', description: 'Advanced image generation by Google.' },
+  { type: 'google', value: 'gemini', label: 'Google Gemini', description: 'Advanced image generation by Google.' },
   { type: 'pollinations', value: 'pollinations', label: 'Pollinations', description: 'Fast & free for creative explorations.' },
-  { type: 'huggingface', value: 'stabilityai/stable-diffusion-2', label: 'Stable Diffusion 2', description: 'Powerful general-purpose model.' },
-  { type: 'huggingface', value: 'stabilityai/stable-diffusion-xl-base-1.0', label: 'Stable Diffusion XL', description: 'High-quality large model.' },
-  { type: 'huggingface', value: 'prompthero/openjourney', label: 'OpenJourney', description: 'MidJourney aesthetic.' },
-  { type: 'huggingface', value: 'dreamlike-art/dreamlike-photoreal-2.0', label: 'Dreamlike Photoreal', description: 'For realistic images.' },
-  { type: 'huggingface', value: 'SG161222/Realistic_Vision_V5.1_B1', label: 'Realistic Vision 5.1', description: 'Focus on photorealism.' },
+  { type: 'huggingface', value: 'huggingface', label: 'Hugging Face', description: 'Uses stabilityai/stable-diffusion-2 model.' },
 ];
 
 

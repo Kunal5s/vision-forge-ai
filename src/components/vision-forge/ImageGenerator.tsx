@@ -31,8 +31,6 @@ type FormData = z.infer<typeof formSchema>;
 
 const imageCountOptions = [
     { label: '1 Image', value: 1 },
-    { label: '2 Images', value: 2 },
-    { label: '4 Images', value: 4 },
 ];
 
 export function ImageGenerator() {
@@ -65,9 +63,10 @@ export function ImageGenerator() {
   const getConstructedPrompt = (): string => {
     let finalPrompt = watch('prompt');
     if (selectedStyle) finalPrompt += `, ${selectedStyle} style`;
-    if (selectedMood) finalPrompt += `, ${selectedMood} mood`;
-    if (selectedLighting) finalPrompt += `, ${selectedLighting} lighting`;
-    if (selectedColour) finalPrompt += `, ${selectedColour} color palette`;
+    if (selectedMood) finalPrompt += `, ${mood} mood`;
+    if (selectedLighting) finalPrompt += `, ${lighting} lighting`;
+    if (selectedColour) finalPrompt += `, ${colour} color palette`;
+    if (selectedAspectRatio !== '1:1') finalPrompt += `, aspect ratio ${selectedAspectRatio}`;
     return finalPrompt;
   };
 
@@ -77,15 +76,11 @@ export function ImageGenerator() {
     setError(null);
     setGeneratedImageUrls([]);
 
+    const constructedPrompt = getConstructedPrompt();
+
     const payload = {
-      prompt: data.prompt,
+      prompt: constructedPrompt,
       model: selectedModel,
-      style: selectedStyle,
-      mood: selectedMood,
-      lighting: selectedLighting,
-      color: selectedColour,
-      aspectRatio: selectedAspectRatio,
-      numberOfImages: numberOfImages,
     };
 
     try {
@@ -252,7 +247,7 @@ export function ImageGenerator() {
                       <Select 
                           value={String(numberOfImages)} 
                           onValueChange={(val) => setNumberOfImages(Number(val))}
-                          disabled={isGenerating}
+                          disabled={true}
                       >
                           <SelectTrigger id="num-images" className="w-full bg-background hover:bg-muted/50">
                               <SelectValue />
