@@ -63,9 +63,9 @@ export function ImageGenerator() {
   const getConstructedPrompt = (): string => {
     let finalPrompt = watch('prompt');
     if (selectedStyle) finalPrompt += `, ${selectedStyle} style`;
-    if (selectedMood) finalPrompt += `, ${mood} mood`;
-    if (selectedLighting) finalPrompt += `, ${lighting} lighting`;
-    if (selectedColour) finalPrompt += `, ${colour} color palette`;
+    if (selectedMood) finalPrompt += `, ${selectedMood} mood`;
+    if (selectedLighting) finalPrompt += `, ${selectedLighting} lighting`;
+    if (selectedColour) finalPrompt += `, ${selectedColour} color palette`;
     if (selectedAspectRatio !== '1:1') finalPrompt += `, aspect ratio ${selectedAspectRatio}`;
     return finalPrompt;
   };
