@@ -6,10 +6,15 @@ export interface StyleOption {
 }
 
 export const MODELS = [
-  { value: 'google', label: 'Google Gemini', description: 'Highest quality and speed. API key required.' },
-  { value: 'pollinations', label: 'Pollinations', description: 'Fast and free for creative explorations.' },
-  { value: 'huggingface', label: 'Hugging Face', description: 'Alternative creative model. API key required.' },
+  { type: 'google', value: 'google', label: 'Google Imagen 2', description: 'Premium quality & speed. API key required.' },
+  { type: 'pollinations', value: 'pollinations', label: 'Pollinations', description: 'Fast & free for creative explorations.' },
+  { type: 'huggingface', value: 'runwayml/stable-diffusion-v1-5', label: 'Stable Diffusion 1.5', description: 'Classic & reliable (Hugging Face).' },
+  { type: 'huggingface', value: 'stabilityai/stable-diffusion-xl-base-1.0', label: 'Stable Diffusion XL', description: 'High-quality large model (Hugging Face).' },
+  { type: 'huggingface', value: 'prompthero/openjourney', label: 'OpenJourney', description: 'MidJourney aesthetic (Hugging Face).' },
+  { type: 'huggingface', value: 'dreamlike-art/dreamlike-photoreal-2.0', label: 'Dreamlike Photoreal', description: 'For realistic images (Hugging Face).' },
+  { type: 'huggingface', value: 'SG161222/Realistic_Vision_V5.1_no_VAE', label: 'Realistic Vision 5.1', description: 'Focus on photorealism (Hugging Face).' },
 ];
+
 
 export const ASPECT_RATIOS = [
   { label: "1:1 (Square)", value: "1:1" },

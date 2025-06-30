@@ -14,7 +14,7 @@ const GenerateImageInputSchema = z.object({
   prompt: z.string().describe('The user-provided prompt for the image.'),
   aspectRatio: z.string().describe("The desired aspect ratio, e.g., '16:9'."),
   numberOfImages: z.number().min(1).max(4).describe('The number of images to generate (max 4).'),
-  model: z.string().describe('The AI model to use for generation (e.g., google, pollinations).'),
+  model: z.string().describe('The AI model to use for generation (e.g., google, pollinations, runwayml/stable-diffusion-v1-5).'),
 });
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
 
@@ -118,7 +118,7 @@ async function generateWithPollinations(input: GenerateImageInput): Promise<stri
  * Generates images using the Hugging Face Inference API.
  * This provides an alternative creative model.
  */
-async function generateWithHuggingFace(input: GenerateImageİnput): Promise<string[]> {
+async function generateWithHuggingFace(input: GenerateImageInput): Promise<string[]> {
   const apiKey = process.env.HUGGINGFACE_KEY;
   if (!apiKey) {
     throw new Error('Hugging Face API key is missing. Please set HUGGINGFACE_KEY in your environment variables.');
@@ -129,7 +129,7 @@ async function generateWithHuggingFace(input: GenerateImageİnput): Promise<stri
 
   for (let i = 0; i < input.numberOfImages; i++) {
     const response = await fetch(
-      "https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5",
+      `https://api-inference.huggingface.co/models/${input.model}`,
       {
         headers: { Authorization: `Bearer ${apiKey}` },
         method: "POST",
@@ -138,7 +138,7 @@ async function generateWithHuggingFace(input: GenerateImageİnput): Promise<stri
     );
 
     if (response.status === 503) {
-      throw new Error('Hugging Face model is currently loading, please try again in a moment.');
+      throw new Error(`Hugging Face model '${input.model}' is currently loading, please try again in a moment.`);
     }
     if (!response.ok) {
       const errorBody = await response.json();
@@ -164,18 +164,13 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
   try {
     let imageUrls: string[];
 
-    switch (input.model) {
-      case 'google':
+    if (input.model === 'google') {
         imageUrls = await generateWithGoogle(input);
-        break;
-      case 'pollinations':
+    } else if (input.model === 'pollinations') {
         imageUrls = await generateWithPollinations(input);
-        break;
-      case 'huggingface':
+    } else {
+        // Assume any other model is from Hugging Face
         imageUrls = await generateWithHuggingFace(input);
-        break;
-      default:
-        throw new Error(`Invalid model selected: ${input.model}`);
     }
 
     return { imageUrls };

@@ -149,6 +149,8 @@ export function ImageGenerator() {
     });
   };
 
+  const selectedModelData = MODELS.find(m => m.value === selectedModel) || MODELS[0];
+
   return (
     <>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -186,8 +188,8 @@ export function ImageGenerator() {
                           <div className="flex items-center gap-3 py-1">
                             <Bot className="h-5 w-5 text-primary" />
                             <div className='text-left'>
-                              <p className="font-semibold text-foreground">{MODELS.find(m => m.value === selectedModel)?.label}</p>
-                              <p className="text-xs text-muted-foreground">{MODELS.find(m => m.value === selectedModel)?.description}</p>
+                              <p className="font-semibold text-foreground">{selectedModelData.label}</p>
+                              <p className="text-xs text-muted-foreground">{selectedModelData.description}</p>
                             </div>
                           </div>
                         </SelectValue>
