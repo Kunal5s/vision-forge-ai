@@ -50,7 +50,7 @@ export function FaqSection() {
     <section id="faq" className="bg-muted py-16">
       <div className="container mx-auto px-4">
         <header className="text-center mb-12">
-          <h2 className="text-4xl font-extrabold tracking-tight text-primary mb-3">
+          <h2 className="text-4xl font-extrabold tracking-tight text-foreground mb-3">
             Frequently Asked <span className="text-accent">Questions</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">

@@ -81,7 +81,7 @@ export function PricingSection() {
           >
             <CardHeader className="text-center">
               <CardTitle className="text-3xl">{plan.name}</CardTitle>
-              <p className="text-4xl font-bold text-primary">{plan.price}<span className="text-sm font-normal text-muted-foreground"> / month</span></p>
+              <p className="text-4xl font-bold text-foreground">{plan.price}<span className="text-sm font-normal text-muted-foreground"> / month</span></p>
               <CardDescription className="pt-2">{plan.description}</CardDescription>
             </CardHeader>
             <CardContent className="flex-grow">

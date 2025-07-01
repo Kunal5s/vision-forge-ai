@@ -11,7 +11,7 @@ export function PreFooterCallToAction() {
         <FuturisticPanel className="!p-8 md:!p-12">
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div>
-              <h2 className="text-3xl md:text-4xl font-extrabold text-primary mb-4">
+              <h2 className="text-3xl md:text-4xl font-extrabold text-foreground mb-4">
                 Ready to Bring Your Vision to Life?
               </h2>
               <p className="text-lg text-foreground/80 mb-6">

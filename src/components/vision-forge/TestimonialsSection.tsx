@@ -25,7 +25,7 @@ export function TestimonialsSection() {
     <section id="testimonials" className="bg-muted py-16">
       <div className="container mx-auto px-4">
         <header className="text-center mb-12">
-            <h2 className="text-4xl font-extrabold tracking-tight text-primary">
+            <h2 className="text-4xl font-extrabold tracking-tight text-foreground">
                 Loved by <span className="text-accent">Creatives</span>
             </h2>
             <p className="text-lg text-muted-foreground mt-2">
