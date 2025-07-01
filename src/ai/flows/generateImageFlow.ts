@@ -8,15 +8,23 @@ import {ai} from '@/ai/genkit';
  * @returns A promise that resolves to the data URI of the generated image.
  */
 export async function generateImageWithGoogle(prompt: string): Promise<string> {
-  const {media} = await ai.generate({
-    model: 'googleai/gemini-2.0-flash-preview-image-generation',
-    prompt: prompt,
-    config: {
-      responseModalities: ['TEXT', 'IMAGE'],
-    },
-  });
-  if (!media?.url) {
-    throw new Error('Google Gemini did not return an image.');
+  try {
+    const {media} = await ai.generate({
+      model: 'googleai/gemini-2.0-flash-preview-image-generation',
+      prompt: prompt,
+      config: {
+        responseModalities: ['TEXT', 'IMAGE'],
+      },
+    });
+
+    if (!media?.url) {
+      throw new Error('Google Gemini did not return an image. The prompt may have been blocked by safety filters.');
+    }
+    
+    return media.url; // This is already a data URI
+  } catch (error: any) {
+    console.error("[GEMINI_API_ERROR]", error);
+    // This ensures a clear, catchable error is sent back to the API route.
+    throw new Error(`Google Gemini API Error: ${error.message || 'An unknown error occurred.'}`);
   }
-  return media.url; // This is already a data URI
 }

@@ -1,7 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { generateImageWithGoogle } from '@/ai/flows/generateImageFlow';
-import { HuggingFaceInference } from '@huggingface/inference';
+import { HfInference } from '@huggingface/inference';
 
 // Create an array of Hugging Face keys from environment variables, filtering out any that are not set.
 const hfApiKeys = [
@@ -52,7 +52,7 @@ async function getHuggingFaceImage(prompt: string, model: string): Promise<strin
 
   for (const key of hfApiKeys) {
     try {
-      const hf = new HuggingFaceInference(key);
+      const hf = new HfInference(key);
       const blob = await hf.textToImage({
         model: model,
         inputs: prompt,
