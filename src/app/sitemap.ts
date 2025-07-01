@@ -13,6 +13,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/pricing',
     '/privacy',
     '/terms',
+    '/edit',
+    '/models',
   ];
 
   const sitemapEntries: MetadataRoute.Sitemap = staticPages.map((path) => ({

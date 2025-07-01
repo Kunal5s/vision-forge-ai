@@ -13,6 +13,7 @@ import { SubscriptionManager } from '../vision-forge/SubscriptionManager';
 
 const navLinks = [
   { href: '/', label: 'Generate' },
+  { href: '/models', label: 'Models' },
   { href: '/pricing', label: 'Pricing' },
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },
