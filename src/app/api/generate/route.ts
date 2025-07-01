@@ -108,17 +108,22 @@ export async function POST(req: NextRequest) {
     // Use Promise.allSettled to wait for all promises to resolve or reject
     const results = await Promise.allSettled(imagePromises);
     
+    let firstError: string | null = null;
     results.forEach(result => {
         if (result.status === 'fulfilled') {
             imageUrls.push(result.value);
         } else {
             // Log the error for the failed image generation
             console.error('An image generation failed:', result.reason);
+            if (!firstError) {
+              firstError = result.reason?.message || 'An unknown generation error occurred.';
+            }
         }
     });
 
     if (imageUrls.length === 0) {
-        return NextResponse.json({ error: 'All image generations failed. Please try a different model or prompt.' }, { status: 500 });
+        const errorMessage = firstError || 'All image generations failed. Please try a different model or prompt.';
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 
     return NextResponse.json({ images: imageUrls });
