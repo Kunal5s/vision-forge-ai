@@ -2,56 +2,32 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://imagenbrainai.in/</loc>
-    <lastmod>2024-07-01</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://imagenbrainai.in/models</loc>
-    <lastmod>2024-07-01</lastmod>
+    <loc>https://imagenbrainai.in/about</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
-    <url>
-    <loc>https://imagenbrainai.in/edit</loc>
-    <lastmod>2024-07-01</lastmod>
+  <url>
+    <loc>https://imagenbrainai.in/contact</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://imagenbrainai.in/models</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://imagenbrainai.in/pricing</loc>
-    <lastmod>2024-07-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://imagenbrainai.in/about</loc>
-    <lastmod>2024-07-01</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://imagenbrainai.in/contact</loc>
-    <lastmod>2024-07-01</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.5</priority>
-  </url>
-   <url>
-    <loc>https://imagenbrainai.in/privacy</loc>
-    <lastmod>2024-07-01</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-  <url>
-    <loc>https://imagenbrainai.in/terms</loc>
-    <lastmod>2024-07-01</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-   <url>
-    <loc>https://imagenbrainai.in/disclaimer</loc>
-    <lastmod>2024-07-01</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
+    <loc>https://imagenbrainai.in/edit</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
 </urlset>
