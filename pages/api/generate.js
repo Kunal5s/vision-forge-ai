@@ -45,17 +45,20 @@ export default async function handler(req) {
     if (model === 'pollinations') {
       const { width, height } = getPollinationsDimensions(aspectRatio);
       
-      const promises = Array.from({ length: numberOfImages }).map(() => {
+      // Changed from parallel to sequential requests to avoid rate limiting.
+      for (let i = 0; i < numberOfImages; i++) {
         const uniqueSeed = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
-        // Append a unique identifier to the prompt itself to force a new generation and break any caching
         const uniquePrompt = `${basePrompt}, variation ID ${uniqueSeed}`; 
         
-        return fetch(`https://image.pollinations.ai/prompt/${encodeURIComponent(uniquePrompt)}?width=${width}&height=${height}&seed=${uniqueSeed}&nofeed=true`);
-      });
-
-      const responses = await Promise.all(promises);
-      for(const res of responses) {
-        if (!res.ok) throw new Error(`Pollinations API returned status ${res.status}`);
+        const res = await fetch(`https://image.pollinations.ai/prompt/${encodeURIComponent(uniquePrompt)}?width=${width}&height=${height}&seed=${uniqueSeed}&nofeed=true`);
+        
+        if (!res.ok) {
+          if (res.status === 429) {
+            throw new Error('Rate limit exceeded. The AI model is receiving too many requests. Please wait a moment and try generating fewer images.');
+          }
+          throw new Error(`Pollinations API returned status ${res.status}`);
+        }
+        
         imageUrls.push(res.url);
       }
 
