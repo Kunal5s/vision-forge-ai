@@ -39,7 +39,7 @@ export default function HomePage() {
     <main>
       <div className="container mx-auto py-8 px-4">
         <header className="text-center mb-10">
-          <h1 className="text-5xl font-extrabold tracking-tight text-primary">
+          <h1 className="text-5xl font-extrabold tracking-tight text-foreground">
               Imagen BrainAi: Your Free <span className="text-accent">AI Image Generator</span>
           </h1>
           <p className="mt-4 text-lg text-foreground/80 max-w-3xl mx-auto">
