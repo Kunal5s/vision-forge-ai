@@ -5,7 +5,18 @@ export interface StyleOption {
 }
 
 export const MODELS = [
+  // Pollinations
   { type: 'pollinations', value: 'pollinations', label: 'Pollinations', description: 'Fast & free for creative explorations.' },
+
+  // Hugging Face
+  { type: 'huggingface', value: 'huggingface/stabilityai/stable-diffusion-xl-base-1.0', label: 'Stable Diffusion XL', description: 'Powerful and popular model by Stability AI.' },
+  { type: 'huggingface', value: 'huggingface/runwayml/stable-diffusion-v1-5', label: 'Stable Diffusion 1.5', description: 'A classic and versatile model from RunwayML.' },
+  { type: 'huggingface', value: 'huggingface/prompthero/openjourney', label: 'OpenJourney', description: 'An open-source model fine-tuned on Midjourney images.' },
+  { type: 'huggingface', value: 'huggingface/SG161222/Realistic_Vision_V5.1_noVAE', label: 'Realistic Vision 5.1', description: 'Excellent for creating photorealistic images.' },
+  { type: 'huggingface', value: 'huggingface/dataautogpt3/OpenDalleV1.1', label: 'OpenDalle v1.1', description: 'A powerful open-source DALL-E replication.' },
+
+  // Gemini
+  { type: 'gemini', value: 'gemini', label: 'Google Gemini', description: 'Google\'s powerful, cutting-edge image generation model.' },
 ];
 
 

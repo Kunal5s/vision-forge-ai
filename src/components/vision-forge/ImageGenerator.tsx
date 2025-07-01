@@ -14,6 +14,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup,
+  SelectLabel,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { ASPECT_RATIOS, STYLES, MOODS, LIGHTING, COLOURS, MODELS } from '@/lib/constants';
@@ -34,8 +36,6 @@ const imageCountOptions = [
     { label: '2 Images', value: 2 },
     { label: '3 Images', value: 3 },
     { label: '4 Images', value: 4 },
-    { label: '5 Images', value: 5 },
-    { label: '6 Images', value: 6 },
 ];
 
 export function ImageGenerator() {
@@ -46,13 +46,12 @@ export function ImageGenerator() {
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>(ASPECT_RATIOS[0].value);
   const [displayAspectRatio, setDisplayAspectRatio] = useState<string>(ASPECT_RATIOS[0].value);
   const [numberOfImages, setNumberOfImages] = useState<number>(1);
-  const [selectedModel] = useState<string>('pollinations');
+  const [selectedModel, setSelectedModel] = useState<string>('pollinations');
   
   const [generatedImageUrls, setGeneratedImageUrls] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // New state for visual selectors
   const [selectedStyle, setSelectedStyle] = useState<string>('');
   const [selectedMood, setSelectedMood] = useState<string>('');
   const [selectedLighting, setSelectedLighting] = useState<string>('');
@@ -65,10 +64,13 @@ export function ImageGenerator() {
   
   const currentPrompt = watch('prompt');
 
-  // Clean up object URLs on component unmount
   useEffect(() => {
     return () => {
-      generatedImageUrls.forEach(url => URL.revokeObjectURL(url));
+      generatedImageUrls.forEach(url => {
+        if (url.startsWith('blob:')) {
+            URL.revokeObjectURL(url)
+        }
+      });
     };
   }, [generatedImageUrls]);
 
@@ -81,14 +83,14 @@ export function ImageGenerator() {
       selectedColour,
       promptText,
     ];
-    return parts.filter(Boolean).join(' ').trim();
+    return parts.filter(Boolean).join(', ').trim();
   };
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     generationCancelled.current = false;
     setIsGenerating(true);
     setError(null);
-    setGeneratedImageUrls([]); // Revoking will be handled by the effect hook
+    setGeneratedImageUrls([]);
 
     const constructedPrompt = getConstructedPrompt();
 
@@ -100,62 +102,45 @@ export function ImageGenerator() {
     }
 
     try {
-      if (numberOfImages > 1) {
-          toast({
-              title: 'Processing Images',
-              description: `Generating ${numberOfImages} images. This might take a moment.`,
-          });
-      }
+      const payload = {
+        prompt: constructedPrompt,
+        model: selectedModel,
+        aspect: selectedAspectRatio,
+        count: numberOfImages,
+      };
 
-      const imagePromises = Array.from({ length: numberOfImages }).map((_, i) => {
-          const uniquePrompt = `${constructedPrompt} seed ${Math.random()}`;
-          const payload = {
-              prompt: uniquePrompt,
-              model: selectedModel,
-              aspect: selectedAspectRatio,
-              count: 1,
-          };
-
-          return fetch('https://vision-forge-ai.vercel.app/api/generate', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload),
-          }).then(res => {
-              if (generationCancelled.current) return null;
-              if (!res.ok) {
-                  return res.text().then(text => {
-                       throw new Error(`API Error: ${text.substring(0, 150)}`);
-                  });
-              }
-              return res.blob();
-          });
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
 
-      const blobs = await Promise.all(imagePromises);
-
       if (generationCancelled.current) {
-          console.log("Generation was cancelled by the user.");
-          return;
+        console.log("Generation was cancelled by the user.");
+        return;
       }
       
-      const validBlobs = blobs.filter(b => b !== null) as Blob[];
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `API Error: Request failed with status ${response.status}`);
+      }
+      
+      const result = await response.json();
 
-      if (validBlobs.length === 0) {
-          throw new Error('The API returned no images. Please try a different prompt.');
+      if (!result.images || result.images.length === 0) {
+        throw new Error('The API returned no images. Please try a different prompt.');
       }
 
-      // Previous URLs are revoked via useEffect.
-      const newImageUrls = validBlobs.map(blob => URL.createObjectURL(blob));
-
-      setGeneratedImageUrls(newImageUrls);
+      setGeneratedImageUrls(result.images);
       setDisplayAspectRatio(selectedAspectRatio);
-      toast({ title: 'Vision Forged!', description: `Successfully generated ${newImageUrls.length} image(s).` });
+      toast({ title: 'Vision Forged!', description: `Successfully generated ${result.images.length} image(s).` });
 
     } catch (e: any) {
       if (!generationCancelled.current) {
         console.error("Image generation failed:", e);
-        setError(e.message);
-        toast({ title: 'Generation Failed', description: e.message, variant: 'destructive', duration: 9000 });
+        const errorMessage = e.message || 'An unknown error occurred during image generation.';
+        setError(errorMessage);
+        toast({ title: 'Generation Failed', description: errorMessage, variant: 'destructive', duration: 9000 });
       }
     } finally {
       if (!generationCancelled.current) {
@@ -188,6 +173,7 @@ export function ImageGenerator() {
     setSelectedAspectRatio(ASPECT_RATIOS[0].value);
     setDisplayAspectRatio(ASPECT_RATIOS[0].value);
     setNumberOfImages(1);
+    setSelectedModel('pollinations');
     setGeneratedImageUrls([]);
     setError(null);
     toast({ title: 'Form Reset', description: 'All settings have been reset to their defaults.' });
@@ -202,8 +188,6 @@ export function ImageGenerator() {
         description: 'The image generation process has been stopped.',
     });
   };
-
-  const selectedModelData = MODELS.find(m => m.value === selectedModel) || MODELS[0];
 
   return (
     <>
@@ -231,6 +215,37 @@ export function ImageGenerator() {
                   </div>
                   {errors.prompt && <p className="text-sm text-destructive mt-1">{errors.prompt.message}</p>}
                 </div>
+
+                <div>
+                  <Label htmlFor="model-select" className="text-lg font-semibold text-foreground/90 mb-2 block">
+                    Choose Your Engine
+                  </Label>
+                  <Select value={selectedModel} onValueChange={setSelectedModel} disabled={isGenerating}>
+                    <SelectTrigger id="model-select" className="w-full bg-background hover:bg-muted/50">
+                      <SelectValue placeholder="Select an AI model" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Free Models</SelectLabel>
+                        <SelectItem value={MODELS[0].value}>{MODELS[0].label}</SelectItem>
+                      </SelectGroup>
+                      <SelectGroup>
+                        <SelectLabel>Hugging Face Models</SelectLabel>
+                        {MODELS.filter(m => m.type === 'huggingface').map(model => (
+                          <SelectItem key={model.value} value={model.value}>{model.label}</SelectItem>
+                        ))}
+                      </SelectGroup>
+                      <SelectGroup>
+                        <SelectLabel>Google AI</SelectLabel>
+                        <SelectItem value={MODELS.find(m => m.type === 'gemini')!.value}>{MODELS.find(m => m.type === 'gemini')!.label}</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <p className='text-xs text-muted-foreground mt-2'>
+                    {MODELS.find(m => m.value === selectedModel)?.description}
+                  </p>
+                </div>
+
 
                 <div className='space-y-4'>
                     <StyleSelector title="Styles" options={STYLES} selectedValue={selectedStyle} onSelect={setSelectedStyle} />
