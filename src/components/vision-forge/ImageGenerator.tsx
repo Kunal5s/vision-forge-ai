@@ -66,12 +66,12 @@ export function ImageGenerator() {
   const currentPrompt = watch('prompt');
 
   const getConstructedPrompt = (): string => {
-    let finalPrompt = watch('prompt');
-    if (selectedStyle) finalPrompt += `, in ${selectedStyle} style`;
-    if (selectedMood) finalPrompt += `, ${selectedMood} mood`;
-    if (selectedLighting) finalPrompt += `, ${selectedLighting} lighting`;
-    if (selectedColour) finalPrompt += `, dominant color ${selectedColour}`;
-    return finalPrompt;
+    const parts = [watch('prompt')];
+    if (selectedStyle) parts.push(`in a ${selectedStyle} style`);
+    if (selectedMood) parts.push(`with a ${selectedMood} mood`);
+    if (selectedLighting) parts.push(`with ${selectedLighting} lighting`);
+    if (selectedColour) parts.push(`using a ${selectedColour} color palette`);
+    return parts.filter(Boolean).join(', ');
   };
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
