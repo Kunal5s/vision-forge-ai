@@ -7,18 +7,13 @@
   </url>
   <url>
     <loc>https://imagenbrainai.in/about</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
   </url>
   <url>
     <loc>https://imagenbrainai.in/contact</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://imagenbrainai.in/models</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.5</priority>
   </url>
   <url>
     <loc>https://imagenbrainai.in/pricing</loc>
@@ -26,8 +21,8 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://imagenbrainai.in/edit</loc>
+    <loc>https://imagenbrainai.in/models</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.7</priority>
   </url>
 </urlset>
