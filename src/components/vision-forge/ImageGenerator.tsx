@@ -66,14 +66,15 @@ export function ImageGenerator() {
   const currentPrompt = watch('prompt');
 
   const getConstructedPrompt = (): string => {
+    const promptText = watch('prompt').trim();
     const parts = [
-      watch('prompt'),
+      promptText,
       selectedStyle,
       selectedMood,
       selectedLighting,
       selectedColour,
     ];
-    return parts.filter(Boolean).join(', ');
+    return parts.filter(Boolean).join(', ').trim();
   };
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
@@ -83,6 +84,13 @@ export function ImageGenerator() {
     setGeneratedImageUrls([]);
 
     const constructedPrompt = getConstructedPrompt();
+
+    if (!constructedPrompt) {
+        setError('Prompt cannot be empty.');
+        setIsGenerating(false);
+        toast({ title: 'Error', description: 'Please enter a prompt to generate an image.', variant: 'destructive' });
+        return;
+    }
 
     const payload = {
       prompt: constructedPrompt,
