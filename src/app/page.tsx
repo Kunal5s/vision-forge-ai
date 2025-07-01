@@ -51,7 +51,7 @@ export default function HomePage() {
 
       <section id="features" className="container mx-auto py-16 px-4">
         <header className="text-center mb-12">
-          <h2 className="text-4xl font-extrabold tracking-tight text-primary mb-3">
+          <h2 className="text-4xl font-extrabold tracking-tight text-foreground mb-3">
             Powerful AI Image <span className="text-accent">Generation Features</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">

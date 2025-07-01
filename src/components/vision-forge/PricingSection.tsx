@@ -63,7 +63,7 @@ export function PricingSection() {
   return (
     <section id="pricing" className="container mx-auto py-16 px-4">
       <header className="text-center mb-12">
-        <h2 className="text-4xl font-extrabold tracking-tight text-primary mb-3">
+        <h2 className="text-4xl font-extrabold tracking-tight text-foreground mb-3">
           Choose Your Perfect <span className="text-accent">Plan</span>
         </h2>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
