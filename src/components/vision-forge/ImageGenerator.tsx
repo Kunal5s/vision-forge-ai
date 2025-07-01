@@ -25,7 +25,7 @@ import { StyleSelector } from './StyleSelector';
 import { ScrollArea } from '../ui/scroll-area';
 
 const formSchema = z.object({
-  prompt: z.string().min(1, 'Prompt cannot be empty. Let your imagination flow!').max(2000, 'Prompt is too long.'),
+  prompt: z.string().trim().min(1, 'Prompt cannot be empty. Let your imagination flow!').max(2000, 'Prompt is too long.'),
 });
 type FormData = z.infer<typeof formSchema>;
 
@@ -66,11 +66,13 @@ export function ImageGenerator() {
   const currentPrompt = watch('prompt');
 
   const getConstructedPrompt = (): string => {
-    const parts = [watch('prompt')];
-    if (selectedStyle) parts.push(`in a ${selectedStyle} style`);
-    if (selectedMood) parts.push(`with a ${selectedMood} mood`);
-    if (selectedLighting) parts.push(`with ${selectedLighting} lighting`);
-    if (selectedColour) parts.push(`using a ${selectedColour} color palette`);
+    const parts = [
+      watch('prompt'),
+      selectedStyle,
+      selectedMood,
+      selectedLighting,
+      selectedColour,
+    ];
     return parts.filter(Boolean).join(', ');
   };
 
