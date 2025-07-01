@@ -48,7 +48,7 @@ export default async function handler(req) {
       );
     }
 
-    // 4. Enhance the prompt for better quality and uniqueness
+    // 4. Enhance the prompt for better quality
     const basePrompt = `${rawPrompt}, high resolution, high quality, sharp focus, no watermark, photorealistic`;
     const { width, height } = getPollinationsDimensions(aspectRatio);
     let imageUrls = [];
@@ -56,7 +56,9 @@ export default async function handler(req) {
     // 5. Generate images sequentially to avoid rate-limiting
     for (let i = 0; i < numberOfImages; i++) {
       const uniqueSeed = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
-      const uniquePrompt = `${basePrompt}, unique variation id ${uniqueSeed}`; 
+      // PERMANENT FIX: Add both a sequential number and a random seed to the prompt
+      // This forces the API to treat every request as completely unique, defeating any caching.
+      const uniquePrompt = `${basePrompt}, variation ${i + 1}, unique id ${uniqueSeed}`; 
       
       const pollUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(uniquePrompt)}?width=${width}&height=${height}&seed=${uniqueSeed}&nofeed=true`;
       
