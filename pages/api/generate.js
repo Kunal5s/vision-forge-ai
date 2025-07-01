@@ -45,22 +45,16 @@ export default async function handler(req) {
         const basePrompt = `${rawPrompt}, high resolution, high quality, sharp focus, no watermark, photorealistic`;
         const { width, height } = getPollinationsDimensions(aspectRatio);
         
-        const imagePromises = [];
+        const imageUrls = [];
 
         for (let i = 0; i < numberOfImages; i++) {
             const uniqueSeed = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
             const uniquePrompt = `${basePrompt}, variation ${i + 1}, unique id ${uniqueSeed}`;
             const pollUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(uniquePrompt)}?width=${width}&height=${height}&seed=${uniqueSeed}&nofeed=true`;
             
-            // We don't await here, we just push the fetch promise to the array
-            imagePromises.push(fetch(pollUrl));
-        }
+            // Fetch images sequentially to avoid rate-limiting (429 errors)
+            const res = await fetch(pollUrl);
 
-        // We wait for all promises to resolve in parallel
-        const responses = await Promise.all(imagePromises);
-
-        const imageUrls = [];
-        for (const res of responses) {
             if (!res.ok) {
                 const errorText = await res.text();
                 // We substring to prevent sending a massive error message back to the client.
@@ -69,7 +63,6 @@ export default async function handler(req) {
             // The response from Pollinations is a redirect, so the final URL is in the 'url' property of the response object.
             imageUrls.push(res.url);
         }
-
 
         if (imageUrls.length === 0) {
             throw new Error('The AI model did not return any images. The prompt might be too restrictive or the service may be temporarily unavailable.');
