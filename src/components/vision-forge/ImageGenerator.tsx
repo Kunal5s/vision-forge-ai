@@ -67,14 +67,15 @@ export function ImageGenerator() {
 
   const getConstructedPrompt = (): string => {
     const promptText = watch('prompt').trim();
+    // Constructing the prompt as per user's final logic: {style} {mood} {lighting} {color} {prompt}
     const parts = [
-      promptText,
       selectedStyle,
       selectedMood,
       selectedLighting,
       selectedColour,
+      promptText,
     ];
-    return parts.filter(Boolean).join(', ').trim();
+    return parts.filter(Boolean).join(' ').trim();
   };
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
