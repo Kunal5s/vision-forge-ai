@@ -1,6 +1,16 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { generateImageWithGoogle } from '@/ai/flows/generateImageFlow';
 import { HuggingFaceInference } from '@huggingface/inference';
+
+// Create an array of Hugging Face keys from environment variables, filtering out any that are not set.
+const hfApiKeys = [
+  process.env.HUGGINGFACE_KEY_1,
+  process.env.HUGGINGFACE_KEY_2,
+  process.env.HUGGINGFACE_KEY_3,
+  process.env.HUGGINGFACE_KEY_4,
+  process.env.HUGGINGFACE_KEY_5,
+].filter((key): key is string => !!key);
 
 // Helper to get dimensions from aspect ratio string
 function getDimensions(aspect: string): { width: number; height: number } {
@@ -32,19 +42,35 @@ async function getPollinationsImage(prompt: string, aspect: string): Promise<str
   return `data:${blob.type};base64,${buffer.toString('base64')}`;
 }
 
-// Handler for Hugging Face API
+// Handler for Hugging Face API with Key Rotation
 async function getHuggingFaceImage(prompt: string, model: string): Promise<string> {
-  if (!process.env.HUGGINGFACE_KEY) {
-    throw new Error('Hugging Face API key is not configured.');
+  if (hfApiKeys.length === 0) {
+    throw new Error('No Hugging Face API keys are configured in the environment variables.');
   }
-  const hf = new HuggingFaceInference(process.env.HUGGINGFACE_KEY);
-  const blob = await hf.textToImage({
-    model: model,
-    inputs: prompt,
-  });
-  const buffer = Buffer.from(await blob.arrayBuffer());
-  return `data:${blob.type};base64,${buffer.toString('base64')}`;
+
+  let lastError: any = null;
+
+  for (const key of hfApiKeys) {
+    try {
+      const hf = new HuggingFaceInference(key);
+      const blob = await hf.textToImage({
+        model: model,
+        inputs: prompt,
+      });
+      const buffer = Buffer.from(await blob.arrayBuffer());
+      // If successful, return the image data URI and exit the loop
+      return `data:${blob.type};base64,${buffer.toString('base64')}`;
+    } catch (error: any) {
+      lastError = error;
+      // Log the error for the specific key and continue to the next one
+      console.warn(`Hugging Face API key ending in ...${key.slice(-4)} failed. Trying next key. Error: ${error.message}`);
+    }
+  }
+
+  // If the loop completes, it means all keys have failed.
+  throw new Error(`All Hugging Face API keys failed. Last error: ${lastError?.message || 'Unknown error'}`);
 }
+
 
 export async function POST(req: NextRequest) {
   try {
@@ -55,22 +81,38 @@ export async function POST(req: NextRequest) {
     }
 
     const imageUrls: string[] = [];
+    const imagePromises: Promise<string>[] = [];
 
-    // Generate images sequentially to avoid rate limiting
     for (let i = 0; i < count; i++) {
-      const uniquePrompt = `${prompt} seed ${Math.random() * 1000000}`;
-      let imageUrl: string;
+        const uniquePrompt = `${prompt} seed ${Math.random() * 1000000} variation ${i + 1}`;
+        
+        let promise: Promise<string>;
+        if (model.startsWith('huggingface/')) {
+            const hfModel = model.replace('huggingface/', '');
+            promise = getHuggingFaceImage(uniquePrompt, hfModel);
+        } else if (model === 'gemini') {
+            promise = generateImageWithGoogle(uniquePrompt);
+        } else {
+            // Default to Pollinations
+            promise = getPollinationsImage(uniquePrompt, aspect);
+        }
+        imagePromises.push(promise);
+    }
+    
+    // Use Promise.allSettled to wait for all promises to resolve or reject
+    const results = await Promise.allSettled(imagePromises);
+    
+    results.forEach(result => {
+        if (result.status === 'fulfilled') {
+            imageUrls.push(result.value);
+        } else {
+            // Log the error for the failed image generation
+            console.error('An image generation failed:', result.reason);
+        }
+    });
 
-      if (model.startsWith('huggingface/')) {
-        const hfModel = model.replace('huggingface/', '');
-        imageUrl = await getHuggingFaceImage(uniquePrompt, hfModel);
-      } else if (model === 'gemini') {
-        imageUrl = await generateImageWithGoogle(uniquePrompt);
-      } else {
-        // Default to Pollinations
-        imageUrl = await getPollinationsImage(uniquePrompt, aspect);
-      }
-      imageUrls.push(imageUrl);
+    if (imageUrls.length === 0) {
+        return NextResponse.json({ error: 'All image generations failed. Please try a different model or prompt.' }, { status: 500 });
     }
 
     return NextResponse.json({ images: imageUrls });
