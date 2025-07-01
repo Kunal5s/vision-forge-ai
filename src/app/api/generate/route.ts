@@ -3,14 +3,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateImageWithGoogle } from '@/ai/flows/generateImageFlow';
 import { HfInference } from '@huggingface/inference';
 
-// Create an array of Hugging Face keys from environment variables, filtering out any that are not set.
+// Create an array of Hugging Face keys from environment variables, trimming and filtering out any that are not set.
 const hfApiKeys = [
   process.env.HUGGINGFACE_KEY_1,
   process.env.HUGGINGFACE_KEY_2,
   process.env.HUGGINGFACE_KEY_3,
   process.env.HUGGINGFACE_KEY_4,
   process.env.HUGGINGFACE_KEY_5,
-].filter((key): key is string => !!key);
+]
+.map(key => key?.trim()) // Trim whitespace from keys
+.filter((key): key is string => !!key); // Filter out empty or undefined keys
+
+// This log helps in debugging Vercel environment variables.
+console.log(`[API_INIT] Found ${hfApiKeys.length} Hugging Face API keys.`);
+
 
 // Helper to get dimensions from aspect ratio string
 function getDimensions(aspect: string): { width: number; height: number } {
@@ -45,7 +51,7 @@ async function getPollinationsImage(prompt: string, aspect: string): Promise<str
 // Handler for Hugging Face API with Key Rotation
 async function getHuggingFaceImage(prompt: string, model: string): Promise<string> {
   if (hfApiKeys.length === 0) {
-    throw new Error('No Hugging Face API keys are configured in the environment variables.');
+    throw new Error('No Hugging Face API keys found. Please check your environment variables (e.g., HUGGINGFACE_KEY_1) in your Vercel project settings.');
   }
 
   let lastError: any = null;
