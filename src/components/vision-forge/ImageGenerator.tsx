@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -65,9 +65,15 @@ export function ImageGenerator() {
   
   const currentPrompt = watch('prompt');
 
+  // Clean up object URLs on component unmount
+  useEffect(() => {
+    return () => {
+      generatedImageUrls.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [generatedImageUrls]);
+
   const getConstructedPrompt = (): string => {
     const promptText = watch('prompt').trim();
-    // Constructing the prompt as per user's final logic: {style} {mood} {lighting} {color} {prompt}
     const parts = [
       selectedStyle,
       selectedMood,
@@ -82,7 +88,7 @@ export function ImageGenerator() {
     generationCancelled.current = false;
     setIsGenerating(true);
     setError(null);
-    setGeneratedImageUrls([]);
+    setGeneratedImageUrls([]); // Revoking will be handled by the effect hook
 
     const constructedPrompt = getConstructedPrompt();
 
@@ -93,44 +99,64 @@ export function ImageGenerator() {
         return;
     }
 
-    const payload = {
-      prompt: constructedPrompt,
-      model: selectedModel,
-      aspectRatio: selectedAspectRatio,
-      numberOfImages: numberOfImages,
-    };
-
     try {
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      if (numberOfImages > 1) {
+          toast({
+              title: 'Processing Images',
+              description: `Generating ${numberOfImages} images. This might take a moment.`,
+          });
+      }
+
+      const imagePromises = Array.from({ length: numberOfImages }).map((_, i) => {
+          const uniquePrompt = `${constructedPrompt} seed ${Math.random()}`;
+          const payload = {
+              prompt: uniquePrompt,
+              model: selectedModel,
+              aspect: selectedAspectRatio,
+              count: 1,
+          };
+
+          return fetch('https://vision-forge-ai.vercel.app/api/generate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+          }).then(res => {
+              if (generationCancelled.current) return null;
+              if (!res.ok) {
+                  return res.text().then(text => {
+                       throw new Error(`API Error: ${text.substring(0, 150)}`);
+                  });
+              }
+              return res.blob();
+          });
       });
 
-      if (generationCancelled.current) {
-        console.log("Generation was cancelled by the user.");
-        return;
-      }
+      const blobs = await Promise.all(imagePromises);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.details || errorData.error || `Request failed with status ${response.status}`);
+      if (generationCancelled.current) {
+          console.log("Generation was cancelled by the user.");
+          return;
       }
       
-      const result = await response.json();
+      const validBlobs = blobs.filter(b => b !== null) as Blob[];
 
-      if (result.imageUrls && result.imageUrls.length > 0) {
-        setGeneratedImageUrls(result.imageUrls);
-        setDisplayAspectRatio(selectedAspectRatio);
-        toast({ title: 'Vision Forged!', description: `Your image(s) have been successfully generated.` });
-      } else {
-        throw new Error('The API returned no images. This can happen with very specific or unusual search terms.');
+      if (validBlobs.length === 0) {
+          throw new Error('The API returned no images. Please try a different prompt.');
       }
 
+      // Previous URLs are revoked via useEffect.
+      const newImageUrls = validBlobs.map(blob => URL.createObjectURL(blob));
+
+      setGeneratedImageUrls(newImageUrls);
+      setDisplayAspectRatio(selectedAspectRatio);
+      toast({ title: 'Vision Forged!', description: `Successfully generated ${newImageUrls.length} image(s).` });
+
     } catch (e: any) {
-      console.error("Image generation failed:", e);
-      setError(e.message);
-      toast({ title: 'Generation Failed', description: e.message, variant: 'destructive', duration: 9000 });
+      if (!generationCancelled.current) {
+        console.error("Image generation failed:", e);
+        setError(e.message);
+        toast({ title: 'Generation Failed', description: e.message, variant: 'destructive', duration: 9000 });
+      }
     } finally {
       if (!generationCancelled.current) {
         setIsGenerating(false);
