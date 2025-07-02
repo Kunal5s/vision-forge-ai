@@ -71,40 +71,42 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 
         if (validation.success) {
           const parsedSub = validation.data;
-          // Check if the plan has expired
           const purchaseDate = new Date(parsedSub.purchaseDate);
           const expiryDate = new Date(purchaseDate);
           expiryDate.setDate(purchaseDate.getDate() + PLAN_VALIDITY_DAYS);
 
+          // Check for expiration
           if (new Date() > expiryDate && parsedSub.plan !== 'free') {
-            // Plan expired, revert to free
-            toast({
-              title: 'Subscription Expired',
-              description: `Your ${parsedSub.plan} plan has expired. You are now on the Free plan.`,
-              variant: 'destructive',
-            });
-            saveSubscription(createFreePlan());
+            console.log("Subscription expired, resetting to free plan.");
+            localStorage.removeItem('imagenBrainAiSubscription');
+            setSubscription(createFreePlan());
           } else {
+            // Plan is valid
             setSubscription(parsedSub);
           }
         } else {
-            // Data from localStorage is invalid, so clear it and start fresh.
-            console.warn("Invalid subscription data in localStorage, resetting.", validation.error);
-            localStorage.removeItem('imagenBrainAiSubscription');
-            saveSubscription(createFreePlan());
+          // Validation failed, clear storage and use free plan
+          console.warn("Invalid subscription data in localStorage, resetting.", validation.error);
+          localStorage.removeItem('imagenBrainAiSubscription');
+          setSubscription(createFreePlan());
         }
       } else {
-        // No subscription found, create a new free one
-        saveSubscription(createFreePlan());
+        // No subscription found, use free plan
+        setSubscription(createFreePlan());
       }
     } catch (e) {
-      console.error("Failed to load or parse subscription from localStorage:", e);
-      // Fallback to a free plan if there's an error
-      saveSubscription(createFreePlan());
+      console.error("Failed to load or parse subscription from localStorage, resetting.", e);
+      // On any error, clear storage and use free plan
+      try {
+        localStorage.removeItem('imagenBrainAiSubscription');
+      } catch (removeError) {
+        console.error("Failed to remove item from localStorage", removeError);
+      }
+      setSubscription(createFreePlan());
     } finally {
       setIsLoading(false);
     }
-  }, [saveSubscription, toast]);
+  }, []); // Empty dependency array ensures this runs only ONCE on client mount.
 
   const activateSubscription = useCallback((email: string): boolean => {
     const purchasedPlan = MOCK_PURCHASED_EMAILS[email.toLowerCase()];
