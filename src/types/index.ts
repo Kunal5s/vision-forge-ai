@@ -1,17 +1,26 @@
 import { z } from 'zod';
 
-// New types for subscription
 export type Plan = 'free' | 'pro' | 'mega';
 
 export interface Credits {
   google: number;
 }
 
-export interface Subscription {
-  email: string;
-  plan: Plan;
-  status: 'active' | 'inactive';
-  credits: Credits; // Changed from number to Credits object
-  purchaseDate: string; // ISO string to track plan start date
-  lastReset: string; // ISO string to track daily credit reset for free plan
-}
+// Zod schema for validation
+export const SubscriptionSchema = z.object({
+  email: z.string(),
+  plan: z.enum(['free', 'pro', 'mega']),
+  status: z.enum(['active', 'inactive']),
+  credits: z.object({
+    google: z.number().nonnegative(),
+  }),
+  purchaseDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Invalid date string",
+  }),
+  lastReset: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Invalid date string",
+  }),
+});
+
+// The main type is inferred from the schema
+export type Subscription = z.infer<typeof SubscriptionSchema>;

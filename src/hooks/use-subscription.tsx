@@ -2,7 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import type { Subscription, Plan, Credits } from '@/types';
+import { type Subscription, type Plan, type Credits, SubscriptionSchema } from '@/types';
 import { useToast } from './use-toast';
 
 const PLAN_CREDITS: Record<Plan, Credits> = {
@@ -66,30 +66,39 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
     try {
       const storedSub = localStorage.getItem('imagenBrainAiSubscription');
       if (storedSub) {
-        const parsedSub: Subscription = JSON.parse(storedSub);
-        
-        // Check if the plan has expired
-        const purchaseDate = new Date(parsedSub.purchaseDate);
-        const expiryDate = new Date(purchaseDate);
-        expiryDate.setDate(purchaseDate.getDate() + PLAN_VALIDITY_DAYS);
+        const parsedJson = JSON.parse(storedSub);
+        const validation = SubscriptionSchema.safeParse(parsedJson);
 
-        if (new Date() > expiryDate && parsedSub.plan !== 'free') {
-          // Plan expired, revert to free
-          toast({
-            title: 'Subscription Expired',
-            description: `Your ${parsedSub.plan} plan has expired. You are now on the Free plan.`,
-            variant: 'destructive',
-          });
-          saveSubscription(createFreePlan());
+        if (validation.success) {
+          const parsedSub = validation.data;
+          // Check if the plan has expired
+          const purchaseDate = new Date(parsedSub.purchaseDate);
+          const expiryDate = new Date(purchaseDate);
+          expiryDate.setDate(purchaseDate.getDate() + PLAN_VALIDITY_DAYS);
+
+          if (new Date() > expiryDate && parsedSub.plan !== 'free') {
+            // Plan expired, revert to free
+            toast({
+              title: 'Subscription Expired',
+              description: `Your ${parsedSub.plan} plan has expired. You are now on the Free plan.`,
+              variant: 'destructive',
+            });
+            saveSubscription(createFreePlan());
+          } else {
+            setSubscription(parsedSub);
+          }
         } else {
-          setSubscription(parsedSub);
+            // Data from localStorage is invalid, so clear it and start fresh.
+            console.warn("Invalid subscription data in localStorage, resetting.", validation.error);
+            localStorage.removeItem('imagenBrainAiSubscription');
+            saveSubscription(createFreePlan());
         }
       } else {
         // No subscription found, create a new free one
         saveSubscription(createFreePlan());
       }
     } catch (e) {
-      console.error("Failed to load subscription from localStorage:", e);
+      console.error("Failed to load or parse subscription from localStorage:", e);
       // Fallback to a free plan if there's an error
       saveSubscription(createFreePlan());
     } finally {
