@@ -120,14 +120,15 @@ export function ImageGenerator() {
       
       if (!response.ok) {
         let errorMessage = `API Error: ${response.statusText} (${response.status})`;
+        // Read the response body as text once to avoid "body stream already read" error.
+        const errorText = await response.text();
         try {
-            // Try to parse the error response as JSON
-            const errorData = await response.json();
+            // Try to parse the text as JSON
+            const errorData = JSON.parse(errorText);
             errorMessage = errorData.details || errorData.error || errorMessage;
         } catch (jsonError) {
             // If parsing fails, it's not a JSON response (e.g., HTML error page).
-            // We stick with the initial status-based error message.
-            console.error("API error response was not valid JSON.", await response.text());
+            console.error("API error response was not valid JSON. Body:", errorText);
         }
         throw new Error(errorMessage);
       }
