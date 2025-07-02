@@ -1,5 +1,4 @@
 
-import { ImageGenerator } from '@/components/vision-forge/ImageGenerator';
 import { Wand2, Maximize, BrainCircuit, SlidersHorizontal, ZoomIn, Grid } from 'lucide-react';
 import { FuturisticPanel } from '@/components/vision-forge/FuturisticPanel';
 import { TestimonialsSection } from '@/components/vision-forge/TestimonialsSection';
@@ -40,57 +39,62 @@ export default function HomePage() {
       <div className="container mx-auto py-8 px-4">
         <header className="text-center mb-10">
           <h1 className="text-5xl font-extrabold tracking-tight text-foreground">
-              Imagen BrainAi: Your Free <span className="text-accent">AI Image Generator</span>
+              Welcome to <span className="text-accent">Imagen BrainAi</span>
           </h1>
           <p className="mt-4 text-lg text-foreground/80 max-w-3xl mx-auto">
-              Welcome to the future of AI image generation. Describe your vision, and our advanced text-to-image AI, powered by Google's Imagen technology, will bring it to life. Create stunning, high-quality images, illustrations, and art from text prompts in seconds. Get started for free and see what you can create.
+              Explore a modern web application built with Next.js and ShadCN UI. Discover powerful features, user testimonials, and more. Our AI image generation tools are currently under maintenance, but please explore the rest of our site.
           </p>
         </header>
-        <ImageGenerator />
+        <FuturisticPanel className="text-center py-12">
+            <h2 className="text-2xl font-semibold">Image Generation Under Maintenance</h2>
+            <p className="text-muted-foreground mt-2">
+                We are working hard to improve our AI features. Please check back later.
+            </p>
+        </FuturisticPanel>
       </div>
 
       <section id="features" className="container mx-auto py-16 px-4">
         <header className="text-center mb-12">
           <h2 className="text-4xl font-extrabold tracking-tight text-foreground mb-3">
-            Powerful AI Image <span className="text-accent">Generation Features</span>
+            Powerful <span className="text-accent">Application Features</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Explore the cutting-edge capabilities we've integrated to give you full control over your AI-generated art.
+            Explore the cutting-edge capabilities we've integrated to give you a great user experience.
           </p>
         </header>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           <FeatureCard
             icon={<ZoomIn className="h-10 w-10 text-primary" />}
-            title="Premium High-Resolution Images"
-            description="Upgrade to our Pro or Mega plans to generate AI images with breathtaking detail and sharpness using advanced Google AI models for professional-quality results."
+            title="Premium High-Resolution"
+            description="Our application is designed to support high-resolution content for a crisp, professional-quality user experience."
             iconBgClass="bg-primary/10"
             iconTextClass="text-primary"
           />
           <FeatureCard
             icon={<SlidersHorizontal className="h-10 w-10 text-accent" />}
-            title="Advanced Style & Mood Control"
-            description="Go beyond simple prompts. Master the final image by dictating the exact artistic style, mood, lighting, and color palette with our powerful AI art controls."
+            title="Advanced Customization"
+            description="Fine-tune your experience with a wide array of options and controls. Our intuitive interface gives you precise control."
             iconBgClass="bg-accent/10"
             iconTextClass="text-accent"
           />
           <FeatureCard
             icon={<BrainCircuit className="h-10 w-10 text-primary" />}
-            title="Complex Prompt Comprehension"
-            description="Our text-to-image AI understands nuanced and detailed prompts, allowing you to create complex scenes with multiple subjects and actions more accurately than ever before."
+            title="Complex Logic Handling"
+            description="Our backend understands nuanced and detailed requests, allowing for complex operations to be handled with ease."
             iconBgClass="bg-primary/10"
             iconTextClass="text-primary"
           />
            <FeatureCard
             icon={<Maximize className="h-10 w-10 text-accent" />}
-            title="Strict Aspect Ratio Adherence"
-            description="Generate AI art that strictly adheres to your chosen aspect ratio. From cinematic shots (16:9) to portraits (9:16), get the perfect frame every time."
+            title="Flexible Aspect Ratios"
+            description="Our UI supports various aspect ratios, from cinematic shots (16:9) to portraits (9:16), ensuring a perfect layout every time."
             iconBgClass="bg-accent/10"
             iconTextClass="text-accent"
           />
           <FeatureCard
             icon={<Grid className="h-10 w-10 text-accent" />}
             title="Rapid Quad-Variations"
-            description="Get four unique, high-quality image variations from a single text prompt in seconds. This gives you more creative options to choose from instantly, speeding up your workflow."
+            description="Experience fast performance with multiple variations presented instantly, speeding up your workflow."
             iconBgClass="bg-accent/10"
             iconTextClass="text-accent"
           />
