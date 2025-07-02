@@ -4,20 +4,6 @@ import { generateImage } from '@/ai/flows/generateImageFlow';
 
 export const runtime = 'nodejs'; // Use Node.js for full Genkit/fs compatibility
 
-const HUGGINGFACE_KEYS = [
-  process.env.HUGGINGFACE_KEY_1,
-  process.env.HUGGINGFACE_KEY_2,
-  process.env.HUGGINGFACE_KEY_3,
-  process.env.HUGGINGFACE_KEY_4,
-  process.env.HUGGINGFACE_KEY_5,
-].filter(Boolean);
-
-if (HUGGINGFACE_KEYS.length === 0) {
-    console.warn('[API_INIT] Found 0 Hugging Face API keys. Hugging Face models will not work.');
-} else {
-    console.log(`[API_INIT] Found ${HUGGINGFACE_KEYS.length} Hugging Face API keys.`);
-}
-
 const getAspectRatioDimensions = (aspect: string): { width: number, height: number } => {
     const baseSize = 1024;
     const [w, h] = aspect.split(':').map(Number);
@@ -43,40 +29,15 @@ export async function POST(req: Request) {
     if (model === 'gemini') {
         const result = await generateImage({ prompt: finalPrompt, count });
         images = result.images;
-    } else {
+    } else { // Default to Pollinations
         const imagePromises: Promise<string>[] = [];
+        const { width, height } = getAspectRatioDimensions(aspect);
+        
         for (let i = 0; i < count; i++) {
-            if (model.includes('/')) { // Hugging Face model
-                if (HUGGINGFACE_KEYS.length === 0) {
-                    throw new Error('Hugging Face models are not available: No API key configured.');
-                }
-                const key = HUGGINGFACE_KEYS[i % HUGGINGFACE_KEYS.length];
-                imagePromises.push(
-                    fetch(`https://api-inference.huggingface.co/models/${model}`, {
-                        method: 'POST',
-                        headers: {
-                            Authorization: `Bearer ${key}`,
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ inputs: finalPrompt }),
-                    }).then(async res => {
-                        if (!res.ok) {
-                           const errorBody = await res.text();
-                           console.error(`Hugging Face API Error for model ${model}: ${res.status} ${res.statusText}`, errorBody);
-                           throw new Error(`Hugging Face API returned ${res.status}. Check server logs for details.`);
-                        }
-                        const blob = await res.blob();
-                        const buffer = Buffer.from(await blob.arrayBuffer());
-                        return `data:${blob.type};base64,${buffer.toString('base64')}`;
-                    })
-                );
-            } else { // Default to Pollinations
-                const { width, height } = getAspectRatioDimensions(aspect);
-                const seed = Math.floor(Math.random() * 100000);
-                const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed}`;
-                // We directly use the URL for Pollinations as it's designed to be an image source.
-                imagePromises.push(Promise.resolve(pollinationsUrl));
-            }
+            const seed = Math.floor(Math.random() * 100000);
+            const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed}`;
+            // We directly use the URL for Pollinations as it's designed to be an image source.
+            imagePromises.push(Promise.resolve(pollinationsUrl));
         }
         images = await Promise.all(imagePromises);
     }

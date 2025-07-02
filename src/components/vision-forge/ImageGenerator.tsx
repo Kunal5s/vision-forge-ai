@@ -14,14 +14,12 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  SelectGroup,
-  SelectLabel,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { ASPECT_RATIOS, STYLES, MOODS, LIGHTING, COLOURS, MODELS } from '@/lib/constants';
 import { ImageDisplay } from './ImageDisplay';
 import { FuturisticPanel } from './FuturisticPanel';
-import { ImageIcon as ImageIconIcon, RefreshCcw, XCircle, Bot } from 'lucide-react';
+import { ImageIcon as ImageIconIcon, RefreshCcw, XCircle } from 'lucide-react';
 import { useSubscription } from '@/hooks/use-subscription';
 import { StyleSelector } from './StyleSelector';
 import { ScrollArea } from '../ui/scroll-area';
@@ -121,8 +119,17 @@ export function ImageGenerator() {
       }
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `API Error: Request failed with status ${response.status}`);
+        let errorMessage = `API Error: ${response.statusText} (${response.status})`;
+        try {
+            // Try to parse the error response as JSON
+            const errorData = await response.json();
+            errorMessage = errorData.details || errorData.error || errorMessage;
+        } catch (jsonError) {
+            // If parsing fails, it's not a JSON response (e.g., HTML error page).
+            // We stick with the initial status-based error message.
+            console.error("API error response was not valid JSON.", await response.text());
+        }
+        throw new Error(errorMessage);
       }
       
       const result = await response.json();
@@ -225,20 +232,9 @@ export function ImageGenerator() {
                       <SelectValue placeholder="Select an AI model" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Free Models</SelectLabel>
-                        <SelectItem value={MODELS[0].value}>{MODELS[0].label}</SelectItem>
-                      </SelectGroup>
-                      <SelectGroup>
-                        <SelectLabel>Hugging Face Models</SelectLabel>
-                        {MODELS.filter(m => m.type === 'huggingface').map(model => (
+                      {MODELS.map(model => (
                           <SelectItem key={model.value} value={model.value}>{model.label}</SelectItem>
-                        ))}
-                      </SelectGroup>
-                      <SelectGroup>
-                        <SelectLabel>Google AI</SelectLabel>
-                        <SelectItem value={MODELS.find(m => m.type === 'gemini')!.value}>{MODELS.find(m => m.type === 'gemini')!.label}</SelectItem>
-                      </SelectGroup>
+                      ))}
                     </SelectContent>
                   </Select>
                   <p className='text-xs text-muted-foreground mt-2'>

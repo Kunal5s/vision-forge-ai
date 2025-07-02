@@ -83,18 +83,6 @@ export const MODELS = [
     description: 'A fast, community-supported model. Good for quick experiments. No credits required.'
   },
   {
-    value: 'stabilityai/stable-diffusion-xl-base-1.0',
-    label: 'Stable Diffusion XL',
-    type: 'huggingface',
-    description: 'A powerful and popular model from Stability AI for high-quality images. Requires credits.'
-  },
-  {
-    value: 'runwayml/stable-diffusion-v1-5',
-    label: 'Stable Diffusion 1.5',
-    type: 'huggingface',
-    description: 'A classic and versatile model. Less powerful than SDXL but faster. Requires credits.'
-  },
-  {
     value: 'gemini',
     label: 'Google Gemini Pro',
     type: 'gemini',

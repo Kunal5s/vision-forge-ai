@@ -29,12 +29,6 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
-      {
-        protocol: 'https',
-        hostname: 'stablehorde.net',
-        port: '',
-        pathname: '/**',
-      },
     ],
     // Allow data URIs for generated images
     dangerouslyAllowSVG: true, // Not directly for data URIs but good to be aware of content types
