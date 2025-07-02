@@ -84,7 +84,7 @@ export const MODELS = [
   },
   {
     value: 'gemini',
-    label: 'Google Gemini Pro',
+    label: 'Google Imagen 3',
     type: 'gemini',
     description: 'State-of-the-art model from Google for highest quality and coherence. Requires credits.'
   }
