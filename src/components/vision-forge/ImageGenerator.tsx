@@ -118,22 +118,20 @@ export function ImageGenerator() {
         return;
       }
       
+      const responseBody = await response.text();
+
       if (!response.ok) {
         let errorMessage = `API Error: ${response.statusText} (${response.status})`;
-        // Read the response body as text once to avoid "body stream already read" error.
-        const errorText = await response.text();
         try {
-            // Try to parse the text as JSON
-            const errorData = JSON.parse(errorText);
+            const errorData = JSON.parse(responseBody);
             errorMessage = errorData.details || errorData.error || errorMessage;
         } catch (jsonError) {
-            // If parsing fails, it's not a JSON response (e.g., HTML error page).
-            console.error("API error response was not valid JSON. Body:", errorText);
+            console.error("API error response was not valid JSON. Body:", responseBody);
         }
         throw new Error(errorMessage);
       }
       
-      const result = await response.json();
+      const result = JSON.parse(responseBody);
 
       if (!result.images || result.images.length === 0) {
         throw new Error('The API returned no images. Please try a different prompt.');
@@ -223,26 +221,6 @@ export function ImageGenerator() {
                   </div>
                   {errors.prompt && <p className="text-sm text-destructive mt-1">{errors.prompt.message}</p>}
                 </div>
-
-                <div>
-                  <Label htmlFor="model-select" className="text-lg font-semibold text-foreground/90 mb-2 block">
-                    Choose Your Engine
-                  </Label>
-                  <Select value={selectedModel} onValueChange={setSelectedModel} disabled={isGenerating}>
-                    <SelectTrigger id="model-select" className="w-full bg-background hover:bg-muted/50">
-                      <SelectValue placeholder="Select an AI model" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {MODELS.map(model => (
-                          <SelectItem key={model.value} value={model.value}>{model.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className='text-xs text-muted-foreground mt-2'>
-                    {MODELS.find(m => m.value === selectedModel)?.description}
-                  </p>
-                </div>
-
 
                 <div className='space-y-4'>
                     <StyleSelector title="Styles" options={STYLES} selectedValue={selectedStyle} onSelect={setSelectedStyle} />

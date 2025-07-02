@@ -17,14 +17,14 @@ export interface Subscription {
 }
 
 
-// Types for Image Generation Flow
+// Types for Image Generation Flow (kept simple as it's handled in the API route)
 export const GenerateImageInputSchema = z.object({
-  prompt: z.string().describe('The text prompt to generate an image from.'),
-  count: z.number().min(1).max(4).default(1).describe('The number of images to generate.'),
+  prompt: z.string(),
+  count: z.number().optional(),
 });
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
 
 export const GenerateImageOutputSchema = z.object({
-  images: z.array(z.string()).describe('An array of generated image data URIs.'),
+  images: z.array(z.string()),
 });
 export type GenerateImageOutput = z.infer<typeof GenerateImageOutputSchema>;

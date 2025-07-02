@@ -80,12 +80,6 @@ export const MODELS = [
     value: 'pollinations',
     label: 'Pollinations (Community)',
     type: 'free',
-    description: 'A fast, community-supported model. Good for quick experiments. No credits required.'
-  },
-  {
-    value: 'gemini',
-    label: 'Google Imagen 3',
-    type: 'gemini',
-    description: 'State-of-the-art model from Google for highest quality and coherence. Requires credits.'
+    description: 'A fast, community-supported model. Good for quick experiments and compatible with all deployment platforms.'
   }
 ];
