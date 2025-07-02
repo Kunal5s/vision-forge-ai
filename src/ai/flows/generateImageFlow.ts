@@ -1,21 +1,10 @@
-
 'use server';
 /**
  * @fileOverview A flow for generating images using Google's Gemini model.
  */
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-
-const GenerateImageInputSchema = z.object({
-  prompt: z.string().describe('The text prompt to generate an image from.'),
-  count: z.number().min(1).max(4).default(1).describe('The number of images to generate.'),
-});
-export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
-
-const GenerateImageOutputSchema = z.object({
-  images: z.array(z.string()).describe('An array of generated image data URIs.'),
-});
-export type GenerateImageOutput = z.infer<typeof GenerateImageOutputSchema>;
+import type { GenerateImageInput, GenerateImageOutput } from '@/types';
+import { GenerateImageInputSchema, GenerateImageOutputSchema } from '@/types';
 
 export async function generateImage(input: GenerateImageInput): Promise<GenerateImageOutput> {
   return generateImageFlow(input);
