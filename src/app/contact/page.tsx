@@ -12,20 +12,6 @@ export const metadata: Metadata = {
   description: 'Get in touch with the Imagen BrainAi team. We are here to help with your inquiries, feedback, and support requests.',
 };
 
-// Placeholder for a server action. For now, it does nothing.
-async function submitContactForm(formData: FormData) {
-  "use server";
-  // In a real application, you would process the form data here,
-  // e.g., send an email, save to a database.
-  console.log("Form submitted (placeholder action):");
-  console.log("Name:", formData.get("name"));
-  console.log("Email:", formData.get("email"));
-  console.log("Message:", formData.get("message"));
-  // You might return a success or error message.
-  // For now, we'll just log it.
-}
-
-
 export default function ContactPage() {
   return (
     <main className="container mx-auto py-16 px-4">
@@ -45,7 +31,7 @@ export default function ContactPage() {
             <CardDescription>Fill out the form and we'll get back to you as soon as possible.</CardDescription>
           </CardHeader>
           <CardContent>
-            <form action={submitContactForm} className="space-y-6">
+            <form className="space-y-6">
               <div>
                 <Label htmlFor="name" className="text-foreground/90">Full Name</Label>
                 <Input type="text" id="name" name="name" placeholder="John Doe" required className="mt-1 bg-input border-input focus:border-primary focus:ring-primary" />
