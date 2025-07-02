@@ -20,40 +20,40 @@ export function Footer() {
           <div>
             <h3 className="text-md font-bold text-foreground mb-4">Our Services</h3>
             <ul className="space-y-1 text-sm">
-              <li><Link href="/" className="block text-muted-foreground rounded-md -ml-2 px-2 py-1 transition-colors hover:bg-muted">AI Image Generation</Link></li>
-              <li><Link href="/pricing" className="block text-muted-foreground rounded-md -ml-2 px-2 py-1 transition-colors hover:bg-muted">Pricing</Link></li>
-              <li><Link href="/#features" className="block text-muted-foreground rounded-md -ml-2 px-2 py-1 transition-colors hover:bg-muted">Prompt Enhancement</Link></li>
-              <li><Link href="/#features" className="block text-muted-foreground rounded-md -ml-2 px-2 py-1 transition-colors hover:bg-muted">Style Customization</Link></li>
+              <li><Link href="/" className="block text-foreground/80 rounded-md -ml-2 px-2 py-1 transition-colors hover:text-primary">AI Image Generation</Link></li>
+              <li><Link href="/pricing" className="block text-foreground/80 rounded-md -ml-2 px-2 py-1 transition-colors hover:text-primary">Pricing</Link></li>
+              <li><Link href="/#features" className="block text-foreground/80 rounded-md -ml-2 px-2 py-1 transition-colors hover:text-primary">Prompt Enhancement</Link></li>
+              <li><Link href="/#features" className="block text-foreground/80 rounded-md -ml-2 px-2 py-1 transition-colors hover:text-primary">Style Customization</Link></li>
             </ul>
           </div>
 
           <div>
             <h3 className="text-md font-bold text-foreground mb-4">Legal</h3>
             <ul className="space-y-1 text-sm">
-              <li><Link href="/about" className="block text-muted-foreground rounded-md -ml-2 px-2 py-1 transition-colors hover:bg-muted">About Us</Link></li>
-              <li><Link href="/contact" className="block text-muted-foreground rounded-md -ml-2 px-2 py-1 transition-colors hover:bg-muted">Contact Us</Link></li>
-              <li><Link href="/privacy" className="block text-muted-foreground rounded-md -ml-2 px-2 py-1 transition-colors hover:bg-muted">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="block text-muted-foreground rounded-md -ml-2 px-2 py-1 transition-colors hover:bg-muted">Terms of Service</Link></li>
-              <li><Link href="/disclaimer" className="block text-muted-foreground rounded-md -ml-2 px-2 py-1 transition-colors hover:bg-muted">Disclaimer</Link></li>
+              <li><Link href="/about" className="block text-foreground/80 rounded-md -ml-2 px-2 py-1 transition-colors hover:text-primary">About Us</Link></li>
+              <li><Link href="/contact" className="block text-foreground/80 rounded-md -ml-2 px-2 py-1 transition-colors hover:text-primary">Contact Us</Link></li>
+              <li><Link href="/privacy" className="block text-foreground/80 rounded-md -ml-2 px-2 py-1 transition-colors hover:text-primary">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="block text-foreground/80 rounded-md -ml-2 px-2 py-1 transition-colors hover:text-primary">Terms of Service</Link></li>
+              <li><Link href="/disclaimer" className="block text-foreground/80 rounded-md -ml-2 px-2 py-1 transition-colors hover:text-primary">Disclaimer</Link></li>
             </ul>
           </div>
           
           <div>
             <h3 className="text-md font-bold text-foreground mb-4">Follow Us</h3>
             <div className="flex items-center gap-4">
-              <a href="https://twitter.com/ImagenBrainAi" target="_blank" rel="noopener noreferrer" aria-label="Twitter" className="text-muted-foreground hover:text-primary transition-colors">
+              <a href="https://twitter.com/ImagenBrainAi" target="_blank" rel="noopener noreferrer" aria-label="Twitter" className="text-foreground/80 hover:text-primary transition-colors">
                 <Twitter className="h-6 w-6" />
               </a>
-              <a href="https://instagram.com/ImagenBrainAi" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-muted-foreground hover:text-primary transition-colors">
+              <a href="https://instagram.com/ImagenBrainAi" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-foreground/80 hover:text-primary transition-colors">
                 <Instagram className="h-6 w-6" />
               </a>
-              <a href="https://facebook.com/ImagenBrainAi" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="text-muted-foreground hover:text-primary transition-colors">
+              <a href="https://facebook.com/ImagenBrainAi" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="text-foreground/80 hover:text-primary transition-colors">
                 <Facebook className="h-6 w-6" />
               </a>
-              <a href="https://linkedin.com/company/ImagenBrainAi" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="text-muted-foreground hover:text-primary transition-colors">
+              <a href="https://linkedin.com/company/ImagenBrainAi" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="text-foreground/80 hover:text-primary transition-colors">
                 <Linkedin className="h-6 w-6" />
               </a>
-              <a href="https://github.com/ImagenBrainAi" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="text-muted-foreground hover:text-primary transition-colors">
+              <a href="https://github.com/ImagenBrainAi" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="text-foreground/80 hover:text-primary transition-colors">
                 <Github className="h-6 w-6" />
               </a>
             </div>
