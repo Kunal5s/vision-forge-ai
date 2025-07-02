@@ -1,6 +1,4 @@
 
-export const runtime = 'edge';
-
 import { NextRequest, NextResponse } from 'next/server';
 import { generateImageWithGoogle } from '@/ai/flows/generateImageFlow';
 import { HfInference } from '@huggingface/inference';
