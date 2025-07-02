@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { ASPECT_RATIOS, STYLES, MOODS, LIGHTING, COLOURS, MODELS } from '@/lib/constants';
+import { ASPECT_RATIOS, STYLES, MOODS, LIGHTING, COLOURS } from '@/lib/constants';
 import { ImageDisplay } from './ImageDisplay';
 import { FuturisticPanel } from './FuturisticPanel';
 import { ImageIcon as ImageIconIcon, RefreshCcw, XCircle } from 'lucide-react';
@@ -44,7 +44,6 @@ export function ImageGenerator() {
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>(ASPECT_RATIOS[0].value);
   const [displayAspectRatio, setDisplayAspectRatio] = useState<string>(ASPECT_RATIOS[0].value);
   const [numberOfImages, setNumberOfImages] = useState<number>(1);
-  const [selectedModel, setSelectedModel] = useState<string>('pollinations');
   
   const [generatedImageUrls, setGeneratedImageUrls] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -102,7 +101,6 @@ export function ImageGenerator() {
     try {
       const payload = {
         prompt: constructedPrompt,
-        model: selectedModel,
         aspect: selectedAspectRatio,
         count: numberOfImages,
       };
@@ -179,7 +177,6 @@ export function ImageGenerator() {
     setSelectedAspectRatio(ASPECT_RATIOS[0].value);
     setDisplayAspectRatio(ASPECT_RATIOS[0].value);
     setNumberOfImages(1);
-    setSelectedModel('pollinations');
     setGeneratedImageUrls([]);
     setError(null);
     toast({ title: 'Form Reset', description: 'All settings have been reset to their defaults.' });

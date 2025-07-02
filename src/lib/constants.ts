@@ -74,12 +74,3 @@ export const COLOURS: StyleOption[] = [
   { value: 'pastel', label: 'Pastel' },
   { value: 'warm', label: 'Warm' },
 ];
-
-export const MODELS = [
-  {
-    value: 'pollinations',
-    label: 'Pollinations (Community)',
-    type: 'free',
-    description: 'A fast, community-supported model. Good for quick experiments and compatible with all deployment platforms.'
-  }
-];
