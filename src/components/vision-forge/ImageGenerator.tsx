@@ -282,24 +282,13 @@ export function ImageGenerator() {
                       <XCircle size={20} className="mr-2" /> Stop
                     </Button>
                   ) : (
-                    <>
-                      <Button
-                        type="submit"
-                        className="w-full text-base py-3 bg-primary hover:bg-primary/90 text-primary-foreground transition-shadow hover:shadow-xl hover:shadow-primary/20"
-                      >
-                        <Sparkles size={18} className="mr-2" />
-                        Generate {numberOfImages} Images
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="text-base py-3"
-                        disabled
-                      >
-                        <Wand2 size={18} className="mr-2" />
-                        Suggest Prompts
-                      </Button>
-                    </>
+                    <Button
+                      type="submit"
+                      className="w-full text-base py-3 bg-primary hover:bg-primary/90 text-primary-foreground transition-shadow hover:shadow-xl hover:shadow-primary/20"
+                    >
+                      <Sparkles size={18} className="mr-2" />
+                      Generate {numberOfImages} Images
+                    </Button>
                   )}
                 </div>
             </form>
