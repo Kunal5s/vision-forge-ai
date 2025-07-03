@@ -16,25 +16,25 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { ASPECT_RATIOS, STYLES, MOODS, LIGHTING, COLOURS } from '@/lib/constants';
+import {
+  ASPECT_RATIOS,
+  ARTISTIC_STYLES,
+  MOODS,
+  LIGHTING_OPTIONS,
+  COLOR_PALETTES,
+  QUALITY_OPTIONS
+} from '@/lib/constants';
 import { ImageDisplay } from './ImageDisplay';
 import { FuturisticPanel } from './FuturisticPanel';
-import { ImageIcon as ImageIconIcon, RefreshCcw, XCircle } from 'lucide-react';
+import { Wand2, Sparkles, XCircle } from 'lucide-react';
 import { useSubscription } from '@/hooks/use-subscription';
-import { StyleSelector } from './StyleSelector';
-import { ScrollArea } from '../ui/scroll-area';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+
 
 const formSchema = z.object({
   prompt: z.string().trim().min(1, 'Prompt cannot be empty. Let your imagination flow!').max(2000, 'Prompt is too long.'),
 });
 type FormData = z.infer<typeof formSchema>;
-
-const imageCountOptions = [
-    { label: '1 Image', value: 1 },
-    { label: '2 Images', value: 2 },
-    { label: '3 Images', value: 3 },
-    { label: '4 Images', value: 4 },
-];
 
 export function ImageGenerator() {
   const { toast } = useToast();
@@ -43,18 +43,20 @@ export function ImageGenerator() {
   
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>(ASPECT_RATIOS[0].value);
   const [displayAspectRatio, setDisplayAspectRatio] = useState<string>(ASPECT_RATIOS[0].value);
-  const [numberOfImages, setNumberOfImages] = useState<number>(1);
+  const numberOfImages = 4; // Hardcoded to match screenshot
   
   const [generatedImageUrls, setGeneratedImageUrls] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [selectedStyle, setSelectedStyle] = useState<string>('');
-  const [selectedMood, setSelectedMood] = useState<string>('');
-  const [selectedLighting, setSelectedLighting] = useState<string>('');
-  const [selectedColour, setSelectedColour] = useState<string>('');
+  // New states for dropdowns
+  const [artisticStyle, setArtisticStyle] = useState<string>('photographic');
+  const [mood, setMood] = useState<string>('mysterious');
+  const [lighting, setLighting] = useState<string>('');
+  const [colorPalette, setColorPalette] = useState<string>('');
+  const [quality, setQuality] = useState<string>('standard quality');
   
-  const { register, handleSubmit, watch, setValue: setFormValue, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: { prompt: '' },
   });
@@ -74,11 +76,12 @@ export function ImageGenerator() {
   const getConstructedPrompt = (): string => {
     const promptText = watch('prompt').trim();
     const parts = [
-      selectedStyle,
-      selectedMood,
-      selectedLighting,
-      selectedColour,
       promptText,
+      artisticStyle,
+      mood,
+      lighting,
+      colorPalette,
+      quality
     ];
     return parts.filter(Boolean).join(', ').trim();
   };
@@ -167,20 +170,6 @@ export function ImageGenerator() {
     navigator.clipboard.writeText(finalPrompt);
     toast({ title: 'Prompt Copied!', description: 'The final constructed prompt is copied to your clipboard.' });
   };
-  
-  const handleReset = () => {
-    setFormValue('prompt', '');
-    setSelectedStyle('');
-    setSelectedMood('');
-    setSelectedLighting('');
-    setSelectedColour('');
-    setSelectedAspectRatio(ASPECT_RATIOS[0].value);
-    setDisplayAspectRatio(ASPECT_RATIOS[0].value);
-    setNumberOfImages(1);
-    setGeneratedImageUrls([]);
-    setError(null);
-    toast({ title: 'Form Reset', description: 'All settings have been reset to their defaults.' });
-  };
 
   const handleStopGeneration = () => {
     generationCancelled.current = true;
@@ -198,19 +187,16 @@ export function ImageGenerator() {
         <div className="lg:col-span-5 space-y-6">
           <FuturisticPanel>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              <ScrollArea className="h-[calc(100vh-200px)] pr-4">
-              <div className="space-y-6">
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                      <Label htmlFor="prompt" className="text-lg font-semibold text-foreground/90">
-                        Enter Your Vision
-                      </Label>
-                  </div>
+              <div>
+                  <Label htmlFor="prompt" className="text-lg font-semibold text-foreground/90">
+                    Enter your prompt
+                  </Label>
+                  <p className="text-sm text-muted-foreground mb-2">Describe the image you want to create in detail.</p>
                   <div className="relative">
                     <Textarea
                       id="prompt"
                       {...register('prompt')}
-                      placeholder="e.g., A futuristic cityscape at sunset, neon lights reflecting on wet streets..."
+                      placeholder="e.g., A majestic lion wearing a crown, sitting on a throne in a cosmic library..."
                       rows={4}
                       className="bg-background border-input focus:border-primary focus:ring-primary text-base resize-none"
                       disabled={isGenerating}
@@ -218,50 +204,74 @@ export function ImageGenerator() {
                   </div>
                   {errors.prompt && <p className="text-sm text-destructive mt-1">{errors.prompt.message}</p>}
                 </div>
-
-                <div className='space-y-4'>
-                    <StyleSelector title="Styles" options={STYLES} selectedValue={selectedStyle} onSelect={setSelectedStyle} />
-                    <StyleSelector title="Moods" options={MOODS} selectedValue={selectedMood} onSelect={setSelectedMood} />
-                    <StyleSelector title="Lighting" options={LIGHTING} selectedValue={selectedLighting} onSelect={setSelectedLighting} />
-                    <StyleSelector title="Colours" options={COLOURS} selectedValue={selectedColour} onSelect={setSelectedColour} />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="aspect-ratio" className="text-sm font-semibold mb-1 block text-foreground/80">Aspect Ratio</Label>
-                    <Select value={selectedAspectRatio} onValueChange={setSelectedAspectRatio} disabled={isGenerating}>
-                      <SelectTrigger id="aspect-ratio" className="w-full bg-background hover:bg-muted/50">
-                        <SelectValue placeholder="Select aspect ratio" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-popover border-border">
-                        {ASPECT_RATIOS.map((ratio) => (
-                          <SelectItem key={ratio.value} value={ratio.value}>
-                            {ratio.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                      <Label htmlFor="num-images" className="text-sm font-semibold mb-1 block text-foreground/80">Number of Images</Label>
-                      <Select 
-                          value={String(numberOfImages)} 
-                          onValueChange={(val) => setNumberOfImages(Number(val))}
-                          disabled={isGenerating}
-                      >
-                          <SelectTrigger id="num-images" className="w-full bg-background hover:bg-muted/50">
-                              <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                              {imageCountOptions.map((opt) => (
-                                  <SelectItem key={opt.value} value={String(opt.value)}>{opt.label}</SelectItem>
-                              ))}
-                          </SelectContent>
-                      </Select>
-                  </div>
-                </div>
+                
+                <Accordion type="single" collapsible defaultValue="item-1" className="w-full">
+                  <AccordionItem value="item-1">
+                    <AccordionTrigger className="text-base font-semibold hover:no-underline">
+                      <Wand2 className="mr-2 h-5 w-5" /> Creative Tools
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="grid grid-cols-2 gap-4 pt-4">
+                        <div>
+                          <Label htmlFor="artistic-style" className="text-sm font-medium mb-2 block">Artistic Style</Label>
+                          <Select value={artisticStyle} onValueChange={setArtisticStyle} disabled={isGenerating}>
+                            <SelectTrigger id="artistic-style"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {ARTISTIC_STYLES.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="aspect-ratio" className="text-sm font-medium mb-2 block">Aspect Ratio</Label>
+                          <Select value={selectedAspectRatio} onValueChange={setSelectedAspectRatio} disabled={isGenerating}>
+                            <SelectTrigger id="aspect-ratio"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {ASPECT_RATIOS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="mood" className="text-sm font-medium mb-2 block">Mood</Label>
+                          <Select value={mood} onValueChange={setMood} disabled={isGenerating}>
+                            <SelectTrigger id="mood"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {MOODS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="lighting" className="text-sm font-medium mb-2 block">Lighting</Label>
+                          <Select value={lighting} onValueChange={setLighting} disabled={isGenerating}>
+                            <SelectTrigger id="lighting"><SelectValue placeholder="Select lighting"/></SelectTrigger>
+                            <SelectContent>
+                              {LIGHTING_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="color-palette" className="text-sm font-medium mb-2 block">Color Palette</Label>
+                          <Select value={colorPalette} onValueChange={setColorPalette} disabled={isGenerating}>
+                            <SelectTrigger id="color-palette"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {COLOR_PALETTES.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                         <div>
+                          <Label htmlFor="quality" className="text-sm font-medium mb-2 block">Quality</Label>
+                          <Select value={quality} onValueChange={setQuality} disabled={isGenerating}>
+                            <SelectTrigger id="quality"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {QUALITY_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+              </Accordion>
               
-                <div className="flex w-full items-center gap-2 pt-4">
+              <div className="flex w-full items-center gap-2 pt-4">
                   {isGenerating ? (
                     <Button
                       type="button"
@@ -274,26 +284,24 @@ export function ImageGenerator() {
                   ) : (
                     <>
                       <Button
-                        type="button"
-                        onClick={handleReset}
-                        variant="outline"
-                        className="text-lg py-3"
-                        title="Reset all settings to default"
+                        type="submit"
+                        className="w-full text-base py-3 bg-primary hover:bg-primary/90 text-primary-foreground transition-shadow hover:shadow-xl hover:shadow-primary/20"
                       >
-                        <RefreshCcw size={20} />
+                        <Sparkles size={18} className="mr-2" />
+                        Generate {numberOfImages} Images
                       </Button>
                       <Button
-                        type="submit"
-                        className="w-full text-lg py-3 bg-primary hover:bg-primary/90 text-primary-foreground transition-shadow hover:shadow-xl hover:shadow-primary/20"
+                        type="button"
+                        variant="outline"
+                        className="text-base py-3"
+                        disabled
                       >
-                        <ImageIconIcon size={20} className="mr-2" />
-                        Forge Vision
+                        <Wand2 size={18} className="mr-2" />
+                        Suggest Prompts
                       </Button>
                     </>
                   )}
                 </div>
-              </div>
-              </ScrollArea>
             </form>
           </FuturisticPanel>
         </div>
