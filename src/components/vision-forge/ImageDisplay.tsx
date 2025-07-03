@@ -53,7 +53,7 @@ const ImageLoadingSkeleton = ({ aspectRatio, imageCount }: { aspectRatio: string
               getAspectRatioClass(aspectRatio)
             )}
           >
-            <Sparkles className="h-12 w-12 text-primary/50 animate-pulse" />
+            <Sparkles className="h-12 w-12 text-foreground/50 animate-pulse" />
           </div>
         ))}
       </div>
@@ -226,7 +226,7 @@ export function ImageDisplay({
   return (
     <FuturisticPanel className="flex flex-col gap-4 h-full">
       <div className={cn(
-          "w-full rounded-lg bg-background flex items-center justify-center min-h-[300px] md:min-h-[400px] overflow-hidden p-2 relative border-2 border-dashed border-border/50"
+          "w-full rounded-lg bg-background flex items-center justify-center min-h-[300px] md:min-h-[400px] overflow-hidden p-2 relative border-2 border-dashed border-foreground/20"
         )}
       >
         {isLoading && <ImageLoadingSkeleton aspectRatio={aspectRatio} imageCount={imageCount} />}
@@ -252,7 +252,7 @@ export function ImageDisplay({
                   <div key={key} className={cn("relative rounded-md overflow-hidden bg-muted/30 flex items-center justify-center", getAspectRatioClass(aspectRatio))}>
                     {(state === 'loading' || state === 'error') && (
                         <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-20">
-                          <Sparkles className="h-8 w-8 text-primary/50 animate-pulse" />
+                          <Sparkles className="h-8 w-8 text-foreground/50 animate-pulse" />
                         </div>
                     )}
 
