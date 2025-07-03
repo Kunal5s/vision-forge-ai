@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
-const iconSvg = `<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="8" fill="#000000"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="20px" fill="white">B</text></svg>`;
+const iconSvg = `<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="favicon-gradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#F2D82D"/><stop offset="100%" style="stop-color:#2ECC71"/></linearGradient></defs><rect width="32" height="32" rx="8" fill="url(#favicon-gradient)"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="20px" fill="white">B</text></svg>`;
 const iconDataUrl = `data:image/svg+xml,${encodeURIComponent(iconSvg)}`;
 
 export const metadata: Metadata = {
