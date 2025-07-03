@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -52,9 +51,9 @@ export function ImageGenerator() {
   // New states for dropdowns
   const [artisticStyle, setArtisticStyle] = useState<string>('photographic');
   const [mood, setMood] = useState<string>('mysterious');
-  const [lighting, setLighting] = useState<string>('');
-  const [colorPalette, setColorPalette] = useState<string>('');
-  const [quality, setQuality] = useState<string>('standard quality');
+  const [lighting, setLighting] = useState<string>('none');
+  const [colorPalette, setColorPalette] = useState<string>('none');
+  const [quality, setQuality] = useState<string>('standard quality, 1080p');
   
   const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -81,9 +80,10 @@ export function ImageGenerator() {
       mood,
       lighting,
       colorPalette,
-      quality
+      quality,
     ];
-    return parts.filter(Boolean).join(', ').trim();
+    // Filter out any "none" values or empty strings before joining
+    return parts.filter(part => part && part !== 'none').join(', ').trim();
   };
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
@@ -242,7 +242,7 @@ export function ImageGenerator() {
                         <div>
                           <Label htmlFor="lighting" className="text-sm font-medium mb-2 block">Lighting</Label>
                           <Select value={lighting} onValueChange={setLighting} disabled={isGenerating}>
-                            <SelectTrigger id="lighting"><SelectValue placeholder="Select lighting"/></SelectTrigger>
+                            <SelectTrigger id="lighting"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               {LIGHTING_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                             </SelectContent>

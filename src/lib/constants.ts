@@ -25,7 +25,7 @@ export const ARTISTIC_STYLES: StyleOption[] = [
     { label: 'Oil Painting', value: 'oil painting' },
     { label: 'Charcoal Sketch', value: 'charcoal sketch' },
     { label: 'Pixel Art', value: 'pixel art' },
-    { label: 'None', value: '' },
+    { label: 'None', value: 'none' },
 ];
 
 export const MOODS: StyleOption[] = [
@@ -37,11 +37,11 @@ export const MOODS: StyleOption[] = [
     { label: 'Whimsical', value: 'whimsical' },
     { label: 'Gloomy', value: 'gloomy mood' },
     { label: 'Romantic', value: 'romantic mood' },
-    { label: 'None', value: '' },
+    { label: 'None', value: 'none' },
 ];
 
 export const LIGHTING_OPTIONS: StyleOption[] = [
-    { label: 'None', value: '' },
+    { label: 'None', value: 'none' },
     { label: 'Soft', value: 'soft lighting' },
     { label: 'Dramatic', value: 'dramatic lighting' },
     { label: 'Cinematic', value: 'cinematic lighting' },
@@ -53,7 +53,7 @@ export const LIGHTING_OPTIONS: StyleOption[] = [
 ];
 
 export const COLOR_PALETTES: StyleOption[] = [
-    { label: 'Default', value: '' },
+    { label: 'Default', value: 'none' },
     { label: 'Vibrant', value: 'vibrant color palette' },
     { label: 'Monochrome', value: 'monochrome' },
     { label: 'Pastel', value: 'pastel colors' },
