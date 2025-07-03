@@ -3,8 +3,7 @@
 
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Download, Copy, RefreshCw, AlertTriangle, Image as ImageIcon } from 'lucide-react';
-import { LoadingSpinner } from './LoadingSpinner';
+import { Download, Copy, RefreshCw, AlertTriangle, Image as ImageIcon, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FuturisticPanel } from './FuturisticPanel';
 import { useEffect, useState } from 'react';
@@ -22,7 +21,47 @@ interface ImageDisplayProps {
   onRegenerate: () => void;
   onCopyPrompt: () => void;
   userPlan: Plan;
+  imageCount: number;
 }
+
+const ImageLoadingSkeleton = ({ aspectRatio, imageCount }: { aspectRatio: string, imageCount: number }) => {
+  const getAspectRatioClass = (ratio: string) => {
+    switch (ratio) {
+      case '1:1': return 'aspect-square';
+      case '16:9': return 'aspect-video';
+      case '4:3': return 'aspect-[4/3]';
+      case '3:2': return 'aspect-[3/2]';
+      case '2:3': return 'aspect-[2/3]';
+      case '9:16': return 'aspect-[9/16]';
+      default: return 'aspect-square';
+    }
+  };
+
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm z-10 p-2">
+      <div className={cn(
+          "w-full h-full grid gap-2",
+          imageCount === 1 ? 'grid-cols-1' : 'grid-cols-2',
+          imageCount > 4 && 'md:grid-cols-3',
+        )}
+      >
+        {Array.from({ length: imageCount }).map((_, index) => (
+          <div 
+            key={index}
+            className={cn(
+              "relative rounded-md overflow-hidden bg-muted/50 flex items-center justify-center",
+              getAspectRatioClass(aspectRatio)
+            )}
+          >
+            <Sparkles className="h-12 w-12 text-primary/50 animate-pulse" />
+          </div>
+        ))}
+      </div>
+      <p className="mt-4 text-lg font-semibold text-foreground animate-pulse">Forging Vision...</p>
+    </div>
+  );
+};
+
 
 export function ImageDisplay({
   imageUrls,
@@ -33,6 +72,7 @@ export function ImageDisplay({
   onRegenerate,
   onCopyPrompt,
   userPlan,
+  imageCount
 }: ImageDisplayProps) {
   
   const { toast } = useToast();
@@ -189,12 +229,8 @@ export function ImageDisplay({
           "w-full rounded-lg bg-background flex items-center justify-center min-h-[300px] md:min-h-[400px] overflow-hidden p-2 relative border-2 border-dashed border-border/50"
         )}
       >
-        {isLoading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm z-10">
-            <LoadingSpinner size={64} />
-            <p className="mt-4 text-lg font-semibold text-foreground animate-pulse">Forging Vision...</p>
-          </div>
-        )}
+        {isLoading && <ImageLoadingSkeleton aspectRatio={aspectRatio} imageCount={imageCount} />}
+
         {error && !isLoading && !hasImages && (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
             <AlertTriangle size={48} className="mb-2 text-destructive" />
@@ -214,16 +250,10 @@ export function ImageDisplay({
 
                 return (
                   <div key={key} className={cn("relative rounded-md overflow-hidden bg-muted/30 flex items-center justify-center", getAspectRatioClass(aspectRatio))}>
-                    {state === 'loading' && (
+                    {(state === 'loading' || state === 'error') && (
                         <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-20">
-                          <LoadingSpinner size={32} />
+                          <Sparkles className="h-8 w-8 text-primary/50 animate-pulse" />
                         </div>
-                    )}
-                    
-                     {state === 'error' && (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/50 z-10 text-center p-2">
-                         {/* Intentionally blank to avoid "Load Failed" message */}
-                      </div>
                     )}
 
                     <Image

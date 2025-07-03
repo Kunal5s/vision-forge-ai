@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -119,20 +120,27 @@ export function ImageGenerator() {
         return;
       }
       
-      const responseBody = await response.text();
-
       if (!response.ok) {
         let errorMessage = `API Error: ${response.statusText} (${response.status})`;
         try {
-            const errorData = JSON.parse(responseBody);
-            errorMessage = errorData.details || errorData.error || errorMessage;
-        } catch (jsonError) {
-            console.error("API error response was not valid JSON. Body:", responseBody);
+            // Try to parse the error response as text first, as it might not be JSON
+            const errorBody = await response.text();
+            try {
+                // Then, attempt to parse it as JSON
+                const errorData = JSON.parse(errorBody);
+                errorMessage = errorData.details || errorData.error || errorMessage;
+            } catch (jsonError) {
+                // If it's not JSON, the text itself might be the error message
+                errorMessage = errorBody || errorMessage;
+                console.error("API error response was not valid JSON. Body:", errorBody);
+            }
+        } catch (textError) {
+             console.error("Could not read API error response body.", textError);
         }
         throw new Error(errorMessage);
       }
       
-      const result = JSON.parse(responseBody);
+      const result = await response.json();
 
       if (!result.images || result.images.length === 0) {
         throw new Error('The API returned no images. Please try a different prompt.');
@@ -284,7 +292,8 @@ export function ImageGenerator() {
                   ) : (
                     <Button
                       type="submit"
-                      className="w-full text-base py-3 bg-primary hover:bg-primary/90 text-primary-foreground transition-shadow hover:shadow-xl hover:shadow-primary/20"
+                      className="w-full text-base py-3 bg-primary hover:bg-primary/90 text-primary-foreground transition-shadow hover:shadow-xl hover:shadow-primary/20 animate-breathing-glow"
+                      disabled={!currentPrompt}
                     >
                       <Sparkles size={18} className="mr-2" />
                       Generate {numberOfImages} Images
@@ -305,6 +314,7 @@ export function ImageGenerator() {
             onRegenerate={handleRegenerate}
             onCopyPrompt={handleCopyPrompt}
             userPlan={subscription?.plan || 'free'}
+            imageCount={numberOfImages}
           />
         </div>
       </div>

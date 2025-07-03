@@ -25,11 +25,14 @@ export async function POST(req: Request) {
     const imagePromises: Promise<string>[] = [];
     const { width, height } = getAspectRatioDimensions(aspect);
     
-    // Simplified to only use Pollinations which is Edge compatible
+    // Add instructions to avoid watermarks and text
+    const finalPromptSuffix = ', watermark-free, no text, no signatures, high detail';
+    
     for (let i = 0; i < count; i++) {
-        const seed = Math.floor(Math.random() * 100000);
-        const finalPrompt = `${prompt}, aspect ratio ${aspect}`;
-        const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=${width}&height=${height}&seed=${seed}`;
+        // Use a more random seed for better variation
+        const seed = Math.floor(Math.random() * 1_000_000_000);
+        const finalPrompt = `${prompt}${finalPromptSuffix}`;
+        const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
         imagePromises.push(Promise.resolve(pollinationsUrl));
     }
     const images = await Promise.all(imagePromises);
