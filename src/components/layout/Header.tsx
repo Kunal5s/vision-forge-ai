@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -43,7 +42,7 @@ export function Header() {
                 "text-sm font-medium transition-colors hover:text-primary",
                 pathname === link.href 
                   ? (link.href === '/' ? 'text-foreground font-semibold' : 'text-primary font-semibold') 
-                  : 'text-muted-foreground'
+                  : 'text-foreground/80'
               )}
             >
               {link.label}
