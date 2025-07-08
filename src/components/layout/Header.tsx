@@ -9,9 +9,6 @@ import { SubscriptionManager } from '../vision-forge/SubscriptionManager';
 const navLinks = [
   { href: '/', label: 'Generate' },
   { href: '/models', label: 'Models' },
-  { href: '/pricing', label: 'Pricing' },
-  { href: '/about', label: 'About' },
-  { href: '/contact', label: 'Contact' },
   { href: '/prompts', label: 'Prompts' },
   { href: '/styles', label: 'Styles' },
   { href: '/tutorials', label: 'Tutorials' },
@@ -39,9 +36,9 @@ export function Header() {
           </Link>
         </div>
 
-        {/* Scrollable Navigation for all screen sizes */}
-        <div className="w-full overflow-x-auto no-scrollbar md:mt-4">
-          <nav className="flex gap-3 items-center py-2 px-4 md:justify-center md:px-0">
+        {/* Scrollable Navigation for mobile, wrapping on desktop */}
+        <div className="w-full overflow-x-auto no-scrollbar md:mt-4 md:overflow-visible">
+          <nav className="flex gap-3 items-center py-2 px-4 md:flex-wrap md:justify-center md:px-0">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
