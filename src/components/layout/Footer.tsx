@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -12,7 +11,7 @@ export function Footer() {
   return (
     <footer className="bg-background text-card-foreground py-10 mt-auto border-t">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           <div>
             <Link href="/" className="flex items-center gap-2 mb-3">
               <Sparkles className="h-7 w-7 text-primary" />
@@ -43,10 +42,11 @@ export function Footer() {
               <li><Link href="/disclaimer" className={cn("block rounded-md -ml-2 px-2 py-1 hover:text-foreground", pathname === '/disclaimer' ? 'text-foreground font-bold' : 'text-foreground/80')}>Disclaimer</Link></li>
             </ul>
           </div>
-          
-          <div>
+        </div>
+
+        <div className="text-center mb-8">
             <h3 className="text-md font-bold text-foreground mb-4">Follow Us</h3>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center justify-center gap-4">
               <a href="https://twitter.com/ImagenBrainAi" target="_blank" rel="noopener noreferrer" aria-label="Twitter" className="text-foreground/80 hover:text-foreground">
                 <Twitter className="h-6 w-6" />
               </a>
@@ -63,7 +63,6 @@ export function Footer() {
                 <Github className="h-6 w-6" />
               </a>
             </div>
-          </div>
         </div>
         
         <div className="text-center text-xs text-muted-foreground border-t pt-8">
