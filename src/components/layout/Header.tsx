@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -34,16 +33,16 @@ export function Header() {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex gap-6 items-center">
+        <nav className="hidden md:flex gap-3 items-center">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={cn(
-                "text-sm font-medium hover:text-foreground",
+                "px-4 py-1.5 rounded-md text-sm font-medium transition-colors",
                 pathname === link.href
-                  ? 'text-foreground font-bold'
-                  : 'text-foreground/60'
+                  ? 'bg-foreground text-background'
+                  : 'border border-input bg-background hover:bg-muted'
               )}
             >
               {link.label}
