@@ -12,6 +12,15 @@ const navLinks = [
   { href: '/pricing', label: 'Pricing' },
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },
+  { href: '/prompts', label: 'Prompts' },
+  { href: '/styles', label: 'Styles' },
+  { href: '/tutorials', label: 'Tutorials' },
+  { href: '/storybook', label: 'Storybook' },
+  { href: '/usecases', label: 'Usecases' },
+  { href: '/inspiration', label: 'Inspiration' },
+  { href: '/trends', label: 'Trends' },
+  { href: '/technology', label: 'Technology' },
+  { href: '/nft', label: 'NFT' },
 ];
 
 export function Header() {
