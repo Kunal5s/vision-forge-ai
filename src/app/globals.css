@@ -9,36 +9,38 @@ body {
 
 @layer base {
   :root {
-    --background: 222 47% 11%; /* gray-900 */
-    --foreground: 210 40% 98%; /* gray-50 */
+    /* New theme based on the black & white screenshot. Default background is white. */
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
     
-    --card: 0 0% 100%; /* white */
-    --card-foreground: 222 47% 11%; /* gray-900 */
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 240 10% 3.9%;
 
-    /* Buttons are light gray with dark text, inspired by screenshot */
-    --primary: 210 40% 96.1%; /* gray-100 */
-    --primary-foreground: 222 47% 11%; /* gray-900 */
+    /* Primary buttons are light gray with dark text, matching the screenshot */
+    --primary: 240 4.8% 95.9%;
+    --primary-foreground: 240 5.9% 10%;
 
-    --secondary: 217 33% 17%; /* gray-800 */
-    --secondary-foreground: 210 40% 98%; /* gray-50 */
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
 
-    /* Muted sections have the same dark background */
-    --muted: 222 47% 11%;
-    --muted-foreground: 215 20% 65%; /* gray-400 */
+    /* Muted sections will be light gray */
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
 
-    /* Accent for highlighted text like 'BrainAi' */
-    --accent: 210 40% 98%; /* white */
-    --accent-foreground: 222 47% 11%; /* gray-900 */
+    /* Accent color for text spans is black, keeping it monochrome */
+    --accent: 240 10% 3.9%;
+    --accent-foreground: 0 0% 98%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 217 33% 25%; /* Lighter border for on-dark components */
-    --input: 217 33% 25%;
-    --ring: 210 40% 98%;
+    /* A light border to make cards and inputs visible on the white background */
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 10% 3.9%;
 
     --radius: 0.5rem;
   }
