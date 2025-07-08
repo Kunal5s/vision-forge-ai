@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { Sparkles, Twitter, Instagram, Facebook, Linkedin, Github } from 'lucide-react';
+import { BrainCircuit, Twitter, Instagram, Facebook, Linkedin, Github } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
@@ -14,8 +14,10 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           <div>
             <Link href="/" className="flex items-center gap-2 mb-3">
-              <Sparkles className="h-7 w-7 text-primary" />
-              <span className="text-xl font-bold text-foreground">Imagen BrainAi</span>
+              <BrainCircuit className="h-7 w-7 text-foreground" />
+              <span className="text-xl font-bold text-foreground">
+                Imagen <span className="text-accent">BrainAi</span>
+              </span>
             </Link>
             <p className="text-sm text-muted-foreground">
               Empowering your creativity with cutting-edge AI image generation and editing tools. Bring your visions to life.
