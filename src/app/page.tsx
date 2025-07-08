@@ -7,21 +7,24 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Imagen BrainAi: Your Free AI Image Generator',
-  description: "Welcome to the future of AI image generation. Describe your vision, and our advanced text-to-image AI, powered by Google's Imagen technology, will bring it to life. Create stunning, high-quality images, illustrations, and art from text prompts in seconds. Get started for free and see what you can create.",
+  description: "Welcome to the future of AI image generation. Describe your vision, and our advanced text-to-image AI will bring it to life. Create stunning, high-quality images, illustrations, and art from text prompts in seconds. Get started for free and see what you can create.",
 };
 
 export default function HomePage() {
   return (
     <main>
-      <section className="container mx-auto py-8 px-4">
-        <header className="text-center mb-10">
-          <h1 className="text-5xl font-extrabold tracking-tight text-foreground">
-            Imagen BrainAi: Your Free <span className="text-accent">AI Image Generator</span>
-          </h1>
-          <p className="mt-4 text-lg text-foreground/80 max-w-3xl mx-auto">
-            Welcome to the future of AI image generation. Describe your vision, and our advanced text-to-image AI will bring it to life. Create stunning, high-quality images, illustrations, and art from text prompts in seconds. Get started for free and see what you can create.
-          </p>
-        </header>
+      <section className="w-full bg-foreground text-background">
+        <div className="container mx-auto px-4 py-16 text-center">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight">
+              Imagen BrainAi: Your Free AI Image Generator
+            </h1>
+            <p className="mt-6 max-w-3xl mx-auto text-lg text-background/80">
+              Welcome to the future of AI image generation. Describe your vision, and our advanced text-to-image AI will bring it to life. Create stunning, high-quality images, illustrations, and art from text prompts in seconds. Get started for free and see what you can create.
+            </p>
+        </div>
+      </section>
+      
+      <section className="container mx-auto px-4 pt-12 pb-8">
         <ImageGenerator />
       </section>
 
