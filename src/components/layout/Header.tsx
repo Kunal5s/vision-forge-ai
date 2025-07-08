@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -41,7 +42,7 @@ export function Header() {
               className={cn(
                 "text-sm font-medium transition-colors hover:text-primary",
                 pathname === link.href
-                  ? 'text-foreground font-semibold'
+                  ? 'text-primary-foreground font-bold'
                   : 'text-foreground/80'
               )}
             >
