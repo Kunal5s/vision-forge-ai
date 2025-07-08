@@ -16,7 +16,7 @@ export default function PrivacyPolicyPage() {
         <p className="text-lg text-muted-foreground">Last Updated: 2024-06-27</p>
       </header>
 
-      <div className="max-w-3xl mx-auto space-y-6 text-foreground/80 text-base leading-relaxed">
+      <div className="max-w-3xl mx-auto space-y-6 text-foreground text-base leading-relaxed">
         <section>
           <h2 className="text-2xl font-semibold text-foreground mb-3">1. Introduction</h2>
           <p>
@@ -132,7 +132,7 @@ export default function PrivacyPolicyPage() {
             <br />
             Imagen BrainAi Team
             <br />
-            Email: <a href="mailto:privacy@imagenbrain.ai" className="text-primary hover:underline">privacy@imagenbrain.ai</a>
+            Email: <a href="mailto:privacy@imagenbrain.ai" className="text-foreground hover:underline">privacy@imagenbrain.ai</a>
           </p>
         </section>
         <p className="font-bold mt-4 text-destructive text-center">

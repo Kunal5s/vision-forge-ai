@@ -19,7 +19,7 @@ export default function HomePage() {
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight">
               Imagen BrainAi: Your Free AI Image Generator
             </h1>
-            <p className="mt-6 max-w-3xl mx-auto text-lg text-background/80">
+            <p className="mt-6 max-w-3xl mx-auto text-lg text-background">
               Welcome to the future of AI image generation. Describe your vision, and our advanced text-to-image AI will bring it to life. Create stunning, high-quality images, illustrations, and art from text prompts in seconds. Get started for free and see what you can create.
             </p>
         </div>

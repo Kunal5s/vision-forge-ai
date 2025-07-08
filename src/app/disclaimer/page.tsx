@@ -16,7 +16,7 @@ export default function DisclaimerPage() {
         <p className="text-lg text-muted-foreground">Last Updated: 2024-06-27</p>
       </header>
 
-      <div className="max-w-3xl mx-auto space-y-6 text-foreground/80 text-base leading-relaxed">
+      <div className="max-w-3xl mx-auto space-y-6 text-foreground text-base leading-relaxed">
         <p className="font-bold text-destructive">
             IMPORTANT: This is a template Disclaimer and should be reviewed and customized by a legal professional. Do not use this template as-is for your live website.
         </p>
@@ -82,7 +82,7 @@ export default function DisclaimerPage() {
         <section>
           <h2 className="text-2xl font-semibold text-foreground mb-3">9. Contact</h2>
           <p>
-            If you have any feedback, comments, requests for technical support or other inquiries, please contact us by email: <a href="mailto:support@imagenbrain.ai" className="text-primary hover:underline">support@imagenbrain.ai</a>.
+            If you have any feedback, comments, requests for technical support or other inquiries, please contact us by email: <a href="mailto:support@imagenbrain.ai" className="text-foreground hover:underline">support@imagenbrain.ai</a>.
           </p>
         </section>
          <p className="font-bold mt-4 text-destructive text-center">

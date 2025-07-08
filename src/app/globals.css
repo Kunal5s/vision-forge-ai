@@ -36,7 +36,7 @@ body {
 
     /* Muted sections will be light gray */
     --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 4% 40%;
+    --muted-foreground: 240 5% 25%;
 
     /* Accent color for text spans is black, keeping it monochrome */
     --accent: 240 10% 3.9%;

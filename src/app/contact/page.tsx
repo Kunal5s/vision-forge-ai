@@ -33,15 +33,15 @@ export default function ContactPage() {
           <CardContent>
             <form className="space-y-6">
               <div>
-                <Label htmlFor="name" className="text-foreground/90">Full Name</Label>
+                <Label htmlFor="name" className="text-foreground">Full Name</Label>
                 <Input type="text" id="name" name="name" placeholder="John Doe" required className="mt-1 bg-input border-input focus:border-primary focus:ring-primary" />
               </div>
               <div>
-                <Label htmlFor="email" className="text-foreground/90">Email Address</Label>
+                <Label htmlFor="email" className="text-foreground">Email Address</Label>
                 <Input type="email" id="email" name="email" placeholder="you@example.com" required className="mt-1 bg-input border-input focus:border-primary focus:ring-primary" />
               </div>
               <div>
-                <Label htmlFor="message" className="text-foreground/90">Message</Label>
+                <Label htmlFor="message" className="text-foreground">Message</Label>
                 <Textarea id="message" name="message" rows={5} placeholder="Your question or feedback..." required className="mt-1 bg-input border-input focus:border-primary focus:ring-primary resize-none" />
               </div>
               <div>
@@ -62,8 +62,8 @@ export default function ContactPage() {
               <CardTitle className="flex items-center gap-2 text-xl"><Mail className="text-primary" /> General Inquiries</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-foreground/80 mb-1">For general questions, partnership opportunities, or media inquiries, please email us at:</p>
-              <a href="mailto:info@imagenbrain.ai" className="text-primary hover:underline font-medium">info@imagenbrain.ai</a>
+              <p className="text-foreground mb-1">For general questions, partnership opportunities, or media inquiries, please email us at:</p>
+              <a href="mailto:info@imagenbrain.ai" className="text-foreground hover:underline font-medium">info@imagenbrain.ai</a>
               <p className="text-sm text-muted-foreground mt-2">We typically respond within 1-2 business days.</p>
             </CardContent>
           </Card>
@@ -73,7 +73,7 @@ export default function ContactPage() {
               <CardTitle className="flex items-center gap-2 text-xl"><HelpCircle className="text-accent" /> Support & Feedback</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-foreground/80 mb-1">Encountering an issue or have a suggestion to make Imagen BrainAi better? Contact our support team:</p>
+              <p className="text-foreground mb-1">Encountering an issue or have a suggestion to make Imagen BrainAi better? Contact our support team:</p>
               <a href="mailto:support@imagenbrain.ai" className="text-accent hover:underline font-medium">support@imagenbrain.ai</a>
               <p className="text-sm text-muted-foreground mt-2">Your feedback is invaluable to us!</p>
             </CardContent>

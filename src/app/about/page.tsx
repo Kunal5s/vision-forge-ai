@@ -24,10 +24,10 @@ export default function AboutPage() {
         <section>
           <div>
             <h2 className="text-3xl font-semibold text-foreground mb-4">Our Mission</h2>
-            <p className="text-lg text-foreground/80 mb-4">
+            <p className="text-lg text-foreground mb-4">
               At Imagen BrainAi, our mission is to democratize creativity by providing an intuitive and powerful AI art generator that enables anyone to bring their imaginative visions to life. We believe that text-to-image technology should serve as a catalyst for innovation, breaking down barriers and opening up new possibilities for artists, designers, marketers, and dreamers alike.
             </p>
-            <p className="text-lg text-foreground/80">
+            <p className="text-lg text-foreground">
               We strive to build a platform that is not only technologically advanced, leveraging the cutting-edge capabilities of multiple AI models, but also user-friendly and accessible. Our goal is to empower you to create stunning, unique AI-generated images with unprecedented ease and control.
             </p>
           </div>
@@ -59,10 +59,10 @@ export default function AboutPage() {
         
         <section>
           <h2 className="text-3xl font-semibold text-foreground mb-4">Our Vision for the Future</h2>
-          <p className="text-lg text-foreground/80 mb-4">
+          <p className="text-lg text-foreground mb-4">
             We envision a future where AI acts as a seamless partner in the creative process, augmenting human ingenuity rather than replacing it. Imagen BrainAi is committed to continuous innovation, exploring new AI capabilities, and expanding our toolset to support an ever-wider range of creative endeavors in the text-to-art space.
           </p>
-          <p className="text-lg text-foreground/80">
+          <p className="text-lg text-foreground">
             Join us on this exciting journey as we continue to push the boundaries of what's possible with AI and art. Your feedback and creativity are integral to our growth and evolution. Together, let's create new realities.
           </p>
         </section>

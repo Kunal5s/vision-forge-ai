@@ -67,7 +67,7 @@ export function ArticlesSection() {
                 </p>
               </CardContent>
               <CardFooter className="p-6 pt-0">
-                <Link href="#" className="flex items-center text-sm font-semibold text-primary hover:underline">
+                <Link href="#" className="flex items-center text-sm font-semibold text-foreground hover:underline">
                   Read More <ArrowRight className="ml-1 h-4 w-4" />
                 </Link>
               </CardFooter>
