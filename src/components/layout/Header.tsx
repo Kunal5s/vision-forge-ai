@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -22,9 +21,9 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background">
       <div className="container mx-auto flex flex-col items-center px-0 sm:px-4 py-3">
         {/* Top row: Logo */}
-        <div className="w-full flex justify-center items-center px-4 sm:px-0">
+        <div className="w-full flex justify-start items-center px-4 sm:px-0">
           <Link href="/" className="flex items-center gap-2">
-            <BrainCircuit className="h-7 w-7 text-primary" />
+            <BrainCircuit className="h-7 w-7 text-foreground" />
             <span className="text-xl font-bold text-foreground">
               Imagen <span className="text-accent">BrainAi</span>
             </span>
