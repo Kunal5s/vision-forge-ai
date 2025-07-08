@@ -4,6 +4,7 @@ import { TestimonialsSection } from '@/components/vision-forge/TestimonialsSecti
 import { PricingSection } from '@/components/vision-forge/PricingSection';
 import { FaqSection } from '@/components/vision-forge/FaqSection';
 import type { Metadata } from 'next';
+import { ArticlesSection } from '@/components/vision-forge/ArticlesSection';
 
 export const metadata: Metadata = {
   title: 'Imagen BrainAi: Your Free AI Image Generator',
@@ -23,6 +24,8 @@ export default function HomePage() {
             </p>
         </div>
       </section>
+
+      <ArticlesSection />
       
       <section className="container mx-auto px-4 pt-12 pb-8">
         <ImageGenerator />
