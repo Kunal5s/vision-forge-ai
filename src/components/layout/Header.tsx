@@ -1,9 +1,10 @@
+
 "use client";
 
 import Link from 'next/link';
-import { Sparkles, Menu } from 'lucide-react';
+import { BrainCircuit, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -23,11 +24,11 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background">
-      <div className="container mx-auto flex flex-col items-center px-4 py-3">
+      <div className="container mx-auto flex flex-col items-center px-0 sm:px-4 py-3">
         {/* Top row: Logo, Subscription Manager (desktop), and Mobile Menu Trigger */}
-        <div className="w-full flex justify-between items-center">
+        <div className="w-full flex justify-between items-center px-4 sm:px-0">
           <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
-            <Sparkles className="h-7 w-7 text-primary" />
+            <BrainCircuit className="h-7 w-7 text-primary" />
             <span className="text-xl font-bold text-foreground">
               Imagen <span className="text-accent">BrainAi</span>
             </span>
@@ -37,7 +38,7 @@ export function Header() {
              <div className="hidden md:block">
                 <SubscriptionManager />
              </div>
-             {/* Mobile Navigation Trigger */}
+             {/* Mobile Menu Trigger for Subscription Manager */}
             <div className="md:hidden">
               <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                 <SheetTrigger asChild>
@@ -50,55 +51,41 @@ export function Header() {
                   <SheetHeader className="p-4 border-b">
                     <SheetTitle className="flex items-center gap-2">
                       <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
-                        <Sparkles className="h-6 w-6 text-primary" />
+                        <BrainCircuit className="h-6 w-6 text-primary" />
                         <span className="text-lg font-bold text-foreground">
                           Imagen <span className="text-accent">BrainAi</span>
                         </span>
                       </Link>
                     </SheetTitle>
                   </SheetHeader>
-                  <nav className="flex flex-col gap-1 p-4">
-                    {navLinks.map((link) => (
-                      <SheetClose asChild key={link.href}>
-                        <Link
-                          href={link.href}
-                          className={cn(
-                            "block rounded-md px-3 py-2 text-base font-medium hover:bg-muted hover:text-foreground",
-                             pathname === link.href ? "bg-muted text-foreground font-semibold" : "text-foreground/80"
-                          )}
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          {link.label}
-                        </Link>
-                      </SheetClose>
-                    ))}
-                    <div className="border-t pt-4 mt-4">
-                      <SubscriptionManager />
-                    </div>
-                  </nav>
+                  <div className="p-4">
+                    <SubscriptionManager />
+                  </div>
                 </SheetContent>
               </Sheet>
             </div>
           </div>
         </div>
 
-        {/* Desktop Navigation - Below the logo */}
-        <nav className="hidden md:flex gap-3 items-center mt-4">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "px-4 py-1.5 rounded-md text-sm font-medium",
-                pathname === link.href
-                  ? 'bg-foreground text-background'
-                  : 'border border-input bg-background hover:bg-muted'
-              )}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+        {/* Scrollable Navigation for all screen sizes */}
+        <div className="w-full overflow-x-auto no-scrollbar md:mt-4">
+          <nav className="flex gap-3 items-center py-2 px-4 md:justify-center md:px-0">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  "px-4 py-1.5 rounded-md text-sm font-medium whitespace-nowrap",
+                  pathname === link.href
+                    ? 'bg-foreground text-background font-bold'
+                    : 'border border-input bg-background hover:bg-muted'
+                )}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
       </div>
     </header>
   );
