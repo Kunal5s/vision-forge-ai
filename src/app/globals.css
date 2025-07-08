@@ -9,57 +9,38 @@ body {
 
 @layer base {
   :root {
-    --background: 56 100% 96%;
-    --foreground: 0 0% 4%;
+    --background: 222 47% 11%; /* gray-900 */
+    --foreground: 210 40% 98%; /* gray-50 */
     
-    --card: 56 100% 98%;
-    --card-foreground: 0 0% 4%;
+    --card: 0 0% 100%; /* white */
+    --card-foreground: 222 47% 11%; /* gray-900 */
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 4%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 54 94% 56%;
-    --primary-foreground: 54 94% 10%;
+    /* Buttons are light gray with dark text, inspired by screenshot */
+    --primary: 210 40% 96.1%; /* gray-100 */
+    --primary-foreground: 222 47% 11%; /* gray-900 */
 
-    --secondary: 56 20% 94%;
-    --secondary-foreground: 20 5.9% 10%;
+    --secondary: 217 33% 17%; /* gray-800 */
+    --secondary-foreground: 210 40% 98%; /* gray-50 */
 
-    --muted: 56 50% 95%;
-    --muted-foreground: 0 0% 30%;
+    /* Muted sections have the same dark background */
+    --muted: 222 47% 11%;
+    --muted-foreground: 215 20% 65%; /* gray-400 */
 
-    --accent: 145 63% 49%;
-    --accent-foreground: 0 0% 100%;
+    /* Accent for highlighted text like 'BrainAi' */
+    --accent: 210 40% 98%; /* white */
+    --accent-foreground: 222 47% 11%; /* gray-900 */
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 56 30% 88%;
-    --input: 56 30% 88%;
-    --ring: 54 94% 56%;
+    --border: 217 33% 25%; /* Lighter border for on-dark components */
+    --input: 217 33% 25%;
+    --ring: 210 40% 98%;
 
     --radius: 0.5rem;
-  }
-
-  .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 349 97% 44%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 29 97% 43%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 349 97% 44%;
   }
 }
 
