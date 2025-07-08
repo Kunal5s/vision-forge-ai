@@ -16,7 +16,7 @@ export default function ContactPage() {
   return (
     <main className="container mx-auto py-16 px-4">
       <header className="text-center mb-12">
-        <h1 className="text-5xl font-extrabold tracking-tight text-primary mb-4">
+        <h1 className="text-5xl font-extrabold tracking-tight text-foreground mb-4">
           Contact <span className="text-accent">Us</span>
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
