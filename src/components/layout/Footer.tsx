@@ -25,8 +25,8 @@ export function Footer() {
           <div>
             <h3 className="text-md font-bold text-foreground mb-4">Our Services</h3>
             <ul className="space-y-1 text-sm">
-              <li><Link href="/" className={cn("block rounded-md -ml-2 px-2 py-1 transition-colors hover:text-primary", pathname === '/' ? 'text-primary font-semibold' : 'text-foreground/80')}>AI Image Generation</Link></li>
-              <li><Link href="/pricing" className={cn("block rounded-md -ml-2 px-2 py-1 transition-colors hover:text-primary", pathname === '/pricing' ? 'text-primary font-semibold' : 'text-foreground/80')}>Pricing</Link></li>
+              <li><Link href="/" className={cn("block rounded-md -ml-2 px-2 py-1 transition-colors hover:text-primary", pathname === '/' ? 'text-foreground font-semibold' : 'text-foreground/80')}>AI Image Generation</Link></li>
+              <li><Link href="/pricing" className={cn("block rounded-md -ml-2 px-2 py-1 transition-colors hover:text-primary", pathname === '/pricing' ? 'text-foreground font-semibold' : 'text-foreground/80')}>Pricing</Link></li>
               <li><Link href="/#features" className="block text-foreground/80 rounded-md -ml-2 px-2 py-1 transition-colors hover:text-primary">Prompt Enhancement</Link></li>
               <li><Link href="/#features" className="block text-foreground/80 rounded-md -ml-2 px-2 py-1 transition-colors hover:text-primary">Style Customization</Link></li>
             </ul>
@@ -35,11 +35,11 @@ export function Footer() {
           <div>
             <h3 className="text-md font-bold text-foreground mb-4">Legal</h3>
             <ul className="space-y-1 text-sm">
-              <li><Link href="/about" className={cn("block rounded-md -ml-2 px-2 py-1 transition-colors hover:text-primary", pathname === '/about' ? 'text-primary font-semibold' : 'text-foreground/80')}>About Us</Link></li>
-              <li><Link href="/contact" className={cn("block rounded-md -ml-2 px-2 py-1 transition-colors hover:text-primary", pathname === '/contact' ? 'text-primary font-semibold' : 'text-foreground/80')}>Contact Us</Link></li>
-              <li><Link href="/privacy" className={cn("block rounded-md -ml-2 px-2 py-1 transition-colors hover:text-primary", pathname === '/privacy' ? 'text-primary font-semibold' : 'text-foreground/80')}>Privacy Policy</Link></li>
-              <li><Link href="/terms" className={cn("block rounded-md -ml-2 px-2 py-1 transition-colors hover:text-primary", pathname === '/terms' ? 'text-primary font-semibold' : 'text-foreground/80')}>Terms of Service</Link></li>
-              <li><Link href="/disclaimer" className={cn("block rounded-md -ml-2 px-2 py-1 transition-colors hover:text-primary", pathname === '/disclaimer' ? 'text-primary font-semibold' : 'text-foreground/80')}>Disclaimer</Link></li>
+              <li><Link href="/about" className={cn("block rounded-md -ml-2 px-2 py-1 transition-colors hover:text-primary", pathname === '/about' ? 'text-foreground font-semibold' : 'text-foreground/80')}>About Us</Link></li>
+              <li><Link href="/contact" className={cn("block rounded-md -ml-2 px-2 py-1 transition-colors hover:text-primary", pathname === '/contact' ? 'text-foreground font-semibold' : 'text-foreground/80')}>Contact Us</Link></li>
+              <li><Link href="/privacy" className={cn("block rounded-md -ml-2 px-2 py-1 transition-colors hover:text-primary", pathname === '/privacy' ? 'text-foreground font-semibold' : 'text-foreground/80')}>Privacy Policy</Link></li>
+              <li><Link href="/terms" className={cn("block rounded-md -ml-2 px-2 py-1 transition-colors hover:text-primary", pathname === '/terms' ? 'text-foreground font-semibold' : 'text-foreground/80')}>Terms of Service</Link></li>
+              <li><Link href="/disclaimer" className={cn("block rounded-md -ml-2 px-2 py-1 transition-colors hover:text-primary", pathname === '/disclaimer' ? 'text-foreground font-semibold' : 'text-foreground/80')}>Disclaimer</Link></li>
             </ul>
           </div>
           

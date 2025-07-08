@@ -40,8 +40,8 @@ export function Header() {
               href={link.href}
               className={cn(
                 "text-sm font-medium transition-colors hover:text-primary",
-                pathname === link.href 
-                  ? (link.href === '/' ? 'text-foreground font-semibold' : 'text-primary font-semibold') 
+                pathname === link.href
+                  ? 'text-foreground font-semibold'
                   : 'text-foreground/80'
               )}
             >
