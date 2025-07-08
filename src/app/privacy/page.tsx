@@ -10,19 +10,19 @@ export default function PrivacyPolicyPage() {
   return (
     <main className="container mx-auto py-12 px-4">
       <header className="text-center mb-10">
-        <h1 className="text-4xl font-extrabold tracking-tight text-primary mb-3">
+        <h1 className="text-4xl font-extrabold tracking-tight text-foreground mb-3">
           Privacy Policy
         </h1>
-        <p className="text-lg text-muted-foreground">Last Updated: 2024-06-27</p>
+        <p className="text-lg text-foreground/80">Last Updated: 2024-06-27</p>
       </header>
 
-      <div className="max-w-3xl mx-auto space-y-6 text-foreground text-base leading-relaxed">
+      <div className="max-w-3xl mx-auto space-y-6 text-base leading-relaxed">
         <section>
           <h2 className="text-2xl font-semibold text-foreground mb-3">1. Introduction</h2>
-          <p>
+          <p className="text-foreground">
             Welcome to Imagen BrainAi ("we," "us," or "our"). We are committed to protecting your personal information and your right to privacy. If you have any questions or concerns about this privacy notice, or our practices with regards to your personal information, please contact us at privacy@imagenbrain.ai.
           </p>
-          <p className="mt-2">
+          <p className="mt-2 text-foreground">
             This Privacy Policy governs the privacy policies and practices of our website, Imagen BrainAi (the "Website"). Please read this Privacy Policy carefully. We will alert you to any changes to this Policy by changing the "last updated" date at the top of this Policy. Any changes become effective immediately upon publication on our Website, and you waive specific notice of any changes to the Policy by continuing to use and access our Website.
           </p>
           <p className="font-bold mt-2 text-destructive">
@@ -32,10 +32,10 @@ export default function PrivacyPolicyPage() {
 
         <section>
           <h2 className="text-2xl font-semibold text-foreground mb-3">2. Information We Collect</h2>
-          <p>
+          <p className="text-foreground">
             We may collect information about you in a variety of ways. The information we may collect on the Website includes:
           </p>
-          <ul className="list-disc list-inside pl-4 mt-2 space-y-1">
+          <ul className="list-disc list-inside pl-4 mt-2 space-y-1 text-foreground">
             <li>
               <strong>Personal Data:</strong> Personally identifiable information, such as your name, email address, and other contact details that you voluntarily give to us when you register with the Website or when you choose to participate in various activities related to the Website, such as online chat and message boards.
             </li>
@@ -53,10 +53,10 @@ export default function PrivacyPolicyPage() {
 
         <section>
           <h2 className="text-2xl font-semibold text-foreground mb-3">3. How We Use Your Information</h2>
-          <p>
+          <p className="text-foreground">
             Having accurate information about you permits us to provide you with a smooth, efficient, and customized experience. Specifically, we may use information collected about you via the Website to:
           </p>
-          <ul className="list-disc list-inside pl-4 mt-2 space-y-1">
+          <ul className="list-disc list-inside pl-4 mt-2 space-y-1 text-foreground">
             <li>Create and manage your account.</li>
             <li>Provide and improve our AI image generation services.</li>
             <li>Email you regarding your account or order.</li>
@@ -74,10 +74,10 @@ export default function PrivacyPolicyPage() {
 
         <section>
           <h2 className="text-2xl font-semibold text-foreground mb-3">4. Disclosure of Your Information</h2>
-          <p>
+          <p className="text-foreground">
             We may share information we have collected about you in certain situations. Your information may be disclosed as follows:
           </p>
-          <ul className="list-disc list-inside pl-4 mt-2 space-y-1">
+          <ul className="list-disc list-inside pl-4 mt-2 space-y-1 text-foreground">
             <li>
               <strong>By Law or to Protect Rights:</strong> If we believe the release of information about you is necessary to respond to legal process, to investigate or remedy potential violations of our policies, or to protect the rights, property, and safety of others, we may share your information as permitted or required by any applicable law, rule, or regulation.
             </li>
@@ -92,42 +92,42 @@ export default function PrivacyPolicyPage() {
         
         <section>
           <h2 className="text-2xl font-semibold text-foreground mb-3">5. Data Security</h2>
-          <p>
+          <p className="text-foreground">
             We use administrative, technical, and physical security measures to help protect your personal information. While we have taken reasonable steps to secure the personal information you provide to us, please be aware that despite our efforts, no security measures are perfect or impenetrable, and no method of data transmission can be guaranteed against any interception or other type of misuse.
           </p>
         </section>
         
         <section>
           <h2 className="text-2xl font-semibold text-foreground mb-3">6. Data Retention</h2>
-          <p>
+          <p className="text-foreground">
             We will only keep your personal information for as long as it is necessary for the purposes set out in this privacy policy, unless a longer retention period is required or permitted by law (such as tax, accounting or other legal requirements). For image generation history stored locally via browser storage, you have control over its deletion.
           </p>
         </section>
         
         <section>
           <h2 className="text-2xl font-semibold text-foreground mb-3">7. Your Rights</h2>
-          <p>
+          <p className="text-foreground">
             Depending on your location, you may have certain rights regarding your personal information, such as the right to access, correct, or delete your data. To exercise these rights, please contact us.
           </p>
         </section>
 
         <section>
           <h2 className="text-2xl font-semibold text-foreground mb-3">8. Policy for Children</h2>
-          <p>
+          <p className="text-foreground">
             We do not knowingly solicit information from or market to children under the age of 13. If you become aware of any data we have collected from children under age 13, please contact us using the contact information provided below.
           </p>
         </section>
 
         <section>
           <h2 className="text-2xl font-semibold text-foreground mb-3">9. Changes to This Privacy Policy</h2>
-          <p>
+          <p className="text-foreground">
             We may update this privacy policy from time to time. The updated version will be indicated by an updated "Last Updated" date and the updated version will be effective as soon as it is accessible. We encourage you to review this privacy policy frequently to be informed of how we are protecting your information.
           </p>
         </section>
 
         <section>
           <h2 className="text-2xl font-semibold text-foreground mb-3">10. Contact Us</h2>
-          <p>
+          <p className="text-foreground">
             If you have questions or comments about this Privacy Policy, please contact us at:
             <br />
             Imagen BrainAi Team
