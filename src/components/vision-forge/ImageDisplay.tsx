@@ -226,7 +226,7 @@ export function ImageDisplay({
   return (
     <FuturisticPanel className="flex flex-col gap-4 h-full">
       <div className={cn(
-          "w-full rounded-lg bg-background flex items-center justify-center min-h-[300px] md:min-h-[400px] overflow-hidden p-2 relative border-2 border-dashed border-foreground/20"
+          "w-full rounded-lg bg-background flex items-center justify-center min-h-[300px] md:min-h-[400px] overflow-hidden p-2 relative border-2 border-dashed border-foreground"
         )}
       >
         {isLoading && <ImageLoadingSkeleton aspectRatio={aspectRatio} imageCount={imageCount} />}
