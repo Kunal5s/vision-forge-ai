@@ -58,9 +58,11 @@ export function ArticlesSection() {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ topic }),
-                }).then(res => {
+                }).then(async (res) => {
                     if (!res.ok) {
-                        return res.json().then(err => { throw new Error(err.details || `Failed for topic: ${topic}`) });
+                        const errData = await res.json().catch(() => null); // Gracefully handle non-JSON responses
+                        const errorMessage = errData?.details || errData?.error || `Request failed for topic: ${topic}`;
+                        throw new Error(errorMessage);
                     }
                     return res.json();
                 })

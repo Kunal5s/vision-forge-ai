@@ -16,12 +16,14 @@ export async function POST(req: NextRequest) {
     const { topic } = (await req.json()) as { topic: string };
 
     if (!topic) {
-      return NextResponse.json({ error: 'Topic is required' }, { status: 400 });
+      const message = 'Topic is required';
+      return NextResponse.json({ error: message, details: message }, { status: 400 });
     }
     
     const apiKey = process.env.GOOGLE_API_KEY;
     if (!apiKey) {
-        return NextResponse.json({ error: 'Google AI API key is not configured. Please add GOOGLE_API_KEY to your .env file.' }, { status: 500 });
+        const message = 'Google AI API key is not configured. Please add GOOGLE_API_KEY to your .env file.';
+        return NextResponse.json({ error: message, details: message }, { status: 500 });
     }
 
     const prompt = `You are an expert content creator. Your task is to generate a human-friendly and helpful article concept based on the topic provided.
