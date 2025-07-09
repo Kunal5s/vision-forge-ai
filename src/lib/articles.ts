@@ -87,6 +87,10 @@ async function generateSingleArticle(topic: string, category: string): Promise<A
     const articleData = JSON.parse(aiTextResponse);
 
     const { title, articleContent, keyTakeaways, conclusion, imagePrompt } = articleData;
+
+    if (!title || typeof title !== 'string' || title.trim() === '') {
+        throw new Error(`AI response for topic "${topic}" is missing a valid title.`);
+    }
     
     const slug = title.toLowerCase()
       .replace(/\s+/g, '-')
@@ -123,8 +127,9 @@ export async function getArticles(category: string, topics: string[], options: G
         const existingContent = await getContent(filePath);
         if (existingContent) {
             try {
-                const articles = JSON.parse(existingContent.content);
-                if (Array.isArray(articles) && articles.length > 0) {
+                const articles: Article[] = JSON.parse(existingContent.content);
+                // Basic validation to ensure we have an array of articles with slugs
+                if (Array.isArray(articles) && articles.length > 0 && articles.every(a => a.slug)) {
                     console.log(`Found existing articles for category: ${category}`);
                     return articles;
                 }

@@ -24,6 +24,7 @@ interface Article {
 }
 
 const categorySlugToName: { [key: string]: string } = {
+    'featured': 'Featured',
     'prompts': 'Prompts',
     'styles': 'Styles',
     'tutorials': 'Tutorials',
