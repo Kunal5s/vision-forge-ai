@@ -23,11 +23,28 @@ interface GenerationOptions {
     forceRegenerate?: boolean;
 }
 
+const FREE_MODELS = [
+    "meta-llama/llama-3-8b-instruct:free",
+    "nousresearch/nous-hermes-2-mistral-7b-dpo:free",
+    "gryphe/mythomax-l2-13b:free",
+    "openchat/openchat-3.5:free",
+    "qwen/qwen-2-7b-instruct:free",
+    "mistralai/mistral-7b-instruct:free",
+    "google/gemma-7b-it:free",
+    "databricks/dbrx-instruct:free",
+    "cohere/command-r:free",
+    "microsoft/wizardlm-2-8x22b:free"
+];
+
 async function generateSingleArticle(topic: string, category: string): Promise<Article> {
-    const apiKey = process.env.GOOGLE_API_KEY;
+    const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
-        throw new Error('Gemini API key is not configured.');
+        throw new Error('OpenRouter API key is not configured.');
     }
+
+    // Select a random model from the list
+    const model = FREE_MODELS[Math.floor(Math.random() * FREE_MODELS.length)];
+    console.log(`Using OpenRouter model: ${model} for topic: "${topic}"`);
 
     const fullPrompt = `You are a world-class content creator and SEO expert. Your task is to generate a comprehensive, well-structured, and human-friendly long-form article. The website this is for is an AI Image Generator. Ensure all content is highly relevant to the provided topic and category.
 
@@ -60,31 +77,41 @@ async function generateSingleArticle(topic: string, category: string): Promise<A
     Category: "${category}"
     `;
 
-    const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    const openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-            contents: [{ parts: [{ text: fullPrompt }] }],
-            generationConfig: {
-                responseMimeType: "application/json",
-            }
+            model: model,
+            messages: [{ role: "user", content: fullPrompt }],
+            response_format: { type: "json_object" }, // Request JSON output
         }),
     });
 
-    if (!geminiResponse.ok) {
-        const errorBody = await geminiResponse.text();
-        console.error("Gemini API Error:", errorBody);
-        throw new Error(`Failed to generate content from Google AI: ${geminiResponse.statusText}`);
+    if (!openRouterResponse.ok) {
+        const errorBody = await openRouterResponse.text();
+        console.error("OpenRouter API Error:", errorBody);
+        throw new Error(`Failed to generate content from OpenRouter: ${openRouterResponse.statusText}`);
     }
 
-    const geminiData = await geminiResponse.json();
-    const aiTextResponse = geminiData.candidates[0]?.content.parts[0]?.text;
+    const openRouterData = await openRouterResponse.json();
+    const aiTextResponse = openRouterData.choices[0]?.message?.content;
 
     if (!aiTextResponse) {
         throw new Error("Received an empty response from the AI model.");
     }
     
-    const articleData = JSON.parse(aiTextResponse);
+    let articleData;
+    try {
+        // The response should be a JSON string, so we parse it.
+        articleData = JSON.parse(aiTextResponse);
+    } catch(e) {
+        console.error("Failed to parse JSON response from OpenRouter", aiTextResponse);
+        throw new Error("AI response was not valid JSON.");
+    }
+
 
     const { title, articleContent, keyTakeaways, conclusion, imagePrompt } = articleData;
 
