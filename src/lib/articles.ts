@@ -24,7 +24,7 @@ interface GenerationOptions {
 }
 
 async function generateSingleArticle(topic: string, category: string): Promise<Article> {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GOOGLE_API_KEY;
     if (!apiKey) {
         throw new Error('Gemini API key is not configured.');
     }
