@@ -36,46 +36,94 @@ const FREE_MODELS = [
     "microsoft/wizardlm-2-8x22b:free"
 ];
 
-async function generateSingleArticle(topic: string, category: string): Promise<Article> {
+const JSON_PROMPT_STRUCTURE = `You are a world-class content creator and SEO expert. Your task is to generate a comprehensive, well-structured, and human-friendly long-form article. The website this is for is an AI Image Generator. Ensure all content is highly relevant to the provided topic and category.
+
+**JSON Structure Template & Rules:**
+Respond with a single, valid JSON object. Do not include any text, comments, or markdown formatting before or after the JSON.
+{
+  "title": "A catchy, 9-word title about the topic.",
+  "articleContent": [
+    { "type": "h2", "content": "First main heading about the topic." },
+    { "type": "p", "content": "A detailed paragraph expanding on the first main heading. It should be engaging and informative." },
+    { "type": "h3", "content": "An optional subheading to break down complex points." },
+    { "type": "p", "content": "A paragraph related to the subheading." }
+  ],
+  "keyTakeaways": ["Takeaway 1", "Takeaway 2", "Takeaway 3", "Takeaway 4", "Takeaway 5", "Takeaway 6"],
+  "conclusion": "A strong concluding paragraph summarizing the article.",
+  "imagePrompt": "A 10-15 word prompt for an image generator."
+}
+
+**CRITICAL INSTRUCTIONS:**
+1.  **Strict JSON:** The entire output must be a single, valid JSON object.
+2.  **Topic & Category Relevance:** The article MUST be strictly about the provided TOPIC and CATEGORY.
+3.  **Title Constraint:** The "title" MUST be exactly 9 words long.
+4.  **articleContent Structure:** The "articleContent" field MUST be an array of objects. Each object must have a "type" ("h2", "h3", or "p") and a "content" (string). Use these to create a well-structured article with multiple headings and paragraphs.
+5.  **Content Length:** The total text across all "content" fields in "articleContent" should be approximately 1500 words.
+6.  **Key Takeaways:** The "keyTakeaways" MUST be an array of exactly 6 concise, insightful, bullet-point style takeaways.
+7.  **Image Prompt:** The "imagePrompt" must be a concise, descriptive prompt (10-15 words) for an AI image generator to create a visually appealing and relevant header image.`;
+
+
+async function parseAndValidateArticle(aiResponseText: string, topic: string): Promise<Omit<Article, 'image' | 'dataAiHint' | 'slug' | 'category'>> {
+    let articleData;
+    try {
+        articleData = JSON.parse(aiResponseText);
+    } catch (e) {
+        console.error("Failed to parse JSON response from AI", aiResponseText);
+        throw new Error("AI response was not valid JSON.");
+    }
+
+    const { title, articleContent, keyTakeaways, conclusion, imagePrompt } = articleData;
+
+    if (!title || typeof title !== 'string' || title.trim() === '' || !Array.isArray(articleContent) || articleContent.length === 0 || !Array.isArray(keyTakeaways) || !conclusion || !imagePrompt) {
+        throw new Error(`AI response for topic "${topic}" is missing required fields or has invalid format.`);
+    }
+
+    return { title, articleContent, keyTakeaways, conclusion, imagePrompt };
+}
+
+
+async function generateWithGoogleAI(topic: string, category: string): Promise<any> {
+    const apiKey = process.env.GOOGLE_API_KEY;
+    if (!apiKey) {
+      throw new Error('Google API key is not configured.');
+    }
+
+    const model = 'gemini-1.5-flash';
+    console.log(`Using Google AI model: ${model} for topic: "${topic}"`);
+
+    const fullPrompt = `${JSON_PROMPT_STRUCTURE}\n\nNow, generate the content for:\nTopic: "${topic}"\nCategory: "${category}"`;
+    
+    const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            contents: [{ parts: [{ text: fullPrompt }] }],
+            generationConfig: {
+                response_mime_type: "application/json",
+            },
+        }),
+    });
+
+    if (!geminiResponse.ok) {
+        const errorBody = await geminiResponse.text();
+        console.error("Google AI API Error:", errorBody);
+        throw new Error(`Failed to generate content from Google AI: ${geminiResponse.statusText}`);
+    }
+
+    const geminiData = await geminiResponse.json();
+    return geminiData.candidates[0]?.content?.parts[0]?.text;
+}
+
+async function generateWithOpenRouter(topic: string, category: string): Promise<any> {
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
         throw new Error('OpenRouter API key is not configured.');
     }
 
-    // Select a random model from the list
     const model = FREE_MODELS[Math.floor(Math.random() * FREE_MODELS.length)];
     console.log(`Using OpenRouter model: ${model} for topic: "${topic}"`);
 
-    const fullPrompt = `You are a world-class content creator and SEO expert. Your task is to generate a comprehensive, well-structured, and human-friendly long-form article. The website this is for is an AI Image Generator. Ensure all content is highly relevant to the provided topic and category.
-
-    **JSON Structure Template & Rules:**
-    Respond with a single, valid JSON object. Do not include any text, comments, or markdown formatting before or after the JSON.
-    {
-      "title": "A catchy, 9-word title about the topic.",
-      "articleContent": [
-        { "type": "h2", "content": "First main heading about the topic." },
-        { "type": "p", "content": "A detailed paragraph expanding on the first main heading. It should be engaging and informative." },
-        { "type": "h3", "content": "An optional subheading to break down complex points." },
-        { "type": "p", "content": "A paragraph related to the subheading." }
-      ],
-      "keyTakeaways": ["Takeaway 1", "Takeaway 2", "Takeaway 3", "Takeaway 4", "Takeaway 5", "Takeaway 6"],
-      "conclusion": "A strong concluding paragraph summarizing the article.",
-      "imagePrompt": "A 10-15 word prompt for an image generator."
-    }
-
-    **CRITICAL INSTRUCTIONS:**
-    1.  **Strict JSON:** The entire output must be a single, valid JSON object.
-    2.  **Topic & Category Relevance:** The article MUST be strictly about the provided TOPIC ("${topic}") within the context of the given CATEGORY ("${category}").
-    3.  **Title Constraint:** The "title" MUST be exactly 9 words long.
-    4.  **articleContent Structure:** The "articleContent" field MUST be an array of objects. Each object must have a "type" ("h2", "h3", or "p") and a "content" (string). Use these to create a well-structured article with multiple headings and paragraphs.
-    5.  **Content Length:** The total text across all "content" fields in "articleContent" should be approximately 1500 words.
-    6.  **Key Takeaways:** The "keyTakeaways" MUST be an array of exactly 6 concise, insightful, bullet-point style takeaways.
-    7.  **Image Prompt:** The "imagePrompt" must be a concise, descriptive prompt (10-15 words) for an AI image generator to create a visually appealing and relevant header image.
-
-    Now, generate the content for:
-    Topic: "${topic}"
-    Category: "${category}"
-    `;
+    const fullPrompt = `${JSON_PROMPT_STRUCTURE}\n\nNow, generate the content for:\nTopic: "${topic}"\nCategory: "${category}"`;
 
     const openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: 'POST',
@@ -86,7 +134,7 @@ async function generateSingleArticle(topic: string, category: string): Promise<A
         body: JSON.stringify({
             model: model,
             messages: [{ role: "user", content: fullPrompt }],
-            response_format: { type: "json_object" }, // Request JSON output
+            response_format: { type: "json_object" },
         }),
     });
 
@@ -97,27 +145,32 @@ async function generateSingleArticle(topic: string, category: string): Promise<A
     }
 
     const openRouterData = await openRouterResponse.json();
-    const aiTextResponse = openRouterData.choices[0]?.message?.content;
+    return openRouterData.choices[0]?.message?.content;
+}
+
+
+async function generateSingleArticle(topic: string, category: string): Promise<Article> {
+    let aiTextResponse;
+    
+    try {
+        console.log(`Attempting to generate article for topic "${topic}" with Google AI.`);
+        aiTextResponse = await generateWithGoogleAI(topic, category);
+    } catch (error) {
+        console.warn(`Google AI failed for topic "${topic}". Reason:`, error instanceof Error ? error.message : String(error));
+        console.log(`Falling back to OpenRouter for topic "${topic}".`);
+        try {
+            aiTextResponse = await generateWithOpenRouter(topic, category);
+        } catch (openRouterError) {
+             console.error(`OpenRouter also failed for topic "${topic}".`, openRouterError);
+             throw new Error(`Both Google AI and OpenRouter failed to generate the article.`);
+        }
+    }
 
     if (!aiTextResponse) {
-        throw new Error("Received an empty response from the AI model.");
+        throw new Error("Received an empty response from all AI models.");
     }
     
-    let articleData;
-    try {
-        // The response should be a JSON string, so we parse it.
-        articleData = JSON.parse(aiTextResponse);
-    } catch(e) {
-        console.error("Failed to parse JSON response from OpenRouter", aiTextResponse);
-        throw new Error("AI response was not valid JSON.");
-    }
-
-
-    const { title, articleContent, keyTakeaways, conclusion, imagePrompt } = articleData;
-
-    if (!title || typeof title !== 'string' || title.trim() === '') {
-        throw new Error(`AI response for topic "${topic}" is missing a valid title.`);
-    }
+    const { title, articleContent, keyTakeaways, conclusion, imagePrompt } = await parseAndValidateArticle(aiTextResponse, topic);
     
     const slug = title.toLowerCase()
       .replace(/\s+/g, '-')
@@ -125,6 +178,10 @@ async function generateSingleArticle(topic: string, category: string): Promise<A
       .replace(/\-\-+/g, '-')
       .replace(/^-+/, '')
       .replace(/-+$/, '');
+
+    if (!slug) {
+        throw new Error(`Generated an invalid or empty slug for title: "${title}"`);
+    }
 
     const width = 600;
     const height = 400;
@@ -155,8 +212,7 @@ export async function getArticles(category: string, topics: string[], options: G
         if (existingContent) {
             try {
                 const articles: Article[] = JSON.parse(existingContent.content);
-                // Basic validation to ensure we have an array of articles with slugs
-                if (Array.isArray(articles) && articles.length > 0 && articles.every(a => a.slug)) {
+                if (Array.isArray(articles) && articles.length > 0 && articles.every(a => a.slug && a.title)) {
                     console.log(`Found existing articles for category: ${category}`);
                     return articles;
                 }
