@@ -1,4 +1,6 @@
 
+'use server';
+
 import { getContent, saveContent } from './github';
 
 interface Article {
@@ -104,17 +106,29 @@ export async function getArticles(category: string, topics: string[], options: G
         }
     }
 
-    console.log(`Generating new articles for category: ${category}`);
-    const articlePromises = topics.map(topic => generateSingleArticle(topic, category));
-    const newArticles = await Promise.all(articlePromises);
-
-    const existingFile = await getContent(filePath); // Check again in case it was created during generation
-    await saveContent(
-        filePath,
-        JSON.stringify(newArticles, null, 2),
-        `feat: update articles for ${category}`,
-        existingFile?.sha
-    );
+    console.log(`Generating new articles for category: ${category} sequentially to avoid rate limiting.`);
+    
+    const newArticles: Article[] = [];
+    for (const topic of topics) {
+        try {
+            // Generate one article at a time to avoid hitting rate limits
+            const article = await generateSingleArticle(topic, category);
+            newArticles.push(article);
+            console.log(`Successfully generated article for topic: "${topic}"`);
+        } catch (error) {
+            console.error(`Failed to generate article for topic: "${topic}". Skipping.`, error);
+        }
+    }
+    
+    if (newArticles.length > 0) {
+        const existingFile = await getContent(filePath); // Check again in case it was created during generation
+        await saveContent(
+            filePath,
+            JSON.stringify(newArticles, null, 2),
+            `feat: update articles for ${category}`,
+            existingFile?.sha
+        );
+    }
 
     return newArticles;
 }
