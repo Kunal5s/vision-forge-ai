@@ -12,13 +12,18 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { regenerateFeaturedArticles } from '@/app/actions';
 
+interface ArticleContentBlock {
+    type: 'h2' | 'h3' | 'p';
+    content: string;
+}
+
 interface Article {
     image: string;
     dataAiHint: string;
     category: string;
     title: string;
     slug: string;
-    articleContent: string;
+    articleContent: ArticleContentBlock[] | string;
     keyTakeaways: string[];
     conclusion: string;
 }
@@ -65,10 +70,22 @@ export function ArticlesSection({ articles, topics, category, headline, subheadl
         setIsRegenerating(false);
     };
 
-    const createSnippet = (content: string, length = 150) => {
+    const createSnippet = (content: ArticleContentBlock[] | string, length = 150) => {
         if (!content) return '';
-        if (content.length <= length) return content;
-        return content.substring(0, length) + '...';
+
+        let textToSnippet = '';
+
+        if (Array.isArray(content)) {
+            // Find the first paragraph and use its content for the snippet
+            const firstParagraph = content.find(item => item.type === 'p');
+            textToSnippet = firstParagraph ? firstParagraph.content : '';
+        } else {
+            // Fallback for old string format
+            textToSnippet = content;
+        }
+
+        if (textToSnippet.length <= length) return textToSnippet;
+        return textToSnippet.substring(0, length) + '...';
     }
 
     const isLoading = !articles || articles.length === 0;
@@ -89,14 +106,14 @@ export function ArticlesSection({ articles, topics, category, headline, subheadl
                         Array.from({ length: 4 }).map((_, index) => <ArticleSkeleton key={index} />)
                     ) : (
                         articles.map((article, index) => {
-                            const isFeaturedCategory = article.category === 'Featured';
-                            const categorySlug = article.category.toLowerCase().replace(/\s+/g, '');
-                            const articleUrl = isFeaturedCategory ? '#' : `/${categorySlug}/${article.slug}`;
+                            // The slug for the category should be a clean, URL-friendly string.
+                            const categorySlug = article.category.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+                            const articleUrl = `/${categorySlug}/${article.slug}`;
 
                             return (
                                 <Card key={index} className="flex flex-col overflow-hidden transition-shadow hover:shadow-lg">
                                     <CardHeader className="p-0">
-                                        <Link href={articleUrl} className={isFeaturedCategory ? 'pointer-events-none' : ''}>
+                                        <Link href={articleUrl}>
                                             <div className="aspect-video relative">
                                                 <Image
                                                     src={article.image}
@@ -113,7 +130,7 @@ export function ArticlesSection({ articles, topics, category, headline, subheadl
                                     <CardContent className="p-6 flex-grow">
                                         <Badge variant="secondary" className="mb-2">{article.category}</Badge>
                                         <CardTitle className="text-lg font-semibold leading-snug mb-2">
-                                            <Link href={articleUrl} className={isFeaturedCategory ? 'pointer-events-none' : 'hover:underline'}>
+                                            <Link href={articleUrl} className={'hover:underline'}>
                                                 {article.title}
                                             </Link>
                                         </CardTitle>
@@ -124,9 +141,8 @@ export function ArticlesSection({ articles, topics, category, headline, subheadl
                                     <CardFooter className="p-6 pt-0">
                                         <Link 
                                           href={articleUrl} 
-                                          className={`flex items-center text-sm font-semibold text-foreground ${isFeaturedCategory ? 'pointer-events-none text-muted-foreground' : 'hover:underline'}`}
-                                          title={isFeaturedCategory ? "Full article view for featured items is under development." : "Read the full article"}
-                                          onClick={(e) => isFeaturedCategory && e.preventDefault()}
+                                          className={'flex items-center text-sm font-semibold text-foreground hover:underline'}
+                                          title={"Read the full article"}
                                         >
                                             Read More <ArrowRight className="ml-1 h-4 w-4" />
                                         </Link>

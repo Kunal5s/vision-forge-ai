@@ -3,13 +3,18 @@
 
 import { getContent, saveContent } from './github';
 
+interface ArticleContentBlock {
+    type: 'h2' | 'h3' | 'p';
+    content: string;
+}
+
 interface Article {
     image: string;
     dataAiHint: string;
     category: string;
     title: string;
     slug: string;
-    articleContent: string;
+    articleContent: ArticleContentBlock[];
     keyTakeaways: string[];
     conclusion: string;
 }
@@ -26,23 +31,30 @@ async function generateSingleArticle(topic: string, category: string): Promise<A
 
     const fullPrompt = `You are a world-class content creator and SEO expert. Your task is to generate a comprehensive, well-structured, and human-friendly long-form article. The website this is for is an AI Image Generator. Ensure all content is highly relevant to the provided topic and category.
 
-    **CRITICAL INSTRUCTIONS:**
-    1.  **JSON Output Only:** Respond with a single, valid JSON object. Do not include any text, comments, or markdown formatting before or after the JSON.
-    2.  **Topic & Category Relevance:** The article MUST be strictly about the provided TOPIC ("${topic}") within the context of the given CATEGORY ("${category}"). Every paragraph should be relevant.
-    3.  **Title Constraint:** The "title" MUST be exactly 9 words long. This is a strict requirement.
-    4.  **Content Length:** The "articleContent" MUST be approximately 1500 words. It should be detailed, informative, and engaging, structured with clear paragraphs. Use newline characters ('\n') to separate paragraphs.
-    5.  **Key Takeaways:** The "keyTakeaways" MUST be an array of exactly 6 concise, insightful, bullet-point style takeaways. Each takeaway must be a string.
-    6.  **Image Prompt:** The "imagePrompt" must be a concise, descriptive prompt (10-15 words) for an AI image generator to create a visually appealing and relevant header image for this article.
-
-    **JSON Structure Template:**
+    **JSON Structure Template & Rules:**
+    Respond with a single, valid JSON object. Do not include any text, comments, or markdown formatting before or after the JSON.
     {
       "title": "A catchy, 9-word title about the topic.",
-      "articleContent": "The main article body, approx 1500 words, with paragraphs separated by newline characters...",
+      "articleContent": [
+        { "type": "h2", "content": "First main heading about the topic." },
+        { "type": "p", "content": "A detailed paragraph expanding on the first main heading. It should be engaging and informative." },
+        { "type": "h3", "content": "An optional subheading to break down complex points." },
+        { "type": "p", "content": "A paragraph related to the subheading." }
+      ],
       "keyTakeaways": ["Takeaway 1", "Takeaway 2", "Takeaway 3", "Takeaway 4", "Takeaway 5", "Takeaway 6"],
       "conclusion": "A strong concluding paragraph summarizing the article.",
       "imagePrompt": "A 10-15 word prompt for an image generator."
     }
-    
+
+    **CRITICAL INSTRUCTIONS:**
+    1.  **Strict JSON:** The entire output must be a single, valid JSON object.
+    2.  **Topic & Category Relevance:** The article MUST be strictly about the provided TOPIC ("${topic}") within the context of the given CATEGORY ("${category}").
+    3.  **Title Constraint:** The "title" MUST be exactly 9 words long.
+    4.  **articleContent Structure:** The "articleContent" field MUST be an array of objects. Each object must have a "type" ("h2", "h3", or "p") and a "content" (string). Use these to create a well-structured article with multiple headings and paragraphs.
+    5.  **Content Length:** The total text across all "content" fields in "articleContent" should be approximately 1500 words.
+    6.  **Key Takeaways:** The "keyTakeaways" MUST be an array of exactly 6 concise, insightful, bullet-point style takeaways.
+    7.  **Image Prompt:** The "imagePrompt" must be a concise, descriptive prompt (10-15 words) for an AI image generator to create a visually appealing and relevant header image.
+
     Now, generate the content for:
     Topic: "${topic}"
     Category: "${category}"

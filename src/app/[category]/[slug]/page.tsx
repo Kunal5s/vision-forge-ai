@@ -7,13 +7,18 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle } from 'lucide-react';
 import type { Metadata } from 'next';
 
+interface ArticleContentBlock {
+    type: 'h2' | 'h3' | 'p';
+    content: string;
+}
+
 interface Article {
     image: string;
     dataAiHint: string;
     category: string;
     title: string;
     slug: string;
-    articleContent: string;
+    articleContent: ArticleContentBlock[] | string;
     keyTakeaways: string[];
     conclusion: string;
 }
@@ -46,10 +51,14 @@ export async function generateMetadata({ params }: { params: { category: string;
       title: 'Article Not Found',
     };
   }
+  
+  const description = Array.isArray(article.articleContent)
+    ? (article.articleContent.find(c => c.type === 'p')?.content || '').substring(0, 160)
+    : (article.articleContent as string).substring(0, 160);
 
   return {
     title: article.title,
-    description: article.articleContent.substring(0, 160),
+    description: description,
   };
 }
 
@@ -80,12 +89,24 @@ export default async function ArticlePage({ params }: { params: { category: stri
                     </div>
                 </header>
 
-                <div className="text-lg text-foreground/90 leading-relaxed space-y-6">
-                    {
-                    article.articleContent.split('\n').filter(p => p.trim() !== '').map((paragraph, index) => (
-                        <p key={index}>{paragraph}</p>
-                    ))
-                    }
+                <div className="text-lg text-foreground/90 leading-relaxed">
+                     {Array.isArray(article.articleContent) ? article.articleContent.map((item, index) => {
+                        switch (item.type) {
+                            case 'h2':
+                                return <h2 key={index} className="text-3xl font-bold mt-10 mb-4 border-b pb-2">{item.content}</h2>;
+                            case 'h3':
+                                return <h3 key={index} className="text-2xl font-semibold mt-8 mb-3">{item.content}</h3>;
+                            case 'p':
+                                return <p key={index} className="mb-6">{item.content}</p>;
+                            default:
+                                return null;
+                        }
+                    }) : (
+                        // Fallback for old string format for backward compatibility
+                        (article.articleContent as string).split('\n').filter(p => p.trim() !== '').map((paragraph, index) => (
+                            <p key={index} className="mb-6">{paragraph}</p>
+                        ))
+                    )}
                 </div>
 
                 <section className="my-12">
