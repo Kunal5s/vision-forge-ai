@@ -20,9 +20,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: message, details: message }, { status: 400 });
     }
     
-    const apiKey = process.env.GOOGLE_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-        const message = 'Google AI API key is not configured. Please add GOOGLE_API_KEY to your .env file.';
+        const message = 'Gemini API key is not configured. Please add GEMINI_API_KEY to your .env file.';
         return NextResponse.json({ error: message, details: message }, { status: 500 });
     }
 
