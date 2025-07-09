@@ -8,7 +8,7 @@ import { CheckCircle } from 'lucide-react';
 import type { Metadata } from 'next';
 
 interface ArticleContentBlock {
-    type: 'h2' | 'h3' | 'p';
+    type: 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p';
     content: string;
 }
 
@@ -75,7 +75,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
             <article className="max-w-4xl mx-auto">
                 <header className="mb-8">
                     <Badge variant="secondary" className="mb-4">{article.category}</Badge>
-                    <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
+                    <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
                         {article.title}
                     </h1>
                     <div className="relative aspect-video w-full rounded-lg overflow-hidden mt-6 shadow-lg">
@@ -90,13 +90,19 @@ export default async function ArticlePage({ params }: { params: { category: stri
                     </div>
                 </header>
 
-                <div className="text-lg text-foreground/90 leading-relaxed">
+                <div className="prose prose-lg dark:prose-invert max-w-none text-foreground/90 leading-relaxed">
                      {Array.isArray(article.articleContent) ? article.articleContent.map((item, index) => {
                         switch (item.type) {
                             case 'h2':
                                 return <h2 key={index} className="text-3xl font-bold mt-10 mb-4 border-b pb-2">{item.content}</h2>;
                             case 'h3':
                                 return <h3 key={index} className="text-2xl font-semibold mt-8 mb-3">{item.content}</h3>;
+                            case 'h4':
+                                return <h4 key={index} className="text-xl font-semibold mt-6 mb-2">{item.content}</h4>;
+                            case 'h5':
+                                return <h5 key={index} className="text-lg font-semibold mt-4 mb-2">{item.content}</h5>;
+                            case 'h6':
+                                return <h6 key={index} className="text-base font-semibold mt-4 mb-2">{item.content}</h6>;
                             case 'p':
                                 return <p key={index} className="mb-6">{item.content}</p>;
                             default:

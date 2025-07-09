@@ -4,7 +4,7 @@
 import { getContent, saveContent } from './github';
 
 interface ArticleContentBlock {
-    type: 'h2' | 'h3' | 'p';
+    type: 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p';
     content: string;
 }
 
@@ -36,17 +36,21 @@ const FREE_MODELS = [
     "microsoft/wizardlm-2-8x22b:free"
 ];
 
-const JSON_PROMPT_STRUCTURE = `You are a world-class content creator and SEO expert. Your task is to generate a comprehensive, well-structured, and human-friendly long-form article. The website this is for is an AI Image Generator. Ensure all content is highly relevant to the provided topic and category.
+const JSON_PROMPT_STRUCTURE = `You are a world-class content creator and SEO expert with a knack for writing in a deeply human and engaging tone. Your task is to generate a comprehensive, well-structured, and human-friendly long-form article for an AI Image Generator website.
+
+**Primary Goal:** The article must be original, creative, helpful, and written in a tone that feels like a conversation with a friendly expert. It should be fully humanized.
 
 **JSON Structure Template & Rules:**
 Respond with a single, valid JSON object. Do not include any text, comments, or markdown formatting before or after the JSON.
 {
   "title": "A catchy, 9-word title about the topic.",
   "articleContent": [
-    { "type": "h2", "content": "First main heading about the topic." },
-    { "type": "p", "content": "A detailed paragraph expanding on the first main heading. It should be engaging and informative." },
-    { "type": "h3", "content": "An optional subheading to break down complex points." },
-    { "type": "p", "content": "A paragraph related to the subheading." }
+    { "type": "h2", "content": "First main heading." },
+    { "type": "p", "content": "A short, engaging paragraph." },
+    { "type": "h3", "content": "A subheading." },
+    { "type": "p", "content": "Another short paragraph." },
+    { "type": "h4", "content": "A more specific heading." },
+    { "type": "p", "content": "A detailed but concise paragraph." }
   ],
   "keyTakeaways": ["Takeaway 1", "Takeaway 2", "Takeaway 3", "Takeaway 4", "Takeaway 5", "Takeaway 6"],
   "conclusion": "A strong concluding paragraph summarizing the article.",
@@ -54,13 +58,13 @@ Respond with a single, valid JSON object. Do not include any text, comments, or 
 }
 
 **CRITICAL INSTRUCTIONS:**
-1.  **Strict JSON:** The entire output must be a single, valid JSON object.
-2.  **Topic & Category Relevance:** The article MUST be strictly about the provided TOPIC and CATEGORY.
-3.  **Title Constraint:** The "title" MUST be exactly 9 words long.
-4.  **articleContent Structure:** The "articleContent" field MUST be an array of objects. Each object must have a "type" ("h2", "h3", or "p") and a "content" (string). Use these to create a well-structured article with multiple headings and paragraphs.
-5.  **Content Length:** The total text across all "content" fields in "articleContent" should be approximately 1500 words.
-6.  **Key Takeaways:** The "keyTakeaways" MUST be an array of exactly 6 concise, insightful, bullet-point style takeaways.
-7.  **Image Prompt:** The "imagePrompt" must be a concise, descriptive prompt (10-15 words) for an AI image generator to create a visually appealing and relevant header image.`;
+1.  **Tone & Style:** The writing style MUST be conversational, friendly, and empowering. Use a human tone, incorporating emotions like happiness or excitement where appropriate. Paragraphs MUST be short and easy to read.
+2.  **Heading Structure:** The "articleContent" MUST use a logical heading structure, including H2, H3, and H4 tags to break down the topic. Use H5 and H6 for finer details if necessary.
+3.  **Content Length & Relevance:** The total text across all "content" fields should be approximately 1500 words. The content must be highly relevant to the TOPIC and CATEGORY provided.
+4.  **Title Constraint:** The "title" MUST be exactly 9 words long.
+5.  **Key Takeaways:** The "keyTakeaways" array MUST contain exactly 6 concise, insightful bullet-point style takeaways.
+6.  **Image Prompt:** The "imagePrompt" must be a concise, descriptive prompt (10-15 words) to create a relevant header image.
+7.  **Strict JSON:** The entire output must be a single, valid JSON object.`;
 
 
 async function parseAndValidateArticle(aiResponseText: string, topic: string): Promise<Omit<Article, 'image' | 'dataAiHint' | 'slug' | 'category'>> {
@@ -68,13 +72,15 @@ async function parseAndValidateArticle(aiResponseText: string, topic: string): P
     try {
         articleData = JSON.parse(aiResponseText);
     } catch (e) {
-        console.error("Failed to parse JSON response from AI", aiResponseText);
+        console.error("Failed to parse JSON response from AI for topic:", topic, aiResponseText);
         throw new Error("AI response was not valid JSON.");
     }
 
+    // @ts-ignore
     const { title, articleContent, keyTakeaways, conclusion, imagePrompt } = articleData;
 
     if (!title || typeof title !== 'string' || title.trim() === '' || !Array.isArray(articleContent) || articleContent.length === 0 || !Array.isArray(keyTakeaways) || !conclusion || !imagePrompt) {
+        console.error("Validation failed for AI response on topic:", topic, articleData);
         throw new Error(`AI response for topic "${topic}" is missing required fields or has invalid format.`);
     }
 
@@ -149,7 +155,7 @@ async function generateWithOpenRouter(topic: string, category: string): Promise<
 }
 
 
-async function generateSingleArticle(topic: string, category: string): Promise<Article> {
+async function generateSingleArticle(topic: string, category: string): Promise<Article | null> {
     let aiTextResponse;
     
     try {
@@ -170,7 +176,15 @@ async function generateSingleArticle(topic: string, category: string): Promise<A
         throw new Error("Received an empty response from all AI models.");
     }
     
-    const { title, articleContent, keyTakeaways, conclusion, imagePrompt } = await parseAndValidateArticle(aiTextResponse, topic);
+    let parsedData;
+    try {
+        parsedData = await parseAndValidateArticle(aiTextResponse, topic);
+    } catch (validationError) {
+        console.error(`Validation failed for generated article on topic "${topic}". Skipping save.`, validationError);
+        return null; // Return null if validation fails
+    }
+
+    const { title, articleContent, keyTakeaways, conclusion, imagePrompt } = parsedData;
     
     const slug = title.toLowerCase()
       .replace(/\s+/g, '-')
@@ -180,7 +194,8 @@ async function generateSingleArticle(topic: string, category: string): Promise<A
       .replace(/-+$/, '');
 
     if (!slug) {
-        throw new Error(`Generated an invalid or empty slug for title: "${title}"`);
+        console.error(`Generated an invalid or empty slug for title: "${title}". Skipping article.`);
+        return null; // Return null if slug is invalid
     }
 
     const width = 600;
@@ -228,8 +243,10 @@ export async function getArticles(category: string, topics: string[], options: G
     for (const topic of topics) {
         try {
             const article = await generateSingleArticle(topic, category);
-            newArticles.push(article);
-            console.log(`Successfully generated article for topic: "${topic}"`);
+            if (article) { // Only push valid, non-null articles
+                newArticles.push(article);
+                console.log(`Successfully generated and validated article for topic: "${topic}"`);
+            }
         } catch (error) {
             console.error(`Failed to generate article for topic: "${topic}". Skipping.`, error);
         }
@@ -247,5 +264,3 @@ export async function getArticles(category: string, topics: string[], options: G
 
     return newArticles;
 }
-
-    
