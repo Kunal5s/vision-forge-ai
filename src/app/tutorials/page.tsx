@@ -2,6 +2,8 @@
 import { ArticlesSection } from '@/components/vision-forge/ArticlesSection';
 import { getArticles } from '@/lib/articles';
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
+import { ArticlesSkeleton } from '@/components/vision-forge/ArticlesSkeleton';
 
 export const metadata: Metadata = {
     title: 'Tutorials | Imagen BrainAi',
@@ -15,17 +17,27 @@ const tutorialsTopics = [
     'Fixing Common Problems like Hands and Faces in AI',
 ];
 
-export default async function TutorialsPage() {
+async function ArticleList() {
     const articles = await getArticles('Tutorials', tutorialsTopics);
+    return <ArticlesSection articles={articles} topics={tutorialsTopics} category="Tutorials" />;
+}
+
+export default function TutorialsPage() {
     return (
         <main className="py-12">
-            <ArticlesSection 
-                articles={articles}
-                topics={tutorialsTopics} 
-                category="Tutorials" 
-                headline="AI Art Tutorials"
-                subheadline="Step-by-step guides to help you master AI image generation, from basics to advanced techniques."
-            />
+            <section className="container mx-auto px-4">
+                <header className="text-center mb-12">
+                    <h2 className="text-4xl font-extrabold tracking-tight text-foreground">
+                        AI Art Tutorials
+                    </h2>
+                    <p className="text-muted-foreground mt-2 max-w-3xl mx-auto">
+                        Step-by-step guides to help you master AI image generation, from basics to advanced techniques.
+                    </p>
+                </header>
+                <Suspense fallback={<ArticlesSkeleton />}>
+                    <ArticleList />
+                </Suspense>
+            </section>
         </main>
     );
 }

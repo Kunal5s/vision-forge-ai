@@ -2,6 +2,8 @@
 import { ArticlesSection } from '@/components/vision-forge/ArticlesSection';
 import { getArticles } from '@/lib/articles';
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
+import { ArticlesSkeleton } from '@/components/vision-forge/ArticlesSkeleton';
 
 export const metadata: Metadata = {
     title: 'Prompts Articles | Imagen BrainAi',
@@ -15,17 +17,27 @@ const promptsTopics = [
     'How to Achieve Perfect Character Consistency Across Images',
 ];
 
-export default async function PromptsPage() {
+async function ArticleList() {
     const articles = await getArticles('Prompts', promptsTopics);
+    return <ArticlesSection articles={articles} topics={promptsTopics} category="Prompts" />;
+}
+
+export default function PromptsPage() {
     return (
         <main className="py-12">
-            <ArticlesSection 
-                articles={articles}
-                topics={promptsTopics} 
-                category="Prompts" 
-                headline="Mastering AI Prompts"
-                subheadline="Learn how to write better prompts to unlock the full potential of AI image generation."
-            />
+            <section className="container mx-auto px-4">
+                <header className="text-center mb-12">
+                    <h2 className="text-4xl font-extrabold tracking-tight text-foreground">
+                        Mastering AI Prompts
+                    </h2>
+                    <p className="text-muted-foreground mt-2 max-w-3xl mx-auto">
+                        Learn how to write better prompts to unlock the full potential of AI image generation.
+                    </p>
+                </header>
+                <Suspense fallback={<ArticlesSkeleton />}>
+                    <ArticleList />
+                </Suspense>
+            </section>
         </main>
     );
 }

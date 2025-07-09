@@ -6,6 +6,8 @@ import { FaqSection } from '@/components/vision-forge/FaqSection';
 import type { Metadata } from 'next';
 import { ArticlesSection } from '@/components/vision-forge/ArticlesSection';
 import { getArticles } from '@/lib/articles';
+import { Suspense } from 'react';
+import { ArticlesSkeleton } from '@/components/vision-forge/ArticlesSkeleton';
 
 export const metadata: Metadata = {
   title: 'Imagen BrainAi: Your Free AI Image Generator',
@@ -19,9 +21,12 @@ const featuredTopics = [
     'Exploring Ancient Civilizations with Modern AI technology',
 ];
 
-export default async function HomePage() {
-  const articles = await getArticles('Featured', featuredTopics);
+async function FeaturedArticleList() {
+    const articles = await getArticles('Featured', featuredTopics);
+    return <ArticlesSection articles={articles} topics={featuredTopics} category="Featured" showRegenerate={true} />;
+}
 
+export default function HomePage() {
   return (
     <main>
       <section className="w-full bg-foreground text-background">
@@ -35,14 +40,21 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <ArticlesSection 
-        articles={articles}
-        topics={featuredTopics}
-        category="Featured"
-        headline="Featured Articles"
-        subheadline="Explore fresh insights on AI, creativity, and technology, generated just for you."
-        showRegenerate={true}
-      />
+      <section className="py-16 bg-background">
+        <div className="container mx-auto px-4">
+          <header className="text-center mb-12">
+            <h2 className="text-4xl font-extrabold tracking-tight text-foreground">
+              Featured Articles
+            </h2>
+            <p className="text-muted-foreground mt-2 max-w-3xl mx-auto">
+              Explore fresh insights on AI, creativity, and technology, generated just for you.
+            </p>
+          </header>
+          <Suspense fallback={<ArticlesSkeleton />}>
+            <FeaturedArticleList />
+          </Suspense>
+        </div>
+      </section>
       
       <section className="container mx-auto px-4 pt-12 pb-8">
         <ImageGenerator />
