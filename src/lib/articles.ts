@@ -247,3 +247,5 @@ export async function getArticles(category: string, topics: string[], options: G
 
     return newArticles;
 }
+
+    
