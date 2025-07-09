@@ -11,6 +11,13 @@ export const metadata: Metadata = {
   description: "Welcome to the future of AI image generation. Describe your vision, and our advanced text-to-image AI will bring it to life. Create stunning, high-quality images, illustrations, and art from text prompts in seconds. Get started for free and see what you can create.",
 };
 
+const featuredTopics = [
+    'The Impact of 5G Technology on society',
+    'Beginner\'s Guide to Investing in the stock market',
+    'The creative process of Digital Art',
+    'Exploring Ancient Civilizations with Modern AI technology',
+];
+
 export default function HomePage() {
   return (
     <main>
@@ -25,7 +32,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      <ArticlesSection />
+      <ArticlesSection 
+        topics={featuredTopics}
+        category="Featured"
+        headline="Featured Articles"
+        subheadline="Explore fresh insights on AI, creativity, and technology, generated just for you."
+        showRegenerate={true}
+      />
       
       <section className="container mx-auto px-4 pt-12 pb-8">
         <ImageGenerator />

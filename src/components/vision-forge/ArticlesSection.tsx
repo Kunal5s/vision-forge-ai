@@ -16,15 +16,18 @@ interface Article {
     dataAiHint: string;
     category: string;
     title: string;
-    description: string;
+    articleContent: string;
+    keyTakeaways: string[];
+    conclusion: string;
 }
 
-const initialTopics = [
-    'Artificial Intelligence in Healthcare',
-    'The Future of Remote Work',
-    'Sustainable Living Tips',
-    'Beginner\'s Guide to Investing',
-];
+interface ArticlesSectionProps {
+    topics: string[];
+    category: string;
+    headline: string;
+    subheadline: string;
+    showRegenerate?: boolean;
+}
 
 const ArticleSkeleton = () => (
     <Card className="flex flex-col overflow-hidden">
@@ -43,24 +46,25 @@ const ArticleSkeleton = () => (
     </Card>
 );
 
-export function ArticlesSection() {
+export function ArticlesSection({ topics, category, headline, subheadline, showRegenerate = false }: ArticlesSectionProps) {
     const [articles, setArticles] = useState<Article[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const { toast } = useToast();
+    const [currentTopics, setCurrentTopics] = useState(topics);
 
-    const fetchArticles = useCallback(async (topics: string[]) => {
+    const fetchArticles = useCallback(async (topicsToFetch: string[]) => {
         setIsLoading(true);
         setArticles([]);
 
         try {
-            const articlePromises = topics.map(topic =>
+            const articlePromises = topicsToFetch.map(topic =>
                 fetch('/api/generate-article', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ topic }),
+                    body: JSON.stringify({ topic, category }),
                 }).then(async (res) => {
                     if (!res.ok) {
-                        const errData = await res.json().catch(() => null); // Gracefully handle non-JSON responses
+                        const errData = await res.json().catch(() => null);
                         const errorMessage = errData?.details || errData?.error || `Request failed for topic: ${topic}`;
                         throw new Error(errorMessage);
                     }
@@ -81,20 +85,23 @@ export function ArticlesSection() {
         } finally {
             setIsLoading(false);
         }
-    }, [toast]);
+    }, [toast, category]);
 
     useEffect(() => {
-        fetchArticles(initialTopics);
-    }, [fetchArticles]);
+        fetchArticles(currentTopics);
+    }, [fetchArticles, currentTopics]);
     
     const handleRegenerate = () => {
-         const newTopics = [
-            'The Impact of 5G Technology',
-            'Mental Health and Mindfulness',
-            'The Rise of E-commerce',
-            'Exploring Ancient Civilizations with AI',
-         ];
-         fetchArticles(newTopics);
+         // This is a simple regeneration logic. A more advanced version could fetch new topics.
+         // For now, it just re-runs the fetch with the same topics.
+         toast({ title: 'Regenerating...', description: 'Fetching a fresh batch of articles for you.' });
+         fetchArticles(currentTopics);
+    }
+
+    const createSnippet = (content: string, length = 150) => {
+        if (!content) return '';
+        if (content.length <= length) return content;
+        return content.substring(0, length) + '...';
     }
 
     return (
@@ -102,10 +109,10 @@ export function ArticlesSection() {
             <div className="container mx-auto px-4">
                 <header className="text-center mb-12">
                     <h2 className="text-4xl font-extrabold tracking-tight text-foreground">
-                        Featured Articles
+                        {headline}
                     </h2>
-                    <p className="text-muted-foreground mt-2">
-                        Explore fresh insights on AI, creativity, and technology, generated just for you.
+                    <p className="text-muted-foreground mt-2 max-w-3xl mx-auto">
+                        {subheadline}
                     </p>
                 </header>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -131,7 +138,7 @@ export function ArticlesSection() {
                                     <Badge variant="secondary" className="mb-2">{article.category}</Badge>
                                     <CardTitle className="text-lg font-semibold leading-snug mb-2">{article.title}</CardTitle>
                                     <p className="text-sm text-muted-foreground">
-                                        {article.description}
+                                        {createSnippet(article.articleContent)}
                                     </p>
                                 </CardContent>
                                 <CardFooter className="p-6 pt-0">
@@ -143,7 +150,7 @@ export function ArticlesSection() {
                         ))
                     )}
                 </div>
-                 {!isLoading && articles.length > 0 && (
+                 {showRegenerate && !isLoading && articles.length > 0 && (
                     <div className="text-center mt-12">
                         <Button onClick={handleRegenerate} disabled={isLoading}>
                             <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
