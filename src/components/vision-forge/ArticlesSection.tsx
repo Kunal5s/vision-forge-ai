@@ -6,10 +6,11 @@ import Link from 'next/link';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, RefreshCw } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { regenerateFeaturedArticles } from '@/app/actions';
 
 interface Article {
     image: string;
@@ -22,6 +23,7 @@ interface Article {
 }
 
 interface ArticlesSectionProps {
+    articles: Article[];
     topics: string[];
     category: string;
     headline: string;
@@ -46,63 +48,29 @@ const ArticleSkeleton = () => (
     </Card>
 );
 
-export function ArticlesSection({ topics, category, headline, subheadline, showRegenerate = false }: ArticlesSectionProps) {
-    const [articles, setArticles] = useState<Article[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+export function ArticlesSection({ articles, topics, category, headline, subheadline, showRegenerate = false }: ArticlesSectionProps) {
     const { toast } = useToast();
-    const [currentTopics, setCurrentTopics] = useState(topics);
+    const [isRegenerating, setIsRegenerating] = useState(false);
 
-    const fetchArticles = useCallback(async (topicsToFetch: string[]) => {
-        setIsLoading(true);
-        setArticles([]);
-
-        try {
-            const articlePromises = topicsToFetch.map(topic =>
-                fetch('/api/generate-article', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ topic, category }),
-                }).then(async (res) => {
-                    if (!res.ok) {
-                        const errData = await res.json().catch(() => null);
-                        const errorMessage = errData?.details || errData?.error || `Request failed for topic: ${topic}`;
-                        throw new Error(errorMessage);
-                    }
-                    return res.json();
-                })
-            );
-
-            const results = await Promise.all(articlePromises);
-            setArticles(results);
-
-        } catch (error: any) {
-            console.error("Failed to fetch articles:", error);
-            toast({
-                title: 'Error Generating Articles',
-                description: error.message || 'Could not generate new articles. Please try again later.',
-                variant: 'destructive',
-            });
-        } finally {
-            setIsLoading(false);
+    const handleRegenerate = async () => {
+        setIsRegenerating(true);
+        toast({ title: 'Regenerating...', description: 'Fetching a fresh batch of articles. The page will refresh shortly.' });
+        const result = await regenerateFeaturedArticles();
+        if (result.success) {
+            toast({ title: 'Success!', description: result.message });
+        } else {
+            toast({ title: 'Error', description: result.message, variant: 'destructive' });
         }
-    }, [toast, category]);
-
-    useEffect(() => {
-        fetchArticles(currentTopics);
-    }, [fetchArticles, currentTopics]);
-    
-    const handleRegenerate = () => {
-         // This is a simple regeneration logic. A more advanced version could fetch new topics.
-         // For now, it just re-runs the fetch with the same topics.
-         toast({ title: 'Regenerating...', description: 'Fetching a fresh batch of articles for you.' });
-         fetchArticles(currentTopics);
-    }
+        setIsRegenerating(false);
+    };
 
     const createSnippet = (content: string, length = 150) => {
         if (!content) return '';
         if (content.length <= length) return content;
         return content.substring(0, length) + '...';
     }
+
+    const isLoading = !articles || articles.length === 0;
 
     return (
         <section className="py-16 bg-background">
@@ -150,10 +118,10 @@ export function ArticlesSection({ topics, category, headline, subheadline, showR
                         ))
                     )}
                 </div>
-                 {showRegenerate && !isLoading && articles.length > 0 && (
+                 {showRegenerate && (
                     <div className="text-center mt-12">
-                        <Button onClick={handleRegenerate} disabled={isLoading}>
-                            <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                        <Button onClick={handleRegenerate} disabled={isRegenerating}>
+                            <RefreshCw className={`mr-2 h-4 w-4 ${isRegenerating ? 'animate-spin' : ''}`} />
                             Regenerate Articles
                         </Button>
                     </div>

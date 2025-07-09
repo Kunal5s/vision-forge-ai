@@ -1,5 +1,6 @@
 
 import { ArticlesSection } from '@/components/vision-forge/ArticlesSection';
+import { getArticles } from '@/lib/articles';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -14,10 +15,12 @@ const promptsTopics = [
     'How to Achieve Perfect Character Consistency Across Images',
 ];
 
-export default function PromptsPage() {
+export default async function PromptsPage() {
+    const articles = await getArticles('Prompts', promptsTopics);
     return (
         <main className="py-12">
             <ArticlesSection 
+                articles={articles}
                 topics={promptsTopics} 
                 category="Prompts" 
                 headline="Mastering AI Prompts"

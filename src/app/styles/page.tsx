@@ -1,5 +1,6 @@
 
 import { ArticlesSection } from '@/components/vision-forge/ArticlesSection';
+import { getArticles } from '@/lib/articles';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -14,10 +15,12 @@ const stylesTopics = [
     'A Guide to Developing Your Own Unique AI Style',
 ];
 
-export default function StylesPage() {
+export default async function StylesPage() {
+    const articles = await getArticles('Styles', stylesTopics);
     return (
         <main className="py-12">
             <ArticlesSection 
+                articles={articles}
                 topics={stylesTopics} 
                 category="Styles" 
                 headline="Explore Artistic Styles"

@@ -1,5 +1,6 @@
 
 import { ArticlesSection } from '@/components/vision-forge/ArticlesSection';
+import { getArticles } from '@/lib/articles';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -14,10 +15,12 @@ const technologyTopics = [
     'The Rise of Cybersecurity in the Modern Digital Age',
 ];
 
-export default function TechnologyPage() {
+export default async function TechnologyPage() {
+    const articles = await getArticles('Technology', technologyTopics);
     return (
         <main className="py-12">
-            <ArticlesSection 
+            <ArticlesSection
+                articles={articles} 
                 topics={technologyTopics} 
                 category="Technology" 
                 headline="Technology Insights"

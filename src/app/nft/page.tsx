@@ -1,5 +1,6 @@
 
 import { ArticlesSection } from '@/components/vision-forge/ArticlesSection';
+import { getArticles } from '@/lib/articles';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -14,10 +15,12 @@ const nftTopics = [
     'A Deep Dive into the Technology Behind NFTs Explained',
 ];
 
-export default function NftPage() {
+export default async function NftPage() {
+    const articles = await getArticles('NFT', nftTopics);
     return (
         <main className="py-12">
             <ArticlesSection 
+                articles={articles}
                 topics={nftTopics} 
                 category="NFT" 
                 headline="NFT & Digital Art"

@@ -5,6 +5,7 @@ import { PricingSection } from '@/components/vision-forge/PricingSection';
 import { FaqSection } from '@/components/vision-forge/FaqSection';
 import type { Metadata } from 'next';
 import { ArticlesSection } from '@/components/vision-forge/ArticlesSection';
+import { getArticles } from '@/lib/articles';
 
 export const metadata: Metadata = {
   title: 'Imagen BrainAi: Your Free AI Image Generator',
@@ -18,7 +19,9 @@ const featuredTopics = [
     'Exploring Ancient Civilizations with Modern AI technology',
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const articles = await getArticles('Featured', featuredTopics);
+
   return (
     <main>
       <section className="w-full bg-foreground text-background">
@@ -33,6 +36,7 @@ export default function HomePage() {
       </section>
 
       <ArticlesSection 
+        articles={articles}
         topics={featuredTopics}
         category="Featured"
         headline="Featured Articles"

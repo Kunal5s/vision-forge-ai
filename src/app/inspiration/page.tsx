@@ -1,5 +1,6 @@
 
 import { ArticlesSection } from '@/components/vision-forge/ArticlesSection';
+import { getArticles } from '@/lib/articles';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -14,10 +15,13 @@ const inspirationTopics = [
     'How to Find Unique Inspiration in Everyday Life Scenes',
 ];
 
-export default function InspirationPage() {
+export default async function InspirationPage() {
+    const articles = await getArticles('Inspiration', inspirationTopics);
+
     return (
         <main className="py-12">
             <ArticlesSection 
+                articles={articles}
                 topics={inspirationTopics} 
                 category="Inspiration" 
                 headline="Creative Inspiration Hub"

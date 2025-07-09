@@ -1,5 +1,6 @@
 
 import { ArticlesSection } from '@/components/vision-forge/ArticlesSection';
+import { getArticles } from '@/lib/articles';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -14,10 +15,12 @@ const tutorialsTopics = [
     'Fixing Common Problems like Hands and Faces in AI',
 ];
 
-export default function TutorialsPage() {
+export default async function TutorialsPage() {
+    const articles = await getArticles('Tutorials', tutorialsTopics);
     return (
         <main className="py-12">
             <ArticlesSection 
+                articles={articles}
                 topics={tutorialsTopics} 
                 category="Tutorials" 
                 headline="AI Art Tutorials"

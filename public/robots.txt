@@ -1,3 +1,7 @@
+
+# See https://www.robotstxt.org/robotstxt.html for documentation on how to use the robots.txt file
+#
+# Please note: The Sitemap URL should be updated with your production domain.
 User-agent: *
 Allow: /
-Sitemap: https://imagenbrainai.in/sitemap.xml
+Sitemap: https://your-production-domain.com/sitemap.xml
