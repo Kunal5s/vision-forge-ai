@@ -14,7 +14,7 @@ const tutorialsTopics = [
     'A Complete Beginner\'s Guide to Your First AI Image',
     'How to Create Stunningly Realistic AI Portraits in Minutes',
     'A Tutorial on Generating Epic AI Fantasy Landscape Art',
-    'Fixing Common Problems like Hands and Faces in AI',
+    'Fixing Common AI Art Problems like Hands and Faces',
 ];
 
 async function ArticleList() {

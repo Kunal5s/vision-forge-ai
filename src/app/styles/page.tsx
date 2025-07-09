@@ -12,8 +12,8 @@ export const metadata: Metadata = {
 
 const stylesTopics = [
     'Exploring the Most Popular Digital Art Styles in AI',
-    'How to Master Photorealism in Your AI Art Generations',
-    'Creating Authentic Vintage and Retro Effects with AI Prompts',
+    'How to Master Photorealism in Your AI Art Creations',
+    'Creating Authentic Vintage and Retro Effects with AI',
     'A Guide to Developing Your Own Unique AI Style',
 ];
 

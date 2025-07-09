@@ -19,6 +19,7 @@ export async function GET() {
         '/terms',
         '/privacy',
         '/disclaimer',
+        '/blog',
     ].map((route) => ({
         url: `${URL}${route}`,
         lastModified: new Date().toISOString(),

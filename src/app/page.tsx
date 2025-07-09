@@ -8,6 +8,9 @@ import { ArticlesSection } from '@/components/vision-forge/ArticlesSection';
 import { getArticles } from '@/lib/articles';
 import { Suspense } from 'react';
 import { ArticlesSkeleton } from '@/components/vision-forge/ArticlesSkeleton';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Imagen BrainAi: Your Free AI Image Generator',
@@ -15,10 +18,10 @@ export const metadata: Metadata = {
 };
 
 const featuredTopics = [
-    'The Impact of 5G Technology on society',
-    'Beginner\'s Guide to Investing in the stock market',
-    'The creative process of Digital Art',
-    'Exploring Ancient Civilizations with Modern AI technology',
+    'The Impact of AI on Modern Graphic Design',
+    'A Beginner\'s Guide to Investing in Digital Art NFTs',
+    'The Creative Process of an AI-Assisted Digital Artist',
+    'Exploring Ancient Mythology with Modern AI Image Generation',
 ];
 
 async function FeaturedArticleList() {
@@ -53,6 +56,13 @@ export default function HomePage() {
           <Suspense fallback={<ArticlesSkeleton />}>
             <FeaturedArticleList />
           </Suspense>
+           <div className="text-center mt-12">
+              <Button asChild size="lg" variant="default" className="bg-foreground text-background hover:bg-foreground/90">
+                  <Link href="/blog">
+                      Explore All Articles <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
+              </Button>
+          </div>
         </div>
       </section>
       

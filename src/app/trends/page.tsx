@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const trendsTopics = [
-    'The Biggest AI Art and Design Trends of This Year',
-    'Understanding Diffusion Models: The Tech Behind Your Favorite AI',
-    'The Important Ethical Considerations of Modern AI Art Generation',
-    'What is the Future of Generative AI Technology Models',
+    'The Biggest AI Art and Design Trends to Watch',
+    'Sora and Veo: The Rise of AI Video Generation',
+    'The Ethical Considerations of Modern AI Art Generation Tools',
+    'What is the Future of Generative AI and AGI',
 ];
 
 async function ArticleList() {

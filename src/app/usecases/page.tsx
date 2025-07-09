@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const usecasesTopics = [
-    'How AI Image Generation is Revolutionizing Digital Marketing',
-    'Creating Rapid Concept Art for Video Games with AI',
-    'The Use of AI in Modern Architectural Visualization Projects',
-    'A Guide to AI-Assisted Product Design and Prototyping',
+    'How AI Image Generation is Revolutionizing Ad Creatives',
+    'Creating Rapid Concept Art for Indie Video Games',
+    'Using AI for Modern Architectural and Interior Design Visualization',
+    'A Guide to AI-Assisted Product Design and Mockups',
 ];
 
 async function ArticleList() {

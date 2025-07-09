@@ -12,10 +12,10 @@ export const metadata: Metadata = {
 };
 
 const storybookTopics = [
-    'A Guide to Visual Storytelling with AI Image Generators',
-    'Step-by-Step AI Character Design for Your Next Big Project',
+    'A Guide to Compelling Visual Storytelling with AI Generators',
+    'Step-by-Step AI Character Design for Your Next Story',
     'Creating Dynamic and Engaging Scenes for Your Digital Storybook',
-    'How to Generate Comic Book Panels Using AI Tools',
+    'How to Generate Entire Comic Book Panels Using AI',
 ];
 
 async function ArticleList() {

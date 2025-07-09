@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const technologyTopics = [
-    'The Future of Artificial Intelligence in Everyday Life',
-    'Quantum Computing: A Beginner\'s Simple Guide to a Complex Topic',
-    'How 5G Technology is Actively Revolutionizing the World Today',
-    'The Rise of Cybersecurity in the Modern Digital Age',
+    'The Future of Generative AI: Models, Trends, and Ethics',
+    'A Beginner\'s Guide to How AI Diffusion Models Work',
+    'How Latent Consistency Models (LCMs) Are Making AI Faster',
+    'The Rise of Open-Source AI: A Look at Llama 3',
 ];
 
 async function ArticleList() {

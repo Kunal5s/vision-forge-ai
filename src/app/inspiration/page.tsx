@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const inspirationTopics = [
-    'Overcoming Creative Blocks with AI-Powered Idea Generation Tools',
-    'Building Fantasy Worlds: A Guide to AI-Assisted Creativity',
+    'Overcoming Creative Blocks with AI Idea Generation Tools',
+    'Building Fantasy Worlds: A Guide to AI-Assisted World-Building',
     'Exploring Abstract Art Concepts Using Generative AI Models',
-    'How to Find Unique Inspiration in Everyday Life Scenes',
+    'How to Find Unique Artistic Inspiration in Everyday Life',
 ];
 
 async function ArticleList() {
