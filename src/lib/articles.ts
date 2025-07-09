@@ -8,6 +8,7 @@ interface Article {
     dataAiHint: string;
     category: string;
     title: string;
+    slug: string;
     articleContent: string;
     keyTakeaways: string[];
     conclusion: string;
@@ -23,17 +24,26 @@ async function generateSingleArticle(topic: string, category: string): Promise<A
         throw new Error('Gemini API key is not configured.');
     }
 
-    const fullPrompt = `You are an expert content creator and SEO specialist. Your task is to generate a detailed, well-structured, and human-friendly long-form article based on the topic provided.
+    const fullPrompt = `You are a world-class content creator and SEO expert. Your task is to generate a comprehensive, well-structured, and human-friendly long-form article. The website this is for is an AI Image Generator. Ensure all content is highly relevant to the provided topic and category.
 
-    IMPORTANT: Respond with a single, valid JSON object only, with no other text, comments, or markdown formatting before or after it.
+    **CRITICAL INSTRUCTIONS:**
+    1.  **JSON Output Only:** Respond with a single, valid JSON object. Do not include any text, comments, or markdown formatting before or after the JSON.
+    2.  **Topic & Category Relevance:** The article MUST be strictly about the provided TOPIC ("${topic}") within the context of the given CATEGORY ("${category}"). Every paragraph should be relevant.
+    3.  **Title Constraint:** The "title" MUST be exactly 9 words long. This is a strict requirement.
+    4.  **Content Length:** The "articleContent" MUST be approximately 1500 words. It should be detailed, informative, and engaging, structured with clear paragraphs. Use newline characters ('\n') to separate paragraphs.
+    5.  **Key Takeaways:** The "keyTakeaways" MUST be an array of exactly 6 concise, insightful, bullet-point style takeaways. Each takeaway must be a string.
+    6.  **Image Prompt:** The "imagePrompt" must be a concise, descriptive prompt (10-15 words) for an AI image generator to create a visually appealing and relevant header image for this article.
+
+    **JSON Structure Template:**
+    {
+      "title": "A catchy, 9-word title about the topic.",
+      "articleContent": "The main article body, approx 1500 words, with paragraphs separated by newline characters...",
+      "keyTakeaways": ["Takeaway 1", "Takeaway 2", "Takeaway 3", "Takeaway 4", "Takeaway 5", "Takeaway 6"],
+      "conclusion": "A strong concluding paragraph summarizing the article.",
+      "imagePrompt": "A 10-15 word prompt for an image generator."
+    }
     
-    The JSON object must have the following keys:
-    - "title": A catchy, human-friendly title for the article. It MUST be exactly 9 words long.
-    - "articleContent": The main body of the article, written in a helpful and engaging tone. It MUST be a well-structured text of approximately 1500 words. Use paragraphs to structure the content.
-    - "keyTakeaways": An array of exactly 6 concise, bullet-point style key takeaways from the article. Each takeaway MUST be a string.
-    - "conclusion": A strong concluding paragraph that summarizes the article's main points.
-    - "imagePrompt": A concise, descriptive prompt for an image generator to create a relevant, visually appealing image for this article. Should be around 10-15 words.
-    
+    Now, generate the content for:
     Topic: "${topic}"
     Category: "${category}"
     `;
@@ -66,7 +76,13 @@ async function generateSingleArticle(topic: string, category: string): Promise<A
 
     const { title, articleContent, keyTakeaways, conclusion, imagePrompt } = articleData;
     
-    // Generate image using Pollinations.ai
+    const slug = title.toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]+/g, '')
+      .replace(/\-\-+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
+
     const width = 600;
     const height = 400;
     const seed = Math.floor(Math.random() * 1_000_000_000);
@@ -80,6 +96,7 @@ async function generateSingleArticle(topic: string, category: string): Promise<A
       dataAiHint: dataAiHint,
       category,
       title,
+      slug,
       articleContent,
       keyTakeaways,
       conclusion,
@@ -95,7 +112,6 @@ export async function getArticles(category: string, topics: string[], options: G
         if (existingContent) {
             try {
                 const articles = JSON.parse(existingContent.content);
-                // Basic validation
                 if (Array.isArray(articles) && articles.length > 0) {
                     console.log(`Found existing articles for category: ${category}`);
                     return articles;
@@ -111,7 +127,6 @@ export async function getArticles(category: string, topics: string[], options: G
     const newArticles: Article[] = [];
     for (const topic of topics) {
         try {
-            // Generate one article at a time to avoid hitting rate limits
             const article = await generateSingleArticle(topic, category);
             newArticles.push(article);
             console.log(`Successfully generated article for topic: "${topic}"`);
@@ -121,7 +136,7 @@ export async function getArticles(category: string, topics: string[], options: G
     }
     
     if (newArticles.length > 0) {
-        const existingFile = await getContent(filePath); // Check again in case it was created during generation
+        const existingFile = await getContent(filePath);
         await saveContent(
             filePath,
             JSON.stringify(newArticles, null, 2),

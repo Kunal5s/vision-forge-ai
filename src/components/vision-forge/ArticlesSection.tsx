@@ -17,6 +17,7 @@ interface Article {
     dataAiHint: string;
     category: string;
     title: string;
+    slug: string;
     articleContent: string;
     keyTakeaways: string[];
     conclusion: string;
@@ -87,35 +88,52 @@ export function ArticlesSection({ articles, topics, category, headline, subheadl
                     {isLoading ? (
                         Array.from({ length: 4 }).map((_, index) => <ArticleSkeleton key={index} />)
                     ) : (
-                        articles.map((article, index) => (
-                            <Card key={index} className="flex flex-col overflow-hidden transition-shadow hover:shadow-lg">
-                                <CardHeader className="p-0">
-                                    <div className="aspect-video relative">
-                                        <Image
-                                            src={article.image}
-                                            alt={article.title}
-                                            layout="fill"
-                                            objectFit="cover"
-                                            data-ai-hint={article.dataAiHint}
-                                            className="transition-opacity duration-500 opacity-0"
-                                            onLoadingComplete={(image) => image.classList.remove('opacity-0')}
-                                        />
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="p-6 flex-grow">
-                                    <Badge variant="secondary" className="mb-2">{article.category}</Badge>
-                                    <CardTitle className="text-lg font-semibold leading-snug mb-2">{article.title}</CardTitle>
-                                    <p className="text-sm text-muted-foreground">
-                                        {createSnippet(article.articleContent)}
-                                    </p>
-                                </CardContent>
-                                <CardFooter className="p-6 pt-0">
-                                    <Link href="#" className="flex items-center text-sm font-semibold text-foreground hover:underline">
-                                        Read More <ArrowRight className="ml-1 h-4 w-4" />
-                                    </Link>
-                                </CardFooter>
-                            </Card>
-                        ))
+                        articles.map((article, index) => {
+                            const isFeaturedCategory = article.category === 'Featured';
+                            const categorySlug = article.category.toLowerCase().replace(/\s+/g, '');
+                            const articleUrl = isFeaturedCategory ? '#' : `/${categorySlug}/${article.slug}`;
+
+                            return (
+                                <Card key={index} className="flex flex-col overflow-hidden transition-shadow hover:shadow-lg">
+                                    <CardHeader className="p-0">
+                                        <Link href={articleUrl} className={isFeaturedCategory ? 'pointer-events-none' : ''}>
+                                            <div className="aspect-video relative">
+                                                <Image
+                                                    src={article.image}
+                                                    alt={article.title}
+                                                    layout="fill"
+                                                    objectFit="cover"
+                                                    data-ai-hint={article.dataAiHint}
+                                                    className="transition-opacity duration-500 opacity-0"
+                                                    onLoadingComplete={(image) => image.classList.remove('opacity-0')}
+                                                />
+                                            </div>
+                                        </Link>
+                                    </CardHeader>
+                                    <CardContent className="p-6 flex-grow">
+                                        <Badge variant="secondary" className="mb-2">{article.category}</Badge>
+                                        <CardTitle className="text-lg font-semibold leading-snug mb-2">
+                                            <Link href={articleUrl} className={isFeaturedCategory ? 'pointer-events-none' : 'hover:underline'}>
+                                                {article.title}
+                                            </Link>
+                                        </CardTitle>
+                                        <p className="text-sm text-muted-foreground">
+                                            {createSnippet(article.articleContent)}
+                                        </p>
+                                    </CardContent>
+                                    <CardFooter className="p-6 pt-0">
+                                        <Link 
+                                          href={articleUrl} 
+                                          className={`flex items-center text-sm font-semibold text-foreground ${isFeaturedCategory ? 'pointer-events-none text-muted-foreground' : 'hover:underline'}`}
+                                          title={isFeaturedCategory ? "Full article view for featured items is under development." : "Read the full article"}
+                                          onClick={(e) => isFeaturedCategory && e.preventDefault()}
+                                        >
+                                            Read More <ArrowRight className="ml-1 h-4 w-4" />
+                                        </Link>
+                                    </CardFooter>
+                                </Card>
+                            )
+                        })
                     )}
                 </div>
                  {showRegenerate && (
