@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const promptsTopics = [
-    'The Ultimate Guide to Negative Prompts in AI Art',
-    'Mastering Prompt Syntax: How to Use Weights and Parentheses',
-    'From Simple to Complex: A Guide to Layering Prompts',
-    'The Art of Ambiguity: How Vague Prompts Unlock Creativity',
+    'The Secret to Crafting Emotionally Resonant AI Art Prompts',
+    'A Deep Dive into Advanced Prompt Weighting Techniques',
+    'How to Use Negative Prompts to Eliminate Unwanted Elements',
+    'From a Single Word to a Masterpiece: Prompt Expansion',
 ];
 
 async function ArticleList() {

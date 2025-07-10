@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const tutorialsTopics = [
-    'Your First AI Image: A Beginner Guide to Generation',
-    'How to Fix Common AI Art Flaws Like Hands',
-    'Advanced Techniques: A Tutorial on Image-to-Image and Inpainting',
-    'Creating Professional Product Mockups for Your Business Using AI',
+    'A Beginner’s Tutorial to Your First AI Masterpiece',
+    'Tutorial: Fixing Distorted Faces and Hands in AI Art',
+    'Advanced Image Editing Tutorial: AI Inpainting and Outpainting',
+    'How to Create Stunning Product Mockups with AI',
 ];
 
 async function ArticleList() {

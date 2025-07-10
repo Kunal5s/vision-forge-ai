@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const stylesTopics = [
-    'Achieving Photorealism: A Deep Dive into Prompts for AI',
-    'How to Generate Art in the Style of Masters',
-    'Exploring Cyberpunk and Solarpunk Aesthetics in AI-Generated Art',
-    'A Guide to Creating Stunning Anime Characters with AI',
+    'How to Replicate Film Photography Styles Using AI Prompts',
+    'A Guide to Creating Impossible Architecture with AI',
+    'Exploring Abstract Expressionism with AI Image Generation Models',
+    'How to Achieve a Perfect Flat Design Illustration Style',
 ];
 
 async function ArticleList() {
