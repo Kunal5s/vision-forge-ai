@@ -12,10 +12,10 @@ export const metadata: Metadata = {
 };
 
 const storybookTopics = [
-    'How to Create a Consistent Character for Your Illustrated Storybook',
-    'From Script to Panel: Visualizing Comic Book Scenes with AI',
+    'How to Create a Consistent Character for Your Storybook',
+    'From Script to Panel: Visualizing Comic Book Scenes',
     'AI for World-Building: Generating Fantasy Maps and Environments',
-    'A Guide to Creating Emotional and Expressive Characters with AI Prompts',
+    'Creating Emotional and Expressive Characters with AI Prompts',
 ];
 
 async function ArticleList() {

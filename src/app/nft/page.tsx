@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const nftTopics = [
-    'How to Create and Sell Your First AI-Generated NFT Collection',
-    'The Future of NFTs: Exploring Utility, Gaming, and Digital Identity',
+    'How to Create and Sell Your First AI NFT',
+    'The Future of NFTs: Exploring Utility, Gaming, and Identity',
     'Understanding the Carbon Footprint of NFTs and Eco-Friendly Alternatives',
-    'Marketing Your NFT Project: A Guide to Building a Strong Community',
+    'Marketing Your NFT Project: A Guide to Building Community',
 ];
 
 async function ArticleList() {

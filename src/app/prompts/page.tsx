@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const promptsTopics = [
-    'The Ultimate Guide to Negative Prompts: What to Avoid for Perfect Images',
-    'Mastering Prompt Syntax: How to Use Weights and Parentheses Effectively',
-    'From Simple to Complex: A Step-by-Step Guide to Layering Prompts',
-    'The Art of Ambiguity: How Vague Prompts Can Unlock Creative AI Results',
+    'The Ultimate Guide to Negative Prompts in AI Art',
+    'Mastering Prompt Syntax: How to Use Weights and Parentheses',
+    'From Simple to Complex: A Guide to Layering Prompts',
+    'The Art of Ambiguity: How Vague Prompts Unlock Creativity',
 ];
 
 async function ArticleList() {

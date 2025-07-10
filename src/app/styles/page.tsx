@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const stylesTopics = [
-    'Achieving Photorealism: A Deep Dive into Prompts for Realistic AI Images',
-    'How to Generate Art in the Style of Van Gogh, Picasso, and Other Masters',
+    'Achieving Photorealism: A Deep Dive into Prompts for AI',
+    'How to Generate Art in the Style of Masters',
     'Exploring Cyberpunk and Solarpunk Aesthetics in AI-Generated Art',
-    'A Guide to Creating Stunning Anime and Manga Style Characters with AI',
+    'A Guide to Creating Stunning Anime Characters with AI',
 ];
 
 async function ArticleList() {

@@ -18,10 +18,10 @@ export const metadata: Metadata = {
 };
 
 const featuredTopics = [
-    'The Definitive Guide to Advanced Prompt Engineering for AI Art',
-    'How AI is Blurring the Lines Between Photography and Imagination',
+    'The Definitive Guide to Advanced Prompt Engineering for AI',
+    'How AI Blurs the Lines Between Photography and Imagination',
     'Creating Consistent Characters: A Deep Dive into AI Storytelling',
-    'Beyond Pretty Pictures: The Business Case for AI Image Generation',
+    'Beyond Pretty Pictures: The Business Case for AI Generation',
 ];
 
 async function FeaturedArticleList() {

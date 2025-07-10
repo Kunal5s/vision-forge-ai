@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const trendsTopics = [
-    'The Rise of AI-Generated Video: The Next Frontier in Content Creation',
-    'Ethical AI: Navigating Copyright, Bias, and Ownership in Generative Art',
-    'AI in the Metaverse: Shaping the Future of Virtual Worlds',
-    'Hyper-Personalization: How AI is Tailoring Digital Experiences for Everyone',
+    'The Rise of AI-Generated Video: The Next Frontier',
+    'Ethical AI: Navigating Copyright and Bias in Generative Art',
+    'AI in the Metaverse: Shaping the Future of Worlds',
+    'Hyper-Personalization: How AI is Tailoring Digital Experiences for You',
 ];
 
 async function ArticleList() {

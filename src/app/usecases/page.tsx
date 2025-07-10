@@ -12,9 +12,9 @@ export const metadata: Metadata = {
 
 const usecasesTopics = [
     'How AI is Revolutionizing Ad Creatives and Marketing Campaigns',
-    'Generating Endless Concept Art for Indie Game Development on a Budget',
+    'Generating Endless Concept Art for Indie Game Development',
     'The Future of Architectural Visualization with AI-Powered Renderings',
-    'Using AI for Fashion Design: From Mood Boards to Final Products',
+    'Using AI for Fashion Design: From Mood Boards',
 ];
 
 async function ArticleList() {

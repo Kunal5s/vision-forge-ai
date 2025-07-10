@@ -11,8 +11,8 @@ export const metadata: Metadata = {
 };
 
 const tutorialsTopics = [
-    'Your First AI Image: A Beginner\'s Guide to Text-to-Image Generation',
-    'How to Fix Common AI Art Flaws Like Mangled Hands and Distorted Faces',
+    'Your First AI Image: A Beginner Guide to Generation',
+    'How to Fix Common AI Art Flaws Like Hands',
     'Advanced Techniques: A Tutorial on Image-to-Image and Inpainting',
     'Creating Professional Product Mockups for Your Business Using AI',
 ];

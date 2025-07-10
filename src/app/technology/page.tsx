@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const technologyTopics = [
-    'How Diffusion Models Work: A Simple Explanation of Text-to-Image AI',
-    'The Evolution of AI Models: From GPT-2 to the Latest Breakthroughs',
+    'How Diffusion Models Work: An Explanation of Text-to-Image',
+    'The Evolution of AI Models: From GPT-2 to Now',
     'Understanding Latent Space: The Hidden Universe of AI Creativity',
-    'The Role of Cloud Computing in Powering Large-Scale AI Models',
+    'The Role of Cloud Computing in Powering AI Models',
 ];
 
 async function ArticleList() {

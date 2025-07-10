@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const inspirationTopics = [
-    'Overcoming Creative Block: Using AI as Your Brainstorming Partner',
+    'Overcoming Creative Block: Using AI as a Brainstorming Partner',
     'Finding Your Unique Artistic Style in the Age of AI',
-    'Drawing Inspiration from History and Mythology for Your AI Creations',
-    'Surrealism in the Digital Age: Creating Dream-Like Worlds with AI',
+    'Drawing Inspiration from History and Mythology for AI Creations',
+    'Surrealism in the Digital Age: Creating Dream-Like Worlds',
 ];
 
 async function ArticleList() {
