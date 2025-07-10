@@ -35,6 +35,13 @@ const nextConfig: NextConfig = {
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;", // Example, adjust as needed
   },
+  // Expose environment variables to the browser
+  publicRuntimeConfig: {
+    GOOGLE_API_KEY: process.env.GOOGLE_API_KEY,
+    OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
+  },
 };
 
 export default nextConfig;
+
+    

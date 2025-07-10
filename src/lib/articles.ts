@@ -2,6 +2,9 @@
 'use server';
 
 import { getContent, saveContent } from './github';
+import getConfig from 'next/config';
+
+const { serverRuntimeConfig, publicRuntimeConfig } = getConfig() || { serverRuntimeConfig: {}, publicRuntimeConfig: {} };
 
 interface ArticleContentBlock {
     type: 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p';
@@ -58,7 +61,9 @@ You MUST respond with a single, valid JSON object. Do not include any text, comm
     { "type": "h4", "content": "A more specific heading." },
     { "type": "p", "content": "A simple explanation." },
     { "type": "h5", "content": "A heading for a small detail." },
-    { "type": "p", "content": "A final short paragraph for this section." }
+    { "type": "p", "content": "A final short paragraph for this section." },
+    { "type": "h6", "content": "An even more specific heading." },
+    { "type": "p", "content": "A final short paragraph for this subsection." }
   ],
   "keyTakeaways": ["Takeaway 1", "Takeaway 2", "Takeaway 3", "Takeaway 4", "Takeaway 5", "Takeaway 6"],
   "conclusion": "A strong, empowering, and short concluding paragraph.",
@@ -96,7 +101,7 @@ async function parseAndValidateArticle(aiResponseText: string, topic: string): P
 
 
 async function generateWithGoogleAI(topic: string, category: string): Promise<any> {
-    const apiKey = process.env.GOOGLE_API_KEY;
+    const apiKey = publicRuntimeConfig.GOOGLE_API_KEY || process.env.GOOGLE_API_KEY;
     if (!apiKey) {
       throw new Error('Google API key is not configured.');
     }
@@ -128,7 +133,7 @@ async function generateWithGoogleAI(topic: string, category: string): Promise<an
 }
 
 async function generateWithOpenRouter(topic: string, category: string): Promise<any> {
-    const apiKey = process.env.OPENROUTER_API_KEY;
+    const apiKey = publicRuntimeConfig.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
         throw new Error('OpenRouter API key is not configured.');
     }
@@ -185,12 +190,13 @@ async function generateSingleArticle(topic: string, category: string): Promise<A
     
     let parsedData;
     try {
+        // @ts-ignore
         parsedData = await parseAndValidateArticle(aiTextResponse, topic);
     } catch (validationError) {
         console.error(`Validation failed for generated article on topic "${topic}". Skipping save.`, validationError);
         return null; // Return null if validation fails
     }
-
+    // @ts-ignore
     const { title, articleContent, keyTakeaways, conclusion, imagePrompt } = parsedData;
     
     const slug = title.toLowerCase()
@@ -271,3 +277,5 @@ export async function getArticles(category: string, topics: string[], options: G
 
     return newArticles;
 }
+
+    
