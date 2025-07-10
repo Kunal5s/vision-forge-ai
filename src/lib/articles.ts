@@ -24,9 +24,10 @@ interface GenerationOptions {
 }
 
 // 🎯 Priority models first, as requested by the user.
+// Updated list with reliable and available free models.
 const PRIORITY_MODELS = [
-    "qwen/qwen-2-72b-instruct",
     "meta-llama/llama-3-70b-instruct",
+    "qwen/qwen-2-72b-instruct",
     "databricks/dbrx-instruct",
     "mistralai/mixtral-8x22b-instruct",
     "google/gemini-pro" // Using via OpenRouter
