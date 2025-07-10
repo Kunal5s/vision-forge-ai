@@ -6,9 +6,12 @@ import { Octokit } from 'octokit';
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_USER = process.env.GITHUB_USER;
 const GITHUB_REPO = process.env.GITHUB_REPO;
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 
-if (!GITHUB_USER || !GITHUB_REPO || !GITHUB_TOKEN) {
-  console.warn('GitHub environment variables are not fully set. Article persistence will be disabled.');
+
+if (!GITHUB_USER || !GITHUB_REPO || !GITHUB_TOKEN || !OPENROUTER_API_KEY || !GOOGLE_API_KEY) {
+  console.warn('One or more environment variables (GitHub, OpenRouter, Google) are not fully set. Article persistence and generation might be disabled.');
 }
 
 const octokit = new Octokit({
