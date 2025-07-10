@@ -76,7 +76,7 @@ You MUST respond with a single, valid JSON object. Do not include any text, comm
 6.  **Strict JSON:** The entire output must be a single, valid JSON object, ready for parsing.`;
 
 
-async function parseAndValidateArticle(aiResponseText: string, topic: string): Promise<Omit<Article, 'image' | 'dataAiHint' | 'slug' | 'category'>> {
+async function parseAndValidateArticle(aiResponseText: string, topic: string): Promise<Omit<Article, 'image' | 'dataAiHint' | 'slug' | 'category'> & { imagePrompt: string }> {
     let articleData;
     try {
         articleData = JSON.parse(aiResponseText);
@@ -126,6 +126,9 @@ async function generateWithGoogleAI(topic: string, category: string): Promise<an
     }
 
     const geminiData = await geminiResponse.json();
+    if (!geminiData.candidates || geminiData.candidates.length === 0) {
+        throw new Error('Google AI returned no candidates.');
+    }
     return geminiData.candidates[0]?.content?.parts[0]?.text;
 }
 
@@ -187,13 +190,12 @@ async function generateSingleArticle(topic: string, category: string): Promise<A
     
     let parsedData;
     try {
-        // @ts-ignore
         parsedData = await parseAndValidateArticle(aiTextResponse, topic);
     } catch (validationError) {
         console.error(`Validation failed for generated article on topic "${topic}". Skipping save.`, validationError);
         return null; // Return null if validation fails
     }
-    // @ts-ignore
+    
     const { title, articleContent, keyTakeaways, conclusion, imagePrompt } = parsedData;
     
     const slug = title.toLowerCase()

@@ -1,4 +1,3 @@
-
 // This API route is no longer used.
 // The article generation logic has been moved to /src/lib/articles.ts
 // to be used directly by server components for better performance and SEO.
