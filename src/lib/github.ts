@@ -20,7 +20,7 @@ const octokit = new Octokit({
 
 // Function to get file content and sha
 export async function getContent(path: string): Promise<{ content: string; sha: string } | null> {
-  if (!GITHUB_TOKEN) return null;
+  if (!GITHUB_USER || !GITHUB_REPO || !GITHUB_TOKEN) return null;
   try {
     const response = await octokit.request('GET /repos/{owner}/{repo}/contents/{path}', {
       owner: GITHUB_USER!,
@@ -48,7 +48,7 @@ export async function getContent(path: string): Promise<{ content: string; sha: 
 
 // Function to save content to the repo
 export async function saveContent(path: string, content: string, message: string, sha?: string) {
-  if (!GITHUB_TOKEN) return;
+  if (!GITHUB_USER || !GITHUB_REPO || !GITHUB_TOKEN) return;
   try {
     const encodedContent = Buffer.from(content).toString('base64');
     
