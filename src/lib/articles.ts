@@ -36,35 +36,42 @@ const FREE_MODELS = [
     "microsoft/wizardlm-2-8x22b:free"
 ];
 
-const JSON_PROMPT_STRUCTURE = `You are a world-class content creator and SEO expert with a knack for writing in a deeply human and engaging tone. Your task is to generate a comprehensive, well-structured, and human-friendly long-form article for an AI Image Generator website.
+const JSON_PROMPT_STRUCTURE = `You are a world-class content creator and SEO expert with a special talent for writing in a deeply human, engaging, and emotional tone. Your task is to generate a comprehensive, well-structured, and fully humanized long-form article for an AI Image Generator website.
 
-**Primary Goal:** The article must be original, creative, helpful, and written in a tone that feels like a conversation with a friendly expert. It should be fully humanized.
+**Primary Goal:** The article must be original, creative, helpful, and written in a tone that feels like a warm, exciting, and empowering conversation with a friendly expert.
+
+**Tone and Style - CRITICAL INSTRUCTIONS:**
+1.  **Human, Not Robotic:** Your writing MUST be conversational. Use "I," "you," and "we" to build a direct connection. Paragraphs MUST be very short (1-3 sentences) for easy reading.
+2.  **Emotional and Engaging:** Infuse the text with genuine emotion. Use tones like "Empowering" (e.g., "You have the power to create worlds!"), "Friendly" (e.g., "Hey, let's explore this together! 😄"), and "Creative" (e.g., "Imagine a universe painted with light... ✨"). Make the reader feel excited and motivated.
+3.  **No Jargon:** Explain complex topics in a simple, easy-to-understand way. Avoid technical jargon.
 
 **JSON Structure Template & Rules:**
-Respond with a single, valid JSON object. Do not include any text, comments, or markdown formatting before or after the JSON.
+You MUST respond with a single, valid JSON object. Do not include any text, comments, or markdown before or after the JSON.
 {
   "title": "A catchy, 9-word title about the topic.",
   "articleContent": [
     { "type": "h2", "content": "First main heading." },
-    { "type": "p", "content": "A short, engaging paragraph." },
-    { "type": "h3", "content": "A subheading." },
-    { "type": "p", "content": "Another short paragraph." },
+    { "type": "p", "content": "A very short, engaging paragraph (1-2 sentences)." },
+    { "type": "p", "content": "Another short, friendly paragraph." },
+    { "type": "h3", "content": "A subheading to dive deeper." },
+    { "type": "p", "content": "A detailed but concise paragraph." },
     { "type": "h4", "content": "A more specific heading." },
-    { "type": "p", "content": "A detailed but concise paragraph." }
+    { "type": "p", "content": "A simple explanation." },
+    { "type": "h5", "content": "A heading for a small detail." },
+    { "type": "p", "content": "A final short paragraph for this section." }
   ],
   "keyTakeaways": ["Takeaway 1", "Takeaway 2", "Takeaway 3", "Takeaway 4", "Takeaway 5", "Takeaway 6"],
-  "conclusion": "A strong concluding paragraph summarizing the article.",
-  "imagePrompt": "A 10-15 word prompt for an image generator."
+  "conclusion": "A strong, empowering, and short concluding paragraph.",
+  "imagePrompt": "A 10-15 word, highly descriptive prompt for a beautiful header image."
 }
 
-**CRITICAL INSTRUCTIONS:**
-1.  **Tone & Style:** The writing style MUST be conversational, friendly, and empowering. Use a human tone, incorporating emotions like happiness or excitement where appropriate. Paragraphs MUST be short and easy to read.
-2.  **Heading Structure:** The "articleContent" MUST use a logical heading structure, including H2, H3, and H4 tags to break down the topic. Use H5 and H6 for finer details if necessary.
-3.  **Content Length & Relevance:** The total text across all "content" fields should be approximately 1500 words. The content must be highly relevant to the TOPIC and CATEGORY provided.
-4.  **Title Constraint:** The "title" MUST be exactly 9 words long.
-5.  **Key Takeaways:** The "keyTakeaways" array MUST contain exactly 6 concise, insightful bullet-point style takeaways.
-6.  **Image Prompt:** The "imagePrompt" must be a concise, descriptive prompt (10-15 words) to create a relevant header image.
-7.  **Strict JSON:** The entire output must be a single, valid JSON object.`;
+**Content & Formatting - CRITICAL INSTRUCTIONS:**
+1.  **Total Word Count:** The combined text of all "content" fields MUST be approximately 2000 words.
+2.  **Heading Structure:** The "articleContent" array MUST use a logical and deep heading structure, including H2, H3, H4, and even H5/H6 tags to break down the topic comprehensively. This is compulsory.
+3.  **Title Constraint:** The "title" MUST be exactly 9 words long.
+4.  **Key Takeaways:** The "keyTakeaways" array MUST contain exactly 6 concise, insightful, and helpful bullet-point style takeaways.
+5.  **Relevance:** The content must be highly relevant to the TOPIC and CATEGORY provided.
+6.  **Strict JSON:** The entire output must be a single, valid JSON object, ready for parsing.`;
 
 
 async function parseAndValidateArticle(aiResponseText: string, topic: string): Promise<Omit<Article, 'image' | 'dataAiHint' | 'slug' | 'category'>> {
