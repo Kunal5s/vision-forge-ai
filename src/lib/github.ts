@@ -6,11 +6,10 @@ import { Octokit } from 'octokit';
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_REPO_OWNER = process.env.GITHUB_REPO_OWNER;
 const GITHUB_REPO_NAME = process.env.GITHUB_REPO_NAME;
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
-
-if (!GITHUB_REPO_OWNER || !GITHUB_REPO_NAME || !GITHUB_TOKEN || !OPENROUTER_API_KEY) {
-  console.warn('One or more environment variables (GitHub, OpenRouter) are not fully set. Article persistence and generation might be disabled.');
+// This check now correctly uses the variable names from the .env file.
+if (!GITHUB_REPO_OWNER || !GITHUB_REPO_NAME || !GITHUB_TOKEN) {
+  console.warn('GitHub environment variables (GITHUB_REPO_OWNER, GITHUB_REPO_NAME, GITHUB_TOKEN) are not fully set. Article persistence will be disabled.');
 }
 
 const octokit = new Octokit({
@@ -22,8 +21,8 @@ export async function getContent(path: string): Promise<{ content: string; sha: 
   if (!GITHUB_REPO_OWNER || !GITHUB_REPO_NAME || !GITHUB_TOKEN) return null;
   try {
     const response = await octokit.request('GET /repos/{owner}/{repo}/contents/{path}', {
-      owner: GITHUB_REPO_OWNER!,
-      repo: GITHUB_REPO_NAME!,
+      owner: GITHUB_REPO_OWNER,
+      repo: GITHUB_REPO_NAME,
       path: path,
       headers: {
         'X-GitHub-Api-Version': '2022-11-28'
@@ -52,8 +51,8 @@ export async function saveContent(path: string, content: string, message: string
     const encodedContent = Buffer.from(content).toString('base64');
     
     await octokit.request('PUT /repos/{owner}/{repo}/contents/{path}', {
-      owner: GITHUB_REPO_OWNER!,
-      repo: GITHUB_REPO_NAME!,
+      owner: GITHUB_REPO_OWNER,
+      repo: GITHUB_REPO_NAME,
       path: path,
       message: message,
       content: encodedContent,
