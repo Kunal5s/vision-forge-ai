@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -39,7 +39,7 @@ type FormData = z.infer<typeof formSchema>;
 export function ImageGenerator() {
   const { toast } = useToast();
   const { subscription } = useSubscription();
-  const generationCancelled = useRef(false);
+  const [generationCancelled, setGenerationCancelled] = useState(false);
   
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>(ASPECT_RATIOS[0].value);
   const [displayAspectRatio, setDisplayAspectRatio] = useState<string>(ASPECT_RATIOS[0].value);
@@ -88,7 +88,7 @@ export function ImageGenerator() {
   };
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
-    generationCancelled.current = false;
+    setGenerationCancelled(false);
     setIsGenerating(true);
     setError(null);
     setGeneratedImageUrls([]);
@@ -115,7 +115,7 @@ export function ImageGenerator() {
         body: JSON.stringify(payload),
       });
 
-      if (generationCancelled.current) {
+      if (generationCancelled) {
         console.log("Generation was cancelled by the user.");
         return;
       }
@@ -151,14 +151,14 @@ export function ImageGenerator() {
       toast({ title: 'Vision Forged!', description: `Successfully generated ${result.images.length} image(s).` });
 
     } catch (e: any) {
-      if (!generationCancelled.current) {
+      if (!generationCancelled) {
         console.error("Image generation failed:", e);
         const errorMessage = e.message || 'An unknown error occurred during image generation.';
         setError(errorMessage);
         toast({ title: 'Generation Failed', description: errorMessage, variant: 'destructive', duration: 9000 });
       }
     } finally {
-      if (!generationCancelled.current) {
+      if (!generationCancelled) {
         setIsGenerating(false);
       }
     }
@@ -180,7 +180,7 @@ export function ImageGenerator() {
   };
 
   const handleStopGeneration = () => {
-    generationCancelled.current = true;
+    setGenerationCancelled(true);
     setIsGenerating(false);
     setError("Image generation was cancelled by the user.");
     toast({
