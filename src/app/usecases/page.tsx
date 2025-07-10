@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const usecasesTopics = [
-    'AI for Marketing: Creating Unique Ad Creatives Instantly',
-    'Using AI to Generate Concept Art for Video Games',
-    'Architectural Visualization with AI: A Modern Approach',
-    'How Fashion Designers Use AI for Ideation and Prototyping',
+    'How AI is Revolutionizing Ad Creatives and Marketing Campaigns',
+    'Generating Endless Concept Art for Indie Game Development on a Budget',
+    'The Future of Architectural Visualization with AI-Powered Renderings',
+    'Using AI for Fashion Design: From Mood Boards to Final Products',
 ];
 
 async function ArticleList() {

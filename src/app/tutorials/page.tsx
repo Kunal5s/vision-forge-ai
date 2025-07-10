@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const tutorialsTopics = [
-    'How to Use AI to Create Professional Product Mockups',
-    'From Concept to Reality: A Full AI Artwork Tutorial',
-    'Fixing Mangled Hands and Faces in AI-Generated Images',
-    'A Beginner\'s Guide to Inpainting and Outpainting with AI',
+    'Your First AI Image: A Beginner\'s Guide to Text-to-Image Generation',
+    'How to Fix Common AI Art Flaws Like Mangled Hands and Distorted Faces',
+    'Advanced Techniques: A Tutorial on Image-to-Image and Inpainting',
+    'Creating Professional Product Mockups for Your Business Using AI',
 ];
 
 async function ArticleList() {

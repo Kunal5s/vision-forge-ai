@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const inspirationTopics = [
-    'AI Art as a Tool for Healing and Self-Expression',
-    'How to Find and Develop Your Unique Artistic Voice',
-    'Exploring Surrealism: Creating Dreamlike Worlds with AI Prompts',
-    'Drawing Inspiration from Nature for Your AI Creations',
+    'Overcoming Creative Block: Using AI as Your Brainstorming Partner',
+    'Finding Your Unique Artistic Style in the Age of AI',
+    'Drawing Inspiration from History and Mythology for Your AI Creations',
+    'Surrealism in the Digital Age: Creating Dream-Like Worlds with AI',
 ];
 
 async function ArticleList() {

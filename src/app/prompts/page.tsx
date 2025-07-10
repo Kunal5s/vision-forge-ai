@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const promptsTopics = [
-    'The Psychology of Prompting: Thinking Like an AI Model',
-    'Using "Weights" in Prompts for Ultimate Creative Control',
-    'How to Create Consistent Characters Across Different AI Images',
-    'Advanced Guide to Negative Prompts for Flawless AI Art',
+    'The Ultimate Guide to Negative Prompts: What to Avoid for Perfect Images',
+    'Mastering Prompt Syntax: How to Use Weights and Parentheses Effectively',
+    'From Simple to Complex: A Step-by-Step Guide to Layering Prompts',
+    'The Art of Ambiguity: How Vague Prompts Can Unlock Creative AI Results',
 ];
 
 async function ArticleList() {

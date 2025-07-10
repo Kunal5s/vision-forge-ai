@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const trendsTopics = [
-    'AI-Powered Animation: The Next Frontier in Storytelling',
-    'The Rise of AI Influencers and Virtual Models',
-    'Ethical AI: Navigating Copyright and Bias in Art',
-    'Beyond Images: The Future of AI in Video and 3D',
+    'The Rise of AI-Generated Video: The Next Frontier in Content Creation',
+    'Ethical AI: Navigating Copyright, Bias, and Ownership in Generative Art',
+    'AI in the Metaverse: Shaping the Future of Virtual Worlds',
+    'Hyper-Personalization: How AI is Tailoring Digital Experiences for Everyone',
 ];
 
 async function ArticleList() {

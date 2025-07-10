@@ -12,10 +12,10 @@ export const metadata: Metadata = {
 };
 
 const storybookTopics = [
-    'How to Create an Entire Illustrated Storybook Using AI',
-    'AI for World-Building: Generating Maps and Lore Visually',
-    'Designing Your Main Character from Description to Final Image',
-    'From Script to Scene: Visualizing Your Story with AI',
+    'How to Create a Consistent Character for Your Illustrated Storybook',
+    'From Script to Panel: Visualizing Comic Book Scenes with AI',
+    'AI for World-Building: Generating Fantasy Maps and Environments',
+    'A Guide to Creating Emotional and Expressive Characters with AI Prompts',
 ];
 
 async function ArticleList() {

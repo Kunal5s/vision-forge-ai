@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const technologyTopics = [
-    'How AI Image Upscaling Technology Works Its Magic',
-    'The Technical Difference Between Midjourney, DALL-E 3, and Stable Diffusion',
-    'Understanding Latent Space: The AI\'s Creative Playground',
-    'The Role of GPUs in Modern AI Image Generation',
+    'How Diffusion Models Work: A Simple Explanation of Text-to-Image AI',
+    'The Evolution of AI Models: From GPT-2 to the Latest Breakthroughs',
+    'Understanding Latent Space: The Hidden Universe of AI Creativity',
+    'The Role of Cloud Computing in Powering Large-Scale AI Models',
 ];
 
 async function ArticleList() {

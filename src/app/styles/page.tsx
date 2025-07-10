@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const stylesTopics = [
-    'Combining Artistic Styles: Creating Unique Hybrid AI Art',
-    'A Deep Dive into Generating Hyper-Realistic AI Photographs',
-    'Mastering the Cyberpunk Aesthetic in Your AI Creations',
-    'How to Recreate Classic Art Movements with Modern AI',
+    'Achieving Photorealism: A Deep Dive into Prompts for Realistic AI Images',
+    'How to Generate Art in the Style of Van Gogh, Picasso, and Other Masters',
+    'Exploring Cyberpunk and Solarpunk Aesthetics in AI-Generated Art',
+    'A Guide to Creating Stunning Anime and Manga Style Characters with AI',
 ];
 
 async function ArticleList() {

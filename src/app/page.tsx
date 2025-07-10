@@ -18,10 +18,10 @@ export const metadata: Metadata = {
 };
 
 const featuredTopics = [
-    'The Impact of AI on Modern Graphic Design',
-    'A Beginner\'s Guide to Investing in Digital Art NFTs',
-    'The Creative Process of an AI-Assisted Digital Artist',
-    'Exploring Ancient Mythology with Modern AI Image Generation',
+    'The Definitive Guide to Advanced Prompt Engineering for AI Art',
+    'How AI is Blurring the Lines Between Photography and Imagination',
+    'Creating Consistent Characters: A Deep Dive into AI Storytelling',
+    'Beyond Pretty Pictures: The Business Case for AI Image Generation',
 ];
 
 async function FeaturedArticleList() {

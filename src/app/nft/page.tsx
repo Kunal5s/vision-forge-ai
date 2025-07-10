@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const nftTopics = [
-    'How AI Image Generators Are Changing NFT Art Forever',
-    'Step-by-Step Guide to Minting Your First AI NFT',
-    'Building a Community Around Your New NFT Collection',
-    'The Future of NFTs: Utility, Gaming, and Beyond',
+    'How to Create and Sell Your First AI-Generated NFT Collection',
+    'The Future of NFTs: Exploring Utility, Gaming, and Digital Identity',
+    'Understanding the Carbon Footprint of NFTs and Eco-Friendly Alternatives',
+    'Marketing Your NFT Project: A Guide to Building a Strong Community',
 ];
 
 async function ArticleList() {
