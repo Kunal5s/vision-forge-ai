@@ -25,7 +25,7 @@ interface GenerationOptions {
 }
 
 export async function getArticles(category: string, topics: string[], options: GenerationOptions = {}): Promise<Article[]> {
-    const filePath = `articles/${category.toLowerCase().replace(/\s/g, '-')}.json`;
+    const filePath = `src/articles/${category.toLowerCase().replace(/\s/g, '-')}.json`;
 
     if (!options.forceRegenerate) {
         const existingContent = await getContent(filePath);
@@ -44,5 +44,6 @@ export async function getArticles(category: string, topics: string[], options: G
     }
     
     // If no valid existing articles, generate new ones
+    console.log(`No valid articles found for ${category}. Generating new ones.`);
     return await generateAndSaveArticles(category, topics);
 }

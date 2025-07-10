@@ -25,10 +25,6 @@ interface Article {
     conclusion: string;
 }
 
-interface GenerationOptions {
-    forceRegenerate?: boolean;
-}
-
 const PRIORITY_MODELS = [
     "meta-llama/llama-3-70b-instruct",
     "qwen/qwen-2-72b-instruct",
@@ -193,7 +189,7 @@ export async function generateAndSaveArticles(category: string, topics: string[]
         }
     }
     if (newArticles.length > 0) {
-        const filePath = `articles/${category.toLowerCase().replace(/\s/g, '-')}.json`;
+        const filePath = `src/articles/${category.toLowerCase().replace(/\s/g, '-')}.json`;
         const existingFile = await getContent(filePath);
         await saveContent(
             filePath,
