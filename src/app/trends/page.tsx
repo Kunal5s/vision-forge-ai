@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const trendsTopics = [
-    'The Biggest AI Art and Design Trends to Watch',
-    'Sora and Veo: The Rise of AI Video Generation',
-    'The Ethical Considerations of Modern AI Art Generation Tools',
-    'What is the Future of Generative AI and AGI',
+    'AI-Powered Animation: The Next Frontier in Storytelling',
+    'The Rise of AI Influencers and Virtual Models',
+    'Ethical AI: Navigating Copyright and Bias in Art',
+    'Beyond Images: The Future of AI in Video and 3D',
 ];
 
 async function ArticleList() {

@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const nftTopics = [
-    'How to Create and Launch a Successful NFT Collection',
-    'Understanding The Volatile and Exciting NFT Art Market',
-    'Marketing Strategies for Promoting Your NFT Artwork Online',
-    'A Deep Dive into the Technology Behind NFTs',
+    'How AI Image Generators Are Changing NFT Art Forever',
+    'Step-by-Step Guide to Minting Your First AI NFT',
+    'Building a Community Around Your New NFT Collection',
+    'The Future of NFTs: Utility, Gaming, and Beyond',
 ];
 
 async function ArticleList() {

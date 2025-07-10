@@ -2,9 +2,6 @@
 'use server';
 
 import { getContent, saveContent } from './github';
-import getConfig from 'next/config';
-
-const { serverRuntimeConfig, publicRuntimeConfig } = getConfig() || { serverRuntimeConfig: {}, publicRuntimeConfig: {} };
 
 interface ArticleContentBlock {
     type: 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p';
@@ -101,7 +98,7 @@ async function parseAndValidateArticle(aiResponseText: string, topic: string): P
 
 
 async function generateWithGoogleAI(topic: string, category: string): Promise<any> {
-    const apiKey = publicRuntimeConfig.GOOGLE_API_KEY || process.env.GOOGLE_API_KEY;
+    const apiKey = process.env.GOOGLE_API_KEY;
     if (!apiKey) {
       throw new Error('Google API key is not configured.');
     }
@@ -133,7 +130,7 @@ async function generateWithGoogleAI(topic: string, category: string): Promise<an
 }
 
 async function generateWithOpenRouter(topic: string, category: string): Promise<any> {
-    const apiKey = publicRuntimeConfig.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY;
+    const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
         throw new Error('OpenRouter API key is not configured.');
     }
@@ -277,5 +274,3 @@ export async function getArticles(category: string, topics: string[], options: G
 
     return newArticles;
 }
-
-    

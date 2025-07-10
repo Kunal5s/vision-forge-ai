@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const technologyTopics = [
-    'The Future of Generative AI: Models, Trends, and Ethics',
-    'A Beginner\'s Guide to How AI Diffusion Models Work',
-    'How Latent Consistency Models (LCMs) Are Making AI Faster',
-    'The Rise of Open-Source AI: A Look at Llama 3',
+    'How AI Image Upscaling Technology Works Its Magic',
+    'The Technical Difference Between Midjourney, DALL-E 3, and Stable Diffusion',
+    'Understanding Latent Space: The AI\'s Creative Playground',
+    'The Role of GPUs in Modern AI Image Generation',
 ];
 
 async function ArticleList() {

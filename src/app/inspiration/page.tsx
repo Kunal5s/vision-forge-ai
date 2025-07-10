@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const inspirationTopics = [
-    'Overcoming Creative Blocks with AI Idea Generation Tools',
-    'Building Fantasy Worlds: A Guide to AI-Assisted World-Building',
-    'Exploring Abstract Art Concepts Using Generative AI Models',
-    'How to Find Unique Artistic Inspiration in Everyday Life',
+    'AI Art as a Tool for Healing and Self-Expression',
+    'How to Find and Develop Your Unique Artistic Voice',
+    'Exploring Surrealism: Creating Dreamlike Worlds with AI Prompts',
+    'Drawing Inspiration from Nature for Your AI Creations',
 ];
 
 async function ArticleList() {

@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const stylesTopics = [
-    'Exploring the Most Popular Digital Art Styles in AI',
-    'How to Master Photorealism in Your AI Art Creations',
-    'Creating Authentic Vintage and Retro Effects with AI',
-    'A Guide to Developing Your Own Unique AI Style',
+    'Combining Artistic Styles: Creating Unique Hybrid AI Art',
+    'A Deep Dive into Generating Hyper-Realistic AI Photographs',
+    'Mastering the Cyberpunk Aesthetic in Your AI Creations',
+    'How to Recreate Classic Art Movements with Modern AI',
 ];
 
 async function ArticleList() {

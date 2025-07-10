@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const promptsTopics = [
-    'The Definitive Guide to Crafting Effective AI Art Prompts',
-    'Using Negative Prompts to Drastically Refine Your AI Images',
-    'Advanced Prompting Techniques for Hyper-Realistic AI Image Results',
-    'How to Achieve Perfect Character Consistency Across Multiple Images',
+    'The Psychology of Prompting: Thinking Like an AI Model',
+    'Using "Weights" in Prompts for Ultimate Creative Control',
+    'How to Create Consistent Characters Across Different AI Images',
+    'Advanced Guide to Negative Prompts for Flawless AI Art',
 ];
 
 async function ArticleList() {

@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const tutorialsTopics = [
-    'A Complete Beginner\'s Guide to Your First AI Image',
-    'How to Create Stunningly Realistic AI Portraits in Minutes',
-    'A Tutorial on Generating Epic AI Fantasy Landscape Art',
-    'Fixing Common AI Art Problems like Hands and Faces',
+    'How to Use AI to Create Professional Product Mockups',
+    'From Concept to Reality: A Full AI Artwork Tutorial',
+    'Fixing Mangled Hands and Faces in AI-Generated Images',
+    'A Beginner\'s Guide to Inpainting and Outpainting with AI',
 ];
 
 async function ArticleList() {

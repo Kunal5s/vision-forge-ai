@@ -12,10 +12,10 @@ export const metadata: Metadata = {
 };
 
 const storybookTopics = [
-    'A Guide to Compelling Visual Storytelling with AI Generators',
-    'Step-by-Step AI Character Design for Your Next Story',
-    'Creating Dynamic and Engaging Scenes for Your Digital Storybook',
-    'How to Generate Entire Comic Book Panels Using AI',
+    'How to Create an Entire Illustrated Storybook Using AI',
+    'AI for World-Building: Generating Maps and Lore Visually',
+    'Designing Your Main Character from Description to Final Image',
+    'From Script to Scene: Visualizing Your Story with AI',
 ];
 
 async function ArticleList() {
