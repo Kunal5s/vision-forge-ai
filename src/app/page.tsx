@@ -17,16 +17,11 @@ export const metadata: Metadata = {
   description: "Welcome to the future of AI image generation. Describe your vision, and our advanced text-to-image AI will bring it to life. Create stunning, high-quality images, illustrations, and art from text prompts in seconds. Get started for free and see what you can create.",
 };
 
-const featuredTopics = [
-    'The Definitive Guide to Advanced Prompt Engineering for AI',
-    'How AI Blurs the Lines Between Photography and Imagination',
-    'Creating Consistent Characters: A Deep Dive into AI Storytelling',
-    'Beyond Pretty Pictures: The Business Case for AI Generation',
-];
+const CATEGORY_NAME = 'Featured';
 
 async function FeaturedArticleList() {
-    const articles = await getArticles('Featured', featuredTopics);
-    return <ArticlesSection articles={articles} topics={featuredTopics} category="Featured" showRegenerate={true} />;
+    const articles = await getArticles(CATEGORY_NAME);
+    return <ArticlesSection articles={articles} category={CATEGORY_NAME} showRegenerate={true} />;
 }
 
 export default function HomePage() {

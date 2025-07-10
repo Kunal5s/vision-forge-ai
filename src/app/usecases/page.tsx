@@ -10,16 +10,11 @@ export const metadata: Metadata = {
     description: 'Discover the practical applications of AI image generation in marketing, gaming, design, and more.',
 };
 
-const usecasesTopics = [
-    'How AI is Revolutionizing Ad Creatives and Marketing Campaigns',
-    'Generating Endless Concept Art for Indie Game Development',
-    'The Future of Architectural Visualization with AI-Powered Renderings',
-    'Using AI for Fashion Design: From Mood Boards',
-];
+const CATEGORY_NAME = 'Usecases';
 
 async function ArticleList() {
-    const articles = await getArticles('Usecases', usecasesTopics);
-    return <ArticlesSection articles={articles} topics={usecasesTopics} category="Usecases" />;
+    const articles = await getArticles(CATEGORY_NAME);
+    return <ArticlesSection articles={articles} category={CATEGORY_NAME} />;
 }
 
 export default function UsecasesPage() {

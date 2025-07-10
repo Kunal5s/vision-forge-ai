@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle } from 'lucide-react';
 import type { Metadata } from 'next';
+import { categorySlugMap } from '@/lib/constants';
+
 
 interface ArticleContentBlock {
     type: 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p';
@@ -23,24 +25,12 @@ interface Article {
     conclusion: string;
 }
 
-const categorySlugToName: { [key: string]: string } = {
-    'featured': 'Featured',
-    'prompts': 'Prompts',
-    'styles': 'Styles',
-    'tutorials': 'Tutorials',
-    'storybook': 'Storybook',
-    'usecases': 'Usecases',
-    'inspiration': 'Inspiration',
-    'trends': 'Trends',
-    'technology': 'Technology',
-    'nft': 'NFT'
-};
-
 async function getArticleData(categorySlug: string, articleSlug: string): Promise<Article | undefined> {
-    const categoryName = categorySlugToName[categorySlug];
+    const categoryName = categorySlugMap[categorySlug];
     if (!categoryName) return undefined;
     
-    const articles = await getArticles(categoryName, []);
+    // Now getArticles internally knows which topics to use based on category name
+    const articles = await getArticles(categoryName);
     return articles.find(article => article.slug === articleSlug);
 }
 

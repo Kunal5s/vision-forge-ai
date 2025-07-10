@@ -11,16 +11,11 @@ export const metadata: Metadata = {
     description: 'Learn how to use AI for visual storytelling, character design, and creating comic book panels.',
 };
 
-const storybookTopics = [
-    'How to Create a Consistent Character for Your Storybook',
-    'From Script to Panel: Visualizing Comic Book Scenes',
-    'AI for World-Building: Generating Fantasy Maps and Environments',
-    'Creating Emotional and Expressive Characters with AI Prompts',
-];
+const CATEGORY_NAME = 'Storybook';
 
 async function ArticleList() {
-    const articles = await getArticles('Storybook', storybookTopics);
-    return <ArticlesSection articles={articles} topics={storybookTopics} category="Storybook" />;
+    const articles = await getArticles(CATEGORY_NAME);
+    return <ArticlesSection articles={articles} category={CATEGORY_NAME} />;
 }
 
 export default function StorybookPage() {

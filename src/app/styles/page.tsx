@@ -10,16 +10,11 @@ export const metadata: Metadata = {
     description: 'Explore different artistic styles with our AI-generated guides on photorealism, digital art, and more.',
 };
 
-const stylesTopics = [
-    'How to Replicate Film Photography Styles Using AI Prompts',
-    'A Guide to Creating Impossible Architecture with AI',
-    'Exploring Abstract Expressionism with AI Image Generation Models',
-    'How to Achieve a Perfect Flat Design Illustration Style',
-];
+const CATEGORY_NAME = 'Styles';
 
 async function ArticleList() {
-    const articles = await getArticles('Styles', stylesTopics);
-    return <ArticlesSection articles={articles} topics={stylesTopics} category="Styles" />;
+    const articles = await getArticles(CATEGORY_NAME);
+    return <ArticlesSection articles={articles} category={CATEGORY_NAME} />;
 }
 
 export default function StylesPage() {

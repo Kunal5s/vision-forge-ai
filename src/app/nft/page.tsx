@@ -10,16 +10,11 @@ export const metadata: Metadata = {
     description: 'Learn about creating, promoting, and understanding the NFT market with our AI-generated articles.',
 };
 
-const nftTopics = [
-    'How to Create and Sell Your First AI NFT',
-    'The Future of NFTs: Exploring Utility, Gaming, and Identity',
-    'Understanding the Carbon Footprint of NFTs and Eco-Friendly Alternatives',
-    'Marketing Your NFT Project: A Guide to Building Community',
-];
+const CATEGORY_NAME = 'NFT';
 
 async function ArticleList() {
-    const articles = await getArticles('NFT', nftTopics);
-    return <ArticlesSection articles={articles} topics={nftTopics} category="NFT" />;
+    const articles = await getArticles(CATEGORY_NAME);
+    return <ArticlesSection articles={articles} category={CATEGORY_NAME} />;
 }
 
 export default function NftPage() {

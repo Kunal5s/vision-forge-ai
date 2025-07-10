@@ -3,11 +3,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { getContent, saveContent } from '@/lib/github';
-
-// =================================================================
-// AI ARTICLE GENERATION LOGIC
-// Moved here to leverage Server Actions for robust execution
-// =================================================================
+import { featuredTopics } from '@/lib/constants';
 
 interface ArticleContentBlock {
     type: 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p';
@@ -133,16 +129,34 @@ async function generateWithOpenRouter(model: string, topic: string, category: st
 
 async function generateSingleArticle(topic: string, category: string): Promise<Article | null> {
     let aiTextResponse: string | null = null;
-    const allModels = [...PRIORITY_MODELS, ...FALLBACK_MODELS];
-    for (const model of allModels) {
+    
+    // First, try all priority models
+    for (const model of PRIORITY_MODELS) {
+        console.log(`Trying PRIORITY model: ${model} for topic: "${topic}"`);
         aiTextResponse = await generateWithOpenRouter(model, topic, category);
         if (aiTextResponse) {
-            break;
+            console.log(`SUCCESS with PRIORITY model: ${model}`);
+            break; 
         }
     }
+
+    // If all priority models fail, then try fallback models
     if (!aiTextResponse) {
-        throw new Error(`All OpenRouter models failed to generate the article for topic: "${topic}".`);
+        console.log(`All PRIORITY models failed for topic: "${topic}". Moving to FALLBACK models.`);
+        for (const model of FALLBACK_MODELS) {
+            console.log(`Trying FALLBACK model: ${model} for topic: "${topic}"`);
+            aiTextResponse = await generateWithOpenRouter(model, topic, category);
+            if (aiTextResponse) {
+                console.log(`SUCCESS with FALLBACK model: ${model}`);
+                break;
+            }
+        }
     }
+
+    if (!aiTextResponse) {
+        throw new Error(`All OpenRouter models (Priority and Fallback) failed to generate the article for topic: "${topic}".`);
+    }
+
     let parsedData;
     try {
         parsedData = await parseAndValidateArticle(aiTextResponse, topic);
@@ -150,18 +164,21 @@ async function generateSingleArticle(topic: string, category: string): Promise<A
         console.error(`Validation failed for generated article on topic "${topic}". Skipping save.`, validationError);
         return null;
     }
+
     const { title, articleContent, keyTakeaways, conclusion, imagePrompt } = parsedData;
     const slug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
     if (!slug) {
         console.error(`Generated an invalid or empty slug for title: "${title}". Skipping article.`);
         return null;
     }
+
     const width = 600;
     const height = 400;
     const seed = Math.floor(Math.random() * 1_000_000_000);
     const finalImagePrompt = `${imagePrompt}, ${category}, high detail, vibrant, professional photo`;
     const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalImagePrompt)}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
     const dataAiHint = imagePrompt.split(' ').slice(0, 2).join(' ');
+
     return {
       image: pollinationsUrl,
       dataAiHint: dataAiHint,
@@ -204,12 +221,6 @@ export async function generateAndSaveArticles(category: string, topics: string[]
 export async function regenerateFeaturedArticles() {
   try {
     console.log('Regenerating featured articles...');
-    const featuredTopics = [
-        'The Definitive Guide to Advanced Prompt Engineering for AI',
-        'How AI Blurs the Lines Between Photography and Imagination',
-        'Creating Consistent Characters: A Deep Dive into AI Storytelling',
-        'Beyond Pretty Pictures: The Business Case for AI Generation',
-    ];
     await generateAndSaveArticles('Featured', featuredTopics);
     revalidatePath('/');
     console.log('Featured articles regenerated and path revalidated.');

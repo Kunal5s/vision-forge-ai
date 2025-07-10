@@ -10,16 +10,11 @@ export const metadata: Metadata = {
     description: 'Find creative inspiration with AI-generated articles on art, design, and overcoming creative blocks.',
 };
 
-const inspirationTopics = [
-    'Overcoming Creative Block: Using AI as a Brainstorming Partner',
-    'Finding Your Unique Artistic Style in the Age of AI',
-    'Drawing Inspiration from History and Mythology for AI Creations',
-    'Surrealism in the Digital Age: Creating Dream-Like Worlds',
-];
+const CATEGORY_NAME = 'Inspiration';
 
 async function ArticleList() {
-    const articles = await getArticles('Inspiration', inspirationTopics);
-    return <ArticlesSection articles={articles} topics={inspirationTopics} category="Inspiration" />;
+    const articles = await getArticles(CATEGORY_NAME);
+    return <ArticlesSection articles={articles} category={CATEGORY_NAME} />;
 }
 
 export default function InspirationPage() {

@@ -10,16 +10,11 @@ export const metadata: Metadata = {
     description: 'Stay ahead of the curve with AI-generated articles on the latest trends in generative art and technology.',
 };
 
-const trendsTopics = [
-    'The Rise of AI-Generated Video: The Next Frontier',
-    'Ethical AI: Navigating Copyright and Bias in Generative Art',
-    'AI in the Metaverse: Shaping the Future of Worlds',
-    'Hyper-Personalization: How AI is Tailoring Digital Experiences for You',
-];
+const CATEGORY_NAME = 'Trends';
 
 async function ArticleList() {
-    const articles = await getArticles('Trends', trendsTopics);
-    return <ArticlesSection articles={articles} topics={trendsTopics} category="Trends" />;
+    const articles = await getArticles(CATEGORY_NAME);
+    return <ArticlesSection articles={articles} category={CATEGORY_NAME} />;
 }
 
 export default function TrendsPage() {

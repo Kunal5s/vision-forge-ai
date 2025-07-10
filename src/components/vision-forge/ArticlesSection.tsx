@@ -29,12 +29,11 @@ interface Article {
 
 interface ArticlesSectionProps {
     articles: Article[];
-    topics: string[];
     category: string;
     showRegenerate?: boolean;
 }
 
-export function ArticlesSection({ articles, topics, category, showRegenerate = false }: ArticlesSectionProps) {
+export function ArticlesSection({ articles, category, showRegenerate = false }: ArticlesSectionProps) {
     const { toast } = useToast();
     const [isRegenerating, setIsRegenerating] = useState(false);
 
