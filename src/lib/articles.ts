@@ -23,18 +23,27 @@ interface GenerationOptions {
     forceRegenerate?: boolean;
 }
 
-const FREE_MODELS = [
-    "meta-llama/llama-3-8b-instruct:free",
-    "nousresearch/nous-hermes-2-mistral-7b-dpo:free",
-    "gryphe/mythomax-l2-13b:free",
-    "openchat/openchat-3.5:free",
-    "qwen/qwen-2-7b-instruct:free",
-    "mistralai/mistral-7b-instruct:free",
-    "google/gemma-7b-it:free",
-    "databricks/dbrx-instruct:free",
-    "cohere/command-r:free",
-    "microsoft/wizardlm-2-8x22b:free"
+// 🎯 Priority models first, as requested by the user.
+const PRIORITY_MODELS = [
+    "qwen/qwen-2-72b-instruct",
+    "meta-llama/llama-3-70b-instruct",
+    "databricks/dbrx-instruct",
+    "mistralai/mixtral-8x22b-instruct",
+    "google/gemini-pro" // Using via OpenRouter
 ];
+
+// 🔥 Fallback models if priority ones fail.
+const FALLBACK_MODELS = [
+    "mistralai/mixtral-8x7b-instruct",
+    "nousresearch/nous-hermes-2-mixtral-8x7b-dpo",
+    "openchat/openchat-3.5",
+    "huggingfaceh4/zephyr-7b-beta",
+    "meta-llama/llama-3-8b-instruct",
+    "gryphe/mythomax-l2-13b",
+    "qwen/qwen-2-7b-instruct",
+    "microsoft/wizardlm-2-8x22b"
+];
+
 
 const JSON_PROMPT_STRUCTURE = `You are a world-class content creator and SEO expert with a special talent for writing in a deeply human, engaging, and emotional tone. Your task is to generate a comprehensive, well-structured, and fully humanized long-form article for an AI Image Generator website.
 
@@ -97,95 +106,61 @@ async function parseAndValidateArticle(aiResponseText: string, topic: string): P
 }
 
 
-async function generateWithGoogleAI(topic: string, category: string): Promise<any> {
-    const apiKey = process.env.GOOGLE_API_KEY;
-    if (!apiKey) {
-      throw new Error('Google API key is not configured.');
-    }
-
-    const model = 'gemini-1.5-flash';
-    console.log(`Using Google AI model: ${model} for topic: "${topic}"`);
-
-    const fullPrompt = `${JSON_PROMPT_STRUCTURE}\n\nNow, generate the content for:\nTopic: "${topic}"\nCategory: "${category}"`;
-    
-    const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            contents: [{ parts: [{ text: fullPrompt }] }],
-            generationConfig: {
-                response_mime_type: "application/json",
-            },
-        }),
-    });
-
-    if (!geminiResponse.ok) {
-        const errorBody = await geminiResponse.text();
-        console.error("Google AI API Error:", errorBody);
-        throw new Error(`Failed to generate content from Google AI: ${geminiResponse.statusText}`);
-    }
-
-    const geminiData = await geminiResponse.json();
-    if (!geminiData.candidates || geminiData.candidates.length === 0) {
-        throw new Error('Google AI returned no candidates.');
-    }
-    return geminiData.candidates[0]?.content?.parts[0]?.text;
-}
-
-async function generateWithOpenRouter(topic: string, category: string): Promise<any> {
+async function generateWithOpenRouter(model: string, topic: string, category: string): Promise<string | null> {
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
         throw new Error('OpenRouter API key is not configured.');
     }
 
-    const model = FREE_MODELS[Math.floor(Math.random() * FREE_MODELS.length)];
     console.log(`Using OpenRouter model: ${model} for topic: "${topic}"`);
-
     const fullPrompt = `${JSON_PROMPT_STRUCTURE}\n\nNow, generate the content for:\nTopic: "${topic}"\nCategory: "${category}"`;
 
-    const openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            model: model,
-            messages: [{ role: "user", content: fullPrompt }],
-            response_format: { type: "json_object" },
-        }),
-    });
+    try {
+        const openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model: model,
+                messages: [{ role: "user", content: fullPrompt }],
+                response_format: { type: "json_object" },
+            }),
+        });
 
-    if (!openRouterResponse.ok) {
-        const errorBody = await openRouterResponse.text();
-        console.error("OpenRouter API Error:", errorBody);
-        throw new Error(`Failed to generate content from OpenRouter: ${openRouterResponse.statusText}`);
+        if (!openRouterResponse.ok) {
+            const errorBody = await openRouterResponse.text();
+            console.warn(`OpenRouter model ${model} failed with status: ${openRouterResponse.status}`, errorBody);
+            return null;
+        }
+
+        const openRouterData = await openRouterResponse.json();
+        return openRouterData.choices[0]?.message?.content || null;
+
+    } catch (error) {
+        console.warn(`Request to OpenRouter model ${model} failed.`, error);
+        return null;
     }
-
-    const openRouterData = await openRouterResponse.json();
-    return openRouterData.choices[0]?.message?.content;
 }
 
 
 async function generateSingleArticle(topic: string, category: string): Promise<Article | null> {
-    let aiTextResponse;
+    let aiTextResponse: string | null = null;
     
-    try {
-        console.log(`Attempting to generate article for topic "${topic}" with Google AI.`);
-        aiTextResponse = await generateWithGoogleAI(topic, category);
-    } catch (error) {
-        console.warn(`Google AI failed for topic "${topic}". Reason:`, error instanceof Error ? error.message : String(error));
-        console.log(`Falling back to OpenRouter for topic "${topic}".`);
-        try {
-            aiTextResponse = await generateWithOpenRouter(topic, category);
-        } catch (openRouterError) {
-             console.error(`OpenRouter also failed for topic "${topic}".`, openRouterError);
-             throw new Error(`Both Google AI and OpenRouter failed to generate the article.`);
+    const allModels = [...PRIORITY_MODELS, ...FALLBACK_MODELS];
+
+    for (const model of allModels) {
+        console.log(`Attempting to generate article for topic "${topic}" with model: ${model}`);
+        aiTextResponse = await generateWithOpenRouter(model, topic, category);
+        if (aiTextResponse) {
+            console.log(`Successfully received response from model: ${model}`);
+            break; // Success, move on
         }
     }
 
     if (!aiTextResponse) {
-        throw new Error("Received an empty response from all AI models.");
+        throw new Error(`All OpenRouter models failed to generate the article for topic: "${topic}".`);
     }
     
     let parsedData;
