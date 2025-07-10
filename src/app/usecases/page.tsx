@@ -19,7 +19,7 @@ const usecasesTopics = [
 
 async function ArticleList() {
     const articles = await getArticles('Usecases', usecasesTopics);
-    return <ArticlesSection articles={articles} topics={usecasesTopics} category="Use Cases" />;
+    return <ArticlesSection articles={articles} topics={usecasesTopics} category="Usecases" />;
 }
 
 export default function UsecasesPage() {
