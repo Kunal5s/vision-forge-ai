@@ -53,10 +53,12 @@ export async function getArticles(category: string): Promise<Article[]> {
                 return articles;
             }
         } catch(e) {
-            console.error(`Error parsing existing articles for ${category}, will regenerate.`, e);
+            console.warn(`Could not parse or validate existing articles for ${category}, regenerating...`, e);
         }
     }
     
     console.log(`No valid articles found for ${category}. Generating new ones.`);
-    return await generateAndSaveArticles(category, topics);
+    // Await the generation and saving process to ensure it completes before returning.
+    const newArticles = await generateAndSaveArticles(category, topics);
+    return newArticles;
 }

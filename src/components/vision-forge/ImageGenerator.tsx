@@ -51,7 +51,7 @@ export function ImageGenerator() {
 
   // New states for dropdowns
   const [artisticStyle, setArtisticStyle] = useState<string>('photographic');
-  const [mood, setMood] = useState<string>('mysterious');
+  const [mood, setMood] = useState<string>('none');
   const [lighting, setLighting] = useState<string>('none');
   const [colorPalette, setColorPalette] = useState<string>('none');
   const [quality, setQuality] = useState<string>('standard quality, 1080p');
@@ -292,7 +292,7 @@ export function ImageGenerator() {
                   ) : (
                     <Button
                       type="submit"
-                      className="w-full text-base py-3 bg-primary hover:bg-primary/90 text-primary-foreground transition-shadow hover:shadow-xl hover:shadow-primary/20 animate-breathing-glow"
+                      className="w-full text-base py-3 bg-foreground hover:bg-foreground/80 text-background transition-shadow hover:shadow-xl hover:shadow-primary/20"
                       disabled={!currentPrompt}
                     >
                       <Sparkles size={18} className="mr-2" />
