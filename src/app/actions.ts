@@ -1,4 +1,3 @@
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -7,7 +6,8 @@ import { featuredTopics } from '@/lib/constants';
 
 export async function regenerateFeaturedArticles() {
   try {
-    console.log('Regenerating featured articles...');
+    console.log('Regenerating featured articles via action...');
+    // This now calls the function in articles.ts which in turn calls the API route
     await generateAndSaveArticles('Featured', featuredTopics);
     revalidatePath('/');
     console.log('Featured articles regenerated and path revalidated.');

@@ -1,8 +1,12 @@
-
 'use server';
 
 import { getContent, saveContent } from './github';
 import { featuredTopics, promptsTopics, stylesTopics, tutorialsTopics, storybookTopics, usecasesTopics, inspirationTopics, trendsTopics, technologyTopics, nftTopics } from '@/lib/constants';
+
+// This is the base URL of the deployed application.
+// It's crucial for calling the API route from a server-side function.
+// In Vercel, this variable is automatically set. For local dev, it's http://localhost:3000
+const APP_URL = process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : 'http://localhost:3000';
 
 interface ArticleContentBlock {
     type: 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p';
@@ -20,145 +24,38 @@ interface Article {
     conclusion: string;
 }
 
-const PRIORITY_MODELS = [
-    "meta-llama/llama-3-70b-instruct",
-    "qwen/qwen-2-72b-instruct",
-    "databricks/dbrx-instruct",
-    "mistralai/mixtral-8x22b-instruct",
-    "google/gemini-pro"
-];
+async function parseAndValidateArticle(aiResponse: any, topic: string): Promise<Omit<Article, 'image' | 'dataAiHint' | 'slug' | 'category'> & { imagePrompt: string }> {
+    const { title, articleContent, keyTakeaways, conclusion, imagePrompt } = aiResponse;
 
-const FALLBACK_MODELS = [
-    "mistralai/mixtral-8x7b-instruct",
-    "nousresearch/nous-hermes-2-mixtral-8x7b-dpo",
-    "openchat/openchat-3.5",
-    "huggingfaceh4/zephyr-7b-beta",
-    "meta-llama/llama-3-8b-instruct",
-    "gryphe/mythomax-l2-13b",
-    "qwen/qwen-2-7b-instruct",
-    "microsoft/wizardlm-2-8x22b"
-];
-
-const JSON_PROMPT_STRUCTURE = `You are a world-class content creator and SEO expert with a special talent for writing in a deeply human, engaging, and emotional tone. Your task is to generate a comprehensive, well-structured, and fully humanized long-form article for an AI Image Generator website.
-
-**Primary Goal:** The article must be original, creative, helpful, and written in a tone that feels like a warm, exciting, and empowering conversation with a friendly expert.
-
-**Tone and Style - CRITICAL INSTRUCTIONS:**
-1.  **Human, Not Robotic:** Your writing MUST be conversational. Use "I," "you," and "we" to build a direct connection. Paragraphs MUST be very short (1-3 sentences) for easy reading.
-2.  **Emotional and Engaging:** Infuse the text with genuine emotion. Use a variety of tones like "Empowering," "Friendly," "Creative," "Motivating," and "Conversational". Make the reader feel excited and motivated.
-3.  **No Jargon:** Explain complex topics in a simple, easy-to-understand way. Avoid technical jargon.
-
-**JSON Structure Template & Rules:**
-You MUST respond with a single, valid JSON object. Do not include any text, comments, or markdown before or after the JSON.
-{
-  "title": "A catchy, EXACTLY 9-word title about the topic.",
-  "articleContent": [
-    { "type": "h2", "content": "First main heading." },
-    { "type": "p", "content": "A very short, engaging paragraph (1-2 sentences)." },
-    { "type": "p", "content": "Another short, friendly paragraph." },
-    { "type": "h3", "content": "A subheading to dive deeper." },
-    { "type": "p", "content": "A detailed but concise paragraph." },
-    { "type": "h4", "content": "A more specific heading." },
-    { "type": "p", "content": "A simple explanation." },
-    { "type": "h5", "content": "A heading for a small detail." },
-    { "type": "p", "content": "A final short paragraph for this section." },
-    { "type": "h6", "content": "An even more specific heading." },
-    { "type": "p", "content": "A final short paragraph for this subsection." }
-  ],
-  "keyTakeaways": ["Takeaway 1", "Takeaway 2", "Takeaway 3", "Takeaway 4", "Takeaway 5", "Takeaway 6"],
-  "conclusion": "A strong, empowering, and short concluding paragraph.",
-  "imagePrompt": "A 10-15 word, highly descriptive prompt for a beautiful header image."
-}
-
-**Content & Formatting - CRITICAL INSTRUCTIONS:**
-1.  **Total Word Count:** The combined text of all "content" fields MUST be approximately 2000 words.
-2.  **Heading Structure:** The "articleContent" array MUST use a logical and deep heading structure, including H2, H3, H4, and even H5/H6 tags to break down the topic comprehensively. This is compulsory.
-3.  **Title Constraint:** The "title" MUST be exactly 9 words long.
-4.  **Key Takeaways:** The "keyTakeaways" array MUST contain exactly 6 concise, insightful, and helpful bullet-point style takeaways.
-5.  **Relevance:** The content must be highly relevant to the TOPIC and CATEGORY provided.
-6.  **Strict JSON:** The entire output must be a single, valid JSON object, ready for parsing.`;
-
-async function parseAndValidateArticle(aiResponseText: string, topic: string): Promise<Omit<Article, 'image' | 'dataAiHint' | 'slug' | 'category'> & { imagePrompt: string }> {
-    let articleData;
-    try {
-        articleData = JSON.parse(aiResponseText);
-    } catch (e) {
-        console.error("Failed to parse JSON response from AI for topic:", topic, aiResponseText);
-        throw new Error("AI response was not valid JSON.");
-    }
-    const { title, articleContent, keyTakeaways, conclusion, imagePrompt } = articleData;
     if (!title || typeof title !== 'string' || title.trim() === '' || !Array.isArray(articleContent) || articleContent.length === 0 || !Array.isArray(keyTakeaways) || !conclusion || !imagePrompt) {
-        console.error("Validation failed for AI response on topic:", topic, articleData);
+        console.error("Validation failed for AI response on topic:", topic, aiResponse);
         throw new Error(`AI response for topic "${topic}" is missing required fields or has invalid format.`);
     }
+
     return { title, articleContent, keyTakeaways, conclusion, imagePrompt };
 }
 
-async function generateWithOpenRouter(model: string, topic: string, category: string): Promise<string | null> {
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    if (!apiKey) {
-        throw new Error('OpenRouter API key is not configured.');
-    }
-    const fullPrompt = `${JSON_PROMPT_STRUCTURE}\n\nNow, generate the content for:\nTopic: "${topic}"\nCategory: "${category}"`;
-    try {
-        const openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                model: model,
-                messages: [{ role: "user", content: fullPrompt }],
-                response_format: { type: "json_object" },
-            }),
-        });
-        if (!openRouterResponse.ok) {
-            const errorBody = await openRouterResponse.text();
-            console.warn(`OpenRouter model ${model} failed with status: ${openRouterResponse.status}`, errorBody);
-            return null;
-        }
-        const openRouterData = await openRouterResponse.json();
-        return openRouterData.choices[0]?.message?.content || null;
-    } catch (error) {
-        console.warn(`Request to OpenRouter model ${model} failed.`, error);
-        return null;
-    }
-}
 
+// This function now calls our own API route to generate the article content.
 async function generateSingleArticle(topic: string, category: string): Promise<Article | null> {
-    let aiTextResponse: string | null = null;
+    console.log(`Calling API to generate article for topic: "${topic}" in category: "${category}"`);
     
-    // First, try all priority models
-    for (const model of PRIORITY_MODELS) {
-        console.log(`Trying PRIORITY model: ${model} for topic: "${topic}"`);
-        aiTextResponse = await generateWithOpenRouter(model, topic, category);
-        if (aiTextResponse) {
-            console.log(`SUCCESS with PRIORITY model: ${model}`);
-            break; 
-        }
-    }
+    const response = await fetch(`${APP_URL}/api/generate-article`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic, category }),
+    });
 
-    // If all priority models fail, then try fallback models
-    if (!aiTextResponse) {
-        console.log(`All PRIORITY models failed for topic: "${topic}". Moving to FALLBACK models.`);
-        for (const model of FALLBACK_MODELS) {
-            console.log(`Trying FALLBACK model: ${model} for topic: "${topic}"`);
-            aiTextResponse = await generateWithOpenRouter(model, topic, category);
-            if (aiTextResponse) {
-                console.log(`SUCCESS with FALLBACK model: ${model}`);
-                break;
-            }
-        }
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate article via API route.');
     }
-
-    if (!aiTextResponse) {
-        throw new Error(`All OpenRouter models (Priority and Fallback) failed to generate the article for topic: "${topic}".`);
-    }
+    
+    const aiJsonResponse = await response.json();
 
     let parsedData;
     try {
-        parsedData = await parseAndValidateArticle(aiTextResponse, topic);
+        parsedData = await parseAndValidateArticle(aiJsonResponse, topic);
     } catch (validationError) {
         console.error(`Validation failed for generated article on topic "${topic}". Skipping save.`, validationError);
         return null;
@@ -190,20 +87,28 @@ async function generateSingleArticle(topic: string, category: string): Promise<A
     };
 }
 
+
 export async function generateAndSaveArticles(category: string, topics: string[]): Promise<Article[]> {
-    console.log(`Generating new articles for category: ${category} sequentially.`);
+    console.log(`Generating and saving articles for category: ${category}`);
     const newArticles: Article[] = [];
-    for (const topic of topics) {
-        try {
-            const article = await generateSingleArticle(topic, category);
-            if (article) {
-                newArticles.push(article);
-                console.log(`Successfully generated and validated article for topic: "${topic}"`);
-            }
-        } catch (error) {
+
+    // We can run these in parallel to speed things up
+    const articlePromises = topics.map(topic => 
+        generateSingleArticle(topic, category).catch(error => {
             console.error(`Failed to generate article for topic: "${topic}". Skipping.`, error);
+            return null; // Return null on error so Promise.all doesn't fail
+        })
+    );
+    
+    const results = await Promise.all(articlePromises);
+
+    // Filter out any null results from failed generations
+    results.forEach(article => {
+        if (article) {
+            newArticles.push(article);
         }
-    }
+    });
+
     if (newArticles.length > 0) {
         const filePath = `src/articles/${category.toLowerCase().replace(/\s/g, '-')}.json`;
         const existingFile = await getContent(filePath);
@@ -213,10 +118,13 @@ export async function generateAndSaveArticles(category: string, topics: string[]
             `feat: update articles for ${category}`,
             existingFile?.sha
         );
+        console.log(`Successfully saved ${newArticles.length} articles to ${filePath}`);
+    } else {
+        console.warn(`No articles were successfully generated for category: ${category}. Nothing to save.`);
     }
+
     return newArticles;
 }
-
 
 const categoryTopicsMap: Record<string, string[]> = {
     'Featured': featuredTopics,
@@ -231,8 +139,6 @@ const categoryTopicsMap: Record<string, string[]> = {
     'NFT': nftTopics,
 };
 
-// This function now consistently gets the right topics based on the category.
-// It no longer needs the topics array to be passed in, removing the source of inconsistency.
 export async function getArticles(category: string): Promise<Article[]> {
     const filePath = `src/articles/${category.toLowerCase().replace(/\s/g, '-')}.json`;
     const topics = categoryTopicsMap[category];
@@ -246,16 +152,16 @@ export async function getArticles(category: string): Promise<Article[]> {
     if (existingContent) {
         try {
             const articles: Article[] = JSON.parse(existingContent.content);
+            // Basic validation to ensure it's a non-empty array of articles
             if (Array.isArray(articles) && articles.length > 0 && articles.every(a => a.slug && a.title)) {
                 return articles;
             }
         } catch(e) {
-            console.warn(`Could not parse or validate existing articles for ${category}, regenerating...`, e);
+            console.warn(`Could not parse or validate existing articles for ${category}. Regenerating...`, e);
         }
     }
     
-    console.log(`No valid articles found for ${category}. Generating new ones.`);
-    // Await the generation and saving process to ensure it completes before returning.
+    // If no valid articles are found, generate and save new ones, then return them.
     const newArticles = await generateAndSaveArticles(category, topics);
     return newArticles;
 }
