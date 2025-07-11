@@ -2,24 +2,9 @@
 // src/scripts/generate-all-articles.ts
 import 'dotenv/config'; // Load environment variables from .env file
 import { generateAndSaveArticles } from '../lib/articles';
-import { 
-    featuredTopics, promptsTopics, stylesTopics, tutorialsTopics, 
-    storybookTopics, usecasesTopics, inspirationTopics, trendsTopics, 
-    technologyTopics, nftTopics 
-} from '../lib/constants';
+import { categorySlugMap } from '../lib/constants';
 
-const allCategories = {
-    'Featured': featuredTopics,
-    'Prompts': promptsTopics,
-    'Styles': stylesTopics,
-    'Tutorials': tutorialsTopics,
-    'Storybook': storybookTopics,
-    'Usecases': usecasesTopics,
-    'Inspiration': inspirationTopics,
-    'Trends': trendsTopics,
-    'Technology': technologyTopics,
-    'NFT': nftTopics,
-};
+const allCategories = Object.values(categorySlugMap);
 
 async function main() {
     console.log('Starting one-time generation for all article categories...');
@@ -31,8 +16,11 @@ async function main() {
         process.exit(1);
     }
     
-    const categoryPromises = Object.entries(allCategories).map(([category, topics]) => {
-        return generateAndSaveArticles(category, topics).catch(e => {
+    // Set NODE_ENV to development to ensure files are saved locally
+    process.env.NODE_ENV = 'development';
+
+    const categoryPromises = allCategories.map((category) => {
+        return generateAndSaveArticles(category).catch(e => {
             console.error(`An error occurred while generating articles for ${category}:`, e);
             return null; // Return null on failure to not stop other categories
         });

@@ -1,14 +1,12 @@
 
 'use server';
 
-// IMPORTANT: This file is now used for READING articles and for the ONE-TIME generation script.
-// The live, automatic regeneration is handled exclusively by the CRON job in /src/app/api/cron/regenerate-articles/route.ts
-
+import 'dotenv/config';
 import { getContent, saveContent } from './github';
 import { 
     featuredTopics, promptsTopics, stylesTopics, tutorialsTopics, 
     storybookTopics, usecasesTopics, inspirationTopics, trendsTopics, 
-    technologyTopics, nftTopics, categorySlugMap
+    technologyTopics, nftTopics
 } from '@/lib/constants';
 import path from 'path';
 import fs from 'fs/promises';
@@ -135,7 +133,7 @@ async function parseAndValidateArticle(aiResponse: any, topic: string): Promise<
     return { title, articleContent, keyTakeaways, conclusion, imagePrompt };
 }
 
-export async function generateAndSaveSingleArticle(topic: string, category: string): Promise<Article | null> {
+export async function generateSingleArticle(topic: string, category: string): Promise<Article | null> {
     let aiJsonResponse: any | null = null;
     const allModels = [...PRIORITY_MODELS, ...FALLBACK_MODELS];
     
@@ -190,14 +188,32 @@ export async function generateAndSaveSingleArticle(topic: string, category: stri
 }
 
 
+const allTopicsByCategory: Record<string, string[]> = {
+    'Featured': featuredTopics,
+    'Prompts': promptsTopics,
+    'Styles': stylesTopics,
+    'Tutorials': tutorialsTopics,
+    'Storybook': storybookTopics,
+    'Usecases': usecasesTopics,
+    'Inspiration': inspirationTopics,
+    'Trends': trendsTopics,
+    'Technology': technologyTopics,
+    'NFT': nftTopics,
+};
+
 // This function is for ONE-TIME local generation, or for the CRON job.
-// It is NOT called during the page build process.
-export async function generateAndSaveArticles(category: string, topics: string[]): Promise<Article[]> {
+export async function generateAndSaveArticles(category: string): Promise<Article[]> {
+    const topics = allTopicsByCategory[category];
+    if (!topics) {
+        console.warn(`No topics found for category: ${category}. Cannot generate articles.`);
+        return [];
+    }
+
     console.log(`Generating and saving articles for category: ${category}`);
     const newArticles: Article[] = [];
 
     const articlePromises = topics.map(topic => 
-        generateAndSaveSingleArticle(topic, category).catch(error => {
+        generateSingleArticle(topic, category).catch(error => {
             console.error(`Failed to generate article for topic: "${topic}". Skipping.`, error);
             return null;
         })
@@ -215,11 +231,11 @@ export async function generateAndSaveArticles(category: string, topics: string[]
         const filePath = `src/articles/${category.toLowerCase().replace(/\s/g, '-')}.json`;
         
         // Check if running in a Node.js environment (local script)
-        if (typeof window === 'undefined') {
-            const localPath = path.join(process.cwd(), filePath);
+        if (typeof window === 'undefined' && process.env.NODE_ENV === 'development') {
+             const localPath = path.join(process.cwd(), filePath);
              await fs.mkdir(path.dirname(localPath), { recursive: true });
-            await fs.writeFile(localPath, JSON.stringify(newArticles, null, 2));
-            console.log(`Successfully saved ${newArticles.length} articles to local file: ${localPath}`);
+             await fs.writeFile(localPath, JSON.stringify(newArticles, null, 2));
+             console.log(`Successfully saved ${newArticles.length} articles to LOCAL file: ${localPath}`);
         } else {
             // This path is for the CRON job running on Vercel
             const existingFile = await getContent(filePath);
@@ -248,8 +264,27 @@ export async function getArticles(category: string): Promise<Article[]> {
         return articleCache.get(cacheKey)!;
     }
 
+    const categorySlug = category.toLowerCase().replace(/\s/g, '-');
+    const filePath = `src/articles/${categorySlug}.json`;
+
+    // Production (Vercel): Read from GitHub
+    if (process.env.NODE_ENV === 'production' && process.env.VERCEL) {
+        try {
+            const file = await getContent(filePath);
+            if (file) {
+                const articles = JSON.parse(file.content);
+                articleCache.set(cacheKey, articles);
+                return articles;
+            }
+        } catch (error) {
+            console.error(`Error fetching articles from GitHub for category "${category}":`, error);
+            return []; // Return empty on error
+        }
+    }
+
+    // Development or other environments: Read from local file system
     try {
-        const articles: Article[] = (await import(`@/articles/${category.toLowerCase().replace(/\s/g, '-')}.json`)).default;
+        const articles: Article[] = (await import(`@/articles/${categorySlug}.json`)).default;
         
         if (Array.isArray(articles) && articles.length > 0) {
             articleCache.set(cacheKey, articles);
