@@ -10,7 +10,8 @@ import { Suspense } from 'react';
 import { ArticlesSkeleton } from '@/components/vision-forge/ArticlesSkeleton';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, RefreshCw } from 'lucide-react';
+import { regenerateFeaturedArticles } from '@/app/actions';
 
 export const metadata: Metadata = {
   title: 'Imagen BrainAi: Your Free AI Image Generator',
@@ -21,7 +22,7 @@ const CATEGORY_NAME = 'Featured';
 
 async function FeaturedArticleList() {
     const articles = await getArticles(CATEGORY_NAME);
-    return <ArticlesSection articles={articles} category={CATEGORY_NAME} showRegenerate={true} />;
+    return <ArticlesSection articles={articles} category={CATEGORY_NAME} />;
 }
 
 export default function HomePage() {
@@ -40,7 +41,7 @@ export default function HomePage() {
 
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4">
-          <header className="text-center mb-12">
+          <header className="text-center mb-6">
             <h2 className="text-4xl font-extrabold tracking-tight text-foreground">
               Featured Articles
             </h2>
@@ -48,6 +49,14 @@ export default function HomePage() {
               Explore fresh insights on AI, creativity, and technology, generated just for you.
             </p>
           </header>
+          <div className="text-center mb-8">
+              <form action={regenerateFeaturedArticles}>
+                  <Button type="submit">
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Regenerate Articles
+                  </Button>
+              </form>
+          </div>
           <Suspense fallback={<ArticlesSkeleton />}>
             <FeaturedArticleList />
           </Suspense>
