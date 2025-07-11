@@ -28,9 +28,9 @@ export function Footer() {
             <h3 className="text-md font-bold text-foreground mb-4">Our Services</h3>
             <ul className="space-y-1 text-sm">
               <li><Link href="/" className={cn("block rounded-md -ml-2 px-2 py-1 hover:text-foreground", pathname === '/' ? 'text-foreground font-bold' : 'text-foreground/80')}>AI Image Generation</Link></li>
+              <li><Link href="/edit" className={cn("block rounded-md -ml-2 px-2 py-1 hover:text-foreground", pathname === '/edit' ? 'text-foreground font-bold' : 'text-foreground/80')}>Image Editor</Link></li>
               <li><Link href="/pricing" className={cn("block rounded-md -ml-2 px-2 py-1 hover:text-foreground", pathname === '/pricing' ? 'text-foreground font-bold' : 'text-foreground/80')}>Pricing</Link></li>
-              <li><Link href="/#features" className="block text-foreground/80 rounded-md -ml-2 px-2 py-1 hover:text-foreground">Prompt Enhancement</Link></li>
-              <li><Link href="/#features" className="block text-foreground/80 rounded-md -ml-2 px-2 py-1 hover:text-foreground">Style Customization</Link></li>
+              <li><Link href="/blog" className={cn("block rounded-md -ml-2 px-2 py-1 hover:text-foreground", pathname === '/blog' ? 'text-foreground font-bold' : 'text-foreground/80')}>Blog</Link></li>
             </ul>
           </div>
 
