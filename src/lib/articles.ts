@@ -1,7 +1,8 @@
+
 'use server';
 
 import { getContent, saveContent } from './github';
-import { featuredTopics, promptsTopics, stylesTopics, tutorialsTopics, storybookTopics, usecasesTopics, inspirationTopics, trendsTopics, technologyTopics, nftTopics } from '@/lib/constants';
+import { featuredTopics, promptsTopics, stylesTopics, tutorialsTopics, storybookTopics, usecasesTopics, inspirationTopics, trendsTopics, technologyTopics, nftTopics, categorySlugMap } from '@/lib/constants';
 
 // This is now the single source of truth for the AI prompt.
 const JSON_PROMPT_STRUCTURE = `You are a world-class content creator and SEO expert with a special talent for writing in a deeply human, engaging, and emotional tone. Your task is to generate a comprehensive, well-structured, and fully humanized long-form article for an AI Image Generator website.
@@ -46,13 +47,14 @@ You MUST respond with a single, valid JSON object. Do not include any text, comm
 const PRIORITY_MODELS = [
     "mistralai/mistral-7b-instruct",
     "openchat/openchat-3.5",
-    "huggingfaceh4/zephyr-7b-beta"
+    "huggingfaceh4/zephyr-7b-beta",
+    "meta-llama/llama-3-8b-instruct",
+    "qwen/qwen-2-7b-instruct",
 ];
 
 const FALLBACK_MODELS = [
-    "meta-llama/llama-3-8b-instruct",
     "gryphe/mythomax-l2-13b",
-    "qwen/qwen-2-7b-instruct",
+    "google/gemini-pro" // Gemini is now the final fallback
 ];
 
 
@@ -132,21 +134,19 @@ async function generateWithOpenRouter(model: string, topic: string, category: st
 // It can be called from anywhere on the server.
 export async function generateAndSaveSingleArticle(topic: string, category: string): Promise<Article | null> {
     let aiJsonResponse: any | null = null;
+    const allModels = [...PRIORITY_MODELS, ...FALLBACK_MODELS];
     
-    for (const model of PRIORITY_MODELS) {
+    for (const model of allModels) {
+        console.log(`Attempting to generate article for topic "${topic}" with model: ${model}`);
         aiJsonResponse = await generateWithOpenRouter(model, topic, category);
-        if (aiJsonResponse) break; 
-    }
-
-    if (!aiJsonResponse) {
-        for (const model of FALLBACK_MODELS) {
-            aiJsonResponse = await generateWithOpenRouter(model, topic, category);
-            if (aiJsonResponse) break;
+        if (aiJsonResponse) {
+            console.log(`Successfully generated content with model: ${model}`);
+            break; 
         }
     }
 
     if (!aiJsonResponse) {
-        console.error(`All OpenRouter models failed to generate the article for topic: "${topic}".`);
+        console.error(`All models failed to generate the article for topic: "${topic}".`);
         return null;
     }
 
@@ -234,7 +234,15 @@ const categoryTopicsMap: Record<string, string[]> = {
     'NFT': nftTopics,
 };
 
+// Using a simple in-memory cache to avoid re-fetching within the same request lifecycle
+const articleCache = new Map<string, Article[]>();
+
 export async function getArticles(category: string): Promise<Article[]> {
+    const cacheKey = category;
+    if (articleCache.has(cacheKey)) {
+        return articleCache.get(cacheKey)!;
+    }
+
     const filePath = `src/articles/${category.toLowerCase().replace(/\s/g, '-')}.json`;
     const topics = categoryTopicsMap[category];
 
@@ -249,6 +257,7 @@ export async function getArticles(category: string): Promise<Article[]> {
             try {
                 const articles: Article[] = JSON.parse(existingContent.content);
                 if (Array.isArray(articles) && articles.length > 0 && articles.every(a => a.slug && a.title)) {
+                    articleCache.set(cacheKey, articles);
                     return articles;
                 }
             } catch(e) {
@@ -256,7 +265,11 @@ export async function getArticles(category: string): Promise<Article[]> {
             }
         }
         
+        console.log(`No valid articles found for "${category}", generating new ones...`);
         const newArticles = await generateAndSaveArticles(category, topics);
+        if (newArticles.length > 0) {
+            articleCache.set(cacheKey, newArticles);
+        }
         return newArticles;
     } catch (error) {
         console.error(`An error occurred in getArticles for category "${category}":`, error);
@@ -264,3 +277,5 @@ export async function getArticles(category: string): Promise<Article[]> {
         return [];
     }
 }
+
+    
