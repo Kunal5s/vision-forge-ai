@@ -35,15 +35,8 @@ const nextConfig: NextConfig = {
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;", // Example, adjust as needed
   },
-  // Expose server-side environment variables to the Next.js server runtime
-  serverRuntimeConfig: {
-    OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
-    GITHUB_TOKEN: process.env.GITHUB_TOKEN,
-    GITHUB_REPO_OWNER: process.env.GITHUB_REPO_OWNER,
-    GITHUB_REPO_NAME: process.env.GITHUB_REPO_NAME,
-    CRON_SECRET: process.env.CRON_SECRET,
-    VERCEL_DEPLOY_HOOK_URL: process.env.VERCEL_DEPLOY_HOOK_URL,
-  },
 };
 
 export default nextConfig;
+
+    

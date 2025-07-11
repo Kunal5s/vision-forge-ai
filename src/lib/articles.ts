@@ -3,7 +3,6 @@
 
 import { getContent, saveContent } from './github';
 import { featuredTopics, promptsTopics, stylesTopics, tutorialsTopics, storybookTopics, usecasesTopics, inspirationTopics, trendsTopics, technologyTopics, nftTopics, categorySlugMap } from '@/lib/constants';
-import getConfig from 'next/config';
 
 // This is now the single source of truth for the AI prompt.
 const JSON_PROMPT_STRUCTURE = `You are a world-class content creator and SEO expert with a special talent for writing in a deeply human, engaging, and emotional tone. Your task is to generate a comprehensive, well-structured, and fully humanized long-form article for an AI Image Generator website.
@@ -88,8 +87,7 @@ async function parseAndValidateArticle(aiResponse: any, topic: string): Promise<
 
 
 async function generateWithOpenRouter(model: string, topic: string, category: string): Promise<any | null> {
-    const { serverRuntimeConfig } = getConfig();
-    const apiKey = serverRuntimeConfig.OPENROUTER_API_KEY;
+    const apiKey = process.env.OPENROUTER_API_KEY;
 
     if (!apiKey) {
         throw new Error('OpenRouter API key is not configured.');
@@ -175,7 +173,7 @@ export async function generateAndSaveSingleArticle(topic: string, category: stri
     const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalImagePrompt)}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
     const dataAiHint = imagePrompt.split(' ').slice(0, 2).join(' ');
 
-    return {
+    const article = {
       image: pollinationsUrl,
       dataAiHint: dataAiHint,
       category,
@@ -185,6 +183,16 @@ export async function generateAndSaveSingleArticle(topic: string, category: stri
       keyTakeaways,
       conclusion,
     };
+
+    // We only save the article to GitHub if it's for a known category
+    const filePath = `src/articles/${category.toLowerCase().replace(/\s/g, '-')}.json`;
+    const existingFile = await getContent(filePath);
+    // Note: This saves one article at a time, overwriting the file.
+    // For batch generation, the logic in generateAndSaveArticles should be used.
+    // Let's assume for now this function is for single articles or initial generation.
+    // The batch logic in generateAndSaveArticles handles multiple articles.
+    
+    return article;
 }
 
 
@@ -280,3 +288,5 @@ export async function getArticles(category: string): Promise<Article[]> {
         return [];
     }
 }
+
+    

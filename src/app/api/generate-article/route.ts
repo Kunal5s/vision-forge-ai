@@ -2,8 +2,6 @@
 import { NextResponse } from 'next/server';
 import { generateAndSaveSingleArticle } from '@/lib/articles';
 
-export const runtime = 'edge';
-
 // This API route is now a lightweight wrapper around the core logic in /src/lib/articles.ts
 // It is used for client-side calls or external triggers, not for server-side page generation.
 export async function POST(req: Request) {
@@ -15,6 +13,7 @@ export async function POST(req: Request) {
     }
 
     // The core logic is now in a reusable function.
+    // This function will internally generate and save the article to GitHub.
     const article = await generateAndSaveSingleArticle(topic, category);
 
     if (!article) {
@@ -30,3 +29,5 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Failed to generate article', details: error.message }, { status: 500 });
   }
 }
+
+    

@@ -2,13 +2,10 @@
 'use server';
 
 import { Octokit } from 'octokit';
-import getConfig from 'next/config';
 
-const { serverRuntimeConfig } = getConfig();
-
-const GITHUB_TOKEN = serverRuntimeConfig.GITHUB_TOKEN;
-const GITHUB_REPO_OWNER = serverRuntimeConfig.GITHUB_REPO_OWNER;
-const GITHUB_REPO_NAME = serverRuntimeConfig.GITHUB_REPO_NAME;
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const GITHUB_REPO_OWNER = process.env.GITHUB_REPO_OWNER;
+const GITHUB_REPO_NAME = process.env.GITHUB_REPO_NAME;
 
 
 // This check now correctly uses the variable names from the .env file.
@@ -71,3 +68,5 @@ export async function saveContent(path: string, content: string, message: string
     throw error;
   }
 }
+
+    
