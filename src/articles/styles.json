@@ -57,11 +57,11 @@
       },
       {
         "type": "p",
-        "content": "*   **Kodak Portra 400:** Famous for its beautiful, warm skin tones and fine grain. Perfect for portraits.\n*   **Fujifilm Velvia:** Known for its high saturation and vibrant colors, especially greens and blues. Amazing for landscapes.\n*   **Ilford HP5 Plus:** A classic, versatile black and white film with beautiful contrast and noticeable grain. Great for documentary-style or moody shots.\n*   **Kodak Ektachrome:** A slide film with a clean, slightly cool, and realistic color palette. Often associated with National Geographic photography.\n*   **Cinestill 800T:** A tungsten-balanced cinema film known for the distinct red 'halation' effect around light sources. Perfect for moody, neon-lit night scenes."
+        "content": "Kodak Portra 400: Famous for its beautiful, warm skin tones and fine grain. Perfect for portraits. Fujifilm Velvia: Known for its high saturation and vibrant colors, especially greens and blues. Amazing for landscapes. Ilford HP5 Plus: A classic, versatile black and white film with beautiful contrast and noticeable grain. Great for documentary-style or moody shots. Kodak Ektachrome: A slide film with a clean, slightly cool, and realistic color palette. Often associated with National Geographic photography. Cinestill 800T: A tungsten-balanced cinema film known for the distinct red 'halation' effect around light sources. Perfect for moody, neon-lit night scenes."
       },
       {
         "type": "p",
-        "content": "Example Prompt: 'A portrait of a woman in a cafe, **shot on Kodak Portra 400.**'"
+        "content": "Example Prompt: 'A portrait of a woman in a cafe, shot on Kodak Portra 400.'"
       },
       {
         "type": "h3",
@@ -76,12 +76,12 @@
         "content": "Try adding phrases like: 'shot on a Leica M6,' 'Hasselblad 500CM medium format photograph,' or even something more accessible like 'shot on a vintage Canon AE-1.' The AI associates these cameras with a certain look and feel."
       },
       {
-        "type": "h5",
+        "type": "h4",
         "content": "Combining Camera and Film"
       },
       {
         "type": "p",
-        "content": "For maximum effect, combine both. 'A street scene in Paris, **shot on a Leica M6 with Ilford HP5 film.**' This is an incredibly specific and powerful instruction."
+        "content": "For maximum effect, combine both. 'A street scene in Paris, shot on a Leica M6 with Ilford HP5 film.' This is an incredibly specific and powerful instruction."
       },
       {
         "type": "h2",
@@ -108,7 +108,7 @@
         "content": "Film often has a unique color cast. Use phrases that describe it: 'warm, nostalgic tones,' 'muted, desaturated color palette,' 'rich, saturated Kodachrome colors,' or 'dreamy, pastel colors.'"
       },
       {
-        "type": "h4",
+        "type": "h3",
         "content": "The Beauty of Imperfection"
       },
       {
@@ -116,7 +116,7 @@
         "content": "Don't be afraid to ask for the imperfections that make film so charming. You can try adding 'subtle light leaks,' 'dust and scratches,' or 'vignetting' to your prompt. Used sparingly, these can add a wonderful layer of authenticity."
       },
       {
-        "type": "h6",
+        "type": "h4",
         "content": "A Word on Negative Prompts"
       },
       {
@@ -133,7 +133,7 @@
       },
       {
         "type": "p",
-        "content": "*   **Base Prompt:** 'A portrait of a man with a mustache and long hair.'\n*   **Add Camera/Film:** 'A portrait of a man... shot on a Canon AE-1 with Kodak Portra 400 film.'\n*   **Add Aesthetic Descriptors:** 'A portrait of a man... shot on a Canon AE-1 with Kodak Portra 400 film. Warm, nostalgic 1970s color palette, soft focus, subtle film grain.'\n*   **Add a Negative Prompt:** `--no digital, sharp, modern, clean`"
+        "content": "Base Prompt: 'A portrait of a man with a mustache and long hair.'\nAdd Camera/Film: 'A portrait of a man... shot on a Canon AE-1 with Kodak Portra 400 film.'\nAdd Aesthetic Descriptors: 'A portrait of a man... shot on a Canon AE-1 with Kodak Portra 400 film. Warm, nostalgic 1970s color palette, soft focus, subtle film grain.'\nAdd a Negative Prompt: --no digital, sharp, modern, clean"
       },
       {
         "type": "p",
@@ -199,11 +199,11 @@
       },
       {
         "type": "p",
-        "content": "*   **Style:** Brutalist architecture, Art Nouveau, Gothic, Ancient Roman, Deconstructivism.\n*   **Impossible Concept:** Floating, upside-down, made of light, weaving through clouds, defying gravity."
+        "content": "Style: Brutalist architecture, Art Nouveau, Gothic, Ancient Roman, Deconstructivism.\nImpossible Concept: Floating, upside-down, made of light, weaving through clouds, defying gravity."
       },
       {
         "type": "p",
-        "content": "Example Prompt: '**A floating Brutalist monastery** carved from a single asteroid, orbiting a gas giant.' Or '**An Art Nouveau skyscraper** that grows and twists like a giant metallic vine.'"
+        "content": "Example Prompt: 'A floating Brutalist monastery carved from a single asteroid, orbiting a gas giant.' Or 'An Art Nouveau skyscraper that grows and twists like a giant metallic vine.'"
       },
       {
         "type": "h3",
@@ -219,7 +219,7 @@
       },
       {
         "type": "p",
-        "content": "*   **Liquids:** 'A cathedral with walls made of cascading, frozen waterfalls.'\n*   **Gases/Light:** 'A bridge made of woven moonlight,' 'A skyscraper constructed from solid, captured clouds.'\n*   **Abstracts:** 'A library where the shelves are made of pure knowledge, glowing with information,' 'A house built from memories, with translucent, shifting walls.'"
+        "content": "Liquids: 'A cathedral with walls made of cascading, frozen waterfalls.'\nGases/Light: 'A bridge made of woven moonlight,' 'A skyscraper constructed from solid, captured clouds.'\nAbstracts: 'A library where the shelves are made of pure knowledge, glowing with information,' 'A house built from memories, with translucent, shifting walls.'"
       },
       {
         "type": "h4",
@@ -243,7 +243,7 @@
       },
       {
         "type": "p",
-        "content": "*   **M.C. Escher:** The king of impossible geometry. Use phrases like 'an Escher-like building with impossible staircases' to create mind-bending structures.\n*   **Zdzisław Beksiński:** A master of dystopian surrealism. His name in a prompt will evoke vast, decaying, and monumental structures with a gothic, otherworldly feel.\n*   **Studio Ghibli / Hayao Miyazaki:** For whimsical, charming architecture that feels integrated with nature. Think 'a cozy, cluttered workshop in the style of Studio Ghibli.'\n*   **Surrealism:** Use 'a surrealist building' as a prompt to get unpredictable, dream-like results."
+        "content": "M.C. Escher: The king of impossible geometry. Use phrases like 'an Escher-like building with impossible staircases' to create mind-bending structures.\nZdzisław Beksiński: A master of dystopian surrealism. His name in a prompt will evoke vast, decaying, and monumental structures with a gothic, otherworldly feel.\nStudio Ghibli / Hayao Miyazaki: For whimsical, charming architecture that feels integrated with nature. Think 'a cozy, cluttered workshop in the style of Studio Ghibli.'\nSurrealism: Use 'a surrealist building' as a prompt to get unpredictable, dream-like results."
       },
       {
         "type": "h5",
@@ -341,7 +341,7 @@
       },
       {
         "type": "p",
-        "content": "Example Prompt: '**An explosion of dripping and splashing paint on a vast canvas.**' This tells the AI to focus on the process and energy, not on creating a specific object."
+        "content": "Example Prompt: 'An explosion of dripping and splashing paint on a vast canvas.' This tells the AI to focus on the process and energy, not on creating a specific object."
       },
       {
         "type": "h4",
@@ -361,7 +361,7 @@
       },
       {
         "type": "p",
-        "content": "Try a prompt like: '**A visual representation of pure rage.**' Or '**The feeling of profound serenity, visualized as color and texture.**' The AI will tap into its vast knowledge of art and symbolism to create a purely abstract interpretation of that feeling."
+        "content": "Try a prompt like: 'A visual representation of pure rage.' Or 'The feeling of profound serenity, visualized as color and texture.' The AI will tap into its vast knowledge of art and symbolism to create a purely abstract interpretation of that feeling."
       },
       {
         "type": "h5",
@@ -389,7 +389,7 @@
       },
       {
         "type": "p",
-        "content": "Example: 'An abstract expressionist painting using **a stark, high-contrast palette of black, white, and a single, violent slash of crimson red.**' This is far more specific than just 'a red, white, and black painting.'"
+        "content": "Example: 'An abstract expressionist painting using a stark, high-contrast palette of black, white, and a single, violent slash of crimson red.' This is far more specific than just 'a red, white, and black painting.'"
       },
       {
         "type": "h3",
@@ -527,7 +527,7 @@
       },
       {
         "type": "p",
-        "content": "**Main Prompt:** 'A rocket ship flying through space, surrounded by planets and stars. **flat design illustration, 2D, minimalist, vector art, simple shapes, clean lines.**'\n**Negative Prompt:** '`3D, photorealistic, shadow, gradient, texture, detailed`'"
+        "content": "Main Prompt: 'A rocket ship flying through space, surrounded by planets and stars. flat design illustration, 2D, minimalist, vector art, simple shapes, clean lines.'\nNegative Prompt: '`3D, photorealistic, shadow, gradient, texture, detailed`'"
       },
       {
         "type": "h2",

@@ -25,7 +25,7 @@
       },
       {
         "type": "p",
-        "content": "An image of a 'sad man' is just a description. But an image that *feels* sad, that evokes a sense of melancholy in the viewer—that's art. The AI has been trained on a vast ocean of human expression, including art, photography, and literature that is steeped in emotion."
+        "content": "An image of a 'sad man' is just a description. But an image that feels sad, that evokes a sense of melancholy in the viewer—that's art. The AI has been trained on a vast ocean of human expression, including art, photography, and literature that is steeped in emotion."
       },
       {
         "type": "p",
@@ -77,7 +77,7 @@
       },
       {
         "type": "p",
-        "content": "Focus on verbs of intention. 'A woman looking at the stars' is neutral. 'A woman searching the stars for a sign of hope' is filled with emotion. This tells the AI *why* she is looking, which changes everything."
+        "content": "Focus on verbs of intention. 'A woman looking at the stars' is neutral. 'A woman searching the stars for a sign of hope' is filled with emotion. This tells the AI why she is looking, which changes everything."
       },
       {
         "type": "h2",
@@ -141,7 +141,7 @@
       },
       {
         "type": "p",
-        "content": "By mastering the language of emotion, you elevate your role from a simple operator to a true artist and director. You're no longer just telling the AI what to create; you're telling it what to *feel*."
+        "content": "By mastering the language of emotion, you elevate your role from a simple operator to a true artist and director. You're no longer just telling the AI what to create; you're telling it what to feel."
       }
     ],
     "keyTakeaways": [
@@ -203,7 +203,7 @@
       },
       {
         "type": "p",
-        "content": "*   `a cat` - Normal weight\n*   `a (cat)` - Slightly more important (approx. 1.1x weight)\n*   `a ((cat))` - Even more important (approx. 1.2x weight)"
+        "content": "a cat - Normal weight\na (cat) - Slightly more important (approx. 1.1x weight)\na ((cat)) - Even more important (approx. 1.2x weight)"
       },
       {
         "type": "h4",
@@ -211,7 +211,7 @@
       },
       {
         "type": "p",
-        "content": "Conversely, you can use square brackets to decrease the importance of a concept. `a [cat]` tells the AI to pay less attention to the cat."
+        "content": "Conversely, you can use square brackets to decrease the importance of a concept. a [cat] tells the AI to pay less attention to the cat."
       },
       {
         "type": "h3",
@@ -223,7 +223,7 @@
       },
       {
         "type": "p",
-        "content": "*   `a (cat:1.3)` - This makes 'cat' 30% more important than everything else. This is a very strong emphasis.\n*   `a (cat:0.8)` - This makes 'cat' 20% less important. The AI will de-emphasize it."
+        "content": "a (cat:1.3) - This makes 'cat' 30% more important than everything else. This is a very strong emphasis.\na (cat:0.8) - This makes 'cat' 20% less important. The AI will de-emphasize it."
       },
       {
         "type": "h5",
@@ -239,7 +239,7 @@
       },
       {
         "type": "p",
-        "content": "Knowing *how* to use weighting is easy. Knowing *when* to use it is the real art. Here are some key scenarios where weighting can be a lifesaver."
+        "content": "Knowing how to use weighting is easy. Knowing when to use it is the real art. Here are some key scenarios where weighting can be a lifesaver."
       },
       {
         "type": "h3",
@@ -304,8 +304,8 @@
     ],
     "keyTakeaways": [
       "Prompt weighting allows you to control how much importance the AI gives to different parts of your prompt.",
-      "Use parentheses `(word)` for a slight emphasis or square brackets `[word]` for de-emphasis.",
-      "For precise control, use the colon-and-number syntax, like `(word:1.3)`, to set an exact weight.",
+      "Use parentheses (word) for a slight emphasis or square brackets [word] for de-emphasis.",
+      "For precise control, use the colon-and-number syntax, like (word:1.3), to set an exact weight.",
       "The primary use of weighting is to 'rescue' a subject or detail that the AI is ignoring.",
       "Weighting is a powerful tool for blending two different artistic styles or concepts.",
       "Use weighting sparingly and iteratively; starting with small values (1.1-1.5) is most effective."
@@ -325,7 +325,7 @@
       },
       {
         "type": "p",
-        "content": "We spend so much time thinking about what to put *into* our prompts. But what if the secret to a perfect image lies in what we take *out*? I'm here to introduce you to one of the most powerful, yet often overlooked, tools in your creative arsenal: the negative prompt."
+        "content": "We spend so much time thinking about what to put into our prompts. But what if the secret to a perfect image lies in what we take out? I'm here to introduce you to one of the most powerful, yet often overlooked, tools in your creative arsenal: the negative prompt."
       },
       {
         "type": "p",
@@ -337,7 +337,7 @@
       },
       {
         "type": "p",
-        "content": "A negative prompt is a list of terms that you explicitly tell the AI to avoid. It’s a set of anti-instructions. While your main prompt tells the AI what to create, the negative prompt tells it what *not* to create."
+        "content": "A negative prompt is a list of terms that you explicitly tell the AI to avoid. It’s a set of anti-instructions. While your main prompt tells the AI what to create, the negative prompt tells it what not to create."
       },
       {
         "type": "p",
@@ -361,7 +361,7 @@
       },
       {
         "type": "p",
-        "content": "By adding terms like `ugly, deformed, disfigured, poorly drawn hands, poorly drawn face, extra limbs, bad anatomy` to your negative prompt, you are actively guiding the AI away from these common failure points."
+        "content": "By adding terms like 'ugly, deformed, disfigured, poorly drawn hands, poorly drawn face, extra limbs, bad anatomy' to your negative prompt, you are actively guiding the AI away from these common failure points."
       },
       {
         "type": "h4",
@@ -369,7 +369,7 @@
       },
       {
         "type": "p",
-        "content": "Here is a great, all-purpose negative prompt to start with for any character generation: `ugly, tiling, poorly drawn hands, poorly drawn feet, poorly drawn face, out of frame, extra limbs, disfigured, deformed, body out of frame, blurry, bad anatomy, blurred, watermark, grainy, signature, cut off, draft`."
+        "content": "Here is a great, all-purpose negative prompt to start with for any character generation: 'ugly, tiling, poorly drawn hands, poorly drawn feet, poorly drawn face, out of frame, extra limbs, disfigured, deformed, body out of frame, blurry, bad anatomy, blurred, watermark, grainy, signature, cut off, draft'."
       },
       {
         "type": "h3",
@@ -381,7 +381,7 @@
       },
       {
         "type": "p",
-        "content": "If you're trying to create a photorealistic image and it keeps coming out looking like a cartoon, simply add `cartoon, anime, drawing, sketch` to your negative prompt. If you're creating a medieval scene and a car appears, add `car, modern vehicle` to your negative prompt. It's that simple."
+        "content": "If you're trying to create a photorealistic image and it keeps coming out looking like a cartoon, simply add 'cartoon, anime, drawing, sketch' to your negative prompt. If you're creating a medieval scene and a car appears, add 'car, modern vehicle' to your negative prompt. It's that simple."
       },
       {
         "type": "h5",
@@ -389,7 +389,7 @@
       },
       {
         "type": "p",
-        "content": "You can also use negative prompts to control color. If you want a moody, dark image but the AI keeps adding bright yellow, you can add `yellow, vibrant colors, cheerful` to your negative prompt to steer it towards your desired aesthetic."
+        "content": "You can also use negative prompts to control color. If you want a moody, dark image but the AI keeps adding bright yellow, you can add 'yellow, vibrant colors, cheerful' to your negative prompt to steer it towards your desired aesthetic."
       },
       {
         "type": "h2",
@@ -409,7 +409,7 @@
       },
       {
         "type": "p",
-        "content": "Add terms like `blurry, grainy, low resolution, noisy, pixelated` to your negative prompt to encourage a sharper, cleaner result. You can also negatively prompt for `jpeg artifacts` to get a smoother image."
+        "content": "Add terms like 'blurry, grainy, low resolution, noisy, pixelated' to your negative prompt to encourage a sharper, cleaner result. You can also negatively prompt for 'jpeg artifacts' to get a smoother image."
       },
       {
         "type": "h4",
@@ -417,7 +417,7 @@
       },
       {
         "type": "p",
-        "content": "Sometimes, AI-generated characters can look a bit too perfect, like plastic dolls. To make them look more realistic and human, you can add `plastic, fake, doll-like, smooth skin` to your negative prompt. This encourages the AI to add more realistic, subtle skin textures."
+        "content": "Sometimes, AI-generated characters can look a bit too perfect, like plastic dolls. To make them look more realistic and human, you can add 'plastic, fake, doll-like, smooth skin' to your negative prompt. This encourages the AI to add more realistic, subtle skin textures."
       },
       {
         "type": "h3",
@@ -437,7 +437,7 @@
       },
       {
         "type": "p",
-        "content": "Here's a more comprehensive, powerful negative prompt you can use as a starting point for almost any project: `(deformed, distorted, disfigured:1.3), poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, (mutated hands and fingers:1.4), disconnected limbs, mutation, mutated, ugly, disgusting, blurry, amputation.`"
+        "content": "Here's a more comprehensive, powerful negative prompt you can use as a starting point for almost any project: '(deformed, distorted, disfigured:1.3), poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, (mutated hands and fingers:1.4), disconnected limbs, mutation, mutated, ugly, disgusting, blurry, amputation.'"
       },
       {
         "type": "p",
@@ -491,7 +491,7 @@
       },
       {
         "type": "p",
-        "content": "Let's take a single word and watch it blossom. Our starting seed word will be: **'Dragon.'**"
+        "content": "Let's take a single word and watch it blossom. Our starting seed word will be: 'Dragon.'"
       },
       {
         "type": "h3",
@@ -519,7 +519,7 @@
       },
       {
         "type": "p",
-        "content": "Expanded Prompt: 'An ancient, colossal, obsidian-scaled dragon with glowing molten-gold eyes, **perched atop the highest peak of a jagged, snow-covered mountain range.**'"
+        "content": "Expanded Prompt: 'An ancient, colossal, obsidian-scaled dragon with glowing molten-gold eyes, perched atop the highest peak of a jagged, snow-covered mountain range.'"
       },
       {
         "type": "p",
@@ -535,7 +535,7 @@
       },
       {
         "type": "p",
-        "content": "Expanded Prompt: 'An ancient, colossal, obsidian-scaled dragon with glowing molten-gold eyes, perched atop the highest peak of a jagged, snow-covered mountain range, **under a turbulent, stormy sky filled with dark clouds and flashes of distant lightning. A sense of lonely, ancient power.**'"
+        "content": "Expanded Prompt: 'An ancient, colossal, obsidian-scaled dragon with glowing molten-gold eyes, perched atop the highest peak of a jagged, snow-covered mountain range, under a turbulent, stormy sky filled with dark clouds and flashes of distant lightning. A sense of lonely, ancient power.'"
       },
       {
         "type": "p",
@@ -551,7 +551,7 @@
       },
       {
         "type": "p",
-        "content": "New Prompt: 'An ancient, colossal, obsidian-scaled dragon with glowing molten-gold eyes, **unfurling its vast wings on the highest peak of a jagged, snow-covered mountain range**, under a turbulent, stormy sky filled with dark clouds and flashes of distant lightning. A sense of lonely, ancient power.'"
+        "content": "New Prompt: 'An ancient, colossal, obsidian-scaled dragon with glowing molten-gold eyes, unfurling its vast wings on the highest peak of a jagged, snow-covered mountain range, under a turbulent, stormy sky filled with dark clouds and flashes of distant lightning. A sense of lonely, ancient power.'"
       },
       {
         "type": "h3",
@@ -563,7 +563,7 @@
       },
       {
         "type": "p",
-        "content": "Expanded Prompt: 'An ancient, colossal, obsidian-scaled dragon... [the rest of our prompt]... **Epic fantasy digital painting, in the style of Frank Frazetta, highly detailed, cinematic.**'"
+        "content": "Expanded Prompt: 'An ancient, colossal, obsidian-scaled dragon... [the rest of our prompt]... Epic fantasy digital painting, in the style of Frank Frazetta, highly detailed, cinematic.'"
       },
       {
         "type": "p",

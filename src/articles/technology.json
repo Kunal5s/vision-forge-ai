@@ -73,7 +73,7 @@
       },
       {
         "type": "p",
-        "content": "1.  **Start with Pure Noise:** The AI creates a field of pure, random static, like an old TV with no signal. This is its blank canvas.\n2.  **Consult the Prompt:** The AI looks at your prompt, for example, 'an astronaut riding a horse.' It now has a goal, a conceptual direction.\n3.  **The First Denoising Step:** Guided by your prompt, the AI looks at the field of noise and asks, 'What tiny change can I make to this noise to make it look a little bit less like random static, and a little bit more like an astronaut on a horse?' It then makes a very small adjustment.\n4.  **Iterate, Iterate, Iterate:** The AI repeats this process dozens of times. With each step, the image becomes a little less noisy and a little more coherent. Faint shapes begin to emerge from the static. You might see the rough outline of a helmet, or the curve of a horse's back.\n5.  **The Final Image:** After a set number of steps (e.g., 20 to 50), the denoising process is complete. The initial random noise has been completely transformed into a clear, coherent image that matches your prompt."
+        "content": "1.  Start with Pure Noise: The AI creates a field of pure, random static, like an old TV with no signal. This is its blank canvas.\n2.  Consult the Prompt: The AI looks at your prompt, for example, 'an astronaut riding a horse.' It now has a goal, a conceptual direction.\n3.  The First Denoising Step: Guided by your prompt, the AI looks at the field of noise and asks, 'What tiny change can I make to this noise to make it look a little bit less like random static, and a little bit more like an astronaut on a horse?' It then makes a very small adjustment.\n4.  Iterate, Iterate, Iterate: The AI repeats this process dozens of times. With each step, the image becomes a little less noisy and a little more coherent. Faint shapes begin to emerge from the static. You might see the rough outline of a helmet, or the curve of a horse's back.\n5.  The Final Image: After a set number of steps (e.g., 20 to 50), the denoising process is complete. The initial random noise has been completely transformed into a clear, coherent image that matches your prompt."
       },
       {
         "type": "h5",
@@ -329,7 +329,7 @@
       },
       {
         "type": "p",
-        "content": "This is where things get really exciting. What happens if you travel *between* two points in latent space? This is called 'interpolation,' and it's the basis for many amazing AI animations."
+        "content": "This is where things get really exciting. What happens if you travel between two points in latent space? This is called 'interpolation,' and it's the basis for many amazing AI animations."
       },
       {
         "type": "p",
@@ -411,11 +411,7 @@
       },
       {
         "type": "p",
-        "content": "Training a large-scale AI model, like the ones used for image generation, is one of the most computationally expensive tasks on the planet. The AI needs to process billions of data points (images and text) and adjust the connections between billions of parameters."
-      },
-      {
-        "type": "p",
-        "content": "This requires a level of processing power that is far beyond any personal computer. It requires a supercomputer."
+        "content": "Training a large-scale AI model, like the ones used for image generation, is one of the most computationally expensive tasks on the planet. This requires a level of processing power that is far beyond any personal computer. It requires a supercomputer."
       },
       {
         "type": "h2",

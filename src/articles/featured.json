@@ -121,7 +121,7 @@
       },
       {
         "type": "p",
-        "content": "Just as important as telling the AI what you want is telling it what you *don't* want. This is the power of negative prompts."
+        "content": "Just as important as telling the AI what you want is telling it what you don't want. This is the power of negative prompts."
       },
       {
         "type": "p",
@@ -465,7 +465,7 @@
       },
       {
         "type": "p",
-        "content": "3.  **This seed is now your character's 'DNA.'** Save it alongside your master prompt."
+        "content": "3.  This seed is now your character's 'DNA.' Save it alongside your master prompt."
       },
       {
         "type": "h4",
@@ -473,7 +473,7 @@
       },
       {
         "type": "p",
-        "content": "Now, to put your character in a new scene, you will use the **exact same foundational prompt** and the **exact same seed number**. You will only change the part of the prompt that describes the action or location."
+        "content": "Now, to put your character in a new scene, you will use the exact same foundational prompt and the exact same seed number. You will only change the part of the prompt that describes the action or location."
       },
       {
         "type": "h5",
@@ -481,7 +481,7 @@
       },
       {
         "type": "p",
-        "content": "Let's say your winning seed was '12345'. Your new prompt would look like this: 'A 25-year-old woman named Elara... [rest of foundational prompt]... **now she is cautiously exploring a bioluminescent mushroom forest.**' Then, you would manually set the generation seed to '12345'."
+        "content": "Let's say your winning seed was '12345'. Your new prompt would look like this: 'A 25-year-old woman named Elara... [rest of foundational prompt]... now she is cautiously exploring a bioluminescent mushroom forest.' Then, you would manually set the generation seed to '12345'."
       },
       {
         "type": "h6",

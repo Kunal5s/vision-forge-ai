@@ -14,6 +14,8 @@ const JSON_PROMPT_STRUCTURE = `You are a world-class content creator and SEO exp
 1.  **Human, Not Robotic:** Your writing MUST be conversational. Use "I," "you," and "we" to build a direct connection. Paragraphs MUST be very short (1-3 sentences) for easy reading.
 2.  **Emotional and Engaging:** Infuse the text with genuine emotion. Use a variety of tones like "Empowering," "Friendly," "Creative," "Motivating," and "Conversational". Make the reader feel excited and motivated.
 3.  **No Jargon:** Explain complex topics in a simple, easy-to-understand way. Avoid technical jargon.
+4.  **No Asterisks for Bolding:** Do NOT use asterisks or any other markdown for bolding. The text should be plain.
+5.  **Internal Linking:** Where appropriate, naturally weave in internal links to other relevant categories. For example, if you mention creating a consistent character, you could link to the 'Storybook' category. Use the format: "<a href=\"/storybook\">creating consistent characters</a>". Other categories to link to include "prompts", "styles", "tutorials", "usecases", "inspiration", "trends", "technology", "nft".
 
 **JSON Structure Template & Rules:**
 You MUST respond with a single, valid JSON object. Do not include any text, comments, or markdown before or after the JSON.
@@ -22,11 +24,11 @@ You MUST respond with a single, valid JSON object. Do not include any text, comm
   "articleContent": [
     { "type": "h2", "content": "First main heading." },
     { "type": "p", "content": "A very short, engaging paragraph (1-2 sentences)." },
-    { "type": "p", "content": "Another short, friendly paragraph." },
+    { "type": "p", "content": "Another short, friendly paragraph. Maybe this one talks about different <a href=\\"/styles\\">artistic styles</a>." },
     { "type": "h3", "content": "A subheading to dive deeper." },
     { "type": "p", "content": "A detailed but concise paragraph." },
     { "type": "h4", "content": "A more specific heading." },
-    { "type": "p", "content": "A simple explanation." },
+    { "type": "p", "content": "A simple explanation. This could link to our <a href=\\"/tutorials\\">tutorials</a>." },
     { "type": "h5", "content": "A heading for a small detail." },
     { "type": "p", "content": "A final short paragraph for this section." },
     { "type": "h6", "content": "An even more specific heading." },
@@ -193,7 +195,7 @@ export async function saveArticlesForCategory(category: string, articles: Articl
         `feat: update articles for ${category}`,
         existingFile?.sha
     );
-    console.log(`Successfully saved ${articles.length} articles to GitHub for category: ${category}`);
+    console.log(`Successfully saved ${articles.length} total articles to GitHub for category: ${category}`);
 }
 
 
@@ -201,15 +203,14 @@ const articleCache = new Map<string, Article[]>();
 
 // This is the primary function used by pages to get article data.
 // It reads from the local JSON files.
-export async function getArticles(category: string): Promise<Article[]> {
+export async function getArticles(category: string, forceFetch = false): Promise<Article[]> {
     const cacheKey = category;
     
-    if (articleCache.has(cacheKey)) {
+    if (articleCache.has(cacheKey) && !forceFetch) {
         return articleCache.get(cacheKey)!;
     }
 
     const categorySlug = category.toLowerCase().replace(/\s/g, '-');
-    // Construct the full path to the JSON file within the project directory
     const filePath = path.join(process.cwd(), 'src', 'articles', `${categorySlug}.json`);
 
     try {
@@ -221,12 +222,10 @@ export async function getArticles(category: string): Promise<Article[]> {
             return articles;
         }
         
-        // If the file is not an array, return empty
         console.warn(`Data in ${categorySlug}.json is not an array.`);
         return [];
 
     } catch (error: any) {
-        // If the file doesn't exist or there's a parsing error
         if (error.code === 'ENOENT') {
             console.warn(`No articles file found for category: "${category}" at ${filePath}. Returning empty array.`);
         } else {

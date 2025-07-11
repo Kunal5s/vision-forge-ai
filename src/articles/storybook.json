@@ -81,7 +81,7 @@
       },
       {
         "type": "p",
-        "content": "**Save this prompt.** This is your sacred text. You will use it as the base for everything that follows."
+        "content": "Save this prompt. This is your sacred text. You will use it as the base for everything that follows."
       },
       {
         "type": "h2",
@@ -97,7 +97,7 @@
       },
       {
         "type": "p",
-        "content": "1.  Take your complete foundational prompt and generate a batch of 4-8 images.\n2.  Analyze the results. Look for the one image where the AI has captured the essence of your character perfectly. The face, the expression, the outfit—it all just clicks.\n3.  Find the seed number associated with that 'perfect' image. **This is your Golden Seed.**\n4.  Save this seed number with your foundational prompt. They are now a pair, your character's unique genetic code."
+        "content": "1.  Take your complete foundational prompt and generate a batch of 4-8 images.\n2.  Analyze the results. Look for the one image where the AI has captured the essence of your character perfectly. The face, the expression, the outfit—it all just clicks.\n3.  Find the seed number associated with that 'perfect' image. This is your Golden Seed.\n4.  Save this seed number with your foundational prompt. They are now a pair, your character's unique genetic code."
       },
       {
         "type": "h4",
@@ -109,7 +109,7 @@
       },
       {
         "type": "p",
-        "content": "Example: 'Character design sheet for... [rest of Leo's description]... **He is now happily chasing a monarch butterfly through a field of tall grass.** Simple, flat cartoon style...' Then, you ensure the generation uses your Golden Seed."
+        "content": "Example: 'Character design sheet for... [rest of Leo's description]... He is now happily chasing a monarch butterfly through a field of tall grass. Simple, flat cartoon style...' Then, you ensure the generation uses your Golden Seed."
       },
       {
         "type": "h6",
@@ -137,7 +137,7 @@
       },
       {
         "type": "p",
-        "content": "*   '...full body shot, standing, neutral expression, facing forward.'\n*   '...profile view, side view, walking.'\n*   '...three-quarter view, sitting down.'\n*   '...facial expressions: happy, sad, surprised, angry.'"
+        "content": "'...full body shot, standing, neutral expression, facing forward.'\n'...profile view, side view, walking.'\n'...three-quarter view, sitting down.'\n'...facial expressions: happy, sad, surprised, angry.'"
       },
       {
         "type": "h3",
@@ -255,7 +255,7 @@
       },
       {
         "type": "p",
-        "content": "1.  **Characters:** Use your character's foundational prompt.\n2.  **Location:** Use your location's foundational prompt (if applicable).\n3.  **Action & Emotion:** Describe what the character is doing and feeling.\n4.  **Shot Type:** Specify the 'camera' angle (e.g., 'close-up,' 'wide shot,' 'over-the-shoulder shot').\n5.  **Style:** Append your master 'Comic Style' prompt at the end."
+        "content": "1.  Characters: Use your character's foundational prompt.\n2.  Location: Use your location's foundational prompt (if applicable).\n3.  Action & Emotion: Describe what the character is doing and feeling.\n4.  Shot Type: Specify the 'camera' angle (e.g., 'close-up,' 'wide shot,' 'over-the-shoulder shot').\n5.  Style: Append your master 'Comic Style' prompt at the end."
       },
       {
         "type": "h4",
@@ -267,7 +267,7 @@
       },
       {
         "type": "p",
-        "content": "Your AI Prompt: '(Foundational prompt for Captain Eva), (Foundational prompt for the cockpit), **close-up shot on her face, determined expression, a single bead of sweat on her brow, red alert lights flashing on her face.** (Your Comic Style prompt).'"
+        "content": "Your AI Prompt: '(Foundational prompt for Captain Eva), (Foundational prompt for the cockpit), close-up shot on her face, determined expression, a single bead of sweat on her brow, red alert lights flashing on her face. (Your Comic Style prompt).'"
       },
       {
         "type": "h5",
@@ -487,7 +487,7 @@
       },
       {
         "type": "p",
-        "content": "The secret lies in describing the *physical manifestations* of emotion, not just the emotion itself."
+        "content": "The secret lies in describing the physical manifestations of emotion, not just the emotion itself."
       },
       {
         "type": "h2",
@@ -503,7 +503,7 @@
       },
       {
         "type": "p",
-        "content": "*   **Instead of:** 'happy woman'\n*   **Try:** 'A woman with a soft, genuine smile, her eyes crinkling at the corners. A look of serene contentment on her face.'"
+        "content": "Instead of: 'happy woman'\nTry: 'A woman with a soft, genuine smile, her eyes crinkling at the corners. A look of serene contentment on her face.'"
       },
       {
         "type": "p",
@@ -523,7 +523,7 @@
       },
       {
         "type": "p",
-        "content": "*   **Instead of:** 'sad man'\n*   **Try:** 'A man looking down, his shoulders slumped, his brow furrowed with worry. A single tear escapes his tightly shut eye. His jaw is clenched with suppressed emotion.'"
+        "content": "Instead of: 'sad man'\nTry: 'A man looking down, his shoulders slumped, his brow furrowed with worry. A single tear escapes his tightly shut eye. His jaw is clenched with suppressed emotion.'"
       },
       {
         "type": "p",
@@ -543,7 +543,7 @@
       },
       {
         "type": "p",
-        "content": "*   **Instead of:** 'angry superhero'\n*   **Try:** 'A superhero with narrowed eyes, a hard glare fixed on an unseen enemy. Her fists are clenched at her sides, knuckles white. A low snarl on her lips.'"
+        "content": "Instead of: 'angry superhero'\nTry: 'A superhero with narrowed eyes, a hard glare fixed on an unseen enemy. Her fists are clenched at her sides, knuckles white. A low snarl on her lips.'"
       },
       {
         "type": "p",
@@ -567,7 +567,7 @@
       },
       {
         "type": "p",
-        "content": "Now the environment (the rain) reflects his internal state, and the object (the photograph) gives us a powerful clue about the *source* of his sadness. This transforms a simple portrait into a piece of poignant storytelling."
+        "content": "Now the environment (the rain) reflects his internal state, and the object (the photograph) gives us a powerful clue about the source of his sadness. This transforms a simple portrait into a piece of poignant storytelling."
       },
       {
         "type": "h4",

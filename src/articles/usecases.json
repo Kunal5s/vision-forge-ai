@@ -49,7 +49,7 @@
       },
       {
         "type": "p",
-        "content": "*   **For Students:** 'A diverse group of university students collaborating around a laptop in a modern, sunlit library, looking happy and productive. Flat design illustration.'\n*   **For Corporate Executives:** 'A sharp, confident female CEO in a modern high-rise office, looking at a tablet with data visualizations. Photorealistic, cinematic lighting.'\n*   **For Freelancers:** 'A creative freelancer working on a laptop in a cozy, plant-filled home office with a cat sleeping on the desk. Warm, inviting photograph.'"
+        "content": "For Students: 'A diverse group of university students collaborating around a laptop in a modern, sunlit library, looking happy and productive. Flat design illustration.'\nFor Corporate Executives: 'A sharp, confident female CEO in a modern high-rise office, looking at a tablet with data visualizations. Photorealistic, cinematic lighting.'\nFor Freelancers: 'A creative freelancer working on a laptop in a cozy, plant-filled home office with a cat sleeping on the desk. Warm, inviting photograph.'"
       },
       {
         "type": "p",
@@ -73,7 +73,7 @@
       },
       {
         "type": "p",
-        "content": "*   **Test Colors:** Generate the same ad with a blue background, a green one, and an orange one.\n*   **Test Styles:** Generate the ad as a photograph, a 3D render, and a cartoon illustration.\n*   **Test Subjects:** Does your audience respond better to an ad featuring a man, a woman, a group of people, or no people at all?"
+        "content": "Test Colors: Generate the same ad with a blue background, a green one, and an orange one.\nTest Styles: Generate the ad as a photograph, a 3D render, and a cartoon illustration.\nTest Subjects: Does your audience respond better to an ad featuring a man, a woman, a group of people, or no people at all?"
       },
       {
         "type": "h4",
@@ -81,7 +81,7 @@
       },
       {
         "type": "p",
-        "content": "By running these tests, you let the data guide your creative decisions. You're no longer guessing what works; you *know* what works. This data-driven approach can dramatically increase your click-through rates and reduce your cost per acquisition."
+        "content": "By running these tests, you let the data guide your creative decisions. You're no longer guessing what works; you know what works. This data-driven approach can dramatically increase your click-through rates and reduce your cost per acquisition."
       },
       {
         "type": "h2",
@@ -195,7 +195,7 @@
       },
       {
         "type": "p",
-        "content": "Example Prompts:\n*   'A dark, gothic, Lovecraftian horror world, in the style of Bloodborne.'\n*   'A cheerful, vibrant, Ghibli-inspired fantasy world with cozy villages and lush forests.'\n*   'A gritty, neon-soaked, Blade Runner-esque cyberpunk city at night in the rain.'"
+        "content": "Example Prompts:\n'A dark, gothic, Lovecraftian horror world, in the style of Bloodborne.'\n'A cheerful, vibrant, Ghibli-inspired fantasy world with cozy villages and lush forests.'\n'A gritty, neon-soaked, Blade Runner-esque cyberpunk city at night in the rain.'"
       },
       {
         "type": "p",
@@ -219,7 +219,7 @@
       },
       {
         "type": "p",
-        "content": "**Prompt:** `A lineup of 5 different goblin enemy types for a fantasy RPG. Include a small, sneaky goblin rogue, a large, brutish goblin warrior with a club, and a sinister goblin shaman holding a staff. Character concept art sheet, white background.`"
+        "content": "Prompt: `A lineup of 5 different goblin enemy types for a fantasy RPG. Include a small, sneaky goblin rogue, a large, brutish goblin warrior with a club, and a sinister goblin shaman holding a staff. Character concept art sheet, white background.`"
       },
       {
         "type": "p",
@@ -251,7 +251,7 @@
       },
       {
         "type": "p",
-        "content": "*   **For Level Layouts:** 'A top-down map of a ruined temple, showing broken pillars, a central altar, and secret passages. Game level design, blueprint style.'\n*   **For Player's View:** 'A first-person view from inside a dark, atmospheric sci-fi spaceship corridor. Wires hang from the ceiling, and a single red emergency light flashes at the end of the hall. Unreal Engine 5, cinematic.'\n*   **For Establishing Shots:** 'An epic, wide-angle establishing shot of the elven city of Silverwood, nestled in a giant forest. Digital painting.'"
+        "content": "For Level Layouts: 'A top-down map of a ruined temple, showing broken pillars, a central altar, and secret passages. Game level design, blueprint style.'\nFor Player's View: 'A first-person view from inside a dark, atmospheric sci-fi spaceship corridor. Wires hang from the ceiling, and a single red emergency light flashes at the end of the hall. Unreal Engine 5, cinematic.'\nFor Establishing Shots: 'An epic, wide-angle establishing shot of the elven city of Silverwood, nestled in a giant forest. Digital painting.'"
       },
       {
         "type": "h5",
@@ -341,7 +341,7 @@
       },
       {
         "type": "p",
-        "content": "**Prompt Example:** `A photorealistic architectural render of a modern, minimalist single-family home in a dense forest. The house is made of dark wood, black steel, and large glass windows that reflect the surrounding trees. The lighting is soft, overcast, late afternoon. Professional architectural photography.`"
+        "content": "Prompt Example: `A photorealistic architectural render of a modern, minimalist single-family home in a dense forest. The house is made of dark wood, black steel, and large glass windows that reflect the surrounding trees. The lighting is soft, overcast, late afternoon. Professional architectural photography.`"
       },
       {
         "type": "p",
@@ -365,7 +365,7 @@
       },
       {
         "type": "p",
-        "content": "They can then feed this clay render into an AI model with a new prompt, such as: `A modern building made of **light oak wood and weathered concrete**.` The AI will use the clay render as a structural guide and 'paint' the new materials onto it, complete with realistic textures, reflections, and shadows. "
+        "content": "They can then feed this clay render into an AI model with a new prompt, such as: `A modern building made of light oak wood and weathered concrete.` The AI will use the clay render as a structural guide and 'paint' the new materials onto it, complete with realistic textures, reflections, and shadows. "
       },
       {
         "type": "h4",
@@ -373,7 +373,7 @@
       },
       {
         "type": "p",
-        "content": "The architect can then change the prompt to 'made of **black marble and polished chrome**' and get a completely different look in seconds, without ever having to go back and manually change the materials in their 3D software. This allows for an incredible range of material studies in a fraction of the time."
+        "content": "The architect can then change the prompt to 'made of black marble and polished chrome' and get a completely different look in seconds, without ever having to go back and manually change the materials in their 3D software. This allows for an incredible range of material studies in a fraction of the time."
       },
       {
         "type": "p",
@@ -397,7 +397,7 @@
       },
       {
         "type": "p",
-        "content": "**Prompt Example (for an empty street):** `Add realistic-looking people walking on the sidewalk and several modern cars parked along the street.`"
+        "content": "Prompt Example (for an empty street): `Add realistic-looking people walking on the sidewalk and several modern cars parked along the street.`"
       },
       {
         "type": "h3",
@@ -467,7 +467,7 @@
       },
       {
         "type": "p",
-        "content": "**Prompt Example:** `A fashion mood board inspired by 'nostalgic 1970s summer road trip.' It should feature images of vintage denim, faded band t-shirts, dusty desert landscapes, lens flare, and a warm, sun-bleached color palette of orange, brown, and turquoise. Photorealistic.`"
+        "content": "Prompt Example: `A fashion mood board inspired by 'nostalgic 1970s summer road trip.' It should feature images of vintage denim, faded band t-shirts, dusty desert landscapes, lens flare, and a warm, sun-bleached color palette of orange, brown, and turquoise. Photorealistic.`"
       },
       {
         "type": "p",
@@ -491,7 +491,7 @@
       },
       {
         "type": "p",
-        "content": "**Prompt Example:** `Fashion design sketch of a woman's asymmetrical, avant-garde evening gown. The dress is made of black silk and has a dramatic, oversized ruffle on one shoulder. The silhouette is sleek and form-fitting. Minimalist, clean background.`"
+        "content": "Prompt Example: `Fashion design sketch of a woman's asymmetrical, avant-garde evening gown. The dress is made of black silk and has a dramatic, oversized ruffle on one shoulder. The silhouette is sleek and form-fitting. Minimalist, clean background.`"
       },
       {
         "type": "h4",
@@ -499,7 +499,7 @@
       },
       {
         "type": "p",
-        "content": "Once you have a base design you like, you can easily explore variations. Simply change one part of the prompt: 'Change the dress to be made of **liquid silver metallic fabric**,' or 'Change the silhouette to be an **A-line, flowing skirt**.' This allows for an incredibly agile and fast-paced design process."
+        "content": "Once you have a base design you like, you can easily explore variations. Simply change one part of the prompt: 'Change the dress to be made of liquid silver metallic fabric,' or 'Change the silhouette to be an A-line, flowing skirt.' This allows for an incredibly agile and fast-paced design process."
       },
       {
         "type": "h2",
@@ -519,7 +519,7 @@
       },
       {
         "type": "p",
-        "content": "**Prompt Example:** `A seamless, tileable pattern of tropical leaves and exotic flowers in a vibrant, high-contrast color palette. In the style of a vintage Hawaiian shirt. Flat design.`"
+        "content": "Prompt Example: `A seamless, tileable pattern of tropical leaves and exotic flowers in a vibrant, high-contrast color palette. In the style of a vintage Hawaiian shirt. Flat design.`"
       },
       {
         "type": "p",
@@ -551,7 +551,7 @@
       },
       {
         "type": "p",
-        "content": "**Prompt Example:** `High fashion photography of a model wearing a futuristic, iridescent raincoat. The photo is taken on a rainy, neon-lit street in Tokyo at night. The mood is cinematic and moody. Shot on a Sony a7 IV with an 85mm lens.`"
+        "content": "Prompt Example: `High fashion photography of a model wearing a futuristic, iridescent raincoat. The photo is taken on a rainy, neon-lit street in Tokyo at night. The mood is cinematic and moody. Shot on a Sony a7 IV with an 85mm lens.`"
       },
       {
         "type": "p",
