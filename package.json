@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build && rm -rf .next/cache",
-    "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "generate-articles": "tsx src/scripts/generate-all-articles.ts"
