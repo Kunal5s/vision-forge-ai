@@ -25,6 +25,7 @@ async function generateAndSaveForCategory(category: string, topics: string[]) {
     console.log(`--- Generating articles for category: ${category} ---`);
     
     // First, get the current articles to prepend the new ones to
+    // forceFetch: true ensures we read directly from the source, bypassing any in-memory cache.
     const currentArticles = await getArticles(category, true);
     let newArticles = [];
 
@@ -47,6 +48,7 @@ async function generateAndSaveForCategory(category: string, topics: string[]) {
 
     if (newArticles.length > 0) {
         // Prepend new articles to the existing ones to ensure newest are always first
+        // This is the correct archival logic.
         const updatedArticles = [...newArticles, ...currentArticles];
         await saveArticlesForCategory(category, updatedArticles);
         console.log(`  -> Saved ${updatedArticles.length} total articles for ${category}.`);
