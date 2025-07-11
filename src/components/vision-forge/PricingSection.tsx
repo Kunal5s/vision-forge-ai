@@ -61,46 +61,48 @@ const pricingPlans = [
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="container mx-auto py-16 px-4">
-      <header className="text-center mb-12">
-        <h2 className="text-4xl font-extrabold tracking-tight text-foreground mb-3">
-          Choose Your Perfect <span className="text-accent">Plan</span>
-        </h2>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Simple, transparent pricing for Imagen BrainAi. No hidden fees.
-        </p>
-      </header>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
-        {pricingPlans.map((plan) => (
-          <Card
-            key={plan.name}
-            className={cn(
-              'flex flex-col h-full transition-shadow hover:shadow-lg',
-              plan.isFeatured && 'border-primary shadow-2xl scale-105'
-            )}
-          >
-            <CardHeader className="text-center">
-              <CardTitle className="text-3xl">{plan.name}</CardTitle>
-              <p className="text-4xl font-bold text-foreground">{plan.price}<span className="text-sm font-normal text-muted-foreground"> / month</span></p>
-              <CardDescription className="pt-2">{plan.description}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex-grow">
-              <ul className="space-y-3">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-center gap-3">
-                    <Check className="h-5 w-5 text-primary" />
-                    <span className="text-sm text-foreground/80">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-            <CardFooter>
-              <Button asChild className={cn('w-full')} variant={plan.buttonVariant as any}>
-                <Link href={plan.href} target="_blank" rel="noopener noreferrer">{plan.buttonText}</Link>
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
+    <section id="pricing" className="py-16 bg-background">
+      <div className="container mx-auto px-4">
+        <header className="text-center mb-12 rounded-lg bg-foreground text-background p-8">
+          <h2 className="text-4xl font-extrabold tracking-tight mb-3">
+            Choose Your Perfect <span className="text-primary-foreground/80">Plan</span>
+          </h2>
+          <p className="text-lg text-background/80 max-w-2xl mx-auto">
+            Simple, transparent pricing for Imagen BrainAi. No hidden fees.
+          </p>
+        </header>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
+          {pricingPlans.map((plan) => (
+            <Card
+              key={plan.name}
+              className={cn(
+                'flex flex-col h-full transition-shadow hover:shadow-lg',
+                plan.isFeatured && 'border-primary shadow-2xl scale-105'
+              )}
+            >
+              <CardHeader className="text-center">
+                <CardTitle className="text-3xl">{plan.name}</CardTitle>
+                <p className="text-4xl font-bold text-foreground">{plan.price}<span className="text-sm font-normal text-muted-foreground"> / month</span></p>
+                <CardDescription className="pt-2">{plan.description}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-grow">
+                <ul className="space-y-3">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex items-center gap-3">
+                      <Check className="h-5 w-5 text-primary" />
+                      <span className="text-sm text-foreground/80">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+              <CardFooter>
+                <Button asChild className={cn('w-full')} variant={plan.buttonVariant as any}>
+                  <Link href={plan.href} target="_blank" rel="noopener noreferrer">{plan.buttonText}</Link>
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
       </div>
     </section>
   );
