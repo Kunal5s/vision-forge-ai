@@ -2,10 +2,14 @@
 'use server';
 
 import { Octokit } from 'octokit';
+import getConfig from 'next/config';
 
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const GITHUB_REPO_OWNER = process.env.GITHUB_REPO_OWNER;
-const GITHUB_REPO_NAME = process.env.GITHUB_REPO_NAME;
+const { serverRuntimeConfig } = getConfig();
+
+const GITHUB_TOKEN = serverRuntimeConfig.GITHUB_TOKEN;
+const GITHUB_REPO_OWNER = serverRuntimeConfig.GITHUB_REPO_OWNER;
+const GITHUB_REPO_NAME = serverRuntimeConfig.GITHUB_REPO_NAME;
+
 
 // This check now correctly uses the variable names from the .env file.
 if (!GITHUB_REPO_OWNER || !GITHUB_REPO_NAME || !GITHUB_TOKEN) {

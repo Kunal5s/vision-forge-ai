@@ -3,6 +3,7 @@
 
 import { getContent, saveContent } from './github';
 import { featuredTopics, promptsTopics, stylesTopics, tutorialsTopics, storybookTopics, usecasesTopics, inspirationTopics, trendsTopics, technologyTopics, nftTopics, categorySlugMap } from '@/lib/constants';
+import getConfig from 'next/config';
 
 // This is now the single source of truth for the AI prompt.
 const JSON_PROMPT_STRUCTURE = `You are a world-class content creator and SEO expert with a special talent for writing in a deeply human, engaging, and emotional tone. Your task is to generate a comprehensive, well-structured, and fully humanized long-form article for an AI Image Generator website.
@@ -87,7 +88,9 @@ async function parseAndValidateArticle(aiResponse: any, topic: string): Promise<
 
 
 async function generateWithOpenRouter(model: string, topic: string, category: string): Promise<any | null> {
-    const apiKey = process.env.OPENROUTER_API_KEY;
+    const { serverRuntimeConfig } = getConfig();
+    const apiKey = serverRuntimeConfig.OPENROUTER_API_KEY;
+
     if (!apiKey) {
         throw new Error('OpenRouter API key is not configured.');
     }
@@ -277,5 +280,3 @@ export async function getArticles(category: string): Promise<Article[]> {
         return [];
     }
 }
-
-    
