@@ -206,7 +206,7 @@ export function ImageGenerator() {
                       {...register('prompt')}
                       placeholder="e.g., A majestic lion wearing a crown, sitting on a throne in a cosmic library..."
                       rows={4}
-                      className="bg-background border-input focus:border-primary focus:ring-primary text-base resize-none"
+                      className="bg-background border-foreground focus:border-primary focus:ring-primary text-base resize-none"
                       disabled={isGenerating}
                     />
                   </div>
@@ -223,7 +223,7 @@ export function ImageGenerator() {
                         <div>
                           <Label htmlFor="artistic-style" className="text-sm font-medium mb-2 block">Artistic Style</Label>
                           <Select value={artisticStyle} onValueChange={setArtisticStyle} disabled={isGenerating}>
-                            <SelectTrigger id="artistic-style"><SelectValue /></SelectTrigger>
+                            <SelectTrigger id="artistic-style" className="border-foreground"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               {ARTISTIC_STYLES.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                             </SelectContent>
@@ -232,7 +232,7 @@ export function ImageGenerator() {
                         <div>
                           <Label htmlFor="aspect-ratio" className="text-sm font-medium mb-2 block">Aspect Ratio</Label>
                           <Select value={selectedAspectRatio} onValueChange={setSelectedAspectRatio} disabled={isGenerating}>
-                            <SelectTrigger id="aspect-ratio"><SelectValue /></SelectTrigger>
+                            <SelectTrigger id="aspect-ratio" className="border-foreground"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               {ASPECT_RATIOS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                             </SelectContent>
@@ -241,7 +241,7 @@ export function ImageGenerator() {
                         <div>
                           <Label htmlFor="mood" className="text-sm font-medium mb-2 block">Mood</Label>
                           <Select value={mood} onValueChange={setMood} disabled={isGenerating}>
-                            <SelectTrigger id="mood"><SelectValue /></SelectTrigger>
+                            <SelectTrigger id="mood" className="border-foreground"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               {MOODS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                             </SelectContent>
@@ -250,7 +250,7 @@ export function ImageGenerator() {
                         <div>
                           <Label htmlFor="lighting" className="text-sm font-medium mb-2 block">Lighting</Label>
                           <Select value={lighting} onValueChange={setLighting} disabled={isGenerating}>
-                            <SelectTrigger id="lighting"><SelectValue /></SelectTrigger>
+                            <SelectTrigger id="lighting" className="border-foreground"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               {LIGHTING_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                             </SelectContent>
@@ -259,7 +259,7 @@ export function ImageGenerator() {
                         <div>
                           <Label htmlFor="color-palette" className="text-sm font-medium mb-2 block">Color Palette</Label>
                           <Select value={colorPalette} onValueChange={setColorPalette} disabled={isGenerating}>
-                            <SelectTrigger id="color-palette"><SelectValue /></SelectTrigger>
+                            <SelectTrigger id="color-palette" className="border-foreground"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               {COLOR_PALETTES.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                             </SelectContent>
@@ -268,7 +268,7 @@ export function ImageGenerator() {
                          <div>
                           <Label htmlFor="quality" className="text-sm font-medium mb-2 block">Quality</Label>
                           <Select value={quality} onValueChange={setQuality} disabled={isGenerating}>
-                            <SelectTrigger id="quality"><SelectValue /></SelectTrigger>
+                            <SelectTrigger id="quality" className="border-foreground"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               {QUALITY_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                             </SelectContent>
