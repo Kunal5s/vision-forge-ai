@@ -1,4 +1,3 @@
-
 [
   {
     "image": "https://image.pollinations.ai/prompt/A%20glowing%2C%20neural%20network%20visualization%2C%20showing%20how%20a%20diffusion%20model%20transforms%20noise%20into%20an%20image%2C%20Technology%2C%20high%20detail%2C%20vibrant%2C%20professional%20photo?width=600&height=400&seed=223292497&nologo=true",
@@ -410,7 +409,7 @@
         "content": "Why AI Needs So Much Power"
       },
       {
-        "type":- "p",
+        "type": "p",
         "content": "Training a large-scale AI model, like the ones used for image generation, is one of the most computationally expensive tasks on the planet. The AI needs to process billions of data points (images and text) and adjust the connections between billions of parameters."
       },
       {
@@ -509,3 +508,4 @@
     "conclusion": "The next time an image appears on your screen in seconds, take a moment to appreciate the unseen engine humming away in the background. You are leveraging a global network of technology, a symphony of servers, GPUs, and data centers, all working in concert to bring your idea to life. You are not just using a website; you are wielding the power of the cloud."
   }
 ]
+    

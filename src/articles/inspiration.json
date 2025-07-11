@@ -222,7 +222,7 @@
         "content": "Example Analysis"
       },
       {
-        "type":="p",
+        "type": "p",
         "content": "You might find that you consistently love images with 'dramatic, low-key lighting,' 'a muted, earthy color palette,' 'a sense of lonely grandeur,' and 'a slightly grainy, filmic texture.' This is gold. This is your starting point."
       },
       {
@@ -304,7 +304,7 @@
         "content": "Unlocking the Doors of Perception"
       },
       {
-        "type":p",
+        "type": "p",
         "content": "Have you ever wanted to paint your dreams? To walk through landscapes born from pure imagination? Welcome, fellow traveler. You've come to the right place. I'm going to guide you through the process of creating surreal, dream-like worlds with AI."
       },
       {
@@ -597,3 +597,5 @@
     "conclusion": "The stories of our ancestors are not dead relics; they are living, breathing narratives waiting to be reinterpreted by new voices—by your voice. With AI as your tool, you have the power to connect the ancient past with the digital future. Go forth, explore the annals of history and the pantheons of myth, and create something truly timeless."
   }
 ]
+
+    
