@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   description: "Welcome to the future of AI image generation. Describe your vision, and our advanced text-to-image AI will bring it to life. Create stunning, high-quality images, illustrations, and art from text prompts in seconds. Get started for free and see what you can create.",
 };
 
+// This ensures the page is dynamically rendered, allowing article generation on first load.
+export const dynamic = 'force-dynamic';
+
 const CATEGORY_NAME = 'Featured';
 
 async function FeaturedArticleList() {

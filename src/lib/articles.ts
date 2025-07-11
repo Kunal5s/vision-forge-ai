@@ -2,7 +2,7 @@
 'use server';
 
 import { getContent, saveContent } from './github';
-import { featuredTopics, promptsTopics, stylesTopics, tutorialsTopics, storybookTopics, usecasesTopics, inspirationTopics, trendsTopics, technologyTopics, nftTopics, categorySlugMap } from '@/lib/constants';
+import { featuredTopics, promptsTopics, stylesTopics, tutorialsTopics, storybookTopics, usecasesTopics, inspirationTopics, trendsTopics, technologyTopics, nftTopics } from '@/lib/constants';
 
 // This is now the single source of truth for the AI prompt.
 const JSON_PROMPT_STRUCTURE = `You are a world-class content creator and SEO expert with a special talent for writing in a deeply human, engaging, and emotional tone. Your task is to generate a comprehensive, well-structured, and fully humanized long-form article for an AI Image Generator website.
@@ -88,7 +88,6 @@ async function parseAndValidateArticle(aiResponse: any, topic: string): Promise<
 
 async function generateWithOpenRouter(model: string, topic: string, category: string): Promise<any | null> {
     const apiKey = process.env.OPENROUTER_API_KEY;
-
     if (!apiKey) {
         throw new Error('OpenRouter API key is not configured.');
     }
@@ -122,7 +121,6 @@ async function generateWithOpenRouter(model: string, topic: string, category: st
           return null;
         }
         
-        // The AI response is a JSON string, so we need to parse it.
         return JSON.parse(content);
     } catch (error) {
         console.warn(`Request to OpenRouter model ${model} failed.`, error);
@@ -131,8 +129,6 @@ async function generateWithOpenRouter(model: string, topic: string, category: st
 }
 
 
-// This is the new central function for generating a single article.
-// It can be called from anywhere on the server.
 export async function generateAndSaveSingleArticle(topic: string, category: string): Promise<Article | null> {
     let aiJsonResponse: any | null = null;
     const allModels = [...PRIORITY_MODELS, ...FALLBACK_MODELS];
@@ -237,7 +233,6 @@ const categoryTopicsMap: Record<string, string[]> = {
     'NFT': nftTopics,
 };
 
-// Using a simple in-memory cache to avoid re-fetching within the same request lifecycle
 const articleCache = new Map<string, Article[]>();
 
 export async function getArticles(category: string): Promise<Article[]> {
@@ -247,37 +242,29 @@ export async function getArticles(category: string): Promise<Article[]> {
     }
 
     const filePath = `src/articles/${category.toLowerCase().replace(/\s/g, '-')}.json`;
-    const topics = categoryTopicsMap[category];
-
-    if (!topics) {
-        console.error(`No topics defined for category: ${category}`);
-        return [];
-    }
 
     try {
         const existingContent = await getContent(filePath);
         if (existingContent) {
-            try {
-                const articles: Article[] = JSON.parse(existingContent.content);
-                if (Array.isArray(articles) && articles.length > 0 && articles.every(a => a.slug && a.title)) {
-                    articleCache.set(cacheKey, articles);
-                    return articles;
-                }
-            } catch(e) {
-                console.warn(`Could not parse or validate existing articles for ${category}. Regenerating...`, e);
+            const articles: Article[] = JSON.parse(existingContent.content);
+            if (Array.isArray(articles) && articles.length > 0) {
+                articleCache.set(cacheKey, articles);
+                return articles;
             }
         }
         
-        // This part runs ONLY if the JSON file is missing or invalid on the first load.
+        // If file doesn't exist or is empty/invalid, generate it ONCE during the first build/run.
+        // Subsequent content updates will be handled by the CRON job.
         console.log(`No valid articles found for "${category}", generating new ones on first deployment...`);
-        const newArticles = await generateAndSaveArticles(category, topics);
+        const newArticles = await generateAndSaveArticles(category, categoryTopicsMap[category]);
         if (newArticles.length > 0) {
             articleCache.set(cacheKey, newArticles);
         }
         return newArticles;
+
     } catch (error) {
         console.error(`An error occurred in getArticles for category "${category}":`, error);
-        // Return an empty array on failure to prevent the page from crashing.
+        // On failure, return an empty array to prevent the page from crashing.
         return [];
     }
 }

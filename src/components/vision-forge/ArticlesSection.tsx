@@ -51,8 +51,8 @@ export function ArticlesSection({ articles, category }: ArticlesSectionProps) {
     if (!articles || articles.length === 0) {
         return (
             <div className="text-center py-10 text-muted-foreground">
-                <p>No articles found for the "{category}" category.</p>
-                <p className="text-sm mt-2">Click the "Regenerate Articles" button to generate content for this section.</p>
+                <p>No articles are available for the "{category}" category at the moment.</p>
+                <p className="text-sm mt-2">Content is generated automatically. Please check back later.</p>
             </div>
         )
     }
