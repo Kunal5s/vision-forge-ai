@@ -3,17 +3,12 @@
 
 import { regenerateFeaturedArticles } from '@/app/actions';
 import { NextRequest, NextResponse } from 'next/server';
-import getConfig from 'next/config';
 
 export const dynamic = 'force-dynamic'; // Ensures this route is always executed dynamically
 
 export async function POST(req: NextRequest) {
-  const { serverRuntimeConfig } = getConfig();
-  const CRON_SECRET = serverRuntimeConfig.CRON_SECRET;
-  const VERCEL_DEPLOY_HOOK_URL = serverRuntimeConfig.VERCEL_DEPLOY_HOOK_URL;
-
   const authHeader = req.headers.get('authorization');
-  if (authHeader !== `Bearer ${CRON_SECRET}`) {
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -28,13 +23,13 @@ export async function POST(req: NextRequest) {
     console.log('Successfully regenerated articles and saved to GitHub.');
 
     // 2. Trigger Vercel deployment hook to publish changes
-    if (VERCEL_DEPLOY_HOOK_URL) {
+    if (process.env.VERCEL_DEPLOY_HOOK_URL) {
       console.log('Triggering Vercel deployment hook...');
-      const deployResponse = await fetch(VERCEL_DEPLOY_HOOK_URL, { method: 'POST' });
+      const deployResponse = await fetch(process.env.VERCEL_DEPLOY_HOOK_URL, { method: 'POST' });
       if (!deployResponse.ok) {
-        console.error('Failed to trigger Vercel deploy hook:', await deployResponse.text());
-        // We don't throw an error here, as the articles are already saved.
+        // Log the error but don't fail the entire job, as the articles are already saved.
         // The deployment can be triggered manually if needed.
+        console.error('Failed to trigger Vercel deploy hook:', await deployResponse.text());
       } else {
         console.log('Vercel deployment triggered successfully.');
       }

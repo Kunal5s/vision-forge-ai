@@ -183,14 +183,6 @@ export async function generateAndSaveSingleArticle(topic: string, category: stri
       keyTakeaways,
       conclusion,
     };
-
-    // We only save the article to GitHub if it's for a known category
-    const filePath = `src/articles/${category.toLowerCase().replace(/\s/g, '-')}.json`;
-    const existingFile = await getContent(filePath);
-    // Note: This saves one article at a time, overwriting the file.
-    // For batch generation, the logic in generateAndSaveArticles should be used.
-    // Let's assume for now this function is for single articles or initial generation.
-    // The batch logic in generateAndSaveArticles handles multiple articles.
     
     return article;
 }
@@ -276,7 +268,8 @@ export async function getArticles(category: string): Promise<Article[]> {
             }
         }
         
-        console.log(`No valid articles found for "${category}", generating new ones...`);
+        // This part runs ONLY if the JSON file is missing or invalid on the first load.
+        console.log(`No valid articles found for "${category}", generating new ones on first deployment...`);
         const newArticles = await generateAndSaveArticles(category, topics);
         if (newArticles.length > 0) {
             articleCache.set(cacheKey, newArticles);
@@ -288,5 +281,3 @@ export async function getArticles(category: string): Promise<Article[]> {
         return [];
     }
 }
-
-    
