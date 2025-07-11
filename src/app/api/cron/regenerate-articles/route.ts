@@ -1,4 +1,3 @@
-
 // src/app/api/cron/regenerate-articles/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -9,13 +8,18 @@ import { getContent, saveContent } from '@/lib/github';
 export const dynamic = 'force-dynamic';
 
 const STATE_FILE_PATH = 'src/lib/regeneration-state.json';
-const CATEGORY_ROTATION = Object.keys(categorySlugMap); // ['featured', 'prompts', ...]
+// We will update two categories per CRON run to ensure more freshness across the site.
+const CATEGORIES_PER_RUN = 2; 
+// The order in which categories will be updated. 'Featured' is intentionally left out
+// as it can be a manual or special case, keeping other content evergreen.
+const CATEGORY_ROTATION = Object.keys(categorySlugMap).filter(slug => slug !== 'featured');
 
 interface RegenerationState {
   lastUpdatedCategoryIndex: number;
 }
 
-async function getNextCategoryForUpdate(): Promise<string> {
+// This function now gets the NEXT TWO categories to update.
+async function getNextCategoriesForUpdate(): Promise<string[]> {
     let state: RegenerationState;
     try {
         const file = await getContent(STATE_FILE_PATH);
@@ -30,23 +34,30 @@ async function getNextCategoryForUpdate(): Promise<string> {
         state = { lastUpdatedCategoryIndex: -1 };
     }
 
-    const nextIndex = (state.lastUpdatedCategoryIndex + 1) % CATEGORY_ROTATION.length;
-    const nextCategorySlug = CATEGORY_ROTATION[nextIndex];
-    
-    // Convert slug back to the proper category name (e.g., 'featured' -> 'Featured')
-    const nextCategoryName = categorySlugMap[nextCategorySlug];
+    const categoriesToUpdate: string[] = [];
+    let currentIndex = state.lastUpdatedCategoryIndex;
 
+    for (let i = 0; i < CATEGORIES_PER_RUN; i++) {
+        currentIndex = (currentIndex + 1) % CATEGORY_ROTATION.length;
+        const nextCategorySlug = CATEGORY_ROTATION[currentIndex];
+        // Convert slug back to the proper category name (e.g., 'prompts' -> 'Prompts')
+        const nextCategoryName = categorySlugMap[nextCategorySlug];
+        if (nextCategoryName) {
+            categoriesToUpdate.push(nextCategoryName);
+        }
+    }
+    
     // Save the new state for the next run
-    const newState: RegenerationState = { lastUpdatedCategoryIndex: nextIndex };
+    const newState: RegenerationState = { lastUpdatedCategoryIndex: currentIndex };
     const stateFile = await getContent(STATE_FILE_PATH);
     await saveContent(
         STATE_FILE_PATH,
         JSON.stringify(newState, null, 2),
-        `chore: update regeneration state to index ${nextIndex}`,
+        `chore: update regeneration state to index ${currentIndex}`,
         stateFile?.sha
     );
     
-    return nextCategoryName;
+    return categoriesToUpdate;
 }
 
 export async function POST(req: NextRequest) {
@@ -56,20 +67,29 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const categoryToUpdate = await getNextCategoryForUpdate();
-    console.log(`CRON job started: Regenerating articles for category: "${categoryToUpdate}"...`);
+    const categoriesToUpdate = await getNextCategoriesForUpdate();
+    if (categoriesToUpdate.length === 0) {
+        console.log('CRON job ran, but no categories were scheduled for update.');
+        return NextResponse.json({ success: true, message: 'No categories scheduled for update.' });
+    }
 
-    // 1. Regenerate articles for the determined category and save them to GitHub
-    // The generateAndSaveArticles function is already set up to use the correct topics for a given category.
-    await generateAndSaveArticles(categoryToUpdate);
-    console.log(`Successfully regenerated articles for "${categoryToUpdate}" and saved to GitHub.`);
+    console.log(`CRON job started: Regenerating articles for categories: "${categoriesToUpdate.join(', ')}"...`);
 
-    // 2. Trigger Vercel deployment hook to publish changes
+    // Regenerate articles for the determined categories and save them to GitHub
+    const generationPromises = categoriesToUpdate.map(category => 
+        generateAndSaveArticles(category).catch(e => {
+            console.error(`Failed to generate articles for category: ${category}`, e);
+            return null; // Don't let one failure stop the whole process
+        })
+    );
+    await Promise.all(generationPromises);
+    console.log(`Successfully regenerated articles for specified categories and saved to GitHub.`);
+
+    // Trigger Vercel deployment hook to publish changes
     if (process.env.VERCEL_DEPLOY_HOOK_URL) {
       console.log('Triggering Vercel deployment hook...');
       const deployResponse = await fetch(process.env.VERCEL_DEPLOY_HOOK_URL, { method: 'POST' });
       if (!deployResponse.ok) {
-        // Log the error but don't fail the entire job, as the articles are already saved.
         console.error('Failed to trigger Vercel deploy hook:', await deployResponse.text());
       } else {
         console.log('Vercel deployment triggered successfully.');
@@ -78,7 +98,7 @@ export async function POST(req: NextRequest) {
       console.warn('VERCEL_DEPLOY_HOOK_URL is not set. Skipping deployment trigger.');
     }
 
-    return NextResponse.json({ success: true, message: `Articles for "${categoryToUpdate}" regenerated and deployment triggered.` });
+    return NextResponse.json({ success: true, message: `Articles for "${categoriesToUpdate.join(', ')}" regenerated and deployment triggered.` });
 
   } catch (error: any) {
     console.error('CRON job failed:', error);
