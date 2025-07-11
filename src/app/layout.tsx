@@ -34,6 +34,7 @@ export const metadata: Metadata = {
     other: {
       'netpub_7b9465a6c000fc668f19805afb86902b': '7b9465a6c000fc668f19805afb86902b_05f79ef00f4f084d4066151ea34f5b21',
       'netpub_f2a54d8cbe66a52f8648704f26cb6188': 'f2a54d8cbe66a52f8648704f26cb6188_a8a35270a322bf1d60c6f6d8c6081c7e',
+      'ezoic-site-verification': 'ARNEb1PANm51Bre5U3z0zTQYFeFYg7',
     },
   },
   icons: {
