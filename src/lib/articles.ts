@@ -3,14 +3,6 @@
 
 import 'dotenv/config';
 import { getContent, saveContent } from './github';
-import { 
-    featuredTopics, promptsTopics, stylesTopics, tutorialsTopics, 
-    storybookTopics, usecasesTopics, inspirationTopics, trendsTopics, 
-    technologyTopics, nftTopics
-} from '@/lib/constants';
-import path from 'path';
-import fs from 'fs/promises';
-
 
 const JSON_PROMPT_STRUCTURE = `You are a world-class content creator and SEO expert with a special talent for writing in a deeply human, engaging, and emotional tone. Your task is to generate a comprehensive, well-structured, and fully humanized long-form article for an AI Image Generator website.
 
@@ -188,113 +180,64 @@ export async function generateSingleArticle(topic: string, category: string): Pr
 }
 
 
-const allTopicsByCategory: Record<string, string[]> = {
-    'Featured': featuredTopics,
-    'Prompts': promptsTopics,
-    'Styles': stylesTopics,
-    'Tutorials': tutorialsTopics,
-    'Storybook': storybookTopics,
-    'Usecases': usecasesTopics,
-    'Inspiration': inspirationTopics,
-    'Trends': trendsTopics,
-    'Technology': technologyTopics,
-    'NFT': nftTopics,
-};
-
-// This function is for ONE-TIME local generation, or for the CRON job.
-export async function generateAndSaveArticles(category: string): Promise<Article[]> {
-    const topics = allTopicsByCategory[category];
-    if (!topics) {
-        console.warn(`No topics found for category: ${category}. Cannot generate articles.`);
-        return [];
-    }
-
-    console.log(`Generating and saving articles for category: ${category}`);
-    const newArticles: Article[] = [];
-
-    const articlePromises = topics.map(topic => 
-        generateSingleArticle(topic, category).catch(error => {
-            console.error(`Failed to generate article for topic: "${topic}". Skipping.`, error);
-            return null;
-        })
+// Saves a full list of articles for a category, overwriting the existing file.
+export async function saveArticlesForCategory(category: string, articles: Article[]) {
+    const categorySlug = category.toLowerCase().replace(/\s/g, '-');
+    const filePath = `src/articles/${categorySlug}.json`;
+    const existingFile = await getContent(filePath);
+    await saveContent(
+        filePath,
+        JSON.stringify(articles, null, 2),
+        `feat: update articles for ${category}`,
+        existingFile?.sha
     );
-    
-    const results = await Promise.all(articlePromises);
-
-    results.forEach(article => {
-        if (article) {
-            newArticles.push(article);
-        }
-    });
-
-    if (newArticles.length > 0) {
-        const filePath = `src/articles/${category.toLowerCase().replace(/\s/g, '-')}.json`;
-        
-        // Check if running in a Node.js environment (local script)
-        if (typeof window === 'undefined' && process.env.NODE_ENV === 'development') {
-             const localPath = path.join(process.cwd(), filePath);
-             await fs.mkdir(path.dirname(localPath), { recursive: true });
-             await fs.writeFile(localPath, JSON.stringify(newArticles, null, 2));
-             console.log(`Successfully saved ${newArticles.length} articles to LOCAL file: ${localPath}`);
-        } else {
-            // This path is for the CRON job running on Vercel
-            const existingFile = await getContent(filePath);
-            await saveContent(
-                filePath,
-                JSON.stringify(newArticles, null, 2),
-                `feat: update articles for ${category}`,
-                existingFile?.sha
-            );
-            console.log(`Successfully saved ${newArticles.length} articles to GitHub: ${filePath}`);
-        }
-    } else {
-        console.warn(`No articles were successfully generated for category: ${category}. Nothing to save.`);
-    }
-
-    return newArticles;
+    console.log(`Successfully saved ${articles.length} articles to GitHub for category: ${category}`);
 }
 
+
 const articleCache = new Map<string, Article[]>();
+const SCRIPT_GENERATION_CACHE_BUST = new Date().getTime(); // Used to bust cache during script runs
 
 // This is the primary function used by pages to get article data.
 // It ONLY READS from the local JSON files. It DOES NOT generate content.
-export async function getArticles(category: string): Promise<Article[]> {
+export async function getArticles(category: string, forceFetch = false): Promise<Article[]> {
     const cacheKey = category;
-    if (articleCache.has(cacheKey)) {
+    
+    if (articleCache.has(cacheKey) && !forceFetch) {
         return articleCache.get(cacheKey)!;
     }
 
     const categorySlug = category.toLowerCase().replace(/\s/g, '-');
     const filePath = `src/articles/${categorySlug}.json`;
 
-    // Production (Vercel): Read from GitHub
-    if (process.env.NODE_ENV === 'production' && process.env.VERCEL) {
-        try {
-            const file = await getContent(filePath);
-            if (file) {
-                const articles = JSON.parse(file.content);
-                articleCache.set(cacheKey, articles);
-                return articles;
-            }
-        } catch (error) {
-            console.error(`Error fetching articles from GitHub for category "${category}":`, error);
-            return []; // Return empty on error
-        }
-    }
-
-    // Development or other environments: Read from local file system
     try {
-        const articles: Article[] = (await import(`@/articles/${categorySlug}.json`)).default;
-        
-        if (Array.isArray(articles) && articles.length > 0) {
+        // In development, try to read from local file system first for speed
+        if (process.env.NODE_ENV === 'development' && !forceFetch) {
+            const localArticles: Article[] = (await import(`@/articles/${categorySlug}.json?t=${SCRIPT_GENERATION_CACHE_BUST}`)).default;
+            if (Array.isArray(localArticles)) {
+                 articleCache.set(cacheKey, localArticles);
+                 return localArticles;
+            }
+        }
+    } catch (e) {
+        // Fallback to GitHub if local file doesn't exist during dev
+        // This is expected if the generation script hasn't run yet
+    }
+    
+    // For production or if local dev file fails, fetch from GitHub
+    try {
+        const file = await getContent(filePath);
+        if (file) {
+            const articles = JSON.parse(file.content);
             articleCache.set(cacheKey, articles);
             return articles;
         }
-        
-        console.warn(`No articles found for category: "${category}" in the JSON files.`);
-        return [];
     } catch (error) {
-      console.warn(`Could not import articles for category "${category}". The file might not exist yet. Run 'npm run generate-articles'.`);
-      return [];
+        console.error(`Error fetching articles from GitHub for category "${category}":`, error);
+        return [];
     }
+
+    // If no articles found anywhere, return empty array
+    console.warn(`No articles found for category: "${category}" in JSON files or on GitHub.`);
+    return [];
 }

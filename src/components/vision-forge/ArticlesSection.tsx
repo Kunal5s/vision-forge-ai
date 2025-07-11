@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowRight } from 'lucide-react';
 
 interface ArticleContentBlock {
-    type: 'h2' | 'h3' | 'p';
+    type: 'h2' | 'h3' | 'p' | 'h4' | 'h5' | 'h6';
     content: string;
 }
 
@@ -27,6 +27,9 @@ interface ArticlesSectionProps {
     articles: Article[];
     category: string;
 }
+
+// The number of articles to display per category on main pages
+const ARTICLES_TO_SHOW = 4;
 
 export function ArticlesSection({ articles, category }: ArticlesSectionProps) {
 
@@ -57,15 +60,18 @@ export function ArticlesSection({ articles, category }: ArticlesSectionProps) {
         )
     }
 
+    // On the "All Articles" page, we show everything. On other pages, we only show the latest 4.
+    const articlesToDisplay = category === 'All Articles' ? articles : articles.slice(0, ARTICLES_TO_SHOW);
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {articles.map((article, index) => {
+            {articlesToDisplay.map((article, index) => {
                 // The slug for the category should be a clean, URL-friendly string.
                 const categorySlug = article.category.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
                 const articleUrl = `/${categorySlug}/${article.slug}`;
 
                 return (
-                    <Card key={index} className="flex flex-col overflow-hidden transition-shadow hover:shadow-lg">
+                    <Card key={`${article.slug}-${index}`} className="flex flex-col overflow-hidden transition-shadow hover:shadow-lg">
                         <CardHeader className="p-0">
                             <Link href={articleUrl}>
                                 <div className="aspect-video relative">
