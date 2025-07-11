@@ -1,7 +1,7 @@
 
 // src/scripts/generate-all-articles.ts
 import 'dotenv/config'; // Load environment variables from .env file
-import { generateSingleArticle, saveArticlesForCategory } from '../lib/articles';
+import { generateSingleArticle, saveArticlesForCategory, getArticles } from '../lib/articles';
 import { 
     categorySlugMap, featuredTopics, promptsTopics, stylesTopics, tutorialsTopics, 
     storybookTopics, usecasesTopics, inspirationTopics, trendsTopics, 
@@ -23,7 +23,10 @@ const allTopicsByCategory: Record<string, string[]> = {
 
 async function generateAndSaveForCategory(category: string, topics: string[]) {
     console.log(`--- Generating articles for category: ${category} ---`);
-    const newArticles = [];
+    
+    // First, get the current articles to prepend the new ones to
+    const currentArticles = await getArticles(category, true);
+    let newArticles = [];
 
     // We generate 4 articles for each category as per the requirement
     const topicsToGenerate = topics.slice(0, 4);
@@ -43,9 +46,12 @@ async function generateAndSaveForCategory(category: string, topics: string[]) {
     }
 
     if (newArticles.length > 0) {
-        await saveArticlesForCategory(category, newArticles);
+        // Prepend new articles to the existing ones to ensure newest are always first
+        const updatedArticles = [...newArticles, ...currentArticles];
+        await saveArticlesForCategory(category, updatedArticles);
+        console.log(`  -> Saved ${updatedArticles.length} total articles for ${category}.`);
     } else {
-        console.warn(`No articles were generated for ${category}, nothing to save.`);
+        console.warn(`No new articles were generated for ${category}, nothing to save.`);
     }
     console.log(`--- Finished category: ${category} ---`);
 }
