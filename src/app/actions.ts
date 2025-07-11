@@ -5,12 +5,12 @@ import { revalidatePath } from 'next/cache';
 import { generateAndSaveArticles } from '@/lib/articles';
 import { featuredTopics } from '@/lib/constants';
 
-// This function is now exclusively for the CRON job or any explicit user action in the future.
+// This function is now exclusively for the CRON job.
 export async function regenerateFeaturedArticles() {
   try {
-    console.log('Regenerating featured articles via action...');
+    console.log('Regenerating featured articles via CRON job...');
     
-    // The core logic of generating and saving articles to GitHub lives here.
+    // The core logic of generating and saving articles to GitHub lives in the articles library.
     // This is called by the CRON job.
     await generateAndSaveArticles('Featured', featuredTopics);
     
@@ -24,5 +24,3 @@ export async function regenerateFeaturedArticles() {
     return { success: false, message: `Error: ${error.message}` };
   }
 }
-
-    

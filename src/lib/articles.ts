@@ -1,10 +1,19 @@
 
 'use server';
 
-import { getContent, saveContent } from './github';
-import { featuredTopics, promptsTopics, stylesTopics, tutorialsTopics, storybookTopics, usecasesTopics, inspirationTopics, trendsTopics, technologyTopics, nftTopics } from '@/lib/constants';
+// IMPORTANT: This file is now used for READING articles and for the ONE-TIME generation script.
+// The live, automatic regeneration is handled exclusively by the CRON job in /src/app/api/cron/regenerate-articles/route.ts
 
-// This is now the single source of truth for the AI prompt.
+import { getContent, saveContent } from './github';
+import { 
+    featuredTopics, promptsTopics, stylesTopics, tutorialsTopics, 
+    storybookTopics, usecasesTopics, inspirationTopics, trendsTopics, 
+    technologyTopics, nftTopics, categorySlugMap
+} from '@/lib/constants';
+import path from 'path';
+import fs from 'fs/promises';
+
+
 const JSON_PROMPT_STRUCTURE = `You are a world-class content creator and SEO expert with a special talent for writing in a deeply human, engaging, and emotional tone. Your task is to generate a comprehensive, well-structured, and fully humanized long-form article for an AI Image Generator website.
 
 **Primary Goal:** The article must be original, creative, helpful, and written in a tone that feels like a warm, exciting, and empowering conversation with a friendly expert.
@@ -54,9 +63,8 @@ const PRIORITY_MODELS = [
 
 const FALLBACK_MODELS = [
     "gryphe/mythomax-l2-13b",
-    "google/gemini-pro" // Gemini is now the final fallback
+    "google/gemini-pro"
 ];
-
 
 interface ArticleContentBlock {
     type: 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p';
@@ -73,18 +81,6 @@ export interface Article {
     keyTakeaways: string[];
     conclusion: string;
 }
-
-async function parseAndValidateArticle(aiResponse: any, topic: string): Promise<Omit<Article, 'image' | 'dataAiHint' | 'slug' | 'category'> & { imagePrompt: string }> {
-    const { title, articleContent, keyTakeaways, conclusion, imagePrompt } = aiResponse;
-
-    if (!title || typeof title !== 'string' || title.trim() === '' || !Array.isArray(articleContent) || articleContent.length === 0 || !Array.isArray(keyTakeaways) || !conclusion || !imagePrompt) {
-        console.error("Validation failed for AI response on topic:", topic, aiResponse);
-        throw new Error(`AI response for topic "${topic}" is missing required fields or has invalid format.`);
-    }
-
-    return { title, articleContent, keyTakeaways, conclusion, imagePrompt };
-}
-
 
 async function generateWithOpenRouter(model: string, topic: string, category: string): Promise<any | null> {
     const apiKey = process.env.OPENROUTER_API_KEY;
@@ -128,6 +124,16 @@ async function generateWithOpenRouter(model: string, topic: string, category: st
     }
 }
 
+async function parseAndValidateArticle(aiResponse: any, topic: string): Promise<Omit<Article, 'image' | 'dataAiHint' | 'slug' | 'category'> & { imagePrompt: string }> {
+    const { title, articleContent, keyTakeaways, conclusion, imagePrompt } = aiResponse;
+
+    if (!title || typeof title !== 'string' || title.trim() === '' || !Array.isArray(articleContent) || articleContent.length === 0 || !Array.isArray(keyTakeaways) || !conclusion || !imagePrompt) {
+        console.error("Validation failed for AI response on topic:", topic, aiResponse);
+        throw new Error(`AI response for topic "${topic}" is missing required fields or has invalid format.`);
+    }
+
+    return { title, articleContent, keyTakeaways, conclusion, imagePrompt };
+}
 
 export async function generateAndSaveSingleArticle(topic: string, category: string): Promise<Article | null> {
     let aiJsonResponse: any | null = null;
@@ -184,6 +190,8 @@ export async function generateAndSaveSingleArticle(topic: string, category: stri
 }
 
 
+// This function is for ONE-TIME local generation, or for the CRON job.
+// It is NOT called during the page build process.
 export async function generateAndSaveArticles(category: string, topics: string[]): Promise<Article[]> {
     console.log(`Generating and saving articles for category: ${category}`);
     const newArticles: Article[] = [];
@@ -205,14 +213,24 @@ export async function generateAndSaveArticles(category: string, topics: string[]
 
     if (newArticles.length > 0) {
         const filePath = `src/articles/${category.toLowerCase().replace(/\s/g, '-')}.json`;
-        const existingFile = await getContent(filePath);
-        await saveContent(
-            filePath,
-            JSON.stringify(newArticles, null, 2),
-            `feat: update articles for ${category}`,
-            existingFile?.sha
-        );
-        console.log(`Successfully saved ${newArticles.length} articles to ${filePath}`);
+        
+        // Check if running in a Node.js environment (local script)
+        if (typeof window === 'undefined') {
+            const localPath = path.join(process.cwd(), filePath);
+             await fs.mkdir(path.dirname(localPath), { recursive: true });
+            await fs.writeFile(localPath, JSON.stringify(newArticles, null, 2));
+            console.log(`Successfully saved ${newArticles.length} articles to local file: ${localPath}`);
+        } else {
+            // This path is for the CRON job running on Vercel
+            const existingFile = await getContent(filePath);
+            await saveContent(
+                filePath,
+                JSON.stringify(newArticles, null, 2),
+                `feat: update articles for ${category}`,
+                existingFile?.sha
+            );
+            console.log(`Successfully saved ${newArticles.length} articles to GitHub: ${filePath}`);
+        }
     } else {
         console.warn(`No articles were successfully generated for category: ${category}. Nothing to save.`);
     }
@@ -220,55 +238,28 @@ export async function generateAndSaveArticles(category: string, topics: string[]
     return newArticles;
 }
 
-const categoryTopicsMap: Record<string, string[]> = {
-    'Featured': featuredTopics,
-    'Prompts': promptsTopics,
-    'Styles': stylesTopics,
-    'Tutorials': tutorialsTopics,
-    'Storybook': storybookTopics,
-    'Usecases': usecasesTopics,
-    'Inspiration': inspirationTopics,
-    'Trends': trendsTopics,
-    'Technology': technologyTopics,
-    'NFT': nftTopics,
-};
-
 const articleCache = new Map<string, Article[]>();
 
+// This is the primary function used by pages to get article data.
+// It ONLY READS from the local JSON files. It DOES NOT generate content.
 export async function getArticles(category: string): Promise<Article[]> {
     const cacheKey = category;
     if (articleCache.has(cacheKey)) {
         return articleCache.get(cacheKey)!;
     }
 
-    const filePath = `src/articles/${category.toLowerCase().replace(/\s/g, '-')}.json`;
-
     try {
-        const existingContent = await getContent(filePath);
-        if (existingContent) {
-            const articles: Article[] = JSON.parse(existingContent.content);
-            if (Array.isArray(articles) && articles.length > 0) {
-                articleCache.set(cacheKey, articles);
-                return articles;
-            }
+        const articles: Article[] = (await import(`@/articles/${category.toLowerCase().replace(/\s/g, '-')}.json`)).default;
+        
+        if (Array.isArray(articles) && articles.length > 0) {
+            articleCache.set(cacheKey, articles);
+            return articles;
         }
         
-        // If file doesn't exist or is empty, generate articles immediately.
-        console.warn(`No articles file found for category "${category}" at path: ${filePath}. Generating now...`);
-        const topics = categoryTopicsMap[category];
-        if (!topics) {
-             console.error(`No topics defined for category: ${category}`);
-             return [];
-        }
-        const newArticles = await generateAndSaveArticles(category, topics);
-        articleCache.set(cacheKey, newArticles);
-        return newArticles;
-
-    } catch (error) {
-        console.error(`An error occurred in getArticles for category "${category}":`, error);
-        // On failure, return an empty array to prevent the page from crashing.
+        console.warn(`No articles found for category: "${category}" in the JSON files.`);
         return [];
+    } catch (error) {
+      console.warn(`Could not import articles for category "${category}". The file might not exist yet. Run 'npm run generate-articles'.`);
+      return [];
     }
 }
-
-    
