@@ -77,7 +77,9 @@ export function PricingSection() {
               key={plan.name}
               className={cn(
                 'flex flex-col h-full transition-shadow hover:shadow-lg',
-                plan.isFeatured && 'border-primary shadow-2xl scale-105'
+                plan.isFeatured
+                  ? 'border-primary shadow-2xl scale-105'
+                  : 'border-foreground'
               )}
             >
               <CardHeader className="text-center">
