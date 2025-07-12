@@ -7,12 +7,10 @@ import { allTopicsByCategory } from '../lib/constants';
 async function generateAndSaveForCategory(category: string, topics: string[]) {
     console.log(`--- Generating articles for category: ${category} ---`);
     
-    // forceFetch: true ensures we read directly from the source, bypassing any in-memory cache.
     const currentArticles = await getArticles(category, true);
 
     let newArticles = [];
 
-    // We generate 4 articles for each category as per the requirement
     const topicsToGenerate = topics.slice(0, 4);
 
     for (const topic of topicsToGenerate) {
@@ -20,9 +18,8 @@ async function generateAndSaveForCategory(category: string, topics: string[]) {
             const article = await generateSingleArticle(topic, category);
             if (article) {
                 newArticles.push(article);
-                console.log(`  ✔ Successfully generated article for topic: "${topic}"`);
             } else {
-                console.log(`  ✖ Failed to generate article for topic: "${topic}"`);
+                console.log(`  ✖ Skipped saving article for topic: "${topic}" due to generation failure.`);
             }
         } catch (error) {
             console.error(`  ✖ An error occurred while generating article for topic: "${topic}"`, error);
@@ -30,12 +27,11 @@ async function generateAndSaveForCategory(category: string, topics: string[]) {
     }
 
     if (newArticles.length > 0) {
-        // Prepend the new articles to the existing ones
         const updatedArticles = [...newArticles, ...currentArticles];
         await saveArticlesForCategory(category, updatedArticles);
         console.log(`  -> Saved ${newArticles.length} new articles for ${category}. Total articles: ${updatedArticles.length}.`);
     } else {
-        console.warn(`No new articles were generated for ${category}, nothing to save.`);
+        console.warn(`No new articles were successfully generated for ${category}, nothing to save.`);
     }
     console.log(`--- Finished category: ${category} ---`);
 }
@@ -50,12 +46,6 @@ async function main() {
         process.exit(1);
     }
     
-    // GitHub keys are optional for local saving
-    if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_REPO_OWNER || !process.env.GITHUB_REPO_NAME) {
-        console.warn("WARNING: GitHub environment variables (GITHUB_REPO_OWNER, GITHUB_REPO_NAME, GITHUB_TOKEN) are not fully set. Article persistence to GitHub will be disabled, but local files will be created.");
-    }
-
-    // Sequentially generate categories to avoid overwhelming the API and to make logs easier to read.
     for (const category in allTopicsByCategory) {
         await generateAndSaveForCategory(category, allTopicsByCategory[category]);
     }

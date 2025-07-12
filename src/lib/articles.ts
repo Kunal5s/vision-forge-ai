@@ -2,7 +2,6 @@
 'use server';
 
 import 'dotenv/config';
-import { getContent, saveContent } from './github';
 import fs from 'fs/promises';
 import path from 'path';
 import { 
@@ -190,15 +189,17 @@ export async function generateSingleArticle(topic: string, category: string): Pr
 // Saves a full list of articles for a category, overwriting the existing file.
 export async function saveArticlesForCategory(category: string, articles: Article[]) {
     const categorySlug = category.toLowerCase().replace(/\s/g, '-');
-    const filePath = `src/articles/${categorySlug}.json`;
-    const existingFile = await getContent(filePath);
-    await saveContent(
-        filePath,
-        JSON.stringify(articles, null, 2),
-        `feat: update articles for ${category}`,
-        existingFile?.sha
-    );
-    console.log(`Successfully saved ${articles.length} total articles to GitHub for category: ${category}`);
+    const filePath = path.join(process.cwd(), 'src', 'articles', `${categorySlug}.json`);
+    const localDir = path.dirname(filePath);
+
+    try {
+        await fs.mkdir(localDir, { recursive: true });
+        await fs.writeFile(filePath, JSON.stringify(articles, null, 2), 'utf-8');
+        console.log(`Successfully saved ${articles.length} total articles to ${filePath}`);
+    } catch (error) {
+        console.error(`Error saving content locally to ${filePath}:`, error);
+        throw error;
+    }
 }
 
 
@@ -209,8 +210,6 @@ const articleCache = new Map<string, Article[]>();
 export async function getArticles(category: string, forceFetch = false): Promise<Article[]> {
     const cacheKey = category;
     
-    // In a serverless environment, we bypass the cache if forceFetch is true.
-    // This ensures we get the latest data from the source after a generation.
     if (forceFetch && articleCache.has(cacheKey)) {
         articleCache.delete(cacheKey);
     }
@@ -223,8 +222,6 @@ export async function getArticles(category: string, forceFetch = false): Promise
     const filePath = path.join(process.cwd(), 'src', 'articles', `${categorySlug}.json`);
 
     try {
-        // When fetching for pages, always try to read the latest from disk to reflect generation.
-        // For local dev, this is instant. For production, this requires a redeploy or fetching from a persistent source.
         const fileContent = await fs.readFile(filePath, 'utf-8');
         const articles: Article[] = JSON.parse(fileContent);
         
@@ -238,8 +235,7 @@ export async function getArticles(category: string, forceFetch = false): Promise
 
     } catch (error: any) {
         if (error.code === 'ENOENT') {
-            // This is now expected if the content hasn't been generated yet.
-            // Returning an empty array is the correct behavior.
+            console.log(`No articles file found for category "${category}". A new one will be created on generation.`);
         } else {
             console.error(`Error reading or parsing articles for category "${category}":`, error);
         }
@@ -250,7 +246,6 @@ export async function getArticles(category: string, forceFetch = false): Promise
 
 /**
  * Generates new articles for a given category and prepends them to the existing list.
- * This is the primary function to be called by generation scripts.
  * @param category The name of the category to generate articles for (e.g., 'Featured').
  */
 export async function generateAndSaveArticles(category: string, numberOfArticles: number = 4) {
@@ -260,7 +255,6 @@ export async function generateAndSaveArticles(category: string, numberOfArticles
         return;
     }
 
-    // We generate N new articles for the category
     const topicsToGenerate = topics.slice(0, numberOfArticles);
     let newArticles: Article[] = [];
 
@@ -279,13 +273,8 @@ export async function generateAndSaveArticles(category: string, numberOfArticles
     }
 
     if (newArticles.length > 0) {
-        // Fetch the current list of articles to prepend to
-        const currentArticles = await getArticles(category, true); // forceFetch to get latest from source
-
-        // Prepend new articles to the existing ones for archival
+        const currentArticles = await getArticles(category, true);
         const updatedArticles = [...newArticles, ...currentArticles];
-
-        // Save the combined list back
         await saveArticlesForCategory(category, updatedArticles);
         console.log(`Successfully generated ${newArticles.length} new articles and saved ${updatedArticles.length} total articles for ${category}.`);
     } else {
