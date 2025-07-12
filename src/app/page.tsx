@@ -24,7 +24,9 @@ const CATEGORY_NAME = 'Featured';
 
 async function FeaturedArticleList() {
     const articles = await getArticles(CATEGORY_NAME);
-    return <ArticlesSection articles={articles} category={CATEGORY_NAME} />;
+    // Always show the latest 4 articles on the homepage
+    const articlesToShow = articles.slice(0, 4);
+    return <ArticlesSection articles={articlesToShow} category={CATEGORY_NAME} />;
 }
 
 export default function HomePage() {
