@@ -51,13 +51,21 @@ You MUST respond with a single, valid JSON object. Do not include any text, comm
 5.  **Relevance:** The content must be highly relevant to the TOPIC and CATEGORY provided.
 6.  **Strict JSON:** The entire output must be a single, valid JSON object, ready for parsing.`;
 
-// List of high-quality models to try in order of preference.
-const MODELS_TO_TRY = [
-    "cognitivecomputations/dolphin-mixtral-8x7b", // User's preferred model
+// List of models as requested by the user, with priority and fallback.
+const PRIORITY_MODELS = [
+    "cognitivecomputations/dolphin-mixtral-8x7b",
+    "qwen/qwen-2-72b-instruct",
+    "qwen/qwen-2-57b-a14b-instruct",
     "deepseek/deepseek-chat",
-    "mistralai/mistral-7b-instruct",
-    "google/gemma-7b-it",
+    "mistralai/mixtral-8x22b-instruct",
 ];
+
+const FALLBACK_MODELS = [
+    "meta-llama/llama-3-70b-instruct",
+    "mistralai/mistral-large",
+    "google/gemini-pro",
+];
+
 
 interface ArticleContentBlock {
     type: 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p';
@@ -82,7 +90,9 @@ async function generateWithOpenRouter(topic: string, category: string): Promise<
     }
     const fullPrompt = `${JSON_PROMPT_STRUCTURE}\n\nNow, generate the content for:\nTopic: "${topic}"\nCategory: "${category}"`;
     
-    for (const model of MODELS_TO_TRY) {
+    const allModels = [...PRIORITY_MODELS, ...FALLBACK_MODELS];
+
+    for (const model of allModels) {
         console.log(`  -> Attempting generation for topic "${topic}" with model: ${model}`);
         try {
             const openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -104,7 +114,9 @@ async function generateWithOpenRouter(topic: string, category: string): Promise<
                 
                 if (content) {
                     console.log(`  ✔ Success with model: ${model}`);
-                    return JSON.parse(content);
+                    // Attempt to parse to ensure it's valid JSON before returning
+                    const parsedContent = JSON.parse(content);
+                    return parsedContent;
                 }
                 console.warn(`  ! Model ${model} returned empty content. Trying next model.`);
             } else {
