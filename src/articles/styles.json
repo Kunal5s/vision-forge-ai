@@ -149,7 +149,7 @@
         "content": "Prompting by Genre"
       },
       {
-        "type":- "p",
+        "type": "p",
         "content": "Adding a film genre to your prompt is a fantastic way to guide the overall visual style. 'A cinematic movie still from a 1980s sci-fi horror film...' will produce a very different result than 'A cinematic movie still from a 1950s western...' The AI understands the visual conventions of these genres, from the color palettes to the costume design."
       },
       {
@@ -231,7 +231,7 @@
       },
       {
         "type": "p",
-        "content": "The true creative power of AI in architecture lies in its ability to blend styles to create something entirely new. This is where you can design truly 'impossible' structures that defy conventional categorization. Try combining two or more architectural styles in a single prompt."
+        "content": "The true creative power of AI in architecture lies in its ability to blend styles to create something entirely new. This is where you can design truly 'impossible' structures that defy conventional categorization. Try to combine two or more architectural styles in a single prompt."
       },
       {
         "type": "h4",
@@ -239,15 +239,15 @@
       },
       {
         "type": "p",
-        "content": "- **'Gothic Brutalism':** 'A university library designed in the style of Gothic Brutalism, made of raw, cast concrete with towering spires, flying buttresses, and intricate, geometric patterns.'"
+        "content": "'Gothic Brutalism': 'A university library designed in the style of Gothic Brutalism, made of raw, cast concrete with towering spires, flying buttresses, and intricate, geometric patterns.'"
       },
       {
         "type": "p",
-        "content": "- **'Organic Deconstructivism':** 'A concert hall in the style of Organic Deconstructivism, with fragmented, crystalline forms that seem to grow out of the earth like a giant geode.'"
+        "content": "'Organic Deconstructivism': 'A concert hall in the style of Organic Deconstructivism, with fragmented, crystalline forms that seem to grow out of the earth like a giant geode.'"
       },
       {
         "type": "p",
-        "content": "- **'Solarpunk Art Nouveau':** 'A residential building in the Solarpunk Art Nouveau style, with flowing, plant-like curves, covered in solar panels and integrated vertical gardens.'"
+        "content": "'Solarpunk Art Nouveau': 'A residential building in the Solarpunk Art Nouveau style, with flowing, plant-like curves, covered in solar panels and integrated vertical gardens.'"
       },
       {
         "type": "p",
@@ -304,7 +304,7 @@
       },
       {
         "type": "h4",
-        "content": "- Ukiyo-e:"
+        "content": "Ukiyo-e:"
       },
       {
         "type": "p",
@@ -312,7 +312,7 @@
       },
       {
         "type": "h4",
-        "content": "- Art Nouveau:"
+        "content": "Art Nouveau:"
       },
       {
         "type": "p",
@@ -320,7 +320,7 @@
       },
       {
         "type": "h4",
-        "content": "- Cubism:"
+        "content": "Cubism:"
       },
       {
         "type": "p",
@@ -328,7 +328,7 @@
       },
       {
         "type": "h4",
-        "content": "- Baroque:"
+        "content": "Baroque:"
       },
       {
         "type": "p",
@@ -336,7 +336,7 @@
       },
       {
         "type": "h4",
-        "content": "- Medieval Illuminated Manuscript:"
+        "content": "Medieval Illuminated Manuscript:"
       },
       {
         "type": "p",

@@ -68,7 +68,6 @@ const renderContentBlock = (block: ArticleContentBlock, index: number) => {
         case 'p':
             return <p key={index} className="mb-6 leading-relaxed">{block.content}</p>;
         default:
-            // This is a failsafe, but based on the type, it should not be reached.
             return <p key={index}>{block.content}</p>;
     }
 }
