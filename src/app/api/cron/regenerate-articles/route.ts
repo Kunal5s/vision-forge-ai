@@ -1,3 +1,4 @@
+
 // src/app/api/cron/regenerate-articles/route.ts
 'use server';
 

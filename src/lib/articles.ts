@@ -21,7 +21,7 @@ const JSON_PROMPT_STRUCTURE = `You are a world-class content creator and SEO exp
 2.  **Emotional and Engaging:** Infuse the text with genuine emotion. Use a variety of tones like "Empowering," "Friendly," "Creative," "Motivating," and "Conversational". Make the reader feel excited and motivated.
 3.  **No Jargon:** Explain complex topics in a simple, easy-to-understand way. Avoid technical jargon.
 4.  **No Asterisks for Bolding:** Do NOT use asterisks or any other markdown for bolding. The text should be plain.
-5.  **Internal Linking:** Where appropriate, naturally weave in internal links to other relevant categories. For example, if you mention creating a consistent character, you could link to the 'Storybook' category. Use the format: "<a href=\"/storybook\">creating consistent characters</a>". Other categories to link to include "prompts", "styles", "tutorials", "usecases", "inspiration", "trends", "technology", "nft".
+5.  **Internal Linking:** Where appropriate, naturally weave in internal links to other relevant categories. For example, if you mention creating a consistent character, you could link to the 'Storybook' category. Use the format: "<a href=\\"/storybook\\">creating consistent characters</a>". Other categories to link to include "prompts", "styles", "tutorials", "usecases", "inspiration", "trends", "technology", "nft".
 
 **JSON Structure Template & Rules:**
 You MUST respond with a single, valid JSON object. Do not include any text, comments, or markdown before or after the JSON.
