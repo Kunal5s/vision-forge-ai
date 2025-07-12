@@ -6,22 +6,23 @@ This is a Next.js application built with Firebase Studio. It features a modern f
 
 - **Frontend**: Next.js, React, Tailwind CSS, ShadCN UI
 - **AI-Powered Content**: Articles are generated automatically by AI.
-- **Deployment**: Ready for Vercel with CRON-based updates.
+- **Deployment**: Ready for Vercel deployment.
 
 ## Getting Started
 
 ### 1. Environment Setup
 
-First, you need to set up your environment variables. Create a file named `.env` in the root of the project and add your API keys:
+First, you need to set up your environment variables. Create a file named `.env` in the root of the project.
+
+**Required:**
 
 ```
 OPENROUTER_API_KEY=your_open_router_api_key
+```
 
-# Optional: For CRON job regeneration on Vercel
-CRON_SECRET=your_cron_secret
-VERCEL_DEPLOY_HOOK_URL=your_vercel_deploy_hook_url
+**Optional (for syncing articles to a GitHub repository):**
 
-# Optional: For saving articles to a GitHub repo
+```
 GITHUB_TOKEN=your_github_personal_access_token
 GITHUB_REPO_OWNER=your_github_username
 GITHUB_REPO_NAME=your_repo_name
@@ -45,7 +46,7 @@ Run the following command:
 npm run generate-articles
 ```
 
-This will create `.json` files in the `src/articles` directory. This might take a few minutes as it's generating content for all categories.
+This will create `.json` files in the `src/articles` directory. This might take a few minutes as it's generating content for all categories. If GitHub variables are set, it will also commit these files to your repository.
 
 ### 4. Run the Development Server
 
@@ -56,10 +57,3 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result. The main application logic can be found in `src/app/page.tsx`.
-
-## Automatic Updates (CRON Job)
-
-The application includes a CRON job that automatically regenerates the "Featured" articles daily. To enable this on Vercel, you need to:
-
-1.  Set the `CRON_SECRET` and `VERCEL_DEPLOY_HOOK_URL` environment variables in your Vercel project settings.
-2.  Configure a CRON job in `vercel.json` or the Vercel dashboard to send a POST request to `/api/cron/regenerate-articles` daily.

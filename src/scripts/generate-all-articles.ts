@@ -44,11 +44,14 @@ async function generateAndSaveForCategory(category: string, topics: string[]) {
 async function main() {
     console.log('Starting one-time generation for all article categories...');
     
-    // Validate that environment variables are loaded
-    if (!process.env.OPENROUTER_API_KEY || !process.env.GITHUB_TOKEN || !process.env.GITHUB_REPO_OWNER || !process.env.GITHUB_REPO_NAME) {
-        console.error("ERROR: Required environment variables (OPENROUTER_API_KEY, GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME) are not defined in your .env file.");
-        console.error("Please create a .env file in the root directory and add your keys.");
+    if (!process.env.OPENROUTER_API_KEY) {
+        console.error("ERROR: Required environment variable OPENROUTER_API_KEY is not defined in your .env file.");
+        console.error("Please create a .env file in the root directory and add your key.");
         process.exit(1);
+    }
+    
+    if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_REPO_OWNER || !process.env.GITHUB_REPO_NAME) {
+        console.warn("WARNING: GitHub environment variables (GITHUB_REPO_OWNER, GITHUB_REPO_NAME, GITHUB_TOKEN) are not fully set. Article persistence to GitHub will be disabled.");
     }
 
     // Sequentially generate categories to avoid overwhelming the API and to make logs easier to read.
