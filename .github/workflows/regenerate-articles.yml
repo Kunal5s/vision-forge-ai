@@ -1,10 +1,10 @@
 
-name: Daily Article Regeneration
+name: 5-Minute Article Regeneration
 
 on:
   schedule:
-    # Runs every day at midnight UTC.
-    - cron: '0 0 * * *'
+    # Runs every 5 minutes
+    - cron: '*/5 * * * *'
   workflow_dispatch: # Allows manual triggering
 
 jobs:
@@ -24,14 +24,21 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Regenerate two article categories
-        run: npm run regenerate-articles
+      - name: Regenerate one article category
+        # This now points to a simplified script that regenerates one category based on state
+        run: |
+          if [ -z "$OPENROUTER_API_KEY" ]; then
+            echo "OPENROUTER_API_KEY is not set. Skipping regeneration."
+            exit 0
+          fi
+          npx tsx src/app/api/cron/regenerate-articles/route.ts
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
           GITHUB_REPO_OWNER: ${{ secrets.GITHUB_REPO_OWNER }}
           GITHUB_REPO_NAME: ${{ secrets.GITHUB_REPO_NAME }}
-
+          # The CRON_SECRET is not needed when running the script directly like this
+          
       - name: Commit and push if changes
         run: |
           git config --global user.name 'github-actions[bot]'

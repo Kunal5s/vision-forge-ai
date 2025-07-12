@@ -53,18 +53,8 @@ You MUST respond with a single, valid JSON object. Do not include any text, comm
 5.  **Relevance:** The content must be highly relevant to the TOPIC and CATEGORY provided.
 6.  **Strict JSON:** The entire output must be a single, valid JSON object, ready for parsing.`;
 
-const PRIORITY_MODELS = [
-    "mistralai/mistral-7b-instruct",
-    "openchat/openchat-3.5",
-    "huggingfaceh4/zephyr-7b-beta",
-    "meta-llama/llama-3-8b-instruct",
-    "qwen/qwen-2-7b-instruct",
-];
-
-const FALLBACK_MODELS = [
-    "gryphe/mythomax-l2-13b",
-    "google/gemini-pro"
-];
+// Use the user-specified model as the only option.
+const PRIMARY_MODEL = "deepseek/deepseek-chat";
 
 interface ArticleContentBlock {
     type: 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p';
@@ -118,8 +108,8 @@ async function generateWithOpenRouter(model: string, topic: string, category: st
 
         if (!openRouterResponse.ok) {
             const errorBody = await openRouterResponse.text();
-            console.warn(`OpenRouter model ${model} failed with status: ${openRouterResponse.status}`, errorBody);
-            return null;
+            console.error(`OpenRouter model ${model} failed with status: ${openRouterResponse.status}`, errorBody);
+            throw new Error(`Model ${model} failed: ${errorBody}`);
         }
 
         const openRouterData = await openRouterResponse.json();
@@ -132,8 +122,8 @@ async function generateWithOpenRouter(model: string, topic: string, category: st
         
         return JSON.parse(content);
     } catch (error) {
-        console.warn(`Request to OpenRouter model ${model} failed.`, error);
-        return null;
+        console.error(`Request to OpenRouter model ${model} failed.`, error);
+        throw error; // Re-throw to be caught by the caller
     }
 }
 
@@ -150,19 +140,17 @@ async function parseAndValidateArticle(aiResponse: any, topic: string): Promise<
 
 export async function generateSingleArticle(topic: string, category: string): Promise<Article | null> {
     let aiJsonResponse: any | null = null;
-    const allModels = [...PRIORITY_MODELS, ...FALLBACK_MODELS];
     
-    for (const model of allModels) {
-        console.log(`Attempting to generate article for topic "${topic}" with model: ${model}`);
-        aiJsonResponse = await generateWithOpenRouter(model, topic, category);
-        if (aiJsonResponse) {
-            console.log(`Successfully generated content with model: ${model}`);
-            break; 
-        }
+    console.log(`Attempting to generate article for topic "${topic}" with model: ${PRIMARY_MODEL}`);
+    try {
+        aiJsonResponse = await generateWithOpenRouter(PRIMARY_MODEL, topic, category);
+    } catch(e) {
+        console.error(`Model ${PRIMARY_MODEL} failed to generate the article for topic: "${topic}".`, e);
+        return null;
     }
 
     if (!aiJsonResponse) {
-        console.error(`All models failed to generate the article for topic: "${topic}".`);
+        console.error(`Model ${PRIMARY_MODEL} returned no response for topic: "${topic}".`);
         return null;
     }
 
@@ -307,5 +295,3 @@ export async function generateAndSaveArticles(category: string) {
         console.warn(`No new articles were generated for ${category}, nothing to save.`);
     }
 }
-
-    
