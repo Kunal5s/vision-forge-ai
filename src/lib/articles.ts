@@ -9,7 +9,7 @@ import {
 } from './constants';
 
 
-const JSON_PROMPT_STRUCTURE = `You are a world-class content creator and SEO expert with a special talent for writing in a deeply human, engaging, and emotional tone. Your task is to generate a comprehensive, well-structured, and fully humanized long-form article for an AI Image Generator website.
+const JSON_PROMPT_STRUCTURE = `You are a world-class content creator and SEO expert with a special talent for writing in a deeply human, engaging, and emotional tone. Your task is to generate a comprehensive, well-structured, and fully humanized article for an AI Image Generator website.
 
 **Primary Goal:** The article must be original, creative, helpful, and written in a tone that feels like a warm, exciting, and empowering conversation with a friendly expert.
 
@@ -43,7 +43,7 @@ You MUST respond with a single, valid JSON object. Do not include any text, comm
 }
 
 **Content & Formatting - CRITICAL INSTRUCTIONS:**
-1.  **Total Word Count:** The combined text of all "content" fields MUST be approximately 2000 words.
+1.  **Total Word Count:** The combined text of all "content" fields MUST be approximately 800 words. This is a strict limit to conserve credits.
 2.  **Heading Structure:** The "articleContent" array MUST use a logical and deep heading structure, including H2, H3, H4, and even H5/H6 tags to break down the topic comprehensively. This is compulsory.
 3.  **Title Constraint:** The "title" MUST be exactly 9 words long.
 4.  **Key Takeaways:** The "keyTakeaways" array MUST contain exactly 6 concise, insightful, and helpful bullet-point style takeaways.
@@ -251,41 +251,46 @@ export async function getArticles(category: string, forceFetch = false): Promise
 
 
 /**
- * DEPRECATED - This function is no longer the main entry point for generation.
- * The logic is now in the `generate-all-articles.ts` script.
  * Generates new articles for a given category and prepends them to the existing list.
  * @param category The name of the category to generate articles for (e.g., 'Featured').
  */
-export async function generateAndSaveArticles(category: string, numberOfArticles: number = 4) {
+export async function generateAndSaveArticles(category: string, numberOfArticles: number = 1) {
     const topics = allTopicsByCategory[category];
     if (!topics) {
         console.error(`No topics found for category: ${category}`);
         return;
     }
 
-    const topicsToGenerate = topics.slice(0, numberOfArticles);
-    let newArticles: Article[] = [];
+    // Instead of taking the first N topics, let's pick one randomly to ensure variety
+    const randomTopic = topics[Math.floor(Math.random() * topics.length)];
 
-    for (const topic of topicsToGenerate) {
-        try {
-            const article = await generateSingleArticle(topic, category);
-            if (article) {
-                newArticles.push(article);
-                console.log(`  ✔ Successfully generated article for topic: "${topic}"`);
+    console.log(`Attempting to generate a new article for category "${category}" with topic: "${randomTopic}"`);
+
+    try {
+        const newArticle = await generateSingleArticle(randomTopic, category);
+        
+        if (newArticle) {
+            console.log(`  ✔ Successfully generated article for topic: "${randomTopic}"`);
+            const currentArticles = await getArticles(category, true); // Force fetch latest
+            
+            // Check if a similar article already exists to avoid duplicates
+            const existingSlugs = new Set(currentArticles.map(a => a.slug));
+            if (existingSlugs.has(newArticle.slug)) {
+                console.log(`  ! Article with slug "${newArticle.slug}" already exists. Replacing it.`);
+                // Replace existing article with the same slug
+                const updatedArticles = currentArticles.map(a => a.slug === newArticle.slug ? newArticle : a);
+                await saveArticlesForCategory(category, updatedArticles);
+                console.log(`Successfully replaced article and saved ${updatedArticles.length} total articles for ${category}.`);
             } else {
-                console.log(`  ✖ Failed to generate article for topic: "${topic}"`);
+                // Add the new article and keep the list size at 4
+                const updatedArticles = [newArticle, ...currentArticles].slice(0, 4);
+                await saveArticlesForCategory(category, updatedArticles);
+                console.log(`Successfully added new article and saved ${updatedArticles.length} total articles for ${category}.`);
             }
-        } catch (error) {
-            console.error(`  ✖ An error occurred while generating article for topic: "${topic}"`, error);
+        } else {
+            console.log(`  ✖ Failed to generate article for topic: "${randomTopic}"`);
         }
-    }
-
-    if (newArticles.length > 0) {
-        const currentArticles = await getArticles(category, true);
-        const updatedArticles = [...newArticles, ...currentArticles];
-        await saveArticlesForCategory(category, updatedArticles);
-        console.log(`Successfully generated ${newArticles.length} new articles and saved ${updatedArticles.length} total articles for ${category}.`);
-    } else {
-        console.warn(`No new articles were generated for ${category}, nothing to save.`);
+    } catch (error) {
+        console.error(`  ✖ An error occurred while generating article for topic: "${randomTopic}"`, error);
     }
 }
