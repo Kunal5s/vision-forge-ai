@@ -9,8 +9,8 @@ export async function POST(req: Request) {
   try {
     const { category } = await req.json();
     
-    if (!category) {
-        return NextResponse.json({ error: 'Category is required.' }, { status: 400 });
+    if (!category || typeof category !== 'string') {
+        return NextResponse.json({ error: 'Category is required and must be a string.' }, { status: 400 });
     }
 
     // Handle full category regeneration

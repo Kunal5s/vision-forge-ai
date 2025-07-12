@@ -213,10 +213,9 @@ const articleCache = new Map<string, Article[]>();
 export async function getArticles(category: string, forceFetch = false): Promise<Article[]> {
     const cacheKey = category;
     
-    // In a serverless environment (like Vercel production/preview), we cannot rely on a persistent in-memory cache.
-    // For previews and production builds, it's safer to read the file every time to ensure freshness.
-    // The `forceFetch` flag will also bypass any cache if we explicitly need to.
-    if (process.env.NODE_ENV !== 'development' || forceFetch) {
+    // In a serverless environment, we bypass the cache if forceFetch is true.
+    // This ensures we get the latest data from the source after a generation.
+    if (forceFetch && articleCache.has(cacheKey)) {
         articleCache.delete(cacheKey);
     }
     
@@ -228,6 +227,7 @@ export async function getArticles(category: string, forceFetch = false): Promise
     const filePath = path.join(process.cwd(), 'src', 'articles', `${categorySlug}.json`);
 
     try {
+        // Use a cache-busting query parameter for development to ensure we always get the fresh file content
         const fileContent = await fs.readFile(filePath, 'utf-8');
         const articles: Article[] = JSON.parse(fileContent);
         

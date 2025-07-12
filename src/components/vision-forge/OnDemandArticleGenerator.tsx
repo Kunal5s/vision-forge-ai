@@ -70,7 +70,7 @@ export function OnDemandArticleGenerator() {
       setCompletedCategories(prev => [...prev, categorySlug]);
       toast({
         title: 'Success!',
-        description: `Successfully generated new articles for "${categoryName}". They will appear at the top of the category page shortly.`,
+        description: `Successfully generated new articles for "${categoryName}". They will appear on the category page shortly.`,
       });
 
     } catch (error: any) {
@@ -136,7 +136,7 @@ export function OnDemandArticleGenerator() {
                             size="icon"
                             className={cn(
                                 "rounded-full w-12 h-12 text-lg font-bold transition-all duration-300 transform hover:scale-110",
-                                isLoading && "bg-primary text-primary-foreground animate-pulse cursor-not-allowed",
+                                isLoading && "bg-primary text-primary-foreground animate-spin cursor-not-allowed",
                                 isCompleted && "bg-green-500 hover:bg-green-600 text-white border-2 border-primary-foreground/50"
                             )}
                             onClick={() => handleGenerate(categorySlug)}
