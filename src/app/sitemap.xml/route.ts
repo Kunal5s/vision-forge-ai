@@ -2,12 +2,9 @@
 // This file generates the sitemap.xml for the website.
 // It includes static routes and dynamic category routes.
 // For production, ensure the `URL` constant is updated to your website's domain.
+import { categorySlugMap } from '@/lib/constants';
 
 const URL = 'https://your-production-domain.com';
-
-const categories = [
-    'prompts', 'styles', 'tutorials', 'storybook', 'usecases', 'inspiration', 'trends', 'technology', 'nft'
-];
 
 export async function GET() {
     const staticRoutes = [
@@ -25,8 +22,9 @@ export async function GET() {
         lastModified: new Date().toISOString(),
     }));
 
-    const categoryRoutes = categories.map((category) => ({
-        url: `${URL}/${category}`,
+    // Dynamically get categories from the constant map
+    const categoryRoutes = Object.keys(categorySlugMap).map((slug) => ({
+        url: `${URL}/${slug}`,
         lastModified: new Date().toISOString(),
     }));
 
@@ -40,7 +38,7 @@ export async function GET() {
   <url>
     <loc>${url}</loc>
     <lastmod>${lastModified}</lastmod>
-    <changefreq>weekly</changefreq>
+    <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
 `

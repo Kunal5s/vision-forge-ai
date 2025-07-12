@@ -1,3 +1,4 @@
+
 // src/app/api/cron/regenerate-articles/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -10,7 +11,7 @@ export const dynamic = 'force-dynamic';
 const STATE_FILE_PATH = 'src/lib/regeneration-state.json';
 // We will update two categories per CRON run to ensure more freshness across the site.
 const CATEGORIES_PER_RUN = 2; 
-// The order in which categories will be updated. 'Featured' is intentionally left out
+// The order in which categories will be updated. 'featured' is intentionally left out
 // as it can be a manual or special case, keeping other content evergreen.
 const CATEGORY_ROTATION = Object.keys(categorySlugMap).filter(slug => slug !== 'featured');
 
