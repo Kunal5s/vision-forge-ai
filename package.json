@@ -7,9 +7,7 @@
     "dev": "next dev --turbopack",
     "build": "next build && rm -rf .next/cache",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit",
-    "generate-articles": "tsx src/scripts/generate-all-articles.ts",
-    "regenerate-articles": "tsx src/scripts/regenerate-two-categories.ts"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.3",
