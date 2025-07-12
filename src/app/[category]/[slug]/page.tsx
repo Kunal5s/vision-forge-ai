@@ -10,7 +10,7 @@ import { categorySlugMap } from '@/lib/constants';
 
 
 interface ArticleContentBlock {
-    type: 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p';
+    type: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p';
     content: string;
 }
 
@@ -29,7 +29,6 @@ async function getArticleData(categorySlug: string, articleSlug: string): Promis
     const categoryName = categorySlugMap[categorySlug];
     if (!categoryName) return undefined;
     
-    // Now getArticles internally knows which topics to use based on category name
     const articles = await getArticles(categoryName);
     return articles.find(article => article.slug === articleSlug);
 }
@@ -65,9 +64,6 @@ export default async function ArticlePage({ params }: { params: { category: stri
             <article className="max-w-4xl mx-auto">
                 <header className="mb-8">
                     <Badge variant="secondary" className="mb-4">{article.category}</Badge>
-                    <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
-                        {article.title}
-                    </h1>
                     <div className="relative aspect-video w-full rounded-lg overflow-hidden mt-6 shadow-lg">
                         <Image
                             src={article.image}
@@ -83,6 +79,8 @@ export default async function ArticlePage({ params }: { params: { category: stri
                 <div className="prose prose-lg dark:prose-invert max-w-none text-foreground/90 leading-relaxed">
                      {Array.isArray(article.articleContent) ? article.articleContent.map((item, index) => {
                         switch (item.type) {
+                            case 'h1':
+                                return <h1 key={index} className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">{item.content}</h1>;
                             case 'h2':
                                 return <h2 key={index} className="text-3xl font-bold mt-10 mb-4 border-b pb-2">{item.content}</h2>;
                             case 'h3':
@@ -99,10 +97,15 @@ export default async function ArticlePage({ params }: { params: { category: stri
                                 return null;
                         }
                     }) : (
-                        // Fallback for old string format for backward compatibility
-                        (article.articleContent as string).split('\n').filter(p => p.trim() !== '').map((paragraph, index) => (
-                            <p key={index} className="mb-6">{paragraph}</p>
-                        ))
+                        // Fallback for old string format
+                        <>
+                            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
+                                {article.title}
+                            </h1>
+                            {(article.articleContent as string).split('\n').filter(p => p.trim() !== '').map((paragraph, index) => (
+                                <p key={index} className="mb-6">{paragraph}</p>
+                            ))}
+                        </>
                     )}
                 </div>
 

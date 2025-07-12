@@ -19,7 +19,7 @@ async function generateAll() {
 
   for (const category of categories) {
     const topics = allTopicsByCategory[category];
-    // This will generate 4 articles for each category
+    // This will generate articles for all topics for each category
     await generateAndSaveArticles(category, topics);
   }
 
