@@ -47,11 +47,11 @@ const faqs = [
 
 export function FaqSection() {
   return (
-    <section id="faq" className="bg-muted py-16">
+    <section id="faq" className="bg-muted/30 py-16">
       <div className="container mx-auto px-4">
         <header className="text-center mb-12">
           <h2 className="text-4xl font-extrabold tracking-tight text-foreground mb-3">
-            Frequently Asked <span className="text-accent">Questions</span>
+            Frequently Asked Questions
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Have questions? We've got answers. If you need more help, feel free to contact us.

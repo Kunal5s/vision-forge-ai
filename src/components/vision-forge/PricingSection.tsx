@@ -61,13 +61,13 @@ const pricingPlans = [
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="py-16 bg-background">
+    <section id="pricing" className="py-16 bg-muted/30">
       <div className="container mx-auto px-4">
-        <header className="text-center mb-12 rounded-lg bg-foreground text-background p-8">
-          <h2 className="text-4xl font-extrabold tracking-tight mb-3">
-            Choose Your Perfect <span className="text-primary-foreground/80">Plan</span>
+        <header className="text-center mb-12">
+          <h2 className="text-4xl font-extrabold tracking-tight text-foreground mb-3">
+            Choose Your Perfect Plan
           </h2>
-          <p className="text-lg text-background/80 max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Simple, transparent pricing for Imagen BrainAi. No hidden fees.
           </p>
         </header>
@@ -76,10 +76,10 @@ export function PricingSection() {
             <Card
               key={plan.name}
               className={cn(
-                'flex flex-col h-full transition-shadow hover:shadow-lg',
+                'flex flex-col h-full transition-shadow hover:shadow-lg bg-background',
                 plan.isFeatured
-                  ? 'border-primary shadow-2xl scale-105'
-                  : 'border-foreground'
+                  ? 'border-foreground shadow-2xl scale-105'
+                  : 'border'
               )}
             >
               <CardHeader className="text-center">
@@ -91,14 +91,14 @@ export function PricingSection() {
                 <ul className="space-y-3">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-center gap-3">
-                      <Check className="h-5 w-5 text-primary" />
+                      <Check className="h-5 w-5 text-green-500" />
                       <span className="text-sm text-foreground/80">{feature}</span>
                     </li>
                   ))}
                 </ul>
               </CardContent>
               <CardFooter>
-                <Button asChild className={cn('w-full')} variant={plan.buttonVariant as any}>
+                <Button asChild className={cn('w-full', plan.buttonVariant === 'default' && 'bg-foreground text-background hover:bg-foreground/80')} variant={plan.buttonVariant as any}>
                   <Link href={plan.href} target="_blank" rel="noopener noreferrer">{plan.buttonText}</Link>
                 </Button>
               </CardFooter>

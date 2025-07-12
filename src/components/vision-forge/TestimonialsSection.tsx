@@ -22,11 +22,11 @@ const testimonials = [
 
 export function TestimonialsSection() {
   return (
-    <section id="testimonials" className="bg-muted py-16">
+    <section id="testimonials" className="bg-background py-16">
       <div className="container mx-auto px-4">
         <header className="text-center mb-12">
             <h2 className="text-4xl font-extrabold tracking-tight text-foreground">
-                Loved by <span className="text-accent">Creatives</span>
+                Loved by Creatives
             </h2>
             <p className="text-lg text-muted-foreground mt-2">
                 Don't just take our word for it. Here's what our users are saying.
@@ -34,9 +34,9 @@ export function TestimonialsSection() {
         </header>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {testimonials.map((testimonial) => (
-            <Card key={testimonial.name} className="bg-background text-center flex flex-col h-full shadow-none border">
+            <Card key={testimonial.name} className="bg-muted/30 text-center flex flex-col h-full shadow-none border">
               <CardContent className="pt-10 relative flex-grow flex flex-col justify-between">
-                <Quote className="absolute top-4 left-4 h-10 w-10 text-primary/20" />
+                <Quote className="absolute top-4 left-4 h-10 w-10 text-foreground/10" />
                 <blockquote className="text-foreground/80 mb-6 flex-grow text-left">
                   {testimonial.quote}
                 </blockquote>

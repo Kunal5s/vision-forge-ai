@@ -16,7 +16,7 @@ export function Footer() {
             <Link href="/" className="flex items-center gap-2 mb-3">
               <BrainCircuit className="h-7 w-7 text-foreground" />
               <span className="text-xl font-bold text-foreground">
-                Imagen <span className="text-accent">BrainAi</span>
+                Imagen BrainAi
               </span>
             </Link>
             <p className="text-sm text-muted-foreground">
@@ -27,21 +27,21 @@ export function Footer() {
           <div>
             <h3 className="text-md font-bold text-foreground mb-4">Our Services</h3>
             <ul className="space-y-1 text-sm">
-              <li><Link href="/" className={cn("block rounded-md -ml-2 px-2 py-1 hover:text-foreground", pathname === '/' ? 'text-foreground font-bold' : 'text-foreground/80')}>AI Image Generation</Link></li>
-              <li><Link href="/edit" className={cn("block rounded-md -ml-2 px-2 py-1 hover:text-foreground", pathname === '/edit' ? 'text-foreground font-bold' : 'text-foreground/80')}>Image Editor</Link></li>
-              <li><Link href="/pricing" className={cn("block rounded-md -ml-2 px-2 py-1 hover:text-foreground", pathname === '/pricing' ? 'text-foreground font-bold' : 'text-foreground/80')}>Pricing</Link></li>
-              <li><Link href="/blog" className={cn("block rounded-md -ml-2 px-2 py-1 hover:text-foreground", pathname === '/blog' ? 'text-foreground font-bold' : 'text-foreground/80')}>Blog</Link></li>
+              <li><Link href="/" className={cn("block rounded-md -ml-2 px-2 py-1 text-foreground/80 hover:text-foreground", pathname === '/' && 'text-foreground font-semibold')}>AI Image Generation</Link></li>
+              <li><Link href="/edit" className={cn("block rounded-md -ml-2 px-2 py-1 text-foreground/80 hover:text-foreground", pathname === '/edit' && 'text-foreground font-semibold')}>Image Editor</Link></li>
+              <li><Link href="/pricing" className={cn("block rounded-md -ml-2 px-2 py-1 text-foreground/80 hover:text-foreground", pathname === '/pricing' && 'text-foreground font-semibold')}>Pricing</Link></li>
+              <li><Link href="/blog" className={cn("block rounded-md -ml-2 px-2 py-1 text-foreground/80 hover:text-foreground", pathname === '/blog' && 'text-foreground font-semibold')}>Blog</Link></li>
             </ul>
           </div>
 
           <div>
             <h3 className="text-md font-bold text-foreground mb-4">Legal</h3>
             <ul className="space-y-1 text-sm">
-              <li><Link href="/about" className={cn("block rounded-md -ml-2 px-2 py-1 hover:text-foreground", pathname === '/about' ? 'text-foreground font-bold' : 'text-foreground/80')}>About Us</Link></li>
-              <li><Link href="/contact" className={cn("block rounded-md -ml-2 px-2 py-1 hover:text-foreground", pathname === '/contact' ? 'text-foreground font-bold' : 'text-foreground/80')}>Contact Us</Link></li>
-              <li><Link href="/privacy" className={cn("block rounded-md -ml-2 px-2 py-1 hover:text-foreground", pathname === '/privacy' ? 'text-foreground font-bold' : 'text-foreground/80')}>Privacy Policy</Link></li>
-              <li><Link href="/terms" className={cn("block rounded-md -ml-2 px-2 py-1 hover:text-foreground", pathname === '/terms' ? 'text-foreground font-bold' : 'text-foreground/80')}>Terms of Service</Link></li>
-              <li><Link href="/disclaimer" className={cn("block rounded-md -ml-2 px-2 py-1 hover:text-foreground", pathname === '/disclaimer' ? 'text-foreground font-bold' : 'text-foreground/80')}>Disclaimer</Link></li>
+              <li><Link href="/about" className={cn("block rounded-md -ml-2 px-2 py-1 text-foreground/80 hover:text-foreground", pathname === '/about' && 'text-foreground font-semibold')}>About Us</Link></li>
+              <li><Link href="/contact" className={cn("block rounded-md -ml-2 px-2 py-1 text-foreground/80 hover:text-foreground", pathname === '/contact' && 'text-foreground font-semibold')}>Contact Us</Link></li>
+              <li><Link href="/privacy" className={cn("block rounded-md -ml-2 px-2 py-1 text-foreground/80 hover:text-foreground", pathname === '/privacy' && 'text-foreground font-semibold')}>Privacy Policy</Link></li>
+              <li><Link href="/terms" className={cn("block rounded-md -ml-2 px-2 py-1 text-foreground/80 hover:text-foreground", pathname === '/terms' && 'text-foreground font-semibold')}>Terms of Service</Link></li>
+              <li><Link href="/disclaimer" className={cn("block rounded-md -ml-2 px-2 py-1 text-foreground/80 hover:text-foreground", pathname === '/disclaimer' && 'text-foreground font-semibold')}>Disclaimer</Link></li>
             </ul>
           </div>
         </div>

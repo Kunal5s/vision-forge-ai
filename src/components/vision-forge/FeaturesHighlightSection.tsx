@@ -4,32 +4,32 @@ import { Bot, Paintbrush, SlidersHorizontal, Layers, Zap, BookOpen } from 'lucid
 
 const features = [
   {
-    icon: <Bot className="h-8 w-8 text-primary" />,
+    icon: <Bot className="h-8 w-8 text-foreground" />,
     title: 'Advanced Text-to-Image AI',
     description: 'Our core engine turns your words into breathtaking art. By leveraging cutting-edge diffusion models, we offer unparalleled quality and prompt understanding, enabling you to create everything from photorealistic portraits to fantastical landscapes.',
   },
   {
-    icon: <Paintbrush className="h-8 w-8 text-primary" />,
+    icon: <Paintbrush className="h-8 w-8 text-foreground" />,
     title: 'Diverse Artistic Styles',
     description: 'Don\'t settle for one look. Our platform provides a vast library of artistic styles. Choose from digital art, anime, fantasy, cartoon, 3D renders, and classic mediums like oil painting or watercolor to give your creation the perfect aesthetic.',
   },
   {
-    icon: <SlidersHorizontal className="h-8 w-8 text-primary" />,
+    icon: <SlidersHorizontal className="h-8 w-8 text-foreground" />,
     title: 'Fine-Tuned Creative Control',
     description: 'You are the director. Control the mood, lighting, color palette, and quality of your generations. Our intuitive creative tools allow for precise adjustments, ensuring the final image aligns perfectly with your creative vision.',
   },
   {
-    icon: <Layers className="h-8 w-8 text-primary" />,
+    icon: <Layers className="h-8 w-8 text-foreground" />,
     title: 'Multiple Aspect Ratios',
     description: 'Create for any platform. Whether you need a square image for Instagram, a widescreen (16:9) banner for your website, or a portrait (9:16) for mobile stories, our generator supports a wide range of aspect ratios for perfect compositions.',
   },
   {
-    icon: <Zap className="h-8 w-8 text-primary" />,
+    icon: <Zap className="h-8 w-8 text-foreground" />,
     title: 'Rapid Generation & Iteration',
     description: 'Creativity shouldn\'t have to wait. Our optimized engine delivers multiple high-quality image variations in seconds, allowing you to iterate on your ideas quickly and explore different creative paths without friction.',
   },
   {
-    icon: <BookOpen className="h-8 w-8 text-primary" />,
+    icon: <BookOpen className="h-8 w-8 text-foreground" />,
     title: 'Rich Educational Content',
     description: 'We believe in empowering our users. Our site is filled with automatically updated articles and tutorials on prompt engineering, artistic styles, and creative strategies, helping you master the art of AI generation and stay ahead of the trends.',
   },
@@ -37,7 +37,7 @@ const features = [
 
 export function FeaturesHighlightSection() {
   return (
-    <section className="py-16 bg-muted">
+    <section className="py-16 bg-muted/30">
       <div className="container mx-auto px-4">
         <header className="text-center mb-12">
           <h2 className="text-4xl font-extrabold tracking-tight text-foreground">

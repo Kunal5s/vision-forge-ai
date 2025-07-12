@@ -29,9 +29,9 @@ export function Header() {
         {/* Top Row: Logo and Subscription Manager */}
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex flex-shrink-0 items-center gap-2">
-            <BrainCircuit className="h-7 w-7 text-primary" />
+            <BrainCircuit className="h-7 w-7 text-foreground" />
             <span className="text-xl font-bold text-foreground">
-              Imagen <span className="text-accent">BrainAi</span>
+              Imagen BrainAi
             </span>
           </Link>
           <div className="flex items-center gap-4">
@@ -40,20 +40,21 @@ export function Header() {
         </div>
         
         {/* Bottom Row: Navigation Links */}
-        <nav className="flex w-full items-center overflow-x-auto pb-4 no-scrollbar">
-          <div className="flex gap-2">
+        <nav className="flex w-full items-center overflow-x-auto no-scrollbar">
+          <div className="flex gap-6">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-colors",
-                  pathname === link.href
-                    ? 'bg-foreground text-background shadow-md'
-                    : 'bg-card text-card-foreground hover:bg-muted'
+                  "relative whitespace-nowrap py-2 text-sm font-medium transition-colors text-foreground/60 hover:text-foreground",
+                  pathname === link.href && "text-foreground"
                 )}
               >
                 {link.label}
+                {pathname === link.href && (
+                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-foreground animate-in fade-in-0 duration-300"></span>
+                )}
               </Link>
             ))}
           </div>

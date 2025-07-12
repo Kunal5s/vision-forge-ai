@@ -100,8 +100,8 @@ export function SubscriptionManager() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">
-          {isFreePlan ? <ArrowUpCircle className="mr-2 h-4 w-4 text-accent" /> : <UserCheck className="mr-2 h-4 w-4 text-primary" />}
+        <Button variant="outline" className="text-xs h-8">
+          {isFreePlan ? <ArrowUpCircle className="mr-2 h-4 w-4 text-destructive" /> : <UserCheck className="mr-2 h-4 w-4 text-green-500" />}
           {isFreePlan ? 'Activate Plan' : 'Manage Plan'}
         </Button>
       </DialogTrigger>
@@ -135,7 +135,7 @@ export function SubscriptionManager() {
             </p>
              <p className="text-xs text-center text-muted-foreground px-4 mt-2">
               Ready to upgrade?{' '}
-              <Link href="/pricing" className="text-primary underline hover:text-primary/80" onClick={() => setIsOpen(false)}>
+              <Link href="/pricing" className="text-foreground underline hover:text-foreground/80" onClick={() => setIsOpen(false)}>
                 View Plans
               </Link>
             </p>

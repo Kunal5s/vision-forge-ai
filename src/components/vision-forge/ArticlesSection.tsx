@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowRight } from 'lucide-react';
 
 interface ArticleContentBlock {
-    type: 'h2' | 'h3' | 'p' | 'h4' | 'h5' | 'h6';
+    type: 'h1' | 'h2' | 'h3' | 'p' | 'h4' | 'h5' | 'h6';
     content: string;
 }
 
@@ -90,7 +90,7 @@ export function ArticlesSection({ articles, category }: ArticlesSectionProps) {
                         <CardContent className="p-6 flex-grow">
                             <Badge variant="secondary" className="mb-2">{article.category}</Badge>
                             <CardTitle className="text-lg font-semibold leading-snug mb-2">
-                                <Link href={articleUrl} className={'hover:underline'}>
+                                <Link href={articleUrl} className={'hover:text-primary'}>
                                     {article.title}
                                 </Link>
                             </CardTitle>
@@ -101,7 +101,7 @@ export function ArticlesSection({ articles, category }: ArticlesSectionProps) {
                         <CardFooter className="p-6 pt-0">
                             <Link 
                               href={articleUrl} 
-                              className={'flex items-center text-sm font-semibold text-foreground hover:underline'}
+                              className={'flex items-center text-sm font-semibold text-foreground hover:text-primary'}
                               title={"Read the full article"}
                             >
                                 Read More <ArrowRight className="ml-1 h-4 w-4" />
