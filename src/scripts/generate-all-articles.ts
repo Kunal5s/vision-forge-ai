@@ -5,6 +5,8 @@ import { generateSingleArticle, saveArticlesForCategory } from '../lib/articles'
 import { allTopicsByCategory } from '../lib/constants';
 import { commitAndPushToGithub } from '../lib/github';
 
+// This script is for a one-time, manual generation of all articles.
+// The primary automatic mechanism is the CRON job defined in regenerate-two-categories.ts.
 async function generateAndSaveForCategory(category: string, topics: string[]) {
     console.log(`--- Generating articles for category: ${category} ---`);
     
@@ -12,6 +14,7 @@ async function generateAndSaveForCategory(category: string, topics: string[]) {
     let newArticles = [];
     const createdSlugs = new Set<string>();
 
+    // Generate 4 articles per category
     const topicsToGenerate = topics.slice(0, 4);
 
     for (const topic of topicsToGenerate) {
@@ -22,6 +25,7 @@ async function generateAndSaveForCategory(category: string, topics: string[]) {
                 if (!createdSlugs.has(article.slug)) {
                     newArticles.push(article);
                     createdSlugs.add(article.slug);
+                    console.log(`  ✔ Successfully generated article for topic: "${topic}"`);
                 } else {
                     console.log(`  ! Skipped duplicate slug: "${article.slug}"`);
                 }
@@ -47,10 +51,17 @@ async function generateAndSaveForCategory(category: string, topics: string[]) {
 async function main() {
     console.log('Starting one-time generation for all article categories...');
     
+    const canCommit = process.env.GITHUB_TOKEN && process.env.GITHUB_REPO_OWNER && process.env.GITHUB_REPO_NAME;
+    
     if (!process.env.OPENROUTER_API_KEY) {
         console.error("ERROR: Required environment variable OPENROUTER_API_KEY is not defined in your .env file.");
         console.error("Please create a .env file in the root directory and add your key.");
         process.exit(1);
+    }
+    
+    if (!canCommit) {
+        console.warn("WARNING: GitHub environment variables (GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME) are not set.");
+        console.warn("Articles will be generated locally but will not be committed to GitHub.");
     }
     
     let filesChanged = false;
@@ -61,10 +72,13 @@ async function main() {
         }
     }
     
-    if (filesChanged) {
+    if (filesChanged && canCommit) {
         // After all local files are saved, commit them to GitHub
         await commitAndPushToGithub('src/articles', 'feat: ✨ Regenerate AI articles for all categories');
-    } else {
+    } else if (filesChanged && !canCommit) {
+        console.log("Local articles generated. Skipping GitHub commit due to missing credentials.");
+    }
+     else {
         console.log("No new articles were generated across all categories. No GitHub commit needed.");
     }
 

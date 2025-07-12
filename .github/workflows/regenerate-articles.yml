@@ -11,16 +11,22 @@ jobs:
   regenerate:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Article Regeneration
-        run: |
-          response=$(curl --request GET \
-            --url 'https://vision-forge-ai-74a62.web.app/api/cron/regenerate-articles' \
-            --header 'Authorization: Bearer ${{ secrets.CRON_SECRET }}' \
-            --header 'Content-Type: application/json' \
-            --fail)
-          
-          echo "API Response: $response"
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Regenerate Articles
+        run: npm run regenerate-articles
         env:
-          # The CRON_SECRET must be set in your project's repository secrets.
-          # It should be a long, random string.
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO_OWNER: ${{ secrets.GITHUB_REPO_OWNER }}
+          GITHUB_REPO_NAME: ${{ secrets.GITHUB_REPO_NAME }}
