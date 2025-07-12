@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { BrainCircuit, Twitter, Instagram, Facebook, Linkedin, Github } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { RegenerationStatus } from '../vision-forge/RegenerationStatus';
 
 export function Footer() {
   const pathname = usePathname();
@@ -38,7 +39,7 @@ export function Footer() {
             <h3 className="text-md font-bold text-foreground mb-4">Legal</h3>
             <ul className="space-y-1 text-sm">
               <li><Link href="/about" className={cn("block rounded-md -ml-2 px-2 py-1 hover:text-foreground", pathname === '/about' ? 'text-foreground font-bold' : 'text-foreground/80')}>About Us</Link></li>
-              <li><Link href="/contact" className={cn("block rounded-md -ml-2 px-2 py-1 hover:text-foreground", pathname === '/contact' ? 'text-foreground font-bold' : 'text-foreground/80')}>Contact Us</Link></li>
+              <li><Link href="/contact" className={cn("block rounded-md -ml-2 px-2 py-1 hover:text-foreground", pathname === '/contact' ? 'text-foreground/80')}>Contact Us</Link></li>
               <li><Link href="/privacy" className={cn("block rounded-md -ml-2 px-2 py-1 hover:text-foreground", pathname === '/privacy' ? 'text-foreground font-bold' : 'text-foreground/80')}>Privacy Policy</Link></li>
               <li><Link href="/terms" className={cn("block rounded-md -ml-2 px-2 py-1 hover:text-foreground", pathname === '/terms' ? 'text-foreground font-bold' : 'text-foreground/80')}>Terms of Service</Link></li>
               <li><Link href="/disclaimer" className={cn("block rounded-md -ml-2 px-2 py-1 hover:text-foreground", pathname === '/disclaimer' ? 'text-foreground font-bold' : 'text-foreground/80')}>Disclaimer</Link></li>
@@ -64,6 +65,14 @@ export function Footer() {
               <a href="https://github.com/ImagenBrainAi" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="text-foreground/80 hover:text-foreground">
                 <Github className="h-6 w-6" />
               </a>
+            </div>
+        </div>
+
+        {/* On-Demand Regeneration Feature */}
+        <div className="text-center mb-8">
+            <h3 className="text-md font-bold text-foreground mb-4">On-Demand Content</h3>
+            <div className="flex items-center justify-center gap-4">
+              <RegenerationStatus />
             </div>
         </div>
         

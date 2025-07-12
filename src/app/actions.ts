@@ -1,20 +1,19 @@
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import { generateAndSaveArticles } from '@/lib/articles';
-import { featuredTopics } from '@/lib/constants';
 
-// This function is now exclusively for the CRON job.
+// This function is now exclusively for the ON-DEMAND manual trigger button.
+// It specifically targets the 'Featured' category.
 export async function regenerateFeaturedArticles() {
   try {
-    console.log('Regenerating featured articles via CRON job...');
+    console.log('Regenerating featured articles via on-demand Server Action...');
     
     // The core logic of generating and saving articles to GitHub lives in the articles library.
-    // This is called by the CRON job.
-    await generateAndSaveArticles('Featured', featuredTopics);
+    // This action specifically regenerates the "Featured" articles.
+    await generateAndSaveArticles('Featured');
     
-    // Revalidate the homepage to show the newly generated articles after the CRON-triggered deployment.
+    // Revalidate the homepage to show the newly generated articles immediately.
     revalidatePath('/');
     console.log('Featured articles regenerated and path revalidated.');
     
