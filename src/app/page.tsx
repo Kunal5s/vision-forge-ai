@@ -1,4 +1,3 @@
-
 import { ImageGenerator } from '@/components/vision-forge/ImageGenerator';
 import { TestimonialsSection } from '@/components/vision-forge/TestimonialsSection';
 import { PricingSection } from '@/components/vision-forge/PricingSection';
@@ -12,7 +11,6 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { FeaturesHighlightSection } from '@/components/vision-forge/FeaturesHighlightSection';
-import { OnDemandArticleGenerator } from '@/components/vision-forge/OnDemandArticleGenerator';
 
 export const metadata: Metadata = {
   title: 'Imagen BrainAi: Your Free AI Image Generator',
@@ -66,8 +64,6 @@ export default function HomePage() {
         </div>
       </section>
       
-      <OnDemandArticleGenerator />
-
       <section className="container mx-auto px-4 pt-12 pb-8">
         <ImageGenerator />
       </section>
