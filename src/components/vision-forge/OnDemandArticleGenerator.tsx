@@ -22,8 +22,6 @@ export function OnDemandArticleGenerator() {
   const [positions, setPositions] = useState<Position[]>([]);
 
   useEffect(() => {
-    // This calculation is now deferred until the component mounts on the client.
-    // This prevents server-client mismatch (hydration error).
     const calculatePositions = () => {
       return categories.map((_, index) => {
         const angle = (index / categories.length) * 2 * Math.PI;
@@ -34,7 +32,7 @@ export function OnDemandArticleGenerator() {
       });
     };
     setPositions(calculatePositions());
-  }, []); // Empty dependency array ensures this runs only once on the client.
+  }, []);
 
   const handleGenerate = async (categorySlug: string) => {
     if (loadingCategory) {
@@ -85,7 +83,6 @@ export function OnDemandArticleGenerator() {
     }
   };
   
-  // If positions aren't calculated yet, render a placeholder or nothing to avoid the error
   if (positions.length === 0) {
     return (
         <section className="py-16 bg-muted">
@@ -137,11 +134,11 @@ export function OnDemandArticleGenerator() {
                             size="icon"
                             className={cn(
                                 "rounded-full w-12 h-12 text-lg font-bold transition-all duration-300 transform hover:scale-110",
-                                isLoading && "bg-primary text-primary-foreground animate-pulse",
+                                isLoading && "bg-primary text-primary-foreground animate-pulse cursor-not-allowed",
                                 isCompleted && "bg-green-500 hover:bg-green-600 text-white border-2 border-primary-foreground/50"
                             )}
                             onClick={() => handleGenerate(categorySlug)}
-                            disabled={isLoading}
+                            disabled={isLoading || !!loadingCategory}
                         >
                             {isLoading ? (
                                 <Loader2 className="animate-spin" />
