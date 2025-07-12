@@ -50,8 +50,9 @@ async function main() {
         process.exit(1);
     }
     
+    // GitHub keys are optional for local saving
     if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_REPO_OWNER || !process.env.GITHUB_REPO_NAME) {
-        console.warn("WARNING: GitHub environment variables (GITHUB_REPO_OWNER, GITHUB_REPO_NAME, GITHUB_TOKEN) are not fully set. Article persistence to GitHub will be disabled.");
+        console.warn("WARNING: GitHub environment variables (GITHUB_REPO_OWNER, GITHUB_REPO_NAME, GITHUB_TOKEN) are not fully set. Article persistence to GitHub will be disabled, but local files will be created.");
     }
 
     // Sequentially generate categories to avoid overwhelming the API and to make logs easier to read.

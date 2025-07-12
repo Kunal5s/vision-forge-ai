@@ -63,7 +63,6 @@ const PRIORITY_MODELS = [
 const FALLBACK_MODELS = [
     "meta-llama/llama-3-70b-instruct",
     "mistralai/mistral-large",
-    "google/gemini-pro",
 ];
 
 
@@ -216,7 +215,7 @@ export async function getArticles(category: string, forceFetch = false): Promise
         articleCache.delete(cacheKey);
     }
     
-    if (articleCache.has(cacheKey)) {
+    if (articleCache.has(cacheKey) && !forceFetch) {
         return articleCache.get(cacheKey)!;
     }
 
@@ -224,6 +223,8 @@ export async function getArticles(category: string, forceFetch = false): Promise
     const filePath = path.join(process.cwd(), 'src', 'articles', `${categorySlug}.json`);
 
     try {
+        // When fetching for pages, always try to read the latest from disk to reflect generation.
+        // For local dev, this is instant. For production, this requires a redeploy or fetching from a persistent source.
         const fileContent = await fs.readFile(filePath, 'utf-8');
         const articles: Article[] = JSON.parse(fileContent);
         
@@ -252,15 +253,15 @@ export async function getArticles(category: string, forceFetch = false): Promise
  * This is the primary function to be called by generation scripts.
  * @param category The name of the category to generate articles for (e.g., 'Featured').
  */
-export async function generateAndSaveArticles(category: string) {
+export async function generateAndSaveArticles(category: string, numberOfArticles: number = 4) {
     const topics = allTopicsByCategory[category];
     if (!topics) {
         console.error(`No topics found for category: ${category}`);
         return;
     }
 
-    // We generate 4 new articles for the category
-    const topicsToGenerate = topics.slice(0, 4);
+    // We generate N new articles for the category
+    const topicsToGenerate = topics.slice(0, numberOfArticles);
     let newArticles: Article[] = [];
 
     for (const topic of topicsToGenerate) {
