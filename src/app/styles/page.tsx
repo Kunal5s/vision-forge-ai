@@ -10,6 +10,9 @@ export const metadata: Metadata = {
     description: 'Explore different artistic styles with our AI-generated guides on photorealism, digital art, and more.',
 };
 
+// This ensures the page is dynamically rendered, always fetching the latest articles.
+export const dynamic = 'force-dynamic';
+
 const CATEGORY_NAME = 'Styles';
 
 async function ArticleList() {

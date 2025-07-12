@@ -11,6 +11,9 @@ export const metadata: Metadata = {
     description: 'Explore all articles from every category on Imagen BrainAi. Find inspiration, tutorials, and insights on AI image generation, creative prompts, and artistic styles.',
 };
 
+// This ensures the page is dynamically rendered, always fetching the latest articles.
+export const dynamic = 'force-dynamic';
+
 // All categories are fetched to build the complete archive
 const ALL_CATEGORIES = Object.values(categorySlugMap);
 

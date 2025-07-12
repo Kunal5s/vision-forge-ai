@@ -10,6 +10,9 @@ export const metadata: Metadata = {
     description: 'Stay ahead of the curve with AI-generated articles on the latest trends in generative art and technology.',
 };
 
+// This ensures the page is dynamically rendered, always fetching the latest articles.
+export const dynamic = 'force-dynamic';
+
 const CATEGORY_NAME = 'Trends';
 
 async function ArticleList() {

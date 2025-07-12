@@ -10,6 +10,9 @@ export const metadata: Metadata = {
     description: 'Discover the practical applications of AI image generation in marketing, gaming, design, and more.',
 };
 
+// This ensures the page is dynamically rendered, always fetching the latest articles.
+export const dynamic = 'force-dynamic';
+
 const CATEGORY_NAME = 'Usecases';
 
 async function ArticleList() {

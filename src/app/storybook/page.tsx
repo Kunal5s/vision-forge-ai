@@ -11,6 +11,9 @@ export const metadata: Metadata = {
     description: 'Learn how to use AI for visual storytelling, character design, and creating comic book panels.',
 };
 
+// This ensures the page is dynamically rendered, always fetching the latest articles.
+export const dynamic = 'force-dynamic';
+
 const CATEGORY_NAME = 'Storybook';
 
 async function ArticleList() {

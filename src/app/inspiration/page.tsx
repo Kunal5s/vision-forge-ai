@@ -10,6 +10,9 @@ export const metadata: Metadata = {
     description: 'Find creative inspiration with AI-generated articles on art, design, and overcoming creative blocks.',
 };
 
+// This ensures the page is dynamically rendered, always fetching the latest articles.
+export const dynamic = 'force-dynamic';
+
 const CATEGORY_NAME = 'Inspiration';
 
 async function ArticleList() {

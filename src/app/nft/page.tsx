@@ -10,6 +10,9 @@ export const metadata: Metadata = {
     description: 'Learn about creating, promoting, and understanding the NFT market with our AI-generated articles.',
 };
 
+// This ensures the page is dynamically rendered, always fetching the latest articles.
+export const dynamic = 'force-dynamic';
+
 const CATEGORY_NAME = 'NFT';
 
 async function ArticleList() {
