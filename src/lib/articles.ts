@@ -50,7 +50,7 @@ You MUST respond with a single, valid JSON object. Do not include any text, comm
 5.  **Relevance:** The content must be highly relevant to the TOPIC and CATEGORY provided.
 6.  **Strict JSON:** The entire output must be a single, valid JSON object, ready for parsing.`;
 
-// List of models as requested by the user, with priority and fallback.
+
 const PRIORITY_MODELS = [
     "cognitivecomputations/dolphin-mixtral-8x7b",
     "qwen/qwen-2-72b-instruct",
@@ -210,6 +210,12 @@ const articleCache = new Map<string, Article[]>();
 export async function getArticles(category: string, forceFetch = false): Promise<Article[]> {
     const cacheKey = category;
     
+    // In a development environment, always force a fetch to see new generated files.
+    // In production, Vercel's build cache is the source of truth, but `force-dynamic` will handle re-fetching.
+    if (process.env.NODE_ENV === 'development') {
+        forceFetch = true;
+    }
+
     if (forceFetch && articleCache.has(cacheKey)) {
         articleCache.delete(cacheKey);
     }
@@ -245,6 +251,8 @@ export async function getArticles(category: string, forceFetch = false): Promise
 
 
 /**
+ * DEPRECATED - This function is no longer the main entry point for generation.
+ * The logic is now in the `generate-all-articles.ts` script.
  * Generates new articles for a given category and prepends them to the existing list.
  * @param category The name of the category to generate articles for (e.g., 'Featured').
  */
