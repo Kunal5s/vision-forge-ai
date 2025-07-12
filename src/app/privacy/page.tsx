@@ -89,44 +89,57 @@ export default function PrivacyPolicyPage() {
             </li>
           </ul>
         </section>
+
+        <section>
+            <h2 className="text-2xl font-semibold text-foreground mb-3">5. Third-Party Advertising & Ezoic</h2>
+            <p className="text-foreground">
+                We use third-party advertising companies to serve ads when you visit the Website. These companies may use information about your visits to this and other websites that are contained in web cookies in order to provide advertisements about goods and services of interest to you.
+            </p>
+            <p className="text-foreground mt-2">
+                This site uses Ezoic's advertising services. Ezoic's privacy policy is in effect and can be reviewed <a href="http://g.ezoic.net/privacy/imagenbrainai.in" target="_blank" rel="noopener noreferrer" className="text-foreground hover:underline">here</a>. The required disclosures for our use of Ezoic's services are embedded below.
+            </p>
+            <div className="mt-4 p-4 border rounded-lg bg-muted/50">
+                <span id="ezoic-privacy-policy-embed"></span>
+            </div>
+        </section>
         
         <section>
-          <h2 className="text-2xl font-semibold text-foreground mb-3">5. Data Security</h2>
+          <h2 className="text-2xl font-semibold text-foreground mb-3">6. Data Security</h2>
           <p className="text-foreground">
             We use administrative, technical, and physical security measures to help protect your personal information. While we have taken reasonable steps to secure the personal information you provide to us, please be aware that despite our efforts, no security measures are perfect or impenetrable, and no method of data transmission can be guaranteed against any interception or other type of misuse.
           </p>
         </section>
         
         <section>
-          <h2 className="text-2xl font-semibold text-foreground mb-3">6. Data Retention</h2>
+          <h2 className="text-2xl font-semibold text-foreground mb-3">7. Data Retention</h2>
           <p className="text-foreground">
             We will only keep your personal information for as long as it is necessary for the purposes set out in this privacy policy, unless a longer retention period is required or permitted by law (such as tax, accounting or other legal requirements). For image generation history stored locally via browser storage, you have control over its deletion.
           </p>
         </section>
         
         <section>
-          <h2 className="text-2xl font-semibold text-foreground mb-3">7. Your Rights</h2>
+          <h2 className="text-2xl font-semibold text-foreground mb-3">8. Your Rights</h2>
           <p className="text-foreground">
             Depending on your location, you may have certain rights regarding your personal information, such as the right to access, correct, or delete your data. To exercise these rights, please contact us.
           </p>
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-foreground mb-3">8. Policy for Children</h2>
+          <h2 className="text-2xl font-semibold text-foreground mb-3">9. Policy for Children</h2>
           <p className="text-foreground">
             We do not knowingly solicit information from or market to children under the age of 13. If you become aware of any data we have collected from children under age 13, please contact us using the contact information provided below.
           </p>
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-foreground mb-3">9. Changes to This Privacy Policy</h2>
+          <h2 className="text-2xl font-semibold text-foreground mb-3">10. Changes to This Privacy Policy</h2>
           <p className="text-foreground">
             We may update this privacy policy from time to time. The updated version will be indicated by an updated "Last Updated" date and the updated version will be effective as soon as it is accessible. We encourage you to review this privacy policy frequently to be informed of how we are protecting your information.
           </p>
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-foreground mb-3">10. Contact Us</h2>
+          <h2 className="text-2xl font-semibold text-foreground mb-3">11. Contact Us</h2>
           <p className="text-foreground">
             If you have questions or comments about this Privacy Policy, please contact us at:
             <br />
