@@ -1,4 +1,4 @@
-// This file has been deleted.
-// The logic for automatic regeneration is now consolidated in the CRON job script
-// at /src/app/api/cron/regenerate-articles/route.ts, which updates one category 
-// at a time in a rotating sequence for better stability and consistency.
+// This file is obsolete and has been removed to simplify the regeneration process.
+// All automatic regeneration logic is now handled by the single, reliable CRON job script
+// at /src/app/api/cron/regenerate-articles/route.ts, which updates the 'Featured'
+// category every 5 minutes.
