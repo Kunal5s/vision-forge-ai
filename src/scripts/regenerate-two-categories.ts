@@ -1,3 +1,4 @@
-// This file is no longer needed and has been deleted to simplify the regeneration process.
-// The primary CRON job logic is now consolidated in /src/app/api/cron/regenerate-articles/route.ts
-// which handles updating one category at a time in a rotating sequence.
+// This file has been deleted.
+// The logic for automatic regeneration is now consolidated in the CRON job script
+// at /src/app/api/cron/regenerate-articles/route.ts, which updates one category 
+// at a time in a rotating sequence for better stability and consistency.

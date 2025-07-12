@@ -22,12 +22,14 @@ export function OnDemandArticleGenerator() {
   const [positions, setPositions] = useState<Position[]>([]);
 
   useEffect(() => {
+    // This calculation is now done only on the client-side to prevent hydration errors.
     const calculatePositions = () => {
       return categories.map((_, index) => {
         const angle = (index / categories.length) * 2 * Math.PI;
-        const radius = '45%';
-        const x = `calc(50% + ${radius} * ${Math.cos(angle)} - 24px)`;
-        const y = `calc(50% + ${radius} * ${Math.sin(angle)} - 24px)`;
+        // Adjust radius to bring circles closer to the center if needed
+        const radius = 'clamp(100px, 40%, 200px)'; // Responsive radius
+        const x = `calc(50% + ${radius} * ${Math.cos(angle)} - 24px)`; // 24px is half button width
+        const y = `calc(50% + ${radius} * ${Math.sin(angle)} - 24px)`; // 24px is half button height
         return { left: x, top: y };
       });
     };
@@ -126,7 +128,7 @@ export function OnDemandArticleGenerator() {
                     <div 
                         key={categorySlug} 
                         className="absolute w-12 h-12"
-                        style={{ left: position.left, top: position.top }}
+                        style={{ ...position }}
                         title={`Generate articles for ${categoryName}`}
                     >
                         <Button 
@@ -138,7 +140,7 @@ export function OnDemandArticleGenerator() {
                                 isCompleted && "bg-green-500 hover:bg-green-600 text-white border-2 border-primary-foreground/50"
                             )}
                             onClick={() => handleGenerate(categorySlug)}
-                            disabled={isLoading || !!loadingCategory}
+                            disabled={!!loadingCategory}
                         >
                             {isLoading ? (
                                 <Loader2 className="animate-spin" />
