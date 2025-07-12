@@ -6,6 +6,8 @@ import { BrainCircuit } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { SubscriptionManager } from '../vision-forge/SubscriptionManager';
+import { motion } from 'framer-motion';
+import React from 'react';
 
 const navLinks = [
   { href: '/prompts', label: 'Prompts' },
@@ -21,6 +23,11 @@ const navLinks = [
 
 export function Header() {
   const pathname = usePathname();
+  const [activeLink, setActiveLink] = React.useState(pathname);
+
+  React.useEffect(() => {
+    setActiveLink(pathname);
+  }, [pathname]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -39,19 +46,27 @@ export function Header() {
         </div>
         
         {/* Bottom Row: Navigation Links */}
-        <nav className="flex w-full items-center overflow-x-auto pb-4 no-scrollbar">
-          <div className="flex gap-6">
+        <nav className="flex w-full items-center overflow-x-auto pb-2 no-scrollbar">
+          <div className="relative flex gap-6">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
+                onClick={() => setActiveLink(link.href)}
                 className={cn(
-                  "text-sm font-medium transition-colors whitespace-nowrap",
-                  pathname === link.href
+                  "relative text-sm font-medium transition-colors whitespace-nowrap px-1 py-2",
+                  activeLink === link.href
                     ? 'text-foreground'
                     : 'text-muted-foreground hover:text-foreground'
                 )}
               >
+                {activeLink === link.href && (
+                  <motion.span
+                    layoutId="underline"
+                    className="absolute bottom-0 left-0 h-0.5 w-full bg-foreground"
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  />
+                )}
                 {link.label}
               </Link>
             ))}
