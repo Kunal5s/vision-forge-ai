@@ -11,7 +11,7 @@ async function generateAndSaveForCategory(category: string, topics: string[]) {
     console.log(`--- Generating articles for category: ${category} ---`);
     
     // We are generating fresh articles, so no need to fetch current ones.
-    let newArticles = [];
+    let newArticles: any[] = [];
     const createdSlugs = new Set<string>();
 
     // Generate 4 articles per category
