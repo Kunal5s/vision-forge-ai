@@ -84,8 +84,8 @@ export default {
   				}
   			},
         'breathing-glow': {
-          '0%, 100%': { boxShadow: '0 0 5px hsl(var(--primary) / 0.2), 0 0 10px hsl(var(--primary) / 0.1)' },
-          '50%': { boxShadow: '0 0 15px hsl(var(--primary) / 0.3), 0 0 25px hsl(var(--primary) / 0.2)' },
+          '0%, 100%': { boxShadow: '0 0 5px hsl(var(--foreground) / 0.2), 0 0 10px hsl(var(--foreground) / 0.1)' },
+          '50%': { boxShadow: '0 0 15px hsl(var(--foreground) / 0.4), 0 0 25px hsl(var(--foreground) / 0.3)' },
         }
   		},
   		animation: {

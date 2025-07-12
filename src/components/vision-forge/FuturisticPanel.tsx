@@ -8,7 +8,7 @@ export function FuturisticPanel({ className, children, ...props }: FuturisticPan
   return (
     <div
       className={cn(
-        'bg-card border rounded-xl p-6 shadow-sm',
+        'bg-card border-foreground/80 border rounded-xl p-6 shadow-sm relative overflow-hidden animate-breathing-glow',
         className
       )}
       {...props}
