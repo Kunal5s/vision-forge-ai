@@ -76,7 +76,7 @@ export function PricingSection() {
             <Card
               key={plan.name}
               className={cn(
-                'flex flex-col h-full transition-shadow hover:shadow-lg bg-background',
+                'flex flex-col h-full transition-shadow hover:shadow-lg bg-background animate-breathing-glow',
                 plan.isFeatured
                   ? 'border-foreground shadow-2xl scale-105'
                   : 'border'

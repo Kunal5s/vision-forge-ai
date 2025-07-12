@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface ArticleContentBlock {
     type: 'h1' | 'h2' | 'h3' | 'p' | 'h4' | 'h5' | 'h6';
@@ -71,7 +72,7 @@ export function ArticlesSection({ articles, category }: ArticlesSectionProps) {
                 const articleUrl = `/${categorySlug}/${article.slug}`;
 
                 return (
-                    <Card key={`${article.slug}-${index}`} className="flex flex-col overflow-hidden transition-shadow hover:shadow-lg">
+                    <Card key={`${article.slug}-${index}`} className={cn("flex flex-col overflow-hidden transition-shadow hover:shadow-lg animate-breathing-glow")}>
                         <CardHeader className="p-0">
                             <Link href={articleUrl}>
                                 <div className="aspect-video relative">

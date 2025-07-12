@@ -1,6 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bot, Paintbrush, SlidersHorizontal, Layers, Zap, BookOpen } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const features = [
   {
@@ -49,7 +50,7 @@ export function FeaturesHighlightSection() {
         </header>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
-            <Card key={index} className="bg-background text-left transition-shadow hover:shadow-lg">
+            <Card key={index} className={cn("bg-background text-left transition-shadow hover:shadow-lg animate-breathing-glow")}>
               <CardHeader>
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-muted rounded-lg">

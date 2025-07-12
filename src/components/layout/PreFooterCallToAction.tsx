@@ -2,12 +2,13 @@
 import Link from 'next/link';
 import { Brain, SlidersHorizontal, Sparkles, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export function PreFooterCallToAction() {
   return (
     <section className="py-12 md:py-16 bg-muted/30">
       <div className="container mx-auto px-4">
-        <div className="bg-background border rounded-xl p-8 md:p-12">
+        <div className={cn("bg-background border rounded-xl p-8 md:p-12 animate-breathing-glow")}>
             <div className="max-w-xl">
               <h2 className="text-3xl font-extrabold text-foreground mb-4">Ready to Unleash Your Creativity?</h2>
               <p className="text-lg text-muted-foreground mb-8">
