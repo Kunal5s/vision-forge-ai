@@ -1,7 +1,7 @@
 
 // src/app/api/generate-article/route.ts
 import { NextResponse } from 'next/server';
-import { generateSingleArticle, getArticles, saveArticlesForCategory } from '@/lib/articles';
+import { generateSingleArticle, saveArticlesForCategory, getArticles, generateAndSaveArticles } from '@/lib/articles';
 
 // This function is now the core logic for adding a new article and archiving old ones.
 export async function generateAndSaveSingleArticle(topic: string, category: string) {
@@ -33,17 +33,23 @@ export async function POST(req: Request) {
   try {
     const { topic, category } = await req.json();
     
-    if (!topic || !category) {
-        return NextResponse.json({ error: 'Topic and category are required.' }, { status: 400 });
+    if (!category) {
+        return NextResponse.json({ error: 'Category is required.' }, { status: 400 });
     }
 
-    const article = await generateAndSaveSingleArticle(topic, category);
-
-    if (!article) {
-        return NextResponse.json({ error: `Failed to generate and save the article for topic: "${topic}".` }, { status: 500 });
+    if (topic) {
+        // Handle single topic generation
+        const article = await generateAndSaveSingleArticle(topic, category);
+        if (!article) {
+            return NextResponse.json({ error: `Failed to generate and save the article for topic: "${topic}".` }, { status: 500 });
+        }
+        return NextResponse.json(article);
+    } else {
+        // Handle full category regeneration
+        console.log(`Manual trigger for category regeneration: "${category}"`);
+        await generateAndSaveArticles(category);
+        return NextResponse.json({ success: true, message: `Successfully started regeneration for category: ${category}` });
     }
-    
-    return NextResponse.json(article);
 
   } catch (error: any) {
     console.error('[GENERATE_ARTICLE_API_ERROR]', error);
