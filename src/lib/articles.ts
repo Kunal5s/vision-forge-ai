@@ -5,6 +5,12 @@ import 'dotenv/config';
 import { getContent, saveContent } from './github';
 import fs from 'fs/promises';
 import path from 'path';
+import { 
+    categorySlugMap, featuredTopics, promptsTopics, stylesTopics, tutorialsTopics, 
+    storybookTopics, usecasesTopics, inspirationTopics, trendsTopics, 
+    technologyTopics, nftTopics 
+} from './constants';
+
 
 const JSON_PROMPT_STRUCTURE = `You are a world-class content creator and SEO expert with a special talent for writing in a deeply human, engaging, and emotional tone. Your task is to generate a comprehensive, well-structured, and fully humanized long-form article for an AI Image Generator website.
 
@@ -75,6 +81,19 @@ export interface Article {
     keyTakeaways: string[];
     conclusion: string;
 }
+
+const allTopicsByCategory: Record<string, string[]> = {
+    'Featured': featuredTopics,
+    'Prompts': promptsTopics,
+    'Styles': stylesTopics,
+    'Tutorials': tutorialsTopics,
+    'Storybook': storybookTopics,
+    'Usecases': usecasesTopics,
+    'Inspiration': inspirationTopics,
+    'Trends': trendsTopics,
+    'Technology': technologyTopics,
+    'NFT': nftTopics,
+};
 
 async function generateWithOpenRouter(model: string, topic: string, category: string): Promise<any | null> {
     const apiKey = process.env.OPENROUTER_API_KEY;
@@ -206,7 +225,14 @@ const articleCache = new Map<string, Article[]>();
 export async function getArticles(category: string, forceFetch = false): Promise<Article[]> {
     const cacheKey = category;
     
-    if (articleCache.has(cacheKey) && !forceFetch) {
+    // In a serverless environment (like Vercel production/preview), we cannot rely on a persistent in-memory cache.
+    // For previews and production builds, it's safer to read the file every time to ensure freshness.
+    // The `forceFetch` flag will also bypass any cache if we explicitly need to.
+    if (process.env.NODE_ENV !== 'development' || forceFetch) {
+        articleCache.delete(cacheKey);
+    }
+    
+    if (articleCache.has(cacheKey)) {
         return articleCache.get(cacheKey)!;
     }
 
@@ -227,10 +253,59 @@ export async function getArticles(category: string, forceFetch = false): Promise
 
     } catch (error: any) {
         if (error.code === 'ENOENT') {
-            console.warn(`No articles file found for category: "${category}" at ${filePath}. Returning empty array.`);
+            // This is now expected if the content hasn't been generated yet.
+            // Returning an empty array is the correct behavior.
         } else {
             console.error(`Error reading or parsing articles for category "${category}":`, error);
         }
         return [];
     }
 }
+
+
+/**
+ * Generates new articles for a given category and prepends them to the existing list.
+ * This is the primary function to be called by CRON jobs or generation scripts.
+ * @param category The name of the category to generate articles for (e.g., 'Featured').
+ */
+export async function generateAndSaveArticles(category: string) {
+    const topics = allTopicsByCategory[category];
+    if (!topics) {
+        console.error(`No topics found for category: ${category}`);
+        return;
+    }
+
+    // We generate 4 new articles for the category
+    const topicsToGenerate = topics.slice(0, 4);
+    let newArticles: Article[] = [];
+
+    for (const topic of topicsToGenerate) {
+        try {
+            const article = await generateSingleArticle(topic, category);
+            if (article) {
+                newArticles.push(article);
+                console.log(`  ✔ Successfully generated article for topic: "${topic}"`);
+            } else {
+                console.log(`  ✖ Failed to generate article for topic: "${topic}"`);
+            }
+        } catch (error) {
+            console.error(`  ✖ An error occurred while generating article for topic: "${topic}"`, error);
+        }
+    }
+
+    if (newArticles.length > 0) {
+        // Fetch the current list of articles to prepend to
+        const currentArticles = await getArticles(category, true); // forceFetch to get latest from source
+
+        // Prepend new articles to the existing ones for archival
+        const updatedArticles = [...newArticles, ...currentArticles];
+
+        // Save the combined list back
+        await saveArticlesForCategory(category, updatedArticles);
+        console.log(`Successfully generated ${newArticles.length} new articles and saved ${updatedArticles.length} total articles for ${category}.`);
+    } else {
+        console.warn(`No new articles were generated for ${category}, nothing to save.`);
+    }
+}
+
+    
