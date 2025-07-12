@@ -54,7 +54,7 @@ You MUST respond with a single, valid JSON object. Do not include any text, comm
 6.  **Strict JSON:** The entire output must be a single, valid JSON object, ready for parsing.`;
 
 // Use the user-specified model as the only option.
-const PRIMARY_MODEL = "deepseek/deepseek-chat";
+const PRIMARY_MODEL = "cognitivecomputations/dolphin-mixtral-8x7b";
 
 interface ArticleContentBlock {
     type: 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p';
