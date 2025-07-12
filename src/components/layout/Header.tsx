@@ -40,21 +40,20 @@ export function Header() {
         </div>
         
         {/* Bottom Row: Navigation Links */}
-        <nav className="flex w-full items-center overflow-x-auto no-scrollbar">
-          <div className="flex gap-6">
+        <nav className="flex w-full items-center overflow-x-auto no-scrollbar pb-2">
+          <div className="flex gap-2">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "relative whitespace-nowrap py-2 text-sm font-medium transition-colors text-foreground/60 hover:text-foreground",
-                  pathname === link.href && "text-foreground"
+                  "whitespace-nowrap rounded-md px-4 py-1.5 text-sm font-medium transition-colors border",
+                  pathname === link.href 
+                    ? "bg-foreground text-background border-transparent" 
+                    : "bg-background text-foreground border-input hover:bg-muted"
                 )}
               >
                 {link.label}
-                {pathname === link.href && (
-                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-foreground animate-in fade-in-0 duration-300"></span>
-                )}
               </Link>
             ))}
           </div>
