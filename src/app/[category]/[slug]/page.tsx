@@ -21,7 +21,7 @@ interface Article {
     category: string;
     title: string;
     slug: string;
-    articleContent: ArticleContentBlock[] | string;
+    articleContent: ArticleContentBlock[];
     keyTakeaways: string[];
     conclusion: string;
 }
@@ -43,9 +43,7 @@ export async function generateMetadata({ params }: { params: { category: string;
     };
   }
   
-  const description = Array.isArray(article.articleContent)
-    ? (article.articleContent.find(c => c.type === 'p')?.content || '').substring(0, 160)
-    : (article.articleContent as string).substring(0, 160);
+  const description = (article.articleContent.find(c => c.type === 'p')?.content || '').substring(0, 160);
 
   return {
     title: article.title,
@@ -53,24 +51,25 @@ export async function generateMetadata({ params }: { params: { category: string;
   };
 }
 
-const renderContentBlock = (item: ArticleContentBlock, index: number) => {
-    switch (item.type) {
+const renderContentBlock = (block: ArticleContentBlock, index: number) => {
+    switch (block.type) {
         case 'h1':
-            return <h1 key={index}>{item.content}</h1>;
+            return <h1 key={index} className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">{block.content}</h1>;
         case 'h2':
-            return <h2 key={index}>{item.content}</h2>;
+            return <h2 key={index} className="text-3xl font-bold mt-12 mb-4 border-b pb-2">{block.content}</h2>;
         case 'h3':
-            return <h3 key={index}>{item.content}</h3>;
+            return <h3 key={index} className="text-2xl font-semibold mt-10 mb-3">{block.content}</h3>;
         case 'h4':
-            return <h4 key={index}>{item.content}</h4>;
+            return <h4 key={index} className="text-xl font-semibold mt-8 mb-2">{block.content}</h4>;
         case 'h5':
-            return <h5 key={index}>{item.content}</h5>;
+            return <h5 key={index} className="text-lg font-semibold mt-6 mb-2">{block.content}</h5>;
         case 'h6':
-            return <h6 key={index}>{item.content}</h6>;
+            return <h6 key={index} className="text-base font-semibold mt-6 mb-2">{block.content}</h6>;
         case 'p':
-            return <p key={index}>{item.content}</p>;
+            return <p key={index} className="mb-6 leading-relaxed">{block.content}</p>;
         default:
-            return null;
+            // This is a failsafe, but based on the type, it should not be reached.
+            return <p key={index}>{block.content}</p>;
     }
 }
 
@@ -86,6 +85,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
             <article className="max-w-4xl mx-auto">
                 <header className="mb-8">
                     <Badge variant="secondary" className="mb-4">{article.category}</Badge>
+                    <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">{article.title}</h1>
                     <div className="relative aspect-video w-full rounded-lg overflow-hidden mt-6 shadow-lg">
                         <Image
                             src={article.image}
@@ -98,27 +98,8 @@ export default async function ArticlePage({ params }: { params: { category: stri
                     </div>
                 </header>
 
-                <div className={cn(
-                  "prose prose-lg dark:prose-invert max-w-none text-foreground/90",
-                  "prose-h1:text-4xl prose-h1:md:text-5xl prose-h1:font-extrabold prose-h1:tracking-tight prose-h1:text-foreground prose-h1:mb-4",
-                  "prose-h2:text-3xl prose-h2:font-bold prose-h2:mt-12 prose-h2:mb-4 prose-h2:border-b prose-h2:pb-2",
-                  "prose-h3:text-2xl prose-h3:font-semibold prose-h3:mt-10 prose-h3:mb-3",
-                  "prose-h4:text-xl prose-h4:font-semibold prose-h4:mt-8 prose-h4:mb-2",
-                  "prose-h5:text-lg prose-h5:font-semibold prose-h5:mt-6 prose-h5:mb-2",
-                  "prose-h6:text-base prose-h6:font-semibold prose-h6:mt-6 prose-h6:mb-2",
-                  "prose-p:mb-6 prose-p:leading-relaxed"
-                )}>
-                     {Array.isArray(article.articleContent) ? (
-                        article.articleContent.map(renderContentBlock)
-                     ) : (
-                        // Fallback for old string format
-                        <>
-                            <h1>{article.title}</h1>
-                            {(article.articleContent as string).split('\n').filter(p => p.trim() !== '').map((paragraph, index) => (
-                                <p key={index}>{paragraph}</p>
-                            ))}
-                        </>
-                    )}
+                <div className="prose prose-lg dark:prose-invert max-w-none text-foreground/90">
+                    {article.articleContent.map(renderContentBlock)}
                 </div>
 
                 <section className="my-12">

@@ -29,6 +29,7 @@ export const ARTISTIC_STYLES: StyleOption[] = [
 ];
 
 export const MOODS: StyleOption[] = [
+    { label: 'None', value: 'none' },
     { label: 'Mysterious', value: 'mysterious mood' },
     { label: 'Cheerful', value: 'cheerful mood' },
     { label: 'Dramatic', value: 'dramatic mood' },
@@ -37,7 +38,6 @@ export const MOODS: StyleOption[] = [
     { label: 'Whimsical', value: 'whimsical' },
     { label: 'Gloomy', value: 'gloomy mood' },
     { label: 'Romantic', value: 'romantic mood' },
-    { label: 'None', value: 'none' },
 ];
 
 export const LIGHTING_OPTIONS: StyleOption[] = [
