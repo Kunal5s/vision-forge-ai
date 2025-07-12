@@ -213,9 +213,9 @@ export function ImageGenerator() {
                   {errors.prompt && <p className="text-sm text-destructive mt-1">{errors.prompt.message}</p>}
                 </div>
                 
-                <Accordion type="single" collapsible defaultValue="item-1" className="w-full">
-                  <AccordionItem value="item-1">
-                    <AccordionTrigger className="text-base font-semibold hover:no-underline">
+                <Accordion type="single" collapsible defaultValue="item-1" className="w-full border-t pt-4">
+                  <AccordionItem value="item-1" className="border-b-0">
+                    <AccordionTrigger className="text-base font-semibold hover:no-underline pt-0">
                       <Wand2 className="mr-2 h-5 w-5" /> Creative Tools
                     </AccordionTrigger>
                     <AccordionContent>
