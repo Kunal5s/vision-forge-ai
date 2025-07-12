@@ -6,9 +6,7 @@ import { getContent, saveContent } from './github';
 import fs from 'fs/promises';
 import path from 'path';
 import { 
-    categorySlugMap, featuredTopics, promptsTopics, stylesTopics, tutorialsTopics, 
-    storybookTopics, usecasesTopics, inspirationTopics, trendsTopics, 
-    technologyTopics, nftTopics 
+    categorySlugMap, allTopicsByCategory
 } from './constants';
 
 
@@ -53,8 +51,13 @@ You MUST respond with a single, valid JSON object. Do not include any text, comm
 5.  **Relevance:** The content must be highly relevant to the TOPIC and CATEGORY provided.
 6.  **Strict JSON:** The entire output must be a single, valid JSON object, ready for parsing.`;
 
-// Use the user-specified model as the only option.
-const PRIMARY_MODEL = "cognitivecomputations/dolphin-mixtral-8x7b";
+// List of high-quality models to try in order of preference.
+const MODELS_TO_TRY = [
+    "cognitivecomputations/dolphin-mixtral-8x7b", // User's preferred model
+    "deepseek/deepseek-chat",
+    "mistralai/mistral-7b-instruct",
+    "google/gemma-7b-it",
+];
 
 interface ArticleContentBlock {
     type: 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p';
@@ -72,59 +75,49 @@ export interface Article {
     conclusion: string;
 }
 
-const allTopicsByCategory: Record<string, string[]> = {
-    'Featured': featuredTopics,
-    'Prompts': promptsTopics,
-    'Styles': stylesTopics,
-    'Tutorials': tutorialsTopics,
-    'Storybook': storybookTopics,
-    'Usecases': usecasesTopics,
-    'Inspiration': inspirationTopics,
-    'Trends': trendsTopics,
-    'Technology': technologyTopics,
-    'NFT': nftTopics,
-};
-
-async function generateWithOpenRouter(model: string, topic: string, category: string): Promise<any | null> {
+async function generateWithOpenRouter(topic: string, category: string): Promise<any | null> {
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
         throw new Error('OpenRouter API key is not configured.');
     }
     const fullPrompt = `${JSON_PROMPT_STRUCTURE}\n\nNow, generate the content for:\nTopic: "${topic}"\nCategory: "${category}"`;
     
-    try {
-        const openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                model: model,
-                messages: [{ role: "user", content: fullPrompt }],
-                response_format: { type: "json_object" },
-            }),
-        });
+    for (const model of MODELS_TO_TRY) {
+        console.log(`  -> Attempting generation for topic "${topic}" with model: ${model}`);
+        try {
+            const openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    model: model,
+                    messages: [{ role: "user", content: fullPrompt }],
+                    response_format: { type: "json_object" },
+                }),
+            });
 
-        if (!openRouterResponse.ok) {
-            const errorBody = await openRouterResponse.text();
-            console.error(`OpenRouter model ${model} failed with status: ${openRouterResponse.status}`, errorBody);
-            throw new Error(`Model ${model} failed: ${errorBody}`);
+            if (openRouterResponse.ok) {
+                const openRouterData = await openRouterResponse.json();
+                const content = openRouterData.choices[0]?.message?.content;
+                
+                if (content) {
+                    console.log(`  ✔ Success with model: ${model}`);
+                    return JSON.parse(content);
+                }
+                console.warn(`  ! Model ${model} returned empty content. Trying next model.`);
+            } else {
+                const errorBody = await openRouterResponse.text();
+                console.warn(`  ! Model ${model} failed with status: ${openRouterResponse.status}. Trying next model. Error: ${errorBody}`);
+            }
+        } catch (error) {
+            console.error(`  ✖ Request to model ${model} failed. Trying next model.`, error);
         }
-
-        const openRouterData = await openRouterResponse.json();
-        const content = openRouterData.choices[0]?.message?.content;
-        
-        if (!content) {
-          console.warn(`OpenRouter model ${model} returned empty content.`);
-          return null;
-        }
-        
-        return JSON.parse(content);
-    } catch (error) {
-        console.error(`Request to OpenRouter model ${model} failed.`, error);
-        throw error; // Re-throw to be caught by the caller
     }
+    
+    console.error(`All models failed to generate content for topic: "${topic}"`);
+    return null; // Return null if all models fail
 }
 
 async function parseAndValidateArticle(aiResponse: any, topic: string): Promise<Omit<Article, 'image' | 'dataAiHint' | 'slug' | 'category'> & { imagePrompt: string }> {
@@ -139,18 +132,10 @@ async function parseAndValidateArticle(aiResponse: any, topic: string): Promise<
 }
 
 export async function generateSingleArticle(topic: string, category: string): Promise<Article | null> {
-    let aiJsonResponse: any | null = null;
-    
-    console.log(`Attempting to generate article for topic "${topic}" with model: ${PRIMARY_MODEL}`);
-    try {
-        aiJsonResponse = await generateWithOpenRouter(PRIMARY_MODEL, topic, category);
-    } catch(e) {
-        console.error(`Model ${PRIMARY_MODEL} failed to generate the article for topic: "${topic}".`, e);
-        return null;
-    }
+    const aiJsonResponse = await generateWithOpenRouter(topic, category);
 
     if (!aiJsonResponse) {
-        console.error(`Model ${PRIMARY_MODEL} returned no response for topic: "${topic}".`);
+        console.error(`All models failed for topic: "${topic}".`);
         return null;
     }
 
@@ -227,7 +212,6 @@ export async function getArticles(category: string, forceFetch = false): Promise
     const filePath = path.join(process.cwd(), 'src', 'articles', `${categorySlug}.json`);
 
     try {
-        // Use a cache-busting query parameter for development to ensure we always get the fresh file content
         const fileContent = await fs.readFile(filePath, 'utf-8');
         const articles: Article[] = JSON.parse(fileContent);
         
@@ -253,7 +237,7 @@ export async function getArticles(category: string, forceFetch = false): Promise
 
 /**
  * Generates new articles for a given category and prepends them to the existing list.
- * This is the primary function to be called by CRON jobs or generation scripts.
+ * This is the primary function to be called by generation scripts.
  * @param category The name of the category to generate articles for (e.g., 'Featured').
  */
 export async function generateAndSaveArticles(category: string) {

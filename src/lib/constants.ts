@@ -69,67 +69,80 @@ export const QUALITY_OPTIONS: StyleOption[] = [
     { label: 'Basic (720p)', value: 'basic quality, 720p' },
 ];
 
-// Topics for each category
+// NEW, UNIQUE TOPICS - 40 total
 export const featuredTopics = [
-    'The Definitive Guide to Advanced Prompt Engineering for AI',
-    'How AI Blurs the Lines Between Photography and Imagination',
-    'Creating Consistent Characters: A Deep Dive into AI Storytelling',
-    'Beyond Pretty Pictures: The Business Case for AI Generation',
+    'The Future of Creativity is a Human-AI Partnership',
+    'AI as Your Personal Art Director: A New Paradigm',
+    'Why Your Next Creative Breakthrough Will Involve an AI',
+    'Mastering the Digital Canvas: AI for Modern Content Creators',
 ];
 export const promptsTopics = [
-    'The Secret to Crafting Emotionally Resonant AI Art Prompts',
-    'A Deep Dive into Advanced Prompt Weighting Techniques',
-    'How to Use Negative Prompts to Eliminate Unwanted Elements',
-    'From a Single Word to a Masterpiece: Prompt Expansion',
+    'The Psychology of Prompting: Getting Inside the AI’s Mind',
+    'From Simple to Sublime: A Masterclass in Prompt Layering',
+    'Negative Prompts: The Surprising Art of Creative Subtraction',
+    'Unlocking Hyper-Realism: Advanced Photorealistic Prompting Techniques',
 ];
 export const stylesTopics = [
-    'How to Replicate Film Photography Styles Using AI Prompts',
-    'A Guide to Creating Impossible Architecture with AI',
-    'Exploring Abstract Expressionism with AI Image Generation Models',
-    'How to Achieve a Perfect Flat Design Illustration Style',
+    'Beyond the Preset: Forging Your Unique AI Artistic Signature',
+    'Cinematic Storytelling: How to Replicate Movie Stills with AI',
+    'Architectural Dreams: Building Impossible Structures with AI Prompts',
+    'A Fusion of Eras: Blending Historical Art Styles with AI',
 ];
 export const tutorialsTopics = [
-    'A Beginner’s Tutorial to Your First AI Masterpiece',
-    'Tutorial: Fixing Distorted Faces and Hands in AI Art',
-    'Advanced Image Editing Tutorial: AI Inpainting and Outpainting',
-    'How to Create Stunning Product Mockups with AI',
+    'Your First 10 AI Images: A Step-by-Step Walkthrough',
+    'The Ultimate Guide to Fixing Hands, Eyes, and Faces',
+    'From Chaos to Control: Mastering Inpainting and Outpainting',
+    'Creating Professional Ad Creatives from a Single Prompt',
 ];
 export const storybookTopics = [
-    'How to Create a Consistent Character for Your Storybook',
-    'From Script to Panel: Visualizing Comic Book Scenes',
-    'AI for World-Building: Generating Fantasy Maps and Environments',
-    'Creating Emotional and Expressive Characters with AI Prompts',
+    'The Character Consistency Code: A Definitive AI Guide',
+    'World-Building at Scale: Generating Maps, Cities, and Lore',
+    'Panel by Panel: A Writer’s Guide to Creating Comics',
+    'Directing Digital Actors: Prompting for Emotion and Expression',
 ];
 export const usecasesTopics = [
-    'How AI is Revolutionizing Ad Creatives and Marketing Campaigns',
-    'Generating Endless Concept Art for Indie Game Development',
-    'The Future of Architectural Visualization with AI-Powered Renderings',
-    'Using AI for Fashion Design: From Mood Boards',
+    'AI-Powered Branding: Generating Logos and Style Guides Instantly',
+    'The Indie Game Dev’s Secret Weapon for Concept Art',
+    'Revolutionizing E-Commerce: AI for Product Mockups and Photoshoots',
+    'How Interior Designers are Using AI for Virtual Staging',
 ];
 export const inspirationTopics = [
-    'Overcoming Creative Block: Using AI as a Brainstorming Partner',
-    'Finding Your Unique Artistic Style in the Age of AI',
-    'Drawing Inspiration from History and Mythology for AI Creations',
-    'Surrealism in the Digital Age: Creating Dream-Like Worlds',
+    'The AI Muse: Shattering Creative Blocks with Infinite Ideas',
+    'Rediscovering History’s Lost Art Through AI-Powered Visualizations',
+    'The Beauty of the Bizarre: A Guide to Surrealism',
+    'Nature Reimagined: Creating Impossible Flora and Fauna with AI',
 ];
 export const trendsTopics = [
-    'The Rise of AI-Generated Video: The Next Frontier',
-    'Ethical AI: Navigating Copyright and Bias in Generative Art',
-    'AI in the Metaverse: Shaping the Future of Worlds',
-    'Hyper-Personalization: How AI is Tailoring Digital Experiences for You',
+    'Text-to-Video: How AI is Animating the Future of Media',
+    'The Ethics of Style: Using Artist Names in Prompts',
+    'AI in the Metaverse: The Infinite Engine of Creation',
+    'The Rise of the AI-Human Creative Team in Agencies',
 ];
 export const technologyTopics = [
-    'How Diffusion Models Work: An Explanation of Text-to-Image',
-    'The Evolution of AI Models: From GPT-2 to Now',
-    'Understanding Latent Space: The Hidden Universe of AI Creativity',
-    'The Role of Cloud Computing in Powering AI Models',
+    'A Beginner’s Guide to How Diffusion Models Actually Work',
+    'Latent Space Explained: The ‘Mind’ of the AI Model',
+    'The Hardware Behind the Magic: GPUs, TPUs, and AI',
+    'From GANs to Diffusion: The Evolution of Generative AI',
 ];
 export const nftTopics = [
-    'How to Create and Sell Your First AI NFT',
-    'The Future of NFTs: Exploring Utility, Gaming, and Identity',
-    'Understanding the Carbon Footprint of NFTs and Eco-Friendly Alternatives',
-    'Marketing Your NFT Project: A Guide to Building Community',
+    'The Artist’s Guide to Minting a Successful NFT Collection',
+    'Beyond the JPEG: Exploring Utility and Gaming in NFTs',
+    'Proof-of-Stake vs. Proof-of-Work: The New Green NFT',
+    'Community is Everything: How to Market Your NFT Project',
 ];
+
+export const allTopicsByCategory: Record<string, string[]> = {
+    'Featured': featuredTopics,
+    'Prompts': promptsTopics,
+    'Styles': stylesTopics,
+    'Tutorials': tutorialsTopics,
+    'Storybook': storybookTopics,
+    'Usecases': usecasesTopics,
+    'Inspiration': inspirationTopics,
+    'Trends': trendsTopics,
+    'Technology': technologyTopics,
+    'NFT': nftTopics,
+};
 
 // Mapping slugs to category names for easy lookup
 export const categorySlugMap: { [key: string]: string } = {

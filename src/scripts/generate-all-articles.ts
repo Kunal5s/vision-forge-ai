@@ -2,37 +2,13 @@
 // src/scripts/generate-all-articles.ts
 import 'dotenv/config'; // Load environment variables from .env file
 import { generateSingleArticle, saveArticlesForCategory, getArticles } from '../lib/articles';
-import { 
-    categorySlugMap, featuredTopics, promptsTopics, stylesTopics, tutorialsTopics, 
-    storybookTopics, usecasesTopics, inspirationTopics, trendsTopics, 
-    technologyTopics, nftTopics 
-} from '../lib/constants';
-
-const allTopicsByCategory: Record<string, string[]> = {
-    'Featured': featuredTopics,
-    'Prompts': promptsTopics,
-    'Styles': stylesTopics,
-    'Tutorials': tutorialsTopics,
-    'Storybook': storybookTopics,
-    'Usecases': usecasesTopics,
-    'Inspiration': inspirationTopics,
-    'Trends': trendsTopics,
-    'Technology': technologyTopics,
-    'NFT': nftTopics,
-};
+import { allTopicsByCategory } from '../lib/constants';
 
 async function generateAndSaveForCategory(category: string, topics: string[]) {
     console.log(`--- Generating articles for category: ${category} ---`);
     
     // forceFetch: true ensures we read directly from the source, bypassing any in-memory cache.
     const currentArticles = await getArticles(category, true);
-
-    // If there are already articles, don't generate more in this initial script.
-    // The daily cron will handle updates. This prevents duplicating content on every run.
-    if (currentArticles.length > 0) {
-        console.log(`  -> Category "${category}" already has ${currentArticles.length} articles. Skipping initial generation.`);
-        return;
-    }
 
     let newArticles = [];
 
@@ -54,10 +30,10 @@ async function generateAndSaveForCategory(category: string, topics: string[]) {
     }
 
     if (newArticles.length > 0) {
-        // Since there were no current articles, the updated list is just the new ones.
-        const updatedArticles = newArticles;
+        // Prepend the new articles to the existing ones
+        const updatedArticles = [...newArticles, ...currentArticles];
         await saveArticlesForCategory(category, updatedArticles);
-        console.log(`  -> Saved ${updatedArticles.length} new articles for ${category}.`);
+        console.log(`  -> Saved ${newArticles.length} new articles for ${category}. Total articles: ${updatedArticles.length}.`);
     } else {
         console.warn(`No new articles were generated for ${category}, nothing to save.`);
     }
@@ -75,12 +51,10 @@ async function main() {
         process.exit(1);
     }
 
-    // Using Promise.all to run category generation in parallel for speed
-    const allPromises = Object.keys(allTopicsByCategory).map(category => 
-        generateAndSaveForCategory(category, allTopicsByCategory[category])
-    );
-
-    await Promise.all(allPromises);
+    // Sequentially generate categories to avoid overwhelming the API and to make logs easier to read.
+    for (const category in allTopicsByCategory) {
+        await generateAndSaveForCategory(category, allTopicsByCategory[category]);
+    }
 
     console.log('Finished generating all articles.');
 }
