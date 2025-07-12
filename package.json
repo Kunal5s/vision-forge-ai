@@ -8,7 +8,8 @@
     "build": "next build && rm -rf .next/cache",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "generate-articles": "tsx src/scripts/generate-all-articles.ts"
+    "generate-articles": "tsx src/scripts/generate-all-articles.ts",
+    "regenerate-articles": "tsx src/scripts/regenerate-two-categories.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.3",

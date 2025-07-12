@@ -24,9 +24,16 @@ const allTopicsByCategory: Record<string, string[]> = {
 async function generateAndSaveForCategory(category: string, topics: string[]) {
     console.log(`--- Generating articles for category: ${category} ---`);
     
-    // First, get the current articles to prepend the new ones to
     // forceFetch: true ensures we read directly from the source, bypassing any in-memory cache.
     const currentArticles = await getArticles(category, true);
+
+    // If there are already articles, don't generate more in this initial script.
+    // The daily cron will handle updates. This prevents duplicating content on every run.
+    if (currentArticles.length > 0) {
+        console.log(`  -> Category "${category}" already has ${currentArticles.length} articles. Skipping initial generation.`);
+        return;
+    }
+
     let newArticles = [];
 
     // We generate 4 articles for each category as per the requirement
@@ -47,11 +54,10 @@ async function generateAndSaveForCategory(category: string, topics: string[]) {
     }
 
     if (newArticles.length > 0) {
-        // Prepend new articles to the existing ones to ensure newest are always first
-        // This is the correct archival logic.
-        const updatedArticles = [...newArticles, ...currentArticles];
+        // Since there were no current articles, the updated list is just the new ones.
+        const updatedArticles = newArticles;
         await saveArticlesForCategory(category, updatedArticles);
-        console.log(`  -> Saved ${updatedArticles.length} total articles for ${category}.`);
+        console.log(`  -> Saved ${updatedArticles.length} new articles for ${category}.`);
     } else {
         console.warn(`No new articles were generated for ${category}, nothing to save.`);
     }
@@ -69,9 +75,12 @@ async function main() {
         process.exit(1);
     }
 
-    for (const category in allTopicsByCategory) {
-        await generateAndSaveForCategory(category, allTopicsByCategory[category]);
-    }
+    // Using Promise.all to run category generation in parallel for speed
+    const allPromises = Object.keys(allTopicsByCategory).map(category => 
+        generateAndSaveForCategory(category, allTopicsByCategory[category])
+    );
+
+    await Promise.all(allPromises);
 
     console.log('Finished generating all articles.');
 }
