@@ -6,61 +6,56 @@ import fs from 'fs/promises';
 import path from 'path';
 import { saveArticleToGithub } from './github';
 
-// This is the list of models the user wants to try, in order of preference.
+// This is the new list of models provided by the user, prioritized for performance and free usage.
 const ALL_MODELS_IN_ORDER = [
-    "qwen/qwen3-32b-chat",
-    "qwen/qwen3-30b-a3b",
-    "qwen/qwen3-8b",
-    "shisaai/shisa-v2-llama3-70b",
-    "tencent/hunyuan-a13b-chat",
-    "mistralai/mixtral-8x7b-instruct",
-    "nousresearch/nous-hermes-2-mixtral",
-    "cognitivecomputations/dolphin-2.9",
-    "openchat/openchat-3.5",
-    "huggingfaceh4/zephyr-7b-beta",
-    "meta-llama/llama-3-8b-instruct",
-    "openrouter/chronos-hermes-13b",
-    "samantha/samantha-1.1",
-    "gryphe/mythomax-l2-13b",
-    "huggingfaceh4/zephyr-7b-alpha"
+    "unfiltered/zephyr-141b-a35b:beta", // A very powerful model, good to try first.
+    "nousresearch/nous-hermes-2-mixtral-8x7b-dpo", // Top-tier Mixtral fine-tune
+    "mistralai/mistral-7b-instruct",
+    "openchat/openchat-8192",
+    "cognitivecomputations/dolphin-mixtral-8x7b",
+    "anthropic/claude-3.5-sonnet",
+    "google/gemma-2-9b-it",
+    "microsoft/phi-3-medium-128k-instruct",
+    "yi-large/yi-1.5-34b-chat",
+    "mistralai/mixtral-8x22b",
 ];
 
-
-// This is the ideal structure we want from the AI model.
+// This is the ideal structure we want from the AI model, now targeting 3000 words.
 const JSON_PROMPT_STRUCTURE = `
-You are an expert SEO article writer. Generate an article based on the topic provided.
-The response must be a single, valid JSON object that adheres to the following structure:
+You are an expert SEO article writer and a master of long-form content. Generate an article based on the topic provided.
+The response must be a single, valid JSON object that adheres to the following structure. Do not add any text before or after the JSON object.
+
 {
-  "image": "A descriptive prompt for an AI image generator to create a relevant, professional photo for the article. This should be a single, descriptive sentence. For example: 'A glowing brain with intricate neural pathways, representing the art of crafting AI prompts, high detail, vibrant, professional photo'.",
+  "image": "A highly descriptive, vivid, and imaginative prompt for an AI image generator to create a relevant, professional photo for the article. This should be a single, detailed sentence. For example: 'A glowing brain with intricate neural pathways, representing the art of crafting AI prompts, hyper-realistic, high detail, vibrant, cinematic lighting, professional photo'.",
   "dataAiHint": "one or two keywords for an AI image generator to create a relevant image for the article. For example: 'futuristic brain'.",
   "category": "The category of the article, which will be provided.",
   "title": "A compelling, SEO-friendly title for the article, exactly 9 words long.",
   "slug": "The URL-friendly slug for the article, based on the title. For example: 'the-art-of-crafting-compelling-ai-prompts'.",
   "articleContent": [
-    { "type": "h2", "content": "A compelling H2 subheading for the first section." },
-    { "type": "p", "content": "The first paragraph of the section, around 100-150 words." },
-    { "type": "p", "content": "The second paragraph of the section, around 100-150 words." },
-    { "type": "h3", "content": "A relevant H3 subheading." },
-    { "type": "p", "content": "A paragraph for the H3 subheading, around 100-150 words." },
-    { "type": "h2", "content": "A compelling H2 subheading for the second section." },
-    { "type": "p", "content": "A paragraph for this section, around 100-150 words." },
-    { "type": "p", "content": "Another paragraph for this section, around 100-150 words." },
-    { "type": "h2", "content": "A compelling H2 subheading for the third section." },
-    { "type": "p", "content": "A paragraph for this section, around 100-150 words." },
-    { "type": "p", "content": "Another paragraph for this section, around 100-150 words." },
-    { "type": "h2", "content": "A compelling H2 subheading for the fourth section." },
-    { "type": "p", "content": "A paragraph for this section, around 100-150 words." },
-    { "type": "p", "content": "Another paragraph for this section, around 100-150 words." }
+    { "type": "h2", "content": "A compelling H2 subheading for the first main section." },
+    { "type": "p", "content": "The first paragraph of the section, around 200-250 words, providing a strong introduction to the section's topic." },
+    { "type": "p", "content": "The second paragraph of the section, around 200-250 words, expanding on the first paragraph with more details, examples, or insights." },
+    { "type": "h3", "content": "A relevant and interesting H3 subheading that dives deeper into a sub-topic." },
+    { "type": "p", "content": "A detailed paragraph for the H3 subheading, around 200-250 words." },
+    { "type": "h2", "content": "A compelling H2 subheading for the second main section." },
+    { "type": "p", "content": "A detailed paragraph for this section, around 200-250 words." },
+    { "type": "p", "content": "Another detailed paragraph for this section, around 200-250 words, offering a different perspective or additional information." },
+    { "type": "h2", "content": "A compelling H2 subheading for the third main section." },
+    { "type": "p", "content": "A detailed paragraph for this section, around 200-250 words." },
+    { "type": "p", "content": "Another detailed paragraph for this section, around 200-250 words." },
+    { "type": "h2", "content": "A compelling H2 subheading for the fourth main section." },
+    { "type": "p", "content": "A detailed paragraph for this section, around 200-250 words." },
+    { "type": "p", "content": "Another detailed paragraph for this section, around 200-250 words." }
   ],
   "keyTakeaways": [
-    "A key takeaway from the article.",
-    "Another key takeaway from the article.",
-    "A third key takeaway from the article.",
-    "A fourth key takeaway from the article."
+    "A sharp, insightful key takeaway from the article.",
+    "Another sharp, insightful key takeaway from the article.",
+    "A third sharp, insightful key takeaway from the article.",
+    "A fourth sharp, insightful key takeaway from the article."
   ],
-  "conclusion": "A compelling concluding paragraph, around 150-200 words, summarizing the article's main points and providing a final thought."
+  "conclusion": "A powerful and compelling concluding paragraph, around 250-300 words, that summarizes the article's main points, offers a final thought-provoking insight, and leaves a lasting impression on the reader."
 }
-Ensure the entire output is a single JSON object. The total word count of the article content and conclusion should be approximately 2000 words.
+Ensure the entire output is a single JSON object. The total word count of the article content and conclusion should be approximately 3000 words.
 `;
 
 export interface ArticleContentBlock {
@@ -137,7 +132,15 @@ async function generateArticleFromModel(model: string, topic: string, category: 
         }
 
         const data = await response.json();
-        const articleJson = JSON.parse(data.choices[0].message.content);
+        // Handle cases where the response might be wrapped in a different structure
+        let content = data.choices[0].message.content;
+        
+        // Sometimes the model might wrap the JSON in markdown, so we strip it.
+        if (content.startsWith("```json")) {
+            content = content.substring(7, content.length - 3).trim();
+        }
+
+        const articleJson = JSON.parse(content);
 
         // Add an image from pollinations.ai
         const imagePrompt = encodeURIComponent(`${articleJson.image}, ${category}, high detail, vibrant, professional photo`);
@@ -154,6 +157,22 @@ async function generateArticleFromModel(model: string, topic: string, category: 
 export async function generateAndSaveArticles(category: string, topics: string[]) {
     console.log(`Starting article generation for category: "${category}"...`);
     const articles: Article[] = [];
+
+    // First, read existing articles to avoid overwriting them.
+    const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const filePath = path.join(process.cwd(), 'src', 'articles', `${categorySlug}.json`);
+    
+    let existingArticles: Article[] = [];
+    try {
+        const fileContent = await fs.readFile(filePath, 'utf-8');
+        existingArticles = JSON.parse(fileContent);
+        if (!Array.isArray(existingArticles)) {
+            existingArticles = [];
+        }
+    } catch (error) {
+        // File might not exist, which is fine.
+        existingArticles = [];
+    }
 
     for (const topic of topics) {
         let article: Article | null = null;
@@ -173,19 +192,18 @@ export async function generateAndSaveArticles(category: string, topics: string[]
             console.error(`❌ All models failed for topic: "${topic}".`);
         }
     }
+    
+    // Combine existing and new articles, and write them back.
+    const allArticles = [...existingArticles, ...articles];
 
-    if (articles.length === 0) {
-        console.warn(`Could not generate any articles for category "${category}".`);
+    if (allArticles.length === 0) {
+        console.warn(`Could not generate or find any articles for category "${category}".`);
         return;
     }
 
-    const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    const filePath = path.join(process.cwd(), 'src', 'articles', `${categorySlug}.json`);
-    await fs.writeFile(filePath, JSON.stringify(articles, null, 2), 'utf-8');
+    await fs.writeFile(filePath, JSON.stringify(allArticles, null, 2), 'utf-8');
     console.log(`✅ Articles for category "${category}" saved locally to ${filePath}`);
 
     // Now, save the newly generated file to GitHub
-    await saveArticleToGithub(category, JSON.stringify(articles, null, 2));
+    await saveArticleToGithub(category, JSON.stringify(allArticles, null, 2));
 }
-
-    
