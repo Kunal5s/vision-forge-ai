@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { Check, Loader2, Sparkles } from 'lucide-react';
 import { categorySlugMap } from '@/lib/constants';
 
-const categories = Object.keys(categorySlugMap);
+const categories = Object.keys(categorySlugMap).filter(slug => slug !== 'featured');
 
 export function OnDemandArticleGenerator() {
   const { toast } = useToast();
@@ -101,7 +101,7 @@ export function OnDemandArticleGenerator() {
                             className={cn(
                                 "rounded-full w-12 h-12 text-lg font-bold transition-all duration-300 transform hover:scale-110",
                                 isLoading && "bg-primary text-primary-foreground animate-pulse",
-                                isCompleted && "bg-primary text-primary-foreground border-2 border-primary-foreground/50"
+                                isCompleted && "bg-green-500 hover:bg-green-600 text-white border-2 border-primary-foreground/50"
                             )}
                             onClick={() => handleGenerate(categorySlug)}
                             disabled={isLoading}
