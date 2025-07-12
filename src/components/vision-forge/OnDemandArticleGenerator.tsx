@@ -6,18 +6,16 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Check, Loader2, Sparkles } from 'lucide-react';
+import { categorySlugMap } from '@/lib/constants';
 
-const categories = [
-  'Prompts', 'Styles', 'Tutorials', 'Storybook', 'Usecases',
-  'Inspiration', 'Trends', 'Technology', 'NFT', 'Featured'
-];
+const categories = Object.keys(categorySlugMap);
 
 export function OnDemandArticleGenerator() {
   const { toast } = useToast();
   const [loadingCategory, setLoadingCategory] = useState<string | null>(null);
   const [completedCategories, setCompletedCategories] = useState<string[]>([]);
 
-  const handleGenerate = async (category: string) => {
+  const handleGenerate = async (categorySlug: string) => {
     if (loadingCategory) {
         toast({
             title: 'Please Wait',
@@ -26,18 +24,22 @@ export function OnDemandArticleGenerator() {
         });
         return;
     }
+    
+    const categoryName = categorySlugMap[categorySlug];
+    if (!categoryName) return;
 
-    setLoadingCategory(category);
+    setLoadingCategory(categoryName);
     toast({
         title: 'Starting Generation',
-        description: `Generating 4 new articles for the "${category}" category. This may take a few minutes...`,
+        description: `Generating 4 new articles for the "${categoryName}" category. This may take a few minutes...`,
     });
 
     try {
+      // The API expects the full category name, not the slug
       const response = await fetch('/api/generate-article', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category }),
+        body: JSON.stringify({ category: categoryName }),
       });
 
       if (!response.ok) {
@@ -45,17 +47,17 @@ export function OnDemandArticleGenerator() {
         throw new Error(errorData.details || 'Failed to start generation.');
       }
       
-      setCompletedCategories(prev => [...prev, category]);
+      setCompletedCategories(prev => [...prev, categorySlug]);
       toast({
         title: 'Success!',
-        description: `Successfully generated new articles for "${category}". They will appear at the top of the category page shortly.`,
+        description: `Successfully generated new articles for "${categoryName}". They will appear at the top of the category page shortly.`,
       });
 
     } catch (error: any) {
-      console.error(`Failed to generate articles for ${category}:`, error);
+      console.error(`Failed to generate articles for ${categoryName}:`, error);
       toast({
         title: 'Generation Failed',
-        description: error.message || `An error occurred while generating articles for "${category}".`,
+        description: error.message || `An error occurred while generating articles for "${categoryName}".`,
         variant: 'destructive',
       });
     } finally {
@@ -76,20 +78,22 @@ export function OnDemandArticleGenerator() {
         </header>
 
         <div className="relative w-full max-w-lg mx-auto aspect-square flex items-center justify-center">
-            {categories.map((category, index) => {
+            {categories.map((categorySlug, index) => {
                 const angle = (index / categories.length) * 2 * Math.PI;
                 const radius = '45%'; // Use percentage for responsiveness
                 const x = `calc(50% + ${radius} * ${Math.cos(angle)} - 24px)`;
                 const y = `calc(50% + ${radius} * ${Math.sin(angle)} - 24px)`;
-                const isLoading = loadingCategory === category;
-                const isCompleted = completedCategories.includes(category);
+                
+                const categoryName = categorySlugMap[categorySlug];
+                const isLoading = loadingCategory === categoryName;
+                const isCompleted = completedCategories.includes(categorySlug);
                 
                 return (
                     <div 
-                        key={category} 
+                        key={categorySlug} 
                         className="absolute w-12 h-12"
                         style={{ left: x, top: y }}
-                        title={`Generate articles for ${category}`}
+                        title={`Generate articles for ${categoryName}`}
                     >
                         <Button 
                             variant={isCompleted ? "default" : "outline"}
@@ -99,7 +103,7 @@ export function OnDemandArticleGenerator() {
                                 isLoading && "bg-primary text-primary-foreground animate-pulse",
                                 isCompleted && "bg-primary text-primary-foreground border-2 border-primary-foreground/50"
                             )}
-                            onClick={() => handleGenerate(category)}
+                            onClick={() => handleGenerate(categorySlug)}
                             disabled={isLoading}
                         >
                             {isLoading ? (
