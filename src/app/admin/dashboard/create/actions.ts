@@ -37,7 +37,17 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
   const { prompt, category, model, style, mood, wordCount, apiKey } = validatedFields.data;
 
   try {
-    const newArticle = await generateArticleForTopic({ prompt, category, model, style, mood, wordCount, apiKey });
+    // Correctly pass all parameters to the generation function
+    const newArticle = await generateArticleForTopic({ 
+      prompt, 
+      category, 
+      model, 
+      style, 
+      mood, 
+      wordCount, 
+      apiKey 
+    });
+
     if (!newArticle) {
       throw new Error('AI failed to generate the article. The model might be busy, the topic too complex, or the response format incorrect. Please try a different model or topic.');
     }
