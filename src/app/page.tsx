@@ -9,8 +9,10 @@ import { Suspense } from 'react';
 import { ArticlesSkeleton } from '@/components/vision-forge/ArticlesSkeleton';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ShieldCheck } from 'lucide-react';
 import { FeaturesHighlightSection } from '@/components/vision-forge/FeaturesHighlightSection';
+import { AdminLogin } from '@/components/vision-forge/AdminLogin';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export const metadata: Metadata = {
   title: 'Imagen BrainAi: Your Free AI Image Generator',
@@ -43,6 +45,21 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="container mx-auto px-4 py-16">
+        <Card className="bg-muted/30 border-border/50 text-center">
+            <CardHeader>
+                <CardTitle className="flex items-center justify-center gap-2 text-xl">
+                    <ShieldCheck className="h-6 w-6 text-foreground/80" />
+                    Admin Access
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="text-muted-foreground mb-4 max-w-md mx-auto">This section is for site administrators. Please use your credentials to access the dashboard.</p>
+                <AdminLogin />
+            </CardContent>
+        </Card>
+      </section>
+      
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4">
           <header className="text-center mb-12">
