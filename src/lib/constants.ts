@@ -72,15 +72,18 @@ export const QUALITY_OPTIONS: StyleOption[] = [
 // --- ARTICLE GENERATOR CONSTANTS ---
 
 export const OPENROUTER_MODELS: string[] = [
-    "nousresearch/nous-hermes-2-mixtral-8x7b-dpo",
-    "meta-llama/llama-3-8b-instruct",
+    "nousresearch/nous-hermes-2-mixtral-8x7b-dpo", // Kept for legacy
+    "google/gemma-2-9b-it", // New powerful free model
+    "openrouter/mistral-7b-instruct-free",
+    "microsoft/phi-3-mini-128k-instruct",
+    "openchat/openchat-8b-free",
+    "cognitivecomputations/dolphin-mixtral-8x7b",
+    "google/gemma-7b-it",
     "mistralai/mistral-7b-instruct",
-    "openchat/openchat-7b",
-    "gryphe/mythomax-l2-13b",
+    "nousresearch/nous-hermes-2-mistral-7b-dpo",
     "huggingfaceh4/zephyr-7b-beta",
-    "qwen/qwen-110b-chat",
-    "qwen/qwen-72b-chat",
 ];
+
 
 export const WRITING_STYLES: StyleOption[] = [
     { label: 'SEO Optimized', value: 'SEO Optimized and informative' },

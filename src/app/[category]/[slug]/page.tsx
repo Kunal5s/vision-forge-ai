@@ -11,7 +11,7 @@ import type { Article } from '@/lib/articles';
 
 // Function to find the article
 async function getArticleData(categorySlug: string, articleSlug: string): Promise<Article | undefined> {
-    const categoryName = categorySlugMap[categorySlug];
+    const categoryName = Object.entries(categorySlugMap).find(([slug]) => slug === categorySlug)?.[1];
     if (!categoryName) return undefined;
     
     const articles = await getArticles(categoryName);
@@ -59,18 +59,18 @@ export default async function ArticlePage({ params }: { params: { category: stri
     
     const toc = getTableOfContents(article.articleContent);
 
+    // This function will parse basic markdown-like syntax for bold and italic.
+    const parseMarkdown = (text: string) => {
+        return text
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+            .replace(/\*(.*?)\*/g, '<em>$1</em>');           // Italic
+    }
+
     // Component to render individual content blocks, with dangerouslySetInnerHTML
     const renderContentBlock = (block: Article['articleContent'][0], index: number) => {
         const slug = block.type === 'h2' 
             ? block.content.replace(/<[^>]*>?/gm, '').toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '')
             : undefined;
-        
-        // This function will parse basic markdown-like syntax for bold and italic.
-        const parseMarkdown = (text: string) => {
-            return text
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
-                .replace(/\*(.*?)\*/g, '<em>$1</em>');           // Italic
-        }
         
         const processedContent = parseMarkdown(block.content);
 
