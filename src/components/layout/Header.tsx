@@ -8,7 +8,6 @@ import { cn } from '@/lib/utils';
 import { SubscriptionManager } from '../vision-forge/SubscriptionManager';
 import React, { useEffect, useState } from 'react';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { cookies } from 'next/headers';
 
 const navLinks = [
   { href: '/prompts', label: 'Prompts' },

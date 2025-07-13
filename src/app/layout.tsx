@@ -8,7 +8,6 @@ import { Footer } from '@/components/layout/Footer';
 import { PreFooterCallToAction } from '@/components/layout/PreFooterCallToAction'; 
 import { SubscriptionProvider } from '@/hooks/use-subscription';
 import { CookieConsent } from '@/components/layout/CookieConsent';
-import { AdminAuthProvider } from '@/hooks/use-admin-auth';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -45,18 +44,16 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-full bg-background`}>
-        <AdminAuthProvider>
-          <SubscriptionProvider>
-            <Header />
-            <div className="flex-grow">
-              {children}
-            </div>
-            <PreFooterCallToAction /> 
-            <Footer />
-            <Toaster />
-            <CookieConsent />
-          </SubscriptionProvider>
-        </AdminAuthProvider>
+        <SubscriptionProvider>
+          <Header />
+          <div className="flex-grow">
+            {children}
+          </div>
+          <PreFooterCallToAction /> 
+          <Footer />
+          <Toaster />
+          <CookieConsent />
+        </SubscriptionProvider>
       </body>
     </html>
   );

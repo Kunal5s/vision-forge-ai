@@ -1,10 +1,9 @@
 // src/app/admin/actions.ts
 'use server';
 
-import {-case-converter Removed-} from 'next/dist/build/webpack/loaders/next-flight-loader/module-proxy';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import {-case-converter Removed-} from 'jose';
+import { SignJWT, jwtVerify } from 'jose';
 
 const secret = new TextEncoder().encode(process.env.AUTH_SECRET || 'fallback-secret-for-local-dev-32-chars');
 const alg = 'HS256';
