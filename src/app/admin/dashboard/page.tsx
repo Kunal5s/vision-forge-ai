@@ -3,7 +3,7 @@ import { getUser, logout } from '@/app/admin/actions';
 import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { LayoutDashboard, PlusCircle, Edit, LogOut } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, Edit, LogOut, FileSignature } from 'lucide-react';
 import Link from 'next/link';
 
 export default async function AdminDashboardPage() {
@@ -42,7 +42,7 @@ export default async function AdminDashboardPage() {
             <Link href="/admin/dashboard/create" className="block h-full">
               <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-2xl">
-                      <PlusCircle className="text-primary" /> Create Article
+                      <PlusCircle className="text-primary" /> Create with AI
                   </CardTitle>
                   <CardDescription>
                       Generate a new SEO-friendly article with AI assistance.
@@ -50,8 +50,26 @@ export default async function AdminDashboardPage() {
               </CardHeader>
               <CardContent>
                   <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                      Create New
+                      Generate Article
                   </Button>
+              </CardContent>
+            </Link>
+          </Card>
+
+          <Card className="hover:shadow-lg hover:-translate-y-1 transition-all">
+            <Link href="/admin/dashboard/manual" className="block h-full">
+              <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-2xl">
+                      <FileSignature className="text-green-600" /> Manual Publish
+                  </CardTitle>
+                  <CardDescription>
+                      Write, format, and publish your own articles from scratch.
+                  </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full" variant="outline">
+                    Write Manually
+                </Button>
               </CardContent>
             </Link>
           </Card>
@@ -60,7 +78,7 @@ export default async function AdminDashboardPage() {
             <Link href="/admin/dashboard/edit" className="block h-full">
               <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-2xl">
-                      <Edit className="text-accent" /> Edit Articles
+                      <Edit className="text-accent" /> Manage Articles
                   </CardTitle>
                   <CardDescription>
                       Find, modify, and manage all previously published articles.
@@ -74,21 +92,6 @@ export default async function AdminDashboardPage() {
             </Link>
           </Card>
 
-          <Card className="hover:shadow-lg hover:-translate-y-1 transition-all">
-              <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-2xl">
-                      <LayoutDashboard className="text-muted-foreground" /> Manage Site
-                  </CardTitle>
-                  <CardDescription>
-                      Access other site management tools and settings. (Coming soon)
-                  </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="outline" className="w-full" disabled>
-                    Site Settings
-                </Button>
-              </CardContent>
-          </Card>
       </div>
     </main>
   );

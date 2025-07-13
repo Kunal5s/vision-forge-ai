@@ -1,0 +1,204 @@
+
+'use client';
+
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { categorySlugMap } from '@/lib/constants';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft, Loader2, FileSignature } from 'lucide-react';
+import { useState } from 'react';
+import Link from 'next/link';
+import { createManualArticleAction } from './actions';
+
+const manualArticleSchema = z.object({
+  title: z.string().min(5, 'Title must be at least 5 characters long.'),
+  slug: z.string().min(5, 'Slug must be at least 5 characters long. Use dashes instead of spaces.'),
+  category: z.string().min(1, 'Please select a category.'),
+  content: z.string().min(50, 'Content must be at least 50 characters long.'),
+  keyTakeaways: z.string().min(10, 'Please provide a few key takeaways, separated by commas.'),
+  conclusion: z.string().min(20, 'Conclusion must be at least 20 characters long.'),
+});
+
+type ManualArticleFormData = z.infer<typeof manualArticleSchema>;
+
+export default function ManualPublishPage() {
+  const [isPublishing, setIsPublishing] = useState(false);
+  const { toast } = useToast();
+  const { register, handleSubmit, control, formState: { errors }, watch, setValue } = useForm<ManualArticleFormData>({
+    resolver: zodResolver(manualArticleSchema),
+  });
+
+  const titleValue = watch('title');
+  
+  const generateSlug = (title: string) => {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  };
+
+  const handleTitleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newTitle = event.target.value;
+    setValue('title', newTitle);
+    setValue('slug', generateSlug(newTitle));
+  };
+
+
+  const onSubmit = async (data: ManualArticleFormData) => {
+    setIsPublishing(true);
+    toast({
+      title: 'Publishing Your Article...',
+      description: `Saving "${data.title}" to the ${data.category} category.`,
+    });
+
+    const result = await createManualArticleAction(data);
+
+    if (result.success) {
+      toast({
+        title: 'Article Published Successfully!',
+        description: `Your article "${result.title}" has been saved and is now live.`,
+      });
+    } else {
+      toast({
+        title: 'Error Publishing Article',
+        description: result.error,
+        variant: 'destructive',
+      });
+    }
+    setIsPublishing(false);
+  };
+
+  return (
+    <main className="flex-grow container mx-auto py-12 px-4 bg-muted/20 min-h-screen">
+      <div className="mb-8">
+        <Button asChild variant="outline" size="sm">
+          <Link href="/admin/dashboard">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Dashboard
+          </Link>
+        </Button>
+      </div>
+
+      <Card className="max-w-4xl mx-auto">
+        <CardHeader>
+          <CardTitle className="text-2xl">Publish a New Article Manually</CardTitle>
+          <CardDescription>
+            You have full control. Write your content using Markdown for formatting (e.g., `##` for a heading).
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="title">Article Title</Label>
+                  <Input 
+                    id="title" 
+                    placeholder="Your engaging article title"
+                    {...register('title')} 
+                    onChange={handleTitleChange}
+                    disabled={isPublishing} 
+                  />
+                  {errors.title && <p className="text-sm text-destructive mt-1">{errors.title.message}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="slug">URL Slug</Label>
+                  <Input id="slug" placeholder="your-engaging-article-title" {...register('slug')} disabled={isPublishing} />
+                  {errors.slug && <p className="text-sm text-destructive mt-1">{errors.slug.message}</p>}
+                </div>
+            </div>
+
+             <div>
+                <Label htmlFor="category">Category</Label>
+                <Controller
+                  name="category"
+                  control={control}
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isPublishing}>
+                      <SelectTrigger id="category">
+                        <SelectValue placeholder="Select a category for your article" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(categorySlugMap).map(([slug, name]) => (
+                          <SelectItem key={slug} value={name}>
+                            {name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>}
+              </div>
+
+            <div>
+              <Label htmlFor="content">Article Content (Markdown Supported)</Label>
+              <Textarea
+                id="content"
+                {...register('content')}
+                rows={20}
+                className="font-mono"
+                placeholder="## Your Main Heading&#10;&#10;Start writing your compelling article here. Use Markdown for headings, bold, and italic text."
+                disabled={isPublishing}
+              />
+               {errors.content && <p className="text-sm text-destructive mt-1">{errors.content.message}</p>}
+            </div>
+
+            <div>
+              <Label htmlFor="keyTakeaways">Key Takeaways</Label>
+               <Input 
+                id="keyTakeaways" 
+                placeholder="Takeaway one, Takeaway two, Takeaway three"
+                {...register('keyTakeaways')}
+                disabled={isPublishing} 
+              />
+              <p className="text-xs text-muted-foreground mt-1">Separate each takeaway with a comma.</p>
+              {errors.keyTakeaways && <p className="text-sm text-destructive mt-1">{errors.keyTakeaways.message}</p>}
+            </div>
+
+             <div>
+              <Label htmlFor="conclusion">Conclusion</Label>
+              <Textarea
+                id="conclusion"
+                {...register('conclusion')}
+                rows={4}
+                placeholder="Summarize the main points of your article and provide a concluding thought."
+                disabled={isPublishing}
+              />
+               {errors.conclusion && <p className="text-sm text-destructive mt-1">{errors.conclusion.message}</p>}
+            </div>
+
+            <div className="border-t pt-6">
+               <Button type="submit" className="w-full" disabled={isPublishing}>
+                {isPublishing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Publishing...
+                  </>
+                ) : (
+                  <>
+                    <FileSignature className="mr-2 h-4 w-4" />
+                    Publish Article
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </main>
+  );
+}
