@@ -94,6 +94,11 @@ export async function getArticles(category: string): Promise<Article[]> {
     }
 }
 
+// Function to clean markdown bolding from a string
+const cleanMarkdownBold = (text: string): string => {
+    return text.replace(/\*{1,2}(.*?)\*{1,2}/g, '&lt;strong&gt;$1&lt;/strong&gt;');
+};
+
 // Function to generate a single article using a rotating list of models
 async function generateArticleForTopic(category: string, topic: string, retries = MODELS.length): Promise<Article | null> {
     if (!OPENROUTER_API_KEY) {
@@ -134,6 +139,13 @@ async function generateArticleForTopic(category: string, topic: string, retries 
             if (!rawArticle.publishedDate) {
                 rawArticle.publishedDate = new Date().toISOString();
             }
+
+            // ** Clean the content before validation **
+            rawArticle.conclusion = cleanMarkdownBold(rawArticle.conclusion);
+            rawArticle.articleContent.forEach((block: ArticleContentBlock) => {
+                block.content = cleanMarkdownBold(block.content);
+            });
+
 
             // Validate the received JSON against our Zod schema
             const parsedArticle = ArticleSchema.safeParse(rawArticle);
