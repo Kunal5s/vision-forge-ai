@@ -15,6 +15,8 @@ export default async function AdminDashboardPage() {
 
   const handleComingSoon = async () => {
     'use server';
+    // This action is a placeholder for features that are not yet implemented.
+    // In a real app, this might show a toast or log analytics.
     console.log("Feature coming soon!");
   };
 
@@ -43,7 +45,7 @@ export default async function AdminDashboardPage() {
                       <PlusCircle className="text-primary" /> Create Article
                   </CardTitle>
                   <CardDescription>
-                      Write a new article from scratch or generate one with AI assistance.
+                      Generate a new SEO-friendly article with AI assistance.
                   </CardDescription>
               </CardHeader>
               <CardContent>
@@ -55,21 +57,21 @@ export default async function AdminDashboardPage() {
           </Card>
 
           <Card className="hover:shadow-lg hover:-translate-y-1 transition-all">
+            <Link href="/admin/dashboard/edit" className="block h-full">
               <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-2xl">
-                      <Edit className="text-accent" /> Edit Article
+                      <Edit className="text-accent" /> Edit Articles
                   </CardTitle>
                   <CardDescription>
-                      Find and modify previously published articles.
+                      Find, modify, and manage all previously published articles.
                   </CardDescription>
               </CardHeader>
               <CardContent>
-                  <form action={handleComingSoon}>
-                    <Button type="submit" variant="secondary" className="w-full" disabled>
-                        Edit Existing (Soon)
-                    </Button>
-                  </form>
+                <Button variant="secondary" className="w-full">
+                    Manage Content
+                </Button>
               </CardContent>
+            </Link>
           </Card>
 
           <Card className="hover:shadow-lg hover:-translate-y-1 transition-all">
