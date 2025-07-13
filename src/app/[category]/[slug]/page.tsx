@@ -64,22 +64,31 @@ export default async function ArticlePage({ params }: { params: { category: stri
         const slug = block.type === 'h2' 
             ? block.content.replace(/<[^>]*>?/gm, '').toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '')
             : undefined;
+        
+        // This function will parse basic markdown-like syntax for bold and italic.
+        const parseMarkdown = (text: string) => {
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+                .replace(/\*(.*?)\*/g, '<em>$1</em>');           // Italic
+        }
+        
+        const processedContent = parseMarkdown(block.content);
 
         switch (block.type) {
             case 'h2':
-                return <h2 key={index} id={slug} className="text-3xl font-bold mt-12 mb-4 border-b pb-2 scroll-mt-24" dangerouslySetInnerHTML={{ __html: block.content }} />;
+                return <h2 key={index} id={slug} className="text-3xl font-bold mt-12 mb-4 border-b pb-2 scroll-mt-24" dangerouslySetInnerHTML={{ __html: processedContent }} />;
             case 'h3':
-                return <h3 key={index} className="text-2xl font-semibold mt-10 mb-3" dangerouslySetInnerHTML={{ __html: block.content }} />;
+                return <h3 key={index} className="text-2xl font-semibold mt-10 mb-3" dangerouslySetInnerHTML={{ __html: processedContent }} />;
             case 'h4':
-                return <h4 key={index} className="text-xl font-semibold mt-8 mb-2" dangerouslySetInnerHTML={{ __html: block.content }} />;
+                return <h4 key={index} className="text-xl font-semibold mt-8 mb-2" dangerouslySetInnerHTML={{ __html: processedContent }} />;
             case 'h5':
-                return <h5 key={index} className="text-lg font-semibold mt-6 mb-2" dangerouslySetInnerHTML={{ __html: block.content }} />;
+                return <h5 key={index} className="text-lg font-semibold mt-6 mb-2" dangerouslySetInnerHTML={{ __html: processedContent }} />;
             case 'h6':
-                return <h6 key={index} className="text-base font-semibold mt-6 mb-2" dangerouslySetInnerHTML={{ __html: block.content }} />;
+                return <h6 key={index} className="text-base font-semibold mt-6 mb-2" dangerouslySetInnerHTML={{ __html: processedContent }} />;
             case 'p':
-                 return <p key={index} className="mb-6 leading-relaxed text-foreground/90" dangerouslySetInnerHTML={{ __html: block.content }} />;
+                 return <p key={index} className="mb-6 leading-relaxed text-foreground/90" dangerouslySetInnerHTML={{ __html: processedContent }} />;
             default:
-                return <p key={index} dangerouslySetInnerHTML={{ __html: block.content }} />;
+                return <p key={index} dangerouslySetInnerHTML={{ __html: processedContent }} />;
         }
     };
     
@@ -119,7 +128,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
                                         {article.keyTakeaways.map((takeaway, index) => (
                                             <li key={index} className="flex items-start gap-3">
                                                 <CheckCircle className="h-5 w-5 text-primary mt-1 shrink-0" />
-                                                <span className="text-foreground/80" dangerouslySetInnerHTML={{ __html: takeaway }} />
+                                                <span className="text-foreground/80" dangerouslySetInnerHTML={{ __html: parseMarkdown(takeaway) }} />
                                             </li>
                                         ))}
                                     </ul>
@@ -132,7 +141,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
                     {article.conclusion && (
                          <div className="space-y-6 mt-12">
                             <h2 className="text-3xl font-bold border-b pb-2">Conclusion</h2>
-                            <p className="text-lg text-foreground/90 leading-relaxed" dangerouslySetInnerHTML={{ __html: article.conclusion }} />
+                            <p className="text-lg text-foreground/90 leading-relaxed" dangerouslySetInnerHTML={{ __html: parseMarkdown(article.conclusion) }} />
                         </div>
                     )}
                 </article>
@@ -153,7 +162,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
                                         <a 
                                             href={`#${item.slug}`} 
                                             className="text-sm text-muted-foreground hover:text-primary transition-colors block"
-                                            dangerouslySetInnerHTML={{ __html: item.title }}
+                                            dangerouslySetInnerHTML={{ __html: parseMarkdown(item.title) }}
                                         />
                                     </li>
                                 ))}

@@ -52,7 +52,7 @@ const contentToMarkdown = (content: Article['articleContent']): string => {
             case 'p': return block.content;
             default: return block.content;
         }
-    }).join('\n\n');
+    }).join('\n\n'); // Use double newline to separate blocks, which is standard in Markdown
 }
 
 export default function EditArticleForm({ article, categoryName }: EditArticleFormProps) {
@@ -71,6 +71,8 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
 
   const onSubmit = async (data: EditFormData) => {
     setIsSaving(true);
+    toast({ title: "Saving...", description: "Updating your article." });
+
     const result = await editArticleAction({
       ...data,
       originalSlug: article.slug,
@@ -81,7 +83,7 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
       toast({ title: "Error Saving", description: result.error, variant: 'destructive' });
     } else {
       toast({ title: "Article Saved!", description: `"${data.title}" has been updated.` });
-      // The action handles redirection
+      // The action handles redirection, so no need to do it here
     }
     setIsSaving(false);
   };
@@ -97,7 +99,7 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
       setIsDeleting(false);
     } else {
       toast({ title: "Article Deleted", description: "The article has been successfully removed." });
-       // The action handles redirection
+       // The action handles redirection, so no need to do it here
     }
   }
 
@@ -117,6 +119,7 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
           <CardTitle className="text-2xl">Edit Article</CardTitle>
           <CardDescription>
             Make changes to your article below. The content area now supports Markdown for formatting.
+            Use `##` for H2, `###` for H3, etc.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -124,12 +127,12 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="title">Title</Label>
-                  <Input id="title" {...register('title')} disabled={isSaving} />
+                  <Input id="title" {...register('title')} disabled={isSaving || isDeleting} />
                   {errors.title && <p className="text-sm text-destructive mt-1">{errors.title.message}</p>}
                 </div>
                 <div>
                   <Label htmlFor="slug">Slug</Label>
-                  <Input id="slug" {...register('slug')} disabled={isSaving} />
+                  <Input id="slug" {...register('slug')} disabled={isSaving || isDeleting} />
                   {errors.slug && <p className="text-sm text-destructive mt-1">{errors.slug.message}</p>}
                 </div>
             </div>
@@ -142,13 +145,13 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
                 rows={20}
                 className="font-mono"
                 placeholder="## Your Heading&#10;&#10;Your paragraph content..."
-                disabled={isSaving}
+                disabled={isSaving || isDeleting}
               />
                {errors.content && <p className="text-sm text-destructive mt-1">{errors.content.message}</p>}
             </div>
 
             <div className="border-t pt-6 flex justify-between items-center">
-              <Button type="submit" disabled={isSaving}>
+              <Button type="submit" disabled={isSaving || isDeleting}>
                 {isSaving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -164,7 +167,7 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
               
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                   <Button type="button" variant="destructive" disabled={isDeleting}>
+                   <Button type="button" variant="destructive" disabled={isSaving || isDeleting}>
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete Article
                    </Button>
@@ -179,7 +182,7 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                        <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90" disabled={isDeleting}>
                            {isDeleting ? 'Deleting...' : 'Yes, delete it'}
                         </AlertDialogAction>
                     </AlertDialogFooter>
