@@ -16,6 +16,7 @@ const ManualArticleSchema = z.object({
   content: z.string().min(50, 'Content must be at least 50 characters long.'),
   keyTakeaways: z.string().min(10, 'Please provide a few key takeaways.'),
   conclusion: z.string().min(20, 'Conclusion must be at least 20 characters long.'),
+  image: z.string().url('A valid image URL is required.'),
 });
 
 type CreateArticleResult = {
@@ -46,10 +47,11 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
 
   if (!validatedFields.success) {
     console.error("Validation Errors:", validatedFields.error.flatten());
-    return { success: false, error: 'Invalid input data.' };
+    const errorMessage = validatedFields.error.flatten().fieldErrors;
+    return { success: false, error: JSON.stringify(errorMessage) || 'Invalid input data.' };
   }
   
-  const { title, slug, category, content, keyTakeaways, conclusion } = validatedFields.data;
+  const { title, slug, category, content, keyTakeaways, conclusion, image } = validatedFields.data;
 
   try {
     const articleContent = parseMarkdownToContent(content);
@@ -62,7 +64,7 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
       articleContent,
       keyTakeaways: keyTakeaways.split(',').map(k => k.trim()), // Split takeaways string into an array
       conclusion,
-      image: `https://placehold.co/600x400.png`, // Placeholder image
+      image: image || `https://placehold.co/600x400.png`,
       dataAiHint: "manual content",
       publishedDate: new Date().toISOString(),
     };
@@ -113,18 +115,14 @@ async function saveArticle(newArticle: Article, category: string) {
     const updatedArticles = [newArticle, ...existingArticles]; // Prepend the new article
 
     const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    const filePath = path.join(process.cwd(), 'src', 'articles', `${categorySlug}.json`);
+    const repoPath = `src/articles/${categorySlug}.json`;
     const fileContent = JSON.stringify(updatedArticles, null, 2);
-
-    await fs.writeFile(filePath, fileContent, 'utf-8');
-    console.log(`Successfully saved ${updatedArticles.length} articles locally to ${filePath}`);
     
     const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = process.env;
 
     if (GITHUB_TOKEN && GITHUB_REPO_OWNER && GITHUB_REPO_NAME) {
         try {
             const octokit = new Octokit({ auth: GITHUB_TOKEN });
-            const repoPath = `src/articles/${categorySlug}.json`;
             const fileSha = await getShaForFile(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME, repoPath);
             
             await octokit.rest.repos.createOrUpdateFileContents({
@@ -137,9 +135,11 @@ async function saveArticle(newArticle: Article, category: string) {
             });
             console.log(`Successfully committed new article for "${category}" to GitHub.`);
         } catch (error) {
-            console.error("Failed to commit changes to GitHub. The local file was saved.", error);
+            console.error("Failed to commit changes to GitHub.", error);
+            throw new Error("Failed to save article to GitHub. Please check your credentials and repository permissions.");
         }
     } else {
         console.log("GitHub credentials not set. Skipping commit to repository.");
+        throw new Error("GitHub credentials are not configured on the server. Cannot save article.");
     }
 }

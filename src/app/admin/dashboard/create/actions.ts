@@ -99,18 +99,14 @@ async function saveArticle(newArticle: Article, category: string) {
     const updatedArticles = [newArticle, ...existingArticles]; // Prepend the new article
 
     const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    const filePath = path.join(process.cwd(), 'src', 'articles', `${categorySlug}.json`);
+    const repoPath = `src/articles/${categorySlug}.json`;
     const fileContent = JSON.stringify(updatedArticles, null, 2);
-
-    await fs.writeFile(filePath, fileContent, 'utf-8');
-    console.log(`Successfully saved ${updatedArticles.length} articles locally to ${filePath}`);
     
     const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = process.env;
 
     if (GITHUB_TOKEN && GITHUB_REPO_OWNER && GITHUB_REPO_NAME) {
         try {
             const octokit = new Octokit({ auth: GITHUB_TOKEN });
-            const repoPath = `src/articles/${categorySlug}.json`;
             const fileSha = await getShaForFile(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME, repoPath);
             
             await octokit.rest.repos.createOrUpdateFileContents({
@@ -123,10 +119,12 @@ async function saveArticle(newArticle: Article, category: string) {
             });
             console.log(`Successfully committed new article for "${category}" to GitHub.`);
         } catch (error) {
-            console.error("Failed to commit changes to GitHub. The local file was saved.", error);
+            console.error("Failed to commit changes to GitHub.", error);
+            throw new Error("Failed to save article to GitHub. Please check your credentials and repository permissions.");
         }
     } else {
         console.log("GitHub credentials not set. Skipping commit to repository.");
+        throw new Error("GitHub credentials are not configured on the server. Cannot save article.");
     }
 }
 
@@ -226,17 +224,13 @@ export async function deleteArticleAction(category: string, slug: string) {
 
 async function saveUpdatedArticles(category: string, articles: Article[], commitMessage: string) {
     const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    const filePath = path.join(process.cwd(), 'src', 'articles', `${categorySlug}.json`);
+    const repoPath = `src/articles/${categorySlug}.json`;
     const fileContent = JSON.stringify(articles, null, 2);
-
-    await fs.writeFile(filePath, fileContent, 'utf-8');
-    console.log(`Successfully saved updated articles locally to ${filePath}`);
 
     const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = process.env;
     if (GITHUB_TOKEN && GITHUB_REPO_OWNER && GITHUB_REPO_NAME) {
         try {
             const octokit = new Octokit({ auth: GITHUB_TOKEN });
-            const repoPath = `src/articles/${categorySlug}.json`;
             const fileSha = await getShaForFile(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME, repoPath);
             
             await octokit.rest.repos.createOrUpdateFileContents({
@@ -249,9 +243,11 @@ async function saveUpdatedArticles(category: string, articles: Article[], commit
             });
             console.log(`Successfully committed changes for "${category}" to GitHub.`);
         } catch (error) {
-            console.error("Failed to commit changes to GitHub. The local file was saved.", error);
+            console.error("Failed to commit changes to GitHub.", error);
+            throw new Error("Failed to save article to GitHub. Please check your credentials and repository permissions.");
         }
     } else {
-        console.log("GitHub credentials not set. Skipping commit.");
+        console.log("GitHub credentials not set. Skipping commit to repository.");
+        throw new Error("GitHub credentials are not configured on the server. Cannot save article.");
     }
 }

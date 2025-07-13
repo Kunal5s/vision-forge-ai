@@ -18,10 +18,11 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { categorySlugMap } from '@/lib/constants';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, FileSignature } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowLeft, Loader2, FileSignature, ImageIcon } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createManualArticleAction } from './actions';
+import Image from 'next/image';
 
 const manualArticleSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters long.'),
@@ -36,12 +37,23 @@ type ManualArticleFormData = z.infer<typeof manualArticleSchema>;
 
 export default function ManualPublishPage() {
   const [isPublishing, setIsPublishing] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
   const { toast } = useToast();
   const { register, handleSubmit, control, formState: { errors }, watch, setValue } = useForm<ManualArticleFormData>({
     resolver: zodResolver(manualArticleSchema),
   });
 
   const titleValue = watch('title');
+  const categoryValue = watch('category');
+
+  useEffect(() => {
+    if (categoryValue) {
+        const seed = Math.floor(Math.random() * 100000);
+        const imageUrl = `https://image.pollinations.ai/prompt/A%20creative%20image%20for%20an%20article%20about%20${encodeURIComponent(categoryValue)}?width=600&height=400&seed=${seed}&nologo=true`;
+        setPreviewImage(imageUrl);
+    }
+  }, [categoryValue]);
   
   const generateSlug = (title: string) => {
     return title
@@ -57,7 +69,6 @@ export default function ManualPublishPage() {
     setValue('slug', generateSlug(newTitle));
   };
 
-
   const onSubmit = async (data: ManualArticleFormData) => {
     setIsPublishing(true);
     toast({
@@ -65,7 +76,10 @@ export default function ManualPublishPage() {
       description: `Saving "${data.title}" to the ${data.category} category.`,
     });
 
-    const result = await createManualArticleAction(data);
+    const result = await createManualArticleAction({
+      ...data,
+      image: previewImage || `https://placehold.co/600x400.png`
+    });
 
     if (result.success) {
       toast({
@@ -93,112 +107,141 @@ export default function ManualPublishPage() {
         </Button>
       </div>
 
-      <Card className="max-w-4xl mx-auto">
-        <CardHeader>
-          <CardTitle className="text-2xl">Publish a New Article Manually</CardTitle>
-          <CardDescription>
-            You have full control. Write your content using Markdown for formatting (e.g., `##` for a heading).
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="title">Article Title</Label>
-                  <Input 
-                    id="title" 
-                    placeholder="Your engaging article title"
-                    {...register('title')} 
-                    onChange={handleTitleChange}
-                    disabled={isPublishing} 
-                  />
-                  {errors.title && <p className="text-sm text-destructive mt-1">{errors.title.message}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="slug">URL Slug</Label>
-                  <Input id="slug" placeholder="your-engaging-article-title" {...register('slug')} disabled={isPublishing} />
-                  {errors.slug && <p className="text-sm text-destructive mt-1">{errors.slug.message}</p>}
-                </div>
-            </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-2xl">Publish a New Article Manually</CardTitle>
+                    <CardDescription>
+                    You have full control. Write your content using Markdown for formatting (e.g., `##` for a heading).
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="title">Article Title</Label>
+                        <Input 
+                          id="title" 
+                          placeholder="Your engaging article title"
+                          {...register('title')} 
+                          onChange={handleTitleChange}
+                          disabled={isPublishing} 
+                        />
+                        {errors.title && <p className="text-sm text-destructive mt-1">{errors.title.message}</p>}
+                      </div>
+                      <div>
+                        <Label htmlFor="slug">URL Slug</Label>
+                        <Input id="slug" placeholder="your-engaging-article-title" {...register('slug')} disabled={isPublishing} />
+                        {errors.slug && <p className="text-sm text-destructive mt-1">{errors.slug.message}</p>}
+                      </div>
+                  </div>
 
-             <div>
-                <Label htmlFor="category">Category</Label>
-                <Controller
-                  name="category"
-                  control={control}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isPublishing}>
-                      <SelectTrigger id="category">
-                        <SelectValue placeholder="Select a category for your article" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(categorySlugMap).map(([slug, name]) => (
-                          <SelectItem key={slug} value={name}>
-                            {name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>}
-              </div>
+                  <div>
+                      <Label htmlFor="category">Category</Label>
+                      <Controller
+                        name="category"
+                        control={control}
+                        render={({ field }) => (
+                          <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isPublishing}>
+                            <SelectTrigger id="category">
+                              <SelectValue placeholder="Select a category for your article" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Object.entries(categorySlugMap).map(([slug, name]) => (
+                                <SelectItem key={slug} value={name}>
+                                  {name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                      {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>}
+                    </div>
 
-            <div>
-              <Label htmlFor="content">Article Content (Markdown Supported)</Label>
-              <Textarea
-                id="content"
-                {...register('content')}
-                rows={20}
-                className="font-mono"
-                placeholder="## Your Main Heading&#10;&#10;Start writing your compelling article here. Use Markdown for headings, bold, and italic text."
-                disabled={isPublishing}
-              />
-               {errors.content && <p className="text-sm text-destructive mt-1">{errors.content.message}</p>}
-            </div>
+                  <div>
+                    <Label htmlFor="content">Article Content (Markdown Supported)</Label>
+                    <Textarea
+                      id="content"
+                      {...register('content')}
+                      rows={20}
+                      className="font-mono"
+                      placeholder="## Your Main Heading&#10;&#10;Start writing your compelling article here. Use Markdown for headings, bold, and italic text."
+                      disabled={isPublishing}
+                    />
+                    {errors.content && <p className="text-sm text-destructive mt-1">{errors.content.message}</p>}
+                  </div>
 
-            <div>
-              <Label htmlFor="keyTakeaways">Key Takeaways</Label>
-               <Input 
-                id="keyTakeaways" 
-                placeholder="Takeaway one, Takeaway two, Takeaway three"
-                {...register('keyTakeaways')}
-                disabled={isPublishing} 
-              />
-              <p className="text-xs text-muted-foreground mt-1">Separate each takeaway with a comma.</p>
-              {errors.keyTakeaways && <p className="text-sm text-destructive mt-1">{errors.keyTakeaways.message}</p>}
-            </div>
+                  <div>
+                    <Label htmlFor="keyTakeaways">Key Takeaways</Label>
+                    <Input 
+                      id="keyTakeaways" 
+                      placeholder="Takeaway one, Takeaway two, Takeaway three"
+                      {...register('keyTakeaways')}
+                      disabled={isPublishing} 
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Separate each takeaway with a comma.</p>
+                    {errors.keyTakeaways && <p className="text-sm text-destructive mt-1">{errors.keyTakeaways.message}</p>}
+                  </div>
 
-             <div>
-              <Label htmlFor="conclusion">Conclusion</Label>
-              <Textarea
-                id="conclusion"
-                {...register('conclusion')}
-                rows={4}
-                placeholder="Summarize the main points of your article and provide a concluding thought."
-                disabled={isPublishing}
-              />
-               {errors.conclusion && <p className="text-sm text-destructive mt-1">{errors.conclusion.message}</p>}
-            </div>
+                  <div>
+                    <Label htmlFor="conclusion">Conclusion</Label>
+                    <Textarea
+                      id="conclusion"
+                      {...register('conclusion')}
+                      rows={4}
+                      placeholder="Summarize the main points of your article and provide a concluding thought."
+                      disabled={isPublishing}
+                    />
+                    {errors.conclusion && <p className="text-sm text-destructive mt-1">{errors.conclusion.message}</p>}
+                  </div>
+              </CardContent>
+            </Card>
+        </div>
 
-            <div className="border-t pt-6">
-               <Button type="submit" className="w-full" disabled={isPublishing}>
-                {isPublishing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Publishing...
-                  </>
-                ) : (
-                  <>
-                    <FileSignature className="mr-2 h-4 w-4" />
-                    Publish Article
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+        <div className="lg:col-span-1 space-y-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Article Preview</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div>
+                        <Label>Featured Image</Label>
+                        <div className="mt-2 aspect-video w-full rounded-md border bg-muted flex items-center justify-center overflow-hidden">
+                            {previewImage ? (
+                                <Image 
+                                  src={previewImage} 
+                                  alt="Article preview"
+                                  width={600}
+                                  height={400}
+                                  className="object-cover"
+                                  data-ai-hint="manual content"
+                                />
+                            ) : (
+                                <div className="text-center text-muted-foreground p-4">
+                                  <ImageIcon className="mx-auto h-10 w-10" />
+                                  <p className="text-sm mt-2">Select a category to generate a preview image.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    <Button type="submit" className="w-full" disabled={isPublishing}>
+                    {isPublishing ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Publishing...
+                      </>
+                    ) : (
+                      <>
+                        <FileSignature className="mr-2 h-4 w-4" />
+                        Publish Article
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+            </Card>
+        </div>
+      </form>
     </main>
   );
 }
