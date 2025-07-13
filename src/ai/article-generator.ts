@@ -3,6 +3,7 @@
 
 import { z } from 'zod';
 import { Article, ArticleContentBlock, ArticleSchema } from '@/lib/articles';
+import { OPENROUTER_MODELS } from '@/lib/constants';
 
 // Define the structure of an article part (e.g., h2, h3, p)
 const ArticleContentBlockSchema = z.object({
@@ -17,7 +18,7 @@ const ArticleOutputSchema = z.object({
   category: z.string().describe("The category of the article."),
   title: z.string().min(1).describe("A compelling, SEO-friendly title for the article (9-word topic)."),
   slug: z.string().min(1).describe("A URL-friendly slug, generated from the title."),
-  articleContent: z.array(ArticleContentBlockSchema).describe("An array of content blocks. The VERY FIRST object must be a 'p' type with a 200-word summary of the article. The rest should be a well-structured mix of headings (h2-h6) and paragraphs (p). The total word count should be around 3500 words."),
+  articleContent: z.array(ArticleContentBlockSchema).describe("An array of content blocks. The VERY FIRST object must be a 'p' type with a summary of the article. The rest should be a well-structured mix of headings (h2-h6) and paragraphs (p). The total word count should match the user's request."),
   keyTakeaways: z.array(z.string()).describe("An array of 4-5 key takeaways from the article."),
   conclusion: z.string().min(1).describe("A strong, summarizing conclusion for the article."),
 });
@@ -25,31 +26,41 @@ const ArticleOutputSchema = z.object({
 // --- OPENROUTER & MODEL CONFIGURATION ---
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
-export const OPENROUTER_MODELS = [
-    "openrouter/cinematika-7b",
-    "nousresearch/nous-hermes-2-mixtral-8x7b-dpo",
-    "meta-llama/llama-3-8b-instruct",
-    "mistralai/mistral-7b-instruct",
-    "openchat/openchat-7b",
-    "gryphe/mythomax-l2-13b",
-    "huggingfaceh4/zephyr-7b-beta",
-];
+const getJsonPromptStructure = (wordCount: string, style: string, mood: string) => `
+  You are an expert content creator and SEO specialist. Your task is to generate a high-quality, comprehensive, and engaging article about a given topic.
 
+  **CRITICAL INSTRUCTIONS:**
+  - The article's total length MUST be approximately **${wordCount} words**.
+  - The writing style MUST be **${style}**.
+  - The overall mood and tone of the article MUST be **${mood}**.
 
-const JSON_PROMPT_STRUCTURE = `
-  You are an expert content creator and SEO specialist. Your task is to generate a high-quality, comprehensive, and engaging article about a given topic. The article must be approximately 3500 words long.
   You MUST structure your response as a single, valid JSON object that adheres to the schema provided. Do NOT include any markdown formatting like \`\`\`json \`\`\`.
 
   Specifically for the "image" field, you must create a descriptive and artistic prompt for Pollinations.ai based on the article's topic, and then construct the final URL. For example, if the topic is 'The Future of AI', your image prompt might be 'a glowing brain made of circuits and stars, digital art'. The final URL would then be 'https://image.pollinations.ai/prompt/a%20glowing%20brain%20made%20of%20circuits%20and%20stars%2C%20digital%20art?width=600&height=400&seed=...&nologo=true'.
 
-  Your writing style should be authoritative, insightful, and accessible to a broad audience, using natural human tones and emotions. Do not use asterisks for bolding.
+  For the "articleContent", the VERY FIRST object must be a 'p' type with a summary of the article. The rest should be a mix of heading types (h2-h6) and 'p' (paragraph) types to create a well-structured article of the required word count. Paragraphs should be short and easy to read.
+
+  Do not use asterisks for bolding.
 `;
 
-export async function generateArticleForTopic(category: string, topic: string, model: string): Promise<Article | null> {
+interface GenerationParams {
+    prompt: string;
+    category: string;
+    model: string;
+    style: string;
+    mood: string;
+    wordCount: string;
+}
+
+export async function generateArticleForTopic(params: GenerationParams): Promise<Article | null> {
+    const { prompt, category, model, style, mood, wordCount } = params;
+
     if (!OPENROUTER_API_KEY) {
         throw new Error("OPENROUTER_API_KEY environment variable is not set.");
     }
-    console.log(`Generating article for topic: "${topic}" in category: "${category}" using model: ${model}`);
+    console.log(`Generating article for topic: "${prompt}" in category: "${category}" using model: ${model}`);
+
+    const JSON_PROMPT_STRUCTURE = getJsonPromptStructure(wordCount, style, mood);
 
     try {
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -62,7 +73,7 @@ export async function generateArticleForTopic(category: string, topic: string, m
                 model: model,
                 messages: [
                     { role: "system", content: JSON_PROMPT_STRUCTURE },
-                    { role: "user", content: `Generate an article for the category "${category}" on the topic: "${topic}".` }
+                    { role: "user", content: `Generate an article for the category "${category}" on the topic: "${prompt}".` }
                 ],
                 response_format: { type: "json_object" },
             })

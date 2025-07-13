@@ -69,6 +69,42 @@ export const QUALITY_OPTIONS: StyleOption[] = [
     { label: 'Basic (720p)', value: 'basic quality, 720p' },
 ];
 
+// --- ARTICLE GENERATOR CONSTANTS ---
+
+export const OPENROUTER_MODELS: string[] = [
+    "nousresearch/nous-hermes-2-mixtral-8x7b-dpo",
+    "meta-llama/llama-3-8b-instruct",
+    "mistralai/mistral-7b-instruct",
+    "openchat/openchat-7b",
+    "gryphe/mythomax-l2-13b",
+    "huggingfaceh4/zephyr-7b-beta",
+    "qwen/qwen-110b-chat",
+    "qwen/qwen-72b-chat",
+];
+
+export const WRITING_STYLES: StyleOption[] = [
+    { label: 'SEO Optimized', value: 'SEO Optimized and informative' },
+    { label: 'Narrative Storytelling', value: 'Narrative and engaging' },
+    { label: 'Journalistic', value: 'Journalistic and objective' },
+    { label: 'Technical & In-Depth', value: 'Technical and detailed' },
+    { label: 'Casual & Blog-like', value: 'Casual and conversational' },
+];
+
+export const ARTICLE_MOODS: StyleOption[] = [
+    { label: 'Professional', value: 'Professional and authoritative' },
+    { label: 'Humorous', value: 'Humorous and witty' },
+    { label: 'Inspirational', value: 'Inspirational and uplifting' },
+    { label: 'Serious & Formal', value: 'Serious and formal' },
+    { label: 'Excited & Passionate', value: 'Excited and passionate' },
+];
+
+export const WORD_COUNTS: StyleOption[] = [
+    { label: 'Short (~1500 words)', value: '1500' },
+    { label: 'Medium (~3000 words)', value: '3000' },
+    { label: 'Long (~5000 words)', value: '5000' },
+];
+
+
 // Mapping slugs to category names for easy lookup
 export const categorySlugMap: { [key: string]: string } = {
     'featured': 'Featured',

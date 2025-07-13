@@ -9,10 +9,15 @@ import path from 'path';
 import { revalidatePath } from 'next/cache';
 
 const FormSchema = z.object({
-  title: z.string(),
+  prompt: z.string(),
   category: z.string(),
   model: z.string(),
+  style: z.string(),
+  mood: z.string(),
+  wordCount: z.string(),
 });
+
+type FormInputs = z.infer<typeof FormSchema>;
 
 type GenerateArticleResult = {
   success: boolean;
@@ -25,13 +30,14 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
   const validatedFields = FormSchema.safeParse(data);
 
   if (!validatedFields.success) {
+    console.error("Validation Errors:", validatedFields.error.flatten());
     return { success: false, error: 'Invalid input data.' };
   }
   
-  const { title, category, model } = validatedFields.data;
+  const { prompt, category, model, style, mood, wordCount } = validatedFields.data;
 
   try {
-    const newArticle = await generateArticleForTopic(category, title, model);
+    const newArticle = await generateArticleForTopic({ prompt, category, model, style, mood, wordCount });
     if (!newArticle) {
       throw new Error('AI failed to generate the article. The model might be busy, the topic too complex, or the response format incorrect. Please try a different model or topic.');
     }
