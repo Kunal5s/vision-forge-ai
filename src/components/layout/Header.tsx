@@ -2,11 +2,12 @@
 "use client";
 
 import Link from 'next/link';
-import { BrainCircuit } from 'lucide-react';
+import { BrainCircuit, Wrench } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { SubscriptionManager } from '../vision-forge/SubscriptionManager';
 import React from 'react';
+import { useAdminAuth } from '@/hooks/use-admin-auth';
 
 const navLinks = [
   { href: '/prompts', label: 'Prompts' },
@@ -22,6 +23,12 @@ const navLinks = [
 
 export function Header() {
   const pathname = usePathname();
+  const { isAuthenticated } = useAdminAuth();
+
+  // Hide header on the admin login page
+  if (pathname === '/admin') {
+    return null;
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -35,6 +42,14 @@ export function Header() {
             </span>
           </Link>
           <div className="flex items-center gap-4">
+            {isAuthenticated && (
+                <Link href="/admin/dashboard" className={cn(
+                    buttonVariants({ variant: 'outline', size: 'sm' }),
+                    "text-xs h-8"
+                )}>
+                  <Wrench className="mr-2 h-4 w-4" /> Admin
+                </Link>
+            )}
             <SubscriptionManager />
           </div>
         </div>
