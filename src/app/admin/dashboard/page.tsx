@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LayoutDashboard, PlusCircle, Edit, LogOut } from 'lucide-react';
+import Link from 'next/link';
 
 export default async function AdminDashboardPage() {
   const user = await getUser();
@@ -14,9 +15,6 @@ export default async function AdminDashboardPage() {
 
   const handleComingSoon = async () => {
     'use server';
-    // This is a server action, so alert won't work directly.
-    // In a real app, you'd handle this with a state update.
-    // For now, we'll keep it simple as it's a placeholder.
     console.log("Feature coming soon!");
   };
 
@@ -39,6 +37,7 @@ export default async function AdminDashboardPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <Card className="hover:shadow-lg hover:-translate-y-1 transition-all">
+            <Link href="/admin/dashboard/create" className="block h-full">
               <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-2xl">
                       <PlusCircle className="text-primary" /> Create Article
@@ -48,12 +47,11 @@ export default async function AdminDashboardPage() {
                   </CardDescription>
               </CardHeader>
               <CardContent>
-                  <form action={handleComingSoon}>
-                    <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                        Create New (Soon)
-                    </Button>
-                  </form>
+                  <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+                      Create New
+                  </Button>
               </CardContent>
+            </Link>
           </Card>
 
           <Card className="hover:shadow-lg hover:-translate-y-1 transition-all">
@@ -67,7 +65,7 @@ export default async function AdminDashboardPage() {
               </CardHeader>
               <CardContent>
                   <form action={handleComingSoon}>
-                    <Button type="submit" variant="secondary" className="w-full">
+                    <Button type="submit" variant="secondary" className="w-full" disabled>
                         Edit Existing (Soon)
                     </Button>
                   </form>
