@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle, List } from 'lucide-react';
 import type { Metadata } from 'next';
 import { categorySlugMap } from '@/lib/constants';
-import { cn } from '@/lib/utils';
 import type { Article } from '@/lib/articles';
 
 // Function to find the article
@@ -32,20 +31,10 @@ export async function generateMetadata({ params }: { params: { category: string;
   const description = (article.articleContent.find(c => c.type === 'p')?.content || '').substring(0, 160);
 
   return {
-    title: article.title,
-    description: description,
+    title: article.title.replace(/\*{1,2}(.*?)\*{1,2}/g, '$1'),
+    description: description.replace(/\*{1,2}(.*?)\*{1,2}/g, '$1'),
   };
 }
-
-// Function to extract H2 headings for Table of Contents
-const getTableOfContents = (content: Article['articleContent']) => {
-    return content
-        .filter(block => block.type === 'h2')
-        .map(block => ({
-            title: block.content,
-            slug: block.content.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
-        }));
-};
 
 // Main component for rendering the article page
 export default async function ArticlePage({ params }: { params: { category: string; slug: string } }) {
@@ -54,40 +43,49 @@ export default async function ArticlePage({ params }: { params: { category: stri
     if (!article) {
         notFound();
     }
+    
+    // Universal cleaning function to remove asterisks from any text
+    const cleanText = (text: string = ''): string => {
+        return text.replace(/\*{1,2}(.*?)\*{1,2}/g, '$1');
+    };
 
+    // Function to extract H2 headings for Table of Contents, now cleaned
+    const getTableOfContents = (content: Article['articleContent']) => {
+        return content
+            .filter(block => block.type === 'h2')
+            .map(block => ({
+                title: cleanText(block.content),
+                slug: cleanText(block.content).toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
+            }));
+    };
+    
     const toc = getTableOfContents(article.articleContent);
 
-    // Component to render individual content blocks
+    // Component to render individual content blocks, now with cleaning
     const renderContentBlock = (block: Article['articleContent'][0], index: number) => {
+        const cleanedContent = cleanText(block.content);
         const slug = block.type === 'h2' 
-            ? block.content.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '')
+            ? cleanedContent.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '')
             : undefined;
 
         switch (block.type) {
             case 'h2':
-                return <h2 key={index} id={slug} className="text-3xl font-bold mt-12 mb-4 border-b pb-2 scroll-mt-24">{block.content}</h2>;
+                return <h2 key={index} id={slug} className="text-3xl font-bold mt-12 mb-4 border-b pb-2 scroll-mt-24">{cleanedContent}</h2>;
             case 'h3':
-                return <h3 key={index} className="text-2xl font-semibold mt-10 mb-3">{block.content}</h3>;
+                return <h3 key={index} className="text-2xl font-semibold mt-10 mb-3">{cleanedContent}</h3>;
             case 'h4':
-                return <h4 key={index} className="text-xl font-semibold mt-8 mb-2">{block.content}</h4>;
+                return <h4 key={index} className="text-xl font-semibold mt-8 mb-2">{cleanedContent}</h4>;
             case 'h5':
-                return <h5 key={index} className="text-lg font-semibold mt-6 mb-2">{block.content}</h5>;
+                return <h5 key={index} className="text-lg font-semibold mt-6 mb-2">{cleanedContent}</h5>;
             case 'h6':
-                return <h6 key={index} className="text-base font-semibold mt-6 mb-2">{block.content}</h6>;
+                return <h6 key={index} className="text-base font-semibold mt-6 mb-2">{cleanedContent}</h6>;
             case 'p':
-                 return <p key={index} className="mb-6 leading-relaxed text-foreground/90" dangerouslySetInnerHTML={{ __html: block.content }} />;
+                 return <p key={index} className="mb-6 leading-relaxed text-foreground/90">{cleanedContent}</p>;
             default:
-                return <p key={index} dangerouslySetInnerHTML={{ __html: block.content }} />;
+                return <p key={index}>{cleanedContent}</p>;
         }
     };
     
-    const summaryParagraph = article.articleContent.find(block => block.type === 'p');
-    const contentWithoutSummary = summaryParagraph ? article.articleContent.slice(article.articleContent.findIndex(b => b.type !== 'p')) : article.articleContent;
-    
-    const summaryBlock = article.articleContent.find(block => block.type === 'p');
-    const restOfContent = article.articleContent.slice(1);
-
-
     return (
         <main className="container mx-auto py-12 px-4">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
@@ -95,11 +93,11 @@ export default async function ArticlePage({ params }: { params: { category: stri
                 <article className="lg:col-span-9">
                     <header className="mb-8">
                         <Badge variant="secondary" className="mb-4">{article.category}</Badge>
-                        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">{article.title}</h1>
+                        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">{cleanText(article.title)}</h1>
                         <div className="relative aspect-video w-full rounded-lg overflow-hidden mt-6 shadow-lg">
                             <Image
                                 src={article.image}
-                                alt={article.title}
+                                alt={cleanText(article.title)}
                                 layout="fill"
                                 objectFit="cover"
                                 data-ai-hint={article.dataAiHint}
@@ -107,17 +105,9 @@ export default async function ArticlePage({ params }: { params: { category: stri
                             />
                         </div>
                     </header>
-
-                    {/* Summary Paragraph */}
-                    {summaryBlock && (
-                        <p 
-                            className="text-lg text-muted-foreground leading-relaxed my-8 border-l-4 border-primary pl-4"
-                            dangerouslySetInnerHTML={{ __html: summaryBlock.content }}
-                        />
-                    )}
-
+                    
                     <div className="prose prose-lg dark:prose-invert max-w-none text-foreground/90 mt-12">
-                        {restOfContent.map(renderContentBlock)}
+                        {article.articleContent.map(renderContentBlock)}
                     </div>
                     
                     {/* Key Takeaways Section */}
@@ -132,7 +122,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
                                         {article.keyTakeaways.map((takeaway, index) => (
                                             <li key={index} className="flex items-start gap-3">
                                                 <CheckCircle className="h-5 w-5 text-primary mt-1 shrink-0" />
-                                                <span className="text-foreground/80">{takeaway}</span>
+                                                <span className="text-foreground/80">{cleanText(takeaway)}</span>
                                             </li>
                                         ))}
                                     </ul>
@@ -145,7 +135,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
                     {article.conclusion && (
                          <div className="space-y-6 mt-12">
                             <h2 className="text-3xl font-bold border-b pb-2">Conclusion</h2>
-                            <p className="text-lg text-foreground/90 leading-relaxed" dangerouslySetInnerHTML={{ __html: article.conclusion }}/>
+                            <p className="text-lg text-foreground/90 leading-relaxed">{cleanText(article.conclusion)}</p>
                         </div>
                     )}
                 </article>
