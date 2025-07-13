@@ -1,7 +1,7 @@
 // src/app/admin/dashboard/create/page.tsx
 'use client';
 
-import { useForm, type SubmitHandler } from 'react-hook-form';
+import { useForm, Controller, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -21,10 +21,12 @@ import { ArrowLeft, Loader2, Wand2 } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
 import { generateArticleAction } from './actions';
+import { OPENROUTER_MODELS } from '@/ai/article-generator';
 
 const articleSchema = z.object({
   title: z.string().min(10, 'Title must be at least 10 characters long.'),
   category: z.string().min(1, 'Please select a category.'),
+  model: z.string().min(1, 'Please select an AI model.'),
 });
 
 type ArticleFormData = z.infer<typeof articleSchema>;
@@ -34,13 +36,16 @@ export default function CreateArticlePage() {
   const { toast } = useToast();
   const { register, handleSubmit, control, formState: { errors } } = useForm<ArticleFormData>({
     resolver: zodResolver(articleSchema),
+    defaultValues: {
+      model: OPENROUTER_MODELS[0], // Set a default model
+    }
   });
 
   const onSubmit: SubmitHandler<ArticleFormData> = async (data) => {
     setIsGenerating(true);
     toast({
       title: 'Starting AI Article Generation...',
-      description: 'The AI is warming up. This might take a minute or two.',
+      description: `Using model: ${data.model}. This might take a minute or two.`,
     });
 
     const result = await generateArticleAction(data);
@@ -73,9 +78,9 @@ export default function CreateArticlePage() {
 
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
-          <CardTitle className="text-2xl">Create a New Article</CardTitle>
+          <CardTitle className="text-2xl">Create a New Article with AI</CardTitle>
           <CardDescription>
-            Fill in the details below. You can either write the content manually or use our powerful AI to generate it for you.
+            Choose a title, category, and AI model. The AI will generate a complete, SEO-friendly article for you.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -114,6 +119,29 @@ export default function CreateArticlePage() {
               {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>}
             </div>
 
+            <div>
+              <Label htmlFor="model">Select AI Model</Label>
+               <Controller
+                name="model"
+                control={control}
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isGenerating}>
+                    <SelectTrigger id="model">
+                      <SelectValue placeholder="Select an AI model" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {OPENROUTER_MODELS.map(model => (
+                        <SelectItem key={model} value={model}>
+                          {model}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.model && <p className="text-sm text-destructive mt-1">{errors.model.message}</p>}
+            </div>
+
             <div className="border-t pt-6 space-y-4">
                <h3 className="text-lg font-semibold">Actions</h3>
                <Button type="submit" className="w-full" disabled={isGenerating}>
@@ -129,9 +157,6 @@ export default function CreateArticlePage() {
                   </>
                 )}
               </Button>
-               <Button type="button" variant="secondary" className="w-full" disabled={true}>
-                  Save Manually (Coming Soon)
-               </Button>
             </div>
           </form>
         </CardContent>

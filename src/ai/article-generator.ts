@@ -25,8 +25,16 @@ const ArticleOutputSchema = z.object({
 // --- OPENROUTER & MODEL CONFIGURATION ---
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
-// A powerful model for this task. We can add more later.
-const GENERATION_MODEL = "nousresearch/nous-hermes-2-mixtral-8x7b-dpo";
+export const OPENROUTER_MODELS = [
+    "openrouter/cinematika-7b",
+    "nousresearch/nous-hermes-2-mixtral-8x7b-dpo",
+    "meta-llama/llama-3-8b-instruct",
+    "mistralai/mistral-7b-instruct",
+    "openchat/openchat-7b",
+    "gryphe/mythomax-l2-13b",
+    "huggingfaceh4/zephyr-7b-beta",
+];
+
 
 const JSON_PROMPT_STRUCTURE = `
   You are an expert content creator and SEO specialist. Your task is to generate a high-quality, comprehensive, and engaging article about a given topic. The article must be approximately 3500 words long.
@@ -37,14 +45,13 @@ const JSON_PROMPT_STRUCTURE = `
   Your writing style should be authoritative, insightful, and accessible to a broad audience, using natural human tones and emotions. Do not use asterisks for bolding.
 `;
 
-export async function generateArticleForTopic(category: string, topic: string): Promise<Article | null> {
+export async function generateArticleForTopic(category: string, topic: string, model: string): Promise<Article | null> {
     if (!OPENROUTER_API_KEY) {
         throw new Error("OPENROUTER_API_KEY environment variable is not set.");
     }
-    console.log(`Generating article for topic: "${topic}" in category: "${category}"`);
+    console.log(`Generating article for topic: "${topic}" in category: "${category}" using model: ${model}`);
 
     try {
-        console.log(`- Using model: ${GENERATION_MODEL}`);
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -52,7 +59,7 @@ export async function generateArticleForTopic(category: string, topic: string): 
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: GENERATION_MODEL,
+                model: model,
                 messages: [
                     { role: "system", content: JSON_PROMPT_STRUCTURE },
                     { role: "user", content: `Generate an article for the category "${category}" on the topic: "${topic}".` }
@@ -90,7 +97,8 @@ export async function generateArticleForTopic(category: string, topic: string): 
         return finalArticle;
 
     } catch (error) {
-        console.error(`- Failed to generate article with model ${GENERATION_MODEL}. Error:`, error);
-        return null;
+        console.error(`- Failed to generate article with model ${model}. Error:`, error);
+        // Re-throw the error to be caught by the server action
+        throw error;
     }
 }

@@ -11,6 +11,7 @@ import { revalidatePath } from 'next/cache';
 const FormSchema = z.object({
   title: z.string(),
   category: z.string(),
+  model: z.string(),
 });
 
 type GenerateArticleResult = {
@@ -27,12 +28,12 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
     return { success: false, error: 'Invalid input data.' };
   }
   
-  const { title, category } = validatedFields.data;
+  const { title, category, model } = validatedFields.data;
 
   try {
-    const newArticle = await generateArticleForTopic(category, title);
+    const newArticle = await generateArticleForTopic(category, title, model);
     if (!newArticle) {
-      throw new Error('AI failed to generate the article. The model might be busy or the topic too complex. Please try again.');
+      throw new Error('AI failed to generate the article. The model might be busy, the topic too complex, or the response format incorrect. Please try a different model or topic.');
     }
     
     // Save the article to file and optionally to GitHub
