@@ -125,10 +125,6 @@
         "content": "<strong>An elderly, weathered fisherman... in the style of J.M.W. Turner. Dramatic lighting from the stormy sky, high contrast, wide-angle shot, highly detailed, intricate, masterpiece.</strong>"
       },
       {
-        "type": "p",
-        "content": "We've now added specific 'lighting' (dramatic lighting), 'composition' (wide-angle shot), and 'quality' keywords (highly detailed, masterpiece)."
-      },
-      {
         "type": "h4",
         "content": "The Final, Perfect Prompt"
       },
@@ -1072,7 +1068,7 @@
       },
       {
         "type": "p",
-        "content": "With the creature and scene designed, the final step is to apply the stylistic layer that will make the image feel like professional concept art or a cinematic shot."
+        "content": "With the creature and scene designed, the final step is to apply the stylistic layer that will make the image feel like a professional concept art or a cinematic shot."
       },
       {
         "type": "h4",
@@ -1726,3 +1722,4 @@
   }
 ]
 
+    
