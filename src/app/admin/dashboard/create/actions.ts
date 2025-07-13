@@ -5,8 +5,6 @@ import { generateArticleForTopic } from '@/ai/article-generator';
 import { getArticles, Article } from '@/lib/articles';
 import { z } from 'zod';
 import { Octokit } from 'octokit';
-import fs from 'fs/promises';
-import path from 'path';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
@@ -50,15 +48,14 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
     });
 
     if (!newArticle) {
-      throw new Error('AI failed to generate the article. The model might be busy, the topic too complex, or the response format incorrect. Please try a different model or topic.');
+      throw new Error('AI failed to generate the article. The model might be busy, the topic too complex, or the response format incorrect. Please try a different model or topic, or check your API key credits.');
     }
     
     // Save the article to file and optionally to GitHub
-    await saveArticle(newArticle, category);
+    await saveUpdatedArticles(category, [newArticle, ...(await getArticles(category))], `feat: ✨ Add new AI article "${newArticle.title}"`);
 
     // Revalidate paths to show new content immediately
     revalidatePath('/');
-    revalidatePath('/blog');
     const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     revalidatePath(`/${categorySlug}`);
     revalidatePath(`/${categorySlug}/${newArticle.slug}`);
@@ -92,44 +89,6 @@ async function getShaForFile(octokit: Octokit, owner: string, repo: string, path
     }
 }
 
-async function saveArticle(newArticle: Article, category: string) {
-    console.log(`Saving new article "${newArticle.title}" to category "${category}"`);
-    
-    const existingArticles = await getArticles(category);
-    const updatedArticles = [newArticle, ...existingArticles]; // Prepend the new article
-
-    const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    const repoPath = `src/articles/${categorySlug}.json`;
-    const fileContent = JSON.stringify(updatedArticles, null, 2);
-    
-    const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = process.env;
-
-    if (GITHUB_TOKEN && GITHUB_REPO_OWNER && GITHUB_REPO_NAME) {
-        try {
-            const octokit = new Octokit({ auth: GITHUB_TOKEN });
-            const fileSha = await getShaForFile(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME, repoPath);
-            
-            await octokit.rest.repos.createOrUpdateFileContents({
-                owner: GITHUB_REPO_OWNER,
-                repo: GITHUB_REPO_NAME,
-                path: repoPath,
-                message: `feat: ✨ Add new article "${newArticle.title}"`,
-                content: Buffer.from(fileContent).toString('base64'),
-                sha: fileSha,
-            });
-            console.log(`Successfully committed new article for "${category}" to GitHub.`);
-        } catch (error) {
-            console.error("Failed to commit changes to GitHub.", error);
-            throw new Error("Failed to save article to GitHub. Please check your credentials and repository permissions.");
-        }
-    } else {
-        console.log("GitHub credentials not set. Skipping commit to repository.");
-        throw new Error("GitHub credentials are not configured on the server. Cannot save article.");
-    }
-}
-
-
-// New actions for editing and deleting articles
 
 const EditSchema = z.object({
     title: z.string().min(1, "Title cannot be empty."),
@@ -187,7 +146,6 @@ export async function editArticleAction(data: unknown) {
     await saveUpdatedArticles(category, articles, `feat: ✏️ Edit article "${title}"`);
     
     revalidatePath(`/`);
-    revalidatePath('/blog');
     const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     revalidatePath(`/${categorySlug}`);
     revalidatePath(`/${categorySlug}/${slug}`);
@@ -211,7 +169,6 @@ export async function deleteArticleAction(category: string, slug: string) {
         await saveUpdatedArticles(category, updatedArticles, `feat: 🗑️ Delete article with slug "${slug}"`);
 
         revalidatePath(`/`);
-        revalidatePath('/blog');
         const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
         revalidatePath(`/${categorySlug}`);
 
@@ -222,32 +179,34 @@ export async function deleteArticleAction(category: string, slug: string) {
     redirect('/admin/dashboard/edit');
 }
 
-async function saveUpdatedArticles(category: string, articles: Article[], commitMessage: string) {
+// Universal function to save articles to GitHub
+export async function saveUpdatedArticles(category: string, articles: Article[], commitMessage: string) {
     const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const repoPath = `src/articles/${categorySlug}.json`;
     const fileContent = JSON.stringify(articles, null, 2);
 
     const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = process.env;
-    if (GITHUB_TOKEN && GITHUB_REPO_OWNER && GITHUB_REPO_NAME) {
-        try {
-            const octokit = new Octokit({ auth: GITHUB_TOKEN });
-            const fileSha = await getShaForFile(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME, repoPath);
-            
-            await octokit.rest.repos.createOrUpdateFileContents({
-                owner: GITHUB_REPO_OWNER,
-                repo: GITHUB_REPO_NAME,
-                path: repoPath,
-                message: commitMessage,
-                content: Buffer.from(fileContent).toString('base64'),
-                sha: fileSha,
-            });
-            console.log(`Successfully committed changes for "${category}" to GitHub.`);
-        } catch (error) {
-            console.error("Failed to commit changes to GitHub.", error);
-            throw new Error("Failed to save article to GitHub. Please check your credentials and repository permissions.");
-        }
-    } else {
-        console.log("GitHub credentials not set. Skipping commit to repository.");
-        throw new Error("GitHub credentials are not configured on the server. Cannot save article.");
+    if (!GITHUB_TOKEN || !GITHUB_REPO_OWNER || !GITHUB_REPO_NAME) {
+        console.error("GitHub credentials are not configured on the server. Cannot save article.");
+        throw new Error("GitHub credentials are not configured on the server. Article saving is disabled.");
+    }
+
+    try {
+        const octokit = new Octokit({ auth: GITHUB_TOKEN });
+        const fileSha = await getShaForFile(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME, repoPath);
+        
+        await octokit.rest.repos.createOrUpdateFileContents({
+            owner: GITHUB_REPO_OWNER,
+            repo: GITHUB_REPO_NAME,
+            path: repoPath,
+            message: commitMessage,
+            content: Buffer.from(fileContent).toString('base64'),
+            sha: fileSha,
+            branch: 'main', // Explicitly specify the branch
+        });
+        console.log(`Successfully committed changes for "${category}" to GitHub.`);
+    } catch (error) {
+        console.error("Failed to commit changes to GitHub.", error);
+        throw new Error("Failed to save article to GitHub. Please check your credentials and repository permissions.");
     }
 }

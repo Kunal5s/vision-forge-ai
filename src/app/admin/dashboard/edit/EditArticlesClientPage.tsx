@@ -25,7 +25,7 @@ export default function EditArticlesClientPage({ allArticlesByCategory }: EditAr
                 {allArticlesByCategory.length > 0 ? (
                     <div className="space-y-8">
                         {allArticlesByCategory.map(({ category, articles }) => {
-                            const categorySlug = category.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
+                            const categorySlug = Object.entries(categorySlugMap).find(([, name]) => name === category)?.[0] || category.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
                             return (
                             <section key={category}>
                                 <h2 className="text-2xl font-semibold flex items-center gap-2 mb-4 border-b pb-2">

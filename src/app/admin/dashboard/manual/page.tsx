@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { categorySlugMap } from '@/lib/constants';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Loader2, FileSignature, ImageIcon } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { createManualArticleAction } from './actions';
 import Image from 'next/image';
@@ -44,17 +44,8 @@ export default function ManualPublishPage() {
     resolver: zodResolver(manualArticleSchema),
   });
 
-  const titleValue = watch('title');
   const categoryValue = watch('category');
 
-  useEffect(() => {
-    if (categoryValue) {
-        const seed = Math.floor(Math.random() * 100000);
-        const imageUrl = `https://image.pollinations.ai/prompt/A%20creative%20image%20for%20an%20article%20about%20${encodeURIComponent(categoryValue)}?width=600&height=400&seed=${seed}&nologo=true`;
-        setPreviewImage(imageUrl);
-    }
-  }, [categoryValue]);
-  
   const generateSlug = (title: string) => {
     return title
       .toLowerCase()
@@ -62,12 +53,31 @@ export default function ManualPublishPage() {
       .replace(/\s+/g, '-')
       .replace(/^-+|-+$/g, '');
   };
-
-  const handleTitleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  
+  const handleTitleChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = event.target.value;
     setValue('title', newTitle);
     setValue('slug', generateSlug(newTitle));
-  };
+  }, [setValue]);
+  
+  const fetchPreviewImage = useCallback(async (category: string) => {
+    if (!category) return;
+    try {
+        const seed = Math.floor(Math.random() * 1_000_000);
+        const finalPrompt = `A creative, artistic representation for an article about ${category}, digital art`;
+        const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=600&height=400&seed=${seed}&nologo=true`;
+        setPreviewImage(pollinationsUrl);
+    } catch (e) {
+        console.error("Failed to generate preview image", e);
+        setPreviewImage(`https://placehold.co/600x400.png`); // Fallback
+    }
+  }, []);
+
+  useEffect(() => {
+    if (categoryValue) {
+      fetchPreviewImage(categoryValue);
+    }
+  }, [categoryValue, fetchPreviewImage]);
 
   const onSubmit = async (data: ManualArticleFormData) => {
     setIsPublishing(true);
@@ -76,9 +86,19 @@ export default function ManualPublishPage() {
       description: `Saving "${data.title}" to the ${data.category} category.`,
     });
 
+    if (!previewImage) {
+        toast({
+            title: 'Error',
+            description: 'Please wait for the preview image to load before publishing.',
+            variant: 'destructive',
+        });
+        setIsPublishing(false);
+        return;
+    }
+
     const result = await createManualArticleAction({
       ...data,
-      image: previewImage || `https://placehold.co/600x400.png`
+      image: previewImage
     });
 
     if (result.success) {
@@ -123,8 +143,7 @@ export default function ManualPublishPage() {
                         <Input 
                           id="title" 
                           placeholder="Your engaging article title"
-                          {...register('title')} 
-                          onChange={handleTitleChange}
+                          {...register('title', { onChange: handleTitleChange })} 
                           disabled={isPublishing} 
                         />
                         {errors.title && <p className="text-sm text-destructive mt-1">{errors.title.message}</p>}
@@ -216,6 +235,7 @@ export default function ManualPublishPage() {
                                   height={400}
                                   className="object-cover"
                                   data-ai-hint="manual content"
+                                  key={previewImage} // Force re-render when image URL changes
                                 />
                             ) : (
                                 <div className="text-center text-muted-foreground p-4">
@@ -225,7 +245,7 @@ export default function ManualPublishPage() {
                             )}
                         </div>
                     </div>
-                    <Button type="submit" className="w-full" disabled={isPublishing}>
+                    <Button type="submit" className="w-full" disabled={isPublishing || !previewImage}>
                     {isPublishing ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />

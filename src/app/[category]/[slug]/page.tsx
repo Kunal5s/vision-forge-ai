@@ -11,7 +11,7 @@ import type { Article } from '@/lib/articles';
 
 // Function to find the article
 async function getArticleData(categorySlug: string, articleSlug: string): Promise<Article | undefined> {
-    const categoryName = Object.entries(categorySlugMap).find(([slug]) => slug === categorySlug)?.[1];
+    const categoryName = Object.entries(categorySlugMap).find(([, slug]) => slug.toLowerCase().replace(/[^a-z0-9]+/g, '-') === categorySlug)?.[1];
     if (!categoryName) return undefined;
     
     const articles = await getArticles(categoryName);
@@ -78,7 +78,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
             case 'h2':
                 return <h2 key={index} id={slug} className="text-3xl font-bold mt-12 mb-4 border-b pb-2 scroll-mt-24" dangerouslySetInnerHTML={{ __html: processedContent }} />;
             case 'h3':
-                return <h3 key={index} className="text-2xl font-semibold mt-10 mb-3" dangerouslySetInnerHTML={{ __html: processedContent }} />;
+                return <h3 key={index} className="text-2xl font-bold mt-10 mb-3" dangerouslySetInnerHTML={{ __html: processedContent }} />;
             case 'h4':
                 return <h4 key={index} className="text-xl font-semibold mt-8 mb-2" dangerouslySetInnerHTML={{ __html: processedContent }} />;
             case 'h5':

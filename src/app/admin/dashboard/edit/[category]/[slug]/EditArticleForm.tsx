@@ -176,8 +176,7 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the article
-                            from your file system and GitHub repository.
+                            This action cannot be undone. This will permanently delete the article from your GitHub repository.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
