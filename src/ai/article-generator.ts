@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -11,12 +12,12 @@ const ArticleContentBlockSchema = z.object({
 
 // Define the overall structure of a single article
 const ArticleOutputSchema = z.object({
-  image: z.string().url().describe("URL for a relevant, high-quality image from Pollinations.ai. The prompt should be creative and related to the article's theme. URL structure: `https://image.pollinations.ai/prompt/{PROMPT}?width=600&height=400&seed={RANDOM_SEED}&nologo=true`"),
+  image: z.string().url().describe("URL for a relevant, high-quality image from Pollinations.ai. The prompt for the image should be creative and directly related to the article's core theme. The URL structure is `https://image.pollinations.ai/prompt/{PROMPT}?width=600&height=400&seed={RANDOM_SEED}&nologo=true`."),
   dataAiHint: z.string().describe("A two-word string describing the image for AI hint purposes."),
   category: z.string().describe("The category of the article."),
   title: z.string().min(1).describe("A compelling, SEO-friendly title for the article (9-word topic)."),
   slug: z.string().min(1).describe("A URL-friendly slug, generated from the title."),
-  articleContent: z.array(ArticleContentBlockSchema).describe("An array of content blocks. The VERY FIRST object must be a 'p' type with a 200-word summary of the article. The rest should be a well-structured mix of headings (h2-h6) and paragraphs (p)."),
+  articleContent: z.array(ArticleContentBlockSchema).describe("An array of content blocks. The VERY FIRST object must be a 'p' type with a 200-word summary of the article. The rest should be a well-structured mix of headings (h2-h6) and paragraphs (p). The total word count should be around 3500 words."),
   keyTakeaways: z.array(z.string()).describe("An array of 4-5 key takeaways from the article."),
   conclusion: z.string().min(1).describe("A strong, summarizing conclusion for the article."),
 });
@@ -30,6 +31,9 @@ const GENERATION_MODEL = "nousresearch/nous-hermes-2-mixtral-8x7b-dpo";
 const JSON_PROMPT_STRUCTURE = `
   You are an expert content creator and SEO specialist. Your task is to generate a high-quality, comprehensive, and engaging article about a given topic. The article must be approximately 3500 words long.
   You MUST structure your response as a single, valid JSON object that adheres to the schema provided. Do NOT include any markdown formatting like \`\`\`json \`\`\`.
+
+  Specifically for the "image" field, you must create a descriptive and artistic prompt for Pollinations.ai based on the article's topic, and then construct the final URL. For example, if the topic is 'The Future of AI', your image prompt might be 'a glowing brain made of circuits and stars, digital art'. The final URL would then be 'https://image.pollinations.ai/prompt/a%20glowing%20brain%20made%20of%20circuits%20and%20stars%2C%20digital%20art?width=600&height=400&seed=...&nologo=true'.
+
   Your writing style should be authoritative, insightful, and accessible to a broad audience, using natural human tones and emotions. Do not use asterisks for bolding.
 `;
 
