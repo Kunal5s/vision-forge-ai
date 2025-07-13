@@ -18,13 +18,15 @@ export default function EditArticlesClientPage({ allArticlesByCategory }: EditAr
             <CardHeader>
                 <CardTitle className="text-3xl">Manage All Articles</CardTitle>
                 <CardDescription>
-                    Here you can find all articles published on the site, organized by category.
+                    Here you can find all articles published on the site, organized by category. Click 'Edit' to modify an article.
                 </CardDescription>
             </CardHeader>
             <CardContent>
                 {allArticlesByCategory.length > 0 ? (
                     <div className="space-y-8">
-                        {allArticlesByCategory.map(({ category, articles }) => (
+                        {allArticlesByCategory.map(({ category, articles }) => {
+                            const categorySlug = category.toLowerCase().replace(/ /g, '-');
+                            return (
                             <section key={category}>
                                 <h2 className="text-2xl font-semibold flex items-center gap-2 mb-4 border-b pb-2">
                                     <Folder className="h-6 w-6 text-primary" />
@@ -47,18 +49,20 @@ export default function EditArticlesClientPage({ allArticlesByCategory }: EditAr
                                                     {(article.articleContent.find(c => c.type === 'p')?.content || '').substring(0, 150)}...
                                                 </p>
                                                  <p className="text-xs text-muted-foreground mt-1">
-                                                    Slug: /{category.toLowerCase().replace(/ /g, '-')}/{article.slug}
+                                                    Slug: /{categorySlug}/{article.slug}
                                                 </p>
                                             </div>
-                                            <Button variant="secondary" size="sm" onClick={() => alert('Editing functionality is coming in the next update!')}>
-                                                <Edit className="mr-2 h-4 w-4" />
-                                                Edit
+                                            <Button asChild variant="secondary" size="sm">
+                                                <Link href={`/admin/dashboard/edit/${categorySlug}/${article.slug}`}>
+                                                    <Edit className="mr-2 h-4 w-4" />
+                                                    Edit
+                                                </Link>
                                             </Button>
                                         </div>
                                     ))}
                                 </div>
                             </section>
-                        ))}
+                        )};
                     </div>
                 ) : (
                     <div className="text-center py-10 text-muted-foreground">

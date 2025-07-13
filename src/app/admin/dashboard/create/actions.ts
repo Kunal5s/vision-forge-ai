@@ -8,14 +8,15 @@ import { Octokit } from 'octokit';
 import fs from 'fs/promises';
 import path from 'path';
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 
 const FormSchema = z.object({
-  prompt: z.string(),
-  category: z.string(),
-  model: z.string(),
-  style: z.string(),
-  mood: z.string(),
-  wordCount: z.string(),
+  prompt: z.string().min(10, 'Prompt must be at least 10 characters long.'),
+  category: z.string().min(1, 'Please select a category.'),
+  model: z.string().min(1, 'Please select an AI model.'),
+  style: z.string().min(1, 'Please select a writing style.'),
+  mood: z.string().min(1, 'Please select an article mood.'),
+  wordCount: z.string().min(1, 'Please select a word count.'),
   apiKey: z.string().optional(), // API Key is optional
 });
 
@@ -60,6 +61,7 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
     revalidatePath('/blog');
     const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     revalidatePath(`/${categorySlug}`);
+    revalidatePath(`/${categorySlug}/${newArticle.slug}`);
     
     return { success: true, title: newArticle.title };
 
@@ -93,7 +95,6 @@ async function getShaForFile(octokit: Octokit, owner: string, repo: string, path
 async function saveArticle(newArticle: Article, category: string) {
     console.log(`Saving new article "${newArticle.title}" to category "${category}"`);
     
-    // Always read the existing articles to append, not overwrite.
     const existingArticles = await getArticles(category);
     const updatedArticles = [newArticle, ...existingArticles]; // Prepend the new article
 
@@ -101,11 +102,9 @@ async function saveArticle(newArticle: Article, category: string) {
     const filePath = path.join(process.cwd(), 'src', 'articles', `${categorySlug}.json`);
     const fileContent = JSON.stringify(updatedArticles, null, 2);
 
-    // Save to local file system
     await fs.writeFile(filePath, fileContent, 'utf-8');
     console.log(`Successfully saved ${updatedArticles.length} articles locally to ${filePath}`);
     
-    // --- GitHub Integration ---
     const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = process.env;
 
     if (GITHUB_TOKEN && GITHUB_REPO_OWNER && GITHUB_REPO_NAME) {
@@ -125,9 +124,116 @@ async function saveArticle(newArticle: Article, category: string) {
             console.log(`Successfully committed new article for "${category}" to GitHub.`);
         } catch (error) {
             console.error("Failed to commit changes to GitHub. The local file was saved.", error);
-            // We don't re-throw here, as local saving might be sufficient for some workflows
         }
     } else {
         console.log("GitHub credentials not set. Skipping commit to repository.");
+    }
+}
+
+
+// New actions for editing and deleting articles
+
+const EditSchema = z.object({
+    title: z.string().min(1, "Title cannot be empty."),
+    slug: z.string().min(1, "Slug cannot be empty."),
+    content: z.string(), // Raw content from textarea
+    originalSlug: z.string(),
+    category: z.string(),
+});
+
+export async function editArticleAction(data: unknown) {
+  const validatedFields = EditSchema.safeParse(data);
+  if (!validatedFields.success) {
+    return { success: false, error: "Invalid data." };
+  }
+  const { title, slug, content, originalSlug, category } = validatedFields.data;
+
+  try {
+    const articles = await getArticles(category);
+    const articleIndex = articles.findIndex(a => a.slug === originalSlug);
+
+    if (articleIndex === -1) {
+      throw new Error("Article not found.");
+    }
+    
+    const updatedArticle = {
+      ...articles[articleIndex],
+      title,
+      slug,
+      // A simple conversion from string to ArticleContentBlock array.
+      // This can be enhanced later with a markdown parser.
+      articleContent: [{ type: 'p' as const, content: content }],
+      publishedDate: new Date().toISOString(),
+    };
+
+    articles[articleIndex] = updatedArticle;
+
+    await saveUpdatedArticles(category, articles, `feat: ✏️ Edit article "${title}"`);
+    
+    revalidatePath(`/`);
+    revalidatePath('/blog');
+    const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    revalidatePath(`/${categorySlug}`);
+    revalidatePath(`/${categorySlug}/${slug}`);
+
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+  
+  redirect('/admin/dashboard/edit');
+}
+
+export async function deleteArticleAction(category: string, slug: string) {
+    try {
+        const articles = await getArticles(category);
+        const updatedArticles = articles.filter(a => a.slug !== slug);
+        
+        if (articles.length === updatedArticles.length) {
+            throw new Error("Article to delete was not found.");
+        }
+
+        await saveUpdatedArticles(category, updatedArticles, `feat: 🗑️ Delete article with slug "${slug}"`);
+
+        revalidatePath(`/`);
+        revalidatePath('/blog');
+        const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        revalidatePath(`/${categorySlug}`);
+
+    } catch (e: any) {
+        return { success: false, error: e.message };
+    }
+
+    redirect('/admin/dashboard/edit');
+}
+
+async function saveUpdatedArticles(category: string, articles: Article[], commitMessage: string) {
+    const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const filePath = path.join(process.cwd(), 'src', 'articles', `${categorySlug}.json`);
+    const fileContent = JSON.stringify(articles, null, 2);
+
+    await fs.writeFile(filePath, fileContent, 'utf-8');
+    console.log(`Successfully saved updated articles locally to ${filePath}`);
+
+    const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = process.env;
+    if (GITHUB_TOKEN && GITHUB_REPO_OWNER && GITHUB_REPO_NAME) {
+        try {
+            const octokit = new Octokit({ auth: GITHUB_TOKEN });
+            const repoPath = `src/articles/${categorySlug}.json`;
+            const fileSha = await getShaForFile(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME, repoPath);
+            
+            await octokit.rest.repos.createOrUpdateFileContents({
+                owner: GITHUB_REPO_OWNER,
+                repo: GITHUB_REPO_NAME,
+                path: repoPath,
+                message: commitMessage,
+                content: Buffer.from(fileContent).toString('base64'),
+                sha: fileSha,
+            });
+            console.log(`Successfully committed changes for "${category}" to GitHub.`);
+        } catch (error) {
+            console.error("Failed to commit changes to GitHub. The local file was saved.", error);
+        }
+    } else {
+        console.log("GitHub credentials not set. Skipping commit.");
     }
 }
