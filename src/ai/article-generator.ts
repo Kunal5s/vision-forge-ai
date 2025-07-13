@@ -2,8 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { Article, ArticleContentBlock, ArticleSchema } from '@/lib/articles';
-import { OPENROUTER_MODELS } from '@/lib/constants';
+import type { Article } from '@/lib/articles';
 
 // Define the structure of an article part (e.g., h2, h3, p)
 const ArticleContentBlockSchema = z.object({

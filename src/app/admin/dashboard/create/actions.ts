@@ -1,3 +1,4 @@
+
 'use server';
 
 import { generateArticleForTopic } from '@/ai/article-generator';
