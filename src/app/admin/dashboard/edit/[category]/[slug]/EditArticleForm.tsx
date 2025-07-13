@@ -30,7 +30,7 @@ import {
 const editSchema = z.object({
   title: z.string().min(1, "Title is required."),
   slug: z.string().min(1, "Slug is required."),
-  content: z.string(),
+  content: z.string(), // This will now hold the raw Markdown content
 });
 
 type EditFormData = z.infer<typeof editSchema>;
@@ -40,13 +40,15 @@ interface EditArticleFormProps {
     categoryName: string;
 }
 
-// Convert ArticleContent[] to a simple string for the textarea
-const contentToString = (content: Article['articleContent']): string => {
+// Convert ArticleContent[] to a markdown string for the textarea
+const contentToMarkdown = (content: Article['articleContent']): string => {
     return content.map(block => {
         switch (block.type) {
             case 'h2': return `## ${block.content}`;
             case 'h3': return `### ${block.content}`;
             case 'h4': return `#### ${block.content}`;
+            case 'h5': return `##### ${block.content}`;
+            case 'h6': return `###### ${block.content}`;
             case 'p': return block.content;
             default: return block.content;
         }
@@ -63,7 +65,7 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
     defaultValues: {
       title: article.title,
       slug: article.slug,
-      content: contentToString(article.articleContent),
+      content: contentToMarkdown(article.articleContent),
     }
   });
 
@@ -114,7 +116,7 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
         <CardHeader>
           <CardTitle className="text-2xl">Edit Article</CardTitle>
           <CardDescription>
-            Make changes to your article below. The content area supports Markdown.
+            Make changes to your article below. The content area now supports Markdown for formatting.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -133,7 +135,7 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
             </div>
 
             <div>
-              <Label htmlFor="content">Content (Markdown)</Label>
+              <Label htmlFor="content">Content (Markdown Supported)</Label>
               <Textarea
                 id="content"
                 {...register('content')}

@@ -9,7 +9,7 @@ import { z } from 'zod';
 // Define the structure of an article part (e.g., h2, h3, p)
 const ArticleContentBlockSchema = z.object({
   type: z.enum(['h2', 'h3', 'h4', 'h5', 'h6', 'p']),
-  content: z.string().min(1),
+  content: z.string(), // Allow empty string for processing
 });
 export type ArticleContentBlock = z.infer<typeof ArticleContentBlockSchema>;
 
@@ -66,7 +66,7 @@ const JSON_PROMPT_STRUCTURE = `
   - "keyTakeaways": An array of 4-5 strings, each being a key takeaway from the article.
   - "conclusion": A strong, summarizing conclusion for the article.
 
-  Your writing style should be authoritative, insightful, and accessible to a broad audience, using natural human tones and emotions. Do not use asterisks for bolding.
+  Your writing style should be authoritative, insightful, and accessible to a broad audience, using natural human tones and emotions. DO NOT use Markdown like ** for bolding.
 `;
 
 const articleCache = new Map<string, Article[]>();
@@ -86,8 +86,10 @@ export async function getArticles(category: string): Promise<Article[]> {
         const articles: Article[] = JSON.parse(fileContent);
 
         if (Array.isArray(articles)) {
-            articleCache.set(cacheKey, articles);
-            return articles;
+            // Validate each article against the schema
+            const validatedArticles = articles.map(article => ArticleSchema.safeParse(article)).filter(result => result.success).map(result => (result as any).data);
+            articleCache.set(cacheKey, validatedArticles);
+            return validatedArticles;
         }
 
         console.warn(`Data in ${categorySlug}.json is not an array.`);
@@ -102,11 +104,6 @@ export async function getArticles(category: string): Promise<Article[]> {
     }
 }
 
-// Function to clean markdown bolding from a string
-const cleanMarkdownBold = (text: string): string => {
-    // This regex finds **word** or *word* and replaces it with <strong>word</strong>
-    return text.replace(/\*{1,2}(.*?)\*{1,2}/g, '<strong>$1</strong>');
-};
 
 // Function to generate a single article using a rotating list of models
 async function generateArticleForTopic(category: string, topic: string, retries = MODELS.length): Promise<Article | null> {
@@ -148,13 +145,6 @@ async function generateArticleForTopic(category: string, topic: string, retries 
             if (!rawArticle.publishedDate) {
                 rawArticle.publishedDate = new Date().toISOString();
             }
-
-            // ** Clean the content before validation **
-            rawArticle.conclusion = cleanMarkdownBold(rawArticle.conclusion);
-            rawArticle.articleContent.forEach((block: ArticleContentBlock) => {
-                block.content = cleanMarkdownBold(block.content);
-            });
-
 
             // Validate the received JSON against our Zod schema
             const parsedArticle = ArticleSchema.safeParse(rawArticle);

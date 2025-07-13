@@ -136,10 +136,27 @@ async function saveArticle(newArticle: Article, category: string) {
 const EditSchema = z.object({
     title: z.string().min(1, "Title cannot be empty."),
     slug: z.string().min(1, "Slug cannot be empty."),
-    content: z.string(), // Raw content from textarea
+    content: z.string(), // This will hold raw Markdown content from the textarea
     originalSlug: z.string(),
     category: z.string(),
 });
+
+// Helper function to parse Markdown into article content blocks
+function parseMarkdownToContent(markdown: string): Article['articleContent'] {
+  const lines = markdown.split(/\n\s*\n/); // Split by blank lines
+  return lines.map(line => {
+    line = line.trim();
+    if (line.startsWith('###### ')) return { type: 'h6', content: line.substring(7) };
+    if (line.startsWith('##### ')) return { type: 'h5', content: line.substring(6) };
+    if (line.startsWith('#### ')) return { type: 'h4', content: line.substring(5) };
+    if (line.startsWith('### ')) return { type: 'h3', content: line.substring(4) };
+    if (line.startsWith('## ')) return { type: 'h2', content: line.substring(3) };
+    // Note: We don't support H1 from markdown to prevent conflicting with the main article title.
+    if (line.length > 0) return { type: 'p', content: line };
+    return { type: 'p', content: '' }; // Should be filtered out
+  }).filter(block => block.content.length > 0);
+}
+
 
 export async function editArticleAction(data: unknown) {
   const validatedFields = EditSchema.safeParse(data);
@@ -156,14 +173,15 @@ export async function editArticleAction(data: unknown) {
       throw new Error("Article not found.");
     }
     
+    // Parse the markdown content back into the structured array
+    const newArticleContent = parseMarkdownToContent(content);
+
     const updatedArticle = {
       ...articles[articleIndex],
       title,
       slug,
-      // A simple conversion from string to ArticleContentBlock array.
-      // This can be enhanced later with a markdown parser.
-      articleContent: [{ type: 'p' as const, content: content }],
-      publishedDate: new Date().toISOString(),
+      articleContent: newArticleContent,
+      publishedDate: new Date().toISOString(), // Update published date on edit
     };
 
     articles[articleIndex] = updatedArticle;

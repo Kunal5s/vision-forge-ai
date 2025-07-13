@@ -31,8 +31,8 @@ export async function generateMetadata({ params }: { params: { category: string;
   const description = (article.articleContent.find(c => c.type === 'p')?.content || '').substring(0, 160);
 
   return {
-    title: article.title.replace(/\*{1,2}(.*?)\*{1,2}/g, '$1'),
-    description: description.replace(/\*{1,2}(.*?)\*{1,2}/g, '$1'),
+    title: article.title.replace(/<[^>]*>?/gm, ''), // Strip HTML for metadata
+    description: description.replace(/<[^>]*>?/gm, ''), // Strip HTML for metadata
   };
 }
 
@@ -44,45 +44,42 @@ export default async function ArticlePage({ params }: { params: { category: stri
         notFound();
     }
     
-    // Universal cleaning function to remove asterisks from any text
-    const cleanText = (text: string = ''): string => {
-        return text.replace(/\*{1,2}(.*?)\*{1,2}/g, '$1');
-    };
-
-    // Function to extract H2 headings for Table of Contents, now cleaned
+    // Function to extract H2 headings for Table of Contents, now cleaning HTML
     const getTableOfContents = (content: Article['articleContent']) => {
         return content
             .filter(block => block.type === 'h2')
-            .map(block => ({
-                title: cleanText(block.content),
-                slug: cleanText(block.content).toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
-            }));
+            .map(block => {
+                const title = block.content.replace(/<[^>]*>?/gm, '');
+                return {
+                  title,
+                  slug: title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
+                }
+            });
     };
     
     const toc = getTableOfContents(article.articleContent);
 
-    // Component to render individual content blocks, now with cleaning
+    // Component to render individual content blocks, with dangerouslySetInnerHTML
     const renderContentBlock = (block: Article['articleContent'][0], index: number) => {
-        const cleanedContent = cleanText(block.content);
         const slug = block.type === 'h2' 
-            ? cleanedContent.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '')
+            ? block.content.replace(/<[^>]*>?/gm, '').toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '')
             : undefined;
 
         switch (block.type) {
             case 'h2':
-                return <h2 key={index} id={slug} className="text-3xl font-bold mt-12 mb-4 border-b pb-2 scroll-mt-24">{cleanedContent}</h2>;
+                return <h2 key={index} id={slug} className="text-3xl font-bold mt-12 mb-4 border-b pb-2 scroll-mt-24" dangerouslySetInnerHTML={{ __html: block.content }} />;
             case 'h3':
-                return <h3 key={index} className="text-2xl font-semibold mt-10 mb-3">{cleanedContent}</h3>;
+                return <h3 key={index} className="text-2xl font-semibold mt-10 mb-3" dangerouslySetInnerHTML={{ __html: block.content }} />;
             case 'h4':
-                return <h4 key={index} className="text-xl font-semibold mt-8 mb-2">{cleanedContent}</h4>;
+                return <h4 key={index} className="text-xl font-semibold mt-8 mb-2" dangerouslySetInnerHTML={{ __html: block.content }} />;
             case 'h5':
-                return <h5 key={index} className="text-lg font-semibold mt-6 mb-2">{cleanedContent}</h5>;
+                return <h5 key={index} className="text-lg font-semibold mt-6 mb-2" dangerouslySetInnerHTML={{ __html: block.content }} />;
             case 'h6':
-                return <h6 key={index} className="text-base font-semibold mt-6 mb-2">{cleanedContent}</h6>;
+                return <h6 key={index} className="text-base font-semibold mt-6 mb-2" dangerouslySetInnerHTML={{ __html: block.content }} />;
             case 'p':
-                 return <p key={index} className="mb-6 leading-relaxed text-foreground/90">{cleanedContent}</p>;
+                 return <p key={index} className="mb-6 leading-relaxed text-foreground/90" dangerouslySetInnerHTML={{ __html: block.content }} />;
             default:
-                return <p key={index}>{cleanedContent}</p>;
+                return <p key={index} dangerouslySetInnerHTML={{ __html: block.content }} />;
         }
     };
     
@@ -93,11 +90,11 @@ export default async function ArticlePage({ params }: { params: { category: stri
                 <article className="lg:col-span-9">
                     <header className="mb-8">
                         <Badge variant="secondary" className="mb-4">{article.category}</Badge>
-                        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">{cleanText(article.title)}</h1>
+                        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4" dangerouslySetInnerHTML={{ __html: article.title }} />
                         <div className="relative aspect-video w-full rounded-lg overflow-hidden mt-6 shadow-lg">
                             <Image
                                 src={article.image}
-                                alt={cleanText(article.title)}
+                                alt={article.title.replace(/<[^>]*>?/gm, '')}
                                 layout="fill"
                                 objectFit="cover"
                                 data-ai-hint={article.dataAiHint}
@@ -122,7 +119,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
                                         {article.keyTakeaways.map((takeaway, index) => (
                                             <li key={index} className="flex items-start gap-3">
                                                 <CheckCircle className="h-5 w-5 text-primary mt-1 shrink-0" />
-                                                <span className="text-foreground/80">{cleanText(takeaway)}</span>
+                                                <span className="text-foreground/80" dangerouslySetInnerHTML={{ __html: takeaway }} />
                                             </li>
                                         ))}
                                     </ul>
@@ -135,7 +132,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
                     {article.conclusion && (
                          <div className="space-y-6 mt-12">
                             <h2 className="text-3xl font-bold border-b pb-2">Conclusion</h2>
-                            <p className="text-lg text-foreground/90 leading-relaxed">{cleanText(article.conclusion)}</p>
+                            <p className="text-lg text-foreground/90 leading-relaxed" dangerouslySetInnerHTML={{ __html: article.conclusion }} />
                         </div>
                     )}
                 </article>
@@ -156,9 +153,8 @@ export default async function ArticlePage({ params }: { params: { category: stri
                                         <a 
                                             href={`#${item.slug}`} 
                                             className="text-sm text-muted-foreground hover:text-primary transition-colors block"
-                                        >
-                                            {item.title}
-                                        </a>
+                                            dangerouslySetInnerHTML={{ __html: item.title }}
+                                        />
                                     </li>
                                 ))}
                             </ul>
