@@ -2,12 +2,8 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
-import { Toaster } from "@/components/ui/toaster";
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer'; 
-import { PreFooterCallToAction } from '@/components/layout/PreFooterCallToAction'; 
 import { SubscriptionProvider } from '@/hooks/use-subscription';
-import { CookieConsent } from '@/components/layout/CookieConsent';
+import RootLayoutClient from './layout-client';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -45,14 +41,9 @@ export default function RootLayout({
     <html lang="en" className="h-full">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-full bg-background`}>
         <SubscriptionProvider>
-          <Header />
-          <div className="flex-grow">
+          <RootLayoutClient>
             {children}
-          </div>
-          <PreFooterCallToAction /> 
-          <Footer />
-          <Toaster />
-          <CookieConsent />
+          </RootLayoutClient>
         </SubscriptionProvider>
       </body>
     </html>

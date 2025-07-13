@@ -1,7 +1,3 @@
-
-# See https://www.robotstxt.org/robotstxt.html for documentation on how to use the robots.txt file
-#
-# Please note: The Sitemap URL should be updated with your production domain.
+# Block the admin panel from search engines
 User-agent: *
-Allow: /
-Sitemap: https://your-production-domain.com/sitemap.xml
+Disallow: /admin/

@@ -2,12 +2,11 @@
 "use client";
 
 import Link from 'next/link';
-import { BrainCircuit, Wrench } from 'lucide-react';
+import { BrainCircuit } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { SubscriptionManager } from '../vision-forge/SubscriptionManager';
 import React, { useEffect, useState } from 'react';
-import { Button, buttonVariants } from '@/components/ui/button';
 
 const navLinks = [
   { href: '/prompts', label: 'Prompts' },
@@ -32,12 +31,6 @@ export function Header() {
     setIsClient(true);
   }, []);
 
-
-  // Hide header on the admin login page
-  if (pathname === '/admin' && isClient) {
-    return null;
-  }
-  
   // Render a placeholder or nothing on the server until the client-side check is complete
   if (!isClient) {
     return (
@@ -46,8 +39,6 @@ export function Header() {
       </header>
     );
   }
-
-  const isAdminPage = pathname.startsWith('/admin');
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -61,18 +52,12 @@ export function Header() {
             </span>
           </Link>
           <div className="flex items-center gap-4">
-            {isAdminPage && (
-              <Link href="/" className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), "text-xs h-8")}>
-                 Home
-              </Link>
-            )}
             <SubscriptionManager />
           </div>
         </div>
         
-        {/* Bottom Row: Navigation Links (hide on admin pages) */}
-        {!isAdminPage && (
-          <nav className="flex w-full items-center overflow-x-auto no-scrollbar pb-2">
+        {/* Bottom Row: Navigation Links */}
+        <nav className="flex w-full items-center overflow-x-auto no-scrollbar pb-2">
             <div className="flex gap-2">
               {navLinks.map((link) => (
                 <Link
@@ -90,7 +75,6 @@ export function Header() {
               ))}
             </div>
           </nav>
-        )}
       </div>
     </header>
   );
