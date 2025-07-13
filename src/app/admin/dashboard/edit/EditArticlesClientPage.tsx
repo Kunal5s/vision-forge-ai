@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Edit, FileText, Folder } from 'lucide-react';
 import Image from 'next/image';
+import { categorySlugMap } from '@/lib/constants';
 
 interface EditArticlesClientPageProps {
     allArticlesByCategory: { category: string, articles: Article[] }[];
