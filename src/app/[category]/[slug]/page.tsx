@@ -53,7 +53,7 @@ export async function generateMetadata({ params }: { params: { category: string;
 
 const renderContentBlock = (block: ArticleContentBlock, index: number) => {
     switch (block.type) {
-        case 'h1':
+        case 'h1': // This case should ideally not be hit anymore, but as a fallback.
             return <h1 key={index} className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">{block.content}</h1>;
         case 'h2':
             return <h2 key={index} className="text-3xl font-bold mt-12 mb-4 border-b pb-2">{block.content}</h2>;
@@ -66,6 +66,10 @@ const renderContentBlock = (block: ArticleContentBlock, index: number) => {
         case 'h6':
             return <h6 key={index} className="text-base font-semibold mt-6 mb-2">{block.content}</h6>;
         case 'p':
+            // Make the first paragraph (summary) slightly larger
+            if (index === 0) {
+                 return <p key={index} className="mb-6 leading-relaxed text-lg text-muted-foreground">{block.content}</p>;
+            }
             return <p key={index} className="mb-6 leading-relaxed">{block.content}</p>;
         default:
             return <p key={index}>{block.content}</p>;
@@ -97,7 +101,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
                     </div>
                 </header>
 
-                <div className="prose prose-lg dark:prose-invert max-w-none text-foreground/90">
+                <div className="prose prose-lg dark:prose-invert max-w-none text-foreground/90 mt-12">
                     {article.articleContent.map(renderContentBlock)}
                 </div>
 

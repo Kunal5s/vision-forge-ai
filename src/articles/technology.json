@@ -8,6 +8,10 @@
     "slug": "a-beginners-guide-to-how-diffusion-models-actually-work",
     "articleContent": [
       {
+        "type": "p",
+        "content": "At the heart of most modern AI image generators, from Midjourney to Stable Diffusion, is a concept called a 'diffusion model'. The process can seem like magic, but it's based on a surprisingly simple and elegant idea: teaching an AI to clean up a mess. Imagine you take a clear photograph of a cat. Now, you slowly add a little bit of random, static-like 'noise' to it. You repeat this process over and over, adding more and more noise until the original image of the cat is completely gone, leaving only a field of random static. The diffusion model is trained on this process, but in reverse. It is shown millions of examples of noisy images and the original clean images they came from. Its one and only job is to learn how to predict and remove the noise to get back to the original image."
+      },
+      {
         "type": "h2",
         "content": "The Magic of Starting with Noise"
       },
@@ -64,6 +68,10 @@
     "title": "Latent Space Explained: The ‘Mind’ of the AI Model",
     "slug": "latent-space-explained-the-mind-of-the-ai-model",
     "articleContent": [
+      {
+        "type": "p",
+        "content": "When we talk about an AI 'thinking' or 'imagining', what we're really referring to is the concept of 'latent space'. It's one of the most fundamental and fascinating ideas in modern AI. In simple terms, latent space is a highly compressed, abstract, mathematical representation of all the data an AI was trained on. Imagine you have a million pictures of faces. You could store every single pixel of every image, which would take up a massive amount of space. Or, you could find a more efficient way to store the *essence* of a face. You could create a system where you only need a few numbers (or 'dimensions') to describe any face: one number for the jawline shape, one for the distance between the eyes, one for skin tone, one for hair color, and so on. This compressed 'map' of facial features is a latent space."
+      },
       {
         "type": "h2",
         "content": "What is Latent Space?"
@@ -122,6 +130,10 @@
     "slug": "the-hardware-behind-the-magic-gpus-tpus-and-ai",
     "articleContent": [
       {
+        "type": "p",
+        "content": "At the heart of every computer is a Central Processing Unit (CPU). A CPU is like a master chef in a kitchen. It's incredibly smart and versatile, capable of performing any complex task you give it, but it generally works on them one or two at a time (sequentially). This is great for most everyday computing tasks, like loading a web page or running a word processor. However, training and running a large AI model is a completely different kind of problem. It involves performing millions or billions of very simple, identical mathematical calculations (specifically, matrix multiplications) all at the same time. For this job, the single master chef is not the right tool. You need an army of thousands of kitchen assistants who can all chop vegetables simultaneously. This is the power of parallelism, and this is where the GPU comes in."
+      },
+      {
         "type": "h2",
         "content": "Why Your CPU Isn't Enough: The Power of Parallelism"
       },
@@ -178,6 +190,10 @@
     "title": "From GANs to Diffusion: The Evolution of Generative AI",
     "slug": "from-gans-to-diffusion-the-evolution-of-generative-ai",
     "articleContent": [
+      {
+        "type": "p",
+        "content": "Before the era of DALL-E 2 and Midjourney, the world of AI image generation was dominated by a different technology: Generative Adversarial Networks, or GANs. Introduced in a groundbreaking 2014 paper by Ian Goodfellow, GANs were a revolutionary concept. They consist of two neural networks, a 'Generator' and a 'Discriminator', locked in a perpetual battle. The Generator's job is to create fake images (e.g., of human faces) from random noise. The Discriminator's job is to look at an image and determine whether it's a real face from the training data or a fake one created by the Generator. The two networks are trained together. The Generator gets better at fooling the Discriminator, and the Discriminator gets better at catching the fakes. This adversarial process forces the Generator to produce increasingly realistic images. For several years, GANs were the state-of-the-art and produced stunningly realistic, though often low-resolution, images."
+      },
       {
         "type": "h2",
         "content": "The Dawn of Generative AI: GANs"

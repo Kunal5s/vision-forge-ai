@@ -8,6 +8,10 @@
     "slug": "the-character-consistency-code-a-definitive-ai-guide",
     "articleContent": [
       {
+        "type": "p",
+        "content": "For any storyteller using AI to visualize their narratives, character consistency is the holy grail. It's also the greatest challenge. AI models are stateless; they have no memory of your previous generations. Ask for 'a brave knight' ten times, and you'll get ten different knights. This makes creating a comic book, a children's story, or even a consistent set of concept art for a film incredibly difficult. The character's face, clothing, and key features shift from one image to the next, breaking the illusion of a continuous story. Cracking the code of character consistency is the key to unlocking AI's true potential for sequential storytelling. It requires moving from simple, one-off prompts to a more systematic and strategic approach."
+      },
+      {
         "type": "h2",
         "content": "The Challenge of the Shifting Face"
       },
@@ -33,11 +37,11 @@
       },
       {
         "type": "p",
-        "content": "- **Vague Prompt:** 'A female rogue with red hair.'"
+        "content": "- Vague Prompt: 'A female rogue with red hair.'"
       },
       {
         "type": "p",
-        "content": "- **Character Sheet Prompt:** 'Elara, a female rogue with fiery crimson red hair in a messy top-knot, a sprinkle of freckles across her nose, bright hazel eyes, and a small silver hoop earring in her right ear. She wears a fitted, dark grey leather tunic over a simple linen shirt.'"
+        "content": "- Character Sheet Prompt: 'Elara, a female rogue with fiery crimson red hair in a messy top-knot, a sprinkle of freckles across her nose, bright hazel eyes, and a small silver hoop earring in her right ear. She wears a fitted, dark grey leather tunic over a simple linen shirt.'"
       },
       {
         "type": "p",
@@ -92,6 +96,10 @@
     "title": "World-Building at Scale: Generating Maps, Cities, and Lore",
     "slug": "world-building-at-scale-generating-maps-cities-and-lore",
     "articleContent": [
+      {
+        "type": "p",
+        "content": "For authors, game designers, and hobbyists, world-building is one of the most rewarding yet time-consuming aspects of the creative process. Creating a believable world requires designing its geography, cities, cultures, and history—a task that can take years. Generative AI offers a way to accelerate this process exponentially, allowing a single creator to build a world with the depth and breadth that once required a whole team of concept artists and writers. It all starts with a single seed of an idea. You can use a text-generation AI to brainstorm core concepts for your world's history, conflicts, and cultures. Then, feed these concepts into an image-generation AI to start visualizing the landscape, and a new world begins to take shape."
+      },
       {
         "type": "h2",
         "content": "From a Single Seed to an Entire Continent"
@@ -165,6 +173,10 @@
     "title": "Panel by Panel: A Writer’s Guide to Creating Comics",
     "slug": "panel-by-panel-a-writers-guide-to-creating-comics",
     "articleContent": [
+      {
+        "type": "p",
+        "content": "For writers, generative AI represents a monumental opportunity: the ability to create a fully illustrated comic book or graphic novel without needing to draw a single line. This technology transforms the writer's role into that of a director and cinematographer. Your script is no longer just a blueprint for an artist; it's a series of detailed prompts that will generate the final artwork. This requires a new way of thinking about writing. You must think visually, describing not just the dialogue and action, but also the composition, lighting, and emotional tone of every single panel. It's a fusion of screenwriting and art direction, and it gives the writer an unprecedented level of creative control over the final product."
+      },
       {
         "type": "h2",
         "content": "The Writer as Director and Cinematographer"
@@ -263,6 +275,10 @@
     "slug": "directing-digital-actors-prompting-for-emotion-and-expression",
     "articleContent": [
       {
+        "type": "p",
+        "content": "One of the first hurdles new AI artists face is that their characters often have a neutral, doll-like, or 'dead-eyed' expression. While you may have mastered a character's physical consistency, bringing them to life requires mastering the art of prompting for emotion. An AI doesn't understand 'sadness' as an internal feeling, but it has analyzed millions of images labeled with the word 'sad' and knows the associated visual cues: downturned mouths, furrowed brows, teary eyes. Your job as the director is to use a rich vocabulary of emotional keywords to guide the AI to these specific facial configurations. Don't just settle for 'happy' or 'sad.' Use more nuanced and powerful words. Instead of 'happy,' try 'ecstatic,' 'joyful,' 'content,' or 'smirking.' Instead of 'sad,' try 'melancholy,' 'grieving,' 'heartbroken,' or 'pensive.' The more specific your emotional language, the more expressive your 'digital actor' will be."
+      },
+      {
         "type": "h2",
         "content": "Beyond a Neutral Stare: The Nuance of Emotion"
       },
@@ -320,7 +336,7 @@
       },
       {
         "type": "p",
-        "content": "'Elara, a female rogue with fiery crimson red hair in a messy top-knot, a sprinkle of freckles across her nose, bright hazel eyes, and a small silver hoop earring in her right ear. She wears a fitted, dark grey leather tunic. **She has a heartbroken expression, with tears welling in her eyes. She is slumped against a cold stone wall, her body language showing defeat. She is looking down at a shattered locket in her hands.**'"
+        "content": "'Elara, a female rogue with fiery crimson red hair in a messy top-knot, a sprinkle of freckles across her nose, bright hazel eyes, and a small silver hoop earring in her right ear. She wears a fitted, dark grey leather tunic. She has a heartbroken expression, with tears welling in her eyes. She is slumped against a cold stone wall, her body language showing defeat. She is looking down at a shattered locket in her hands.'"
       },
       {
         "type": "p",

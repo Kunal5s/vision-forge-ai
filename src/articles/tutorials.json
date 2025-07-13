@@ -8,12 +8,16 @@
     "slug": "your-first-10-ai-images-a-step-by-step-walkthrough",
     "articleContent": [
       {
+        "type": "p",
+        "content": "Welcome to the world of AI image generation! Let's start with the absolute basics. Your first prompt should be simple and clear. Don't worry about complex styles or lighting yet. The goal here is to see how the AI interprets a single concept. This tutorial will walk you through your first ten generations, progressively adding layers of complexity and control. By the end, you'll understand the fundamental building blocks of a great prompt and be well on your way to creating stunning, unique art. We'll go from a simple subject to a fully realized, cinematic scene, learning how to command the AI with precision and creativity. This is your foundation, your starting point for an incredible journey into the world of digital imagination."
+      },
+      {
         "type": "h2",
         "content": "Image 1: Your First Prompt - The Simple Subject"
       },
       {
         "type": "p",
-        "content": "Welcome to the world of AI image generation! Let's start with the absolute basics. Your first prompt should be simple and clear. Don't worry about complex styles or lighting yet. The goal here is to see how the AI interprets a single concept. Pick a noun and a simple adjective. For example: `A majestic lion`. Type this into the prompt box and hit generate. What you'll get is the AI's most 'average' or 'default' interpretation of a majestic lion. It will likely be a decent image, but perhaps a bit generic. This is your baseline, your starting point. Congratulations, you've just created your first AI image!"
+        "content": "Let's start with the absolute basics. Your first prompt should be simple and clear. Don't worry about complex styles or lighting yet. The goal here is to see how the AI interprets a single concept. Pick a noun and a simple adjective. For example: `A majestic lion`. Type this into the prompt box and hit generate. What you'll get is the AI's most 'average' or 'default' interpretation of a majestic lion. It will likely be a decent image, but perhaps a bit generic. This is your baseline, your starting point. Congratulations, you've just created your first AI image!"
       },
       {
         "type": "h2",
@@ -104,6 +108,10 @@
     "title": "The Ultimate Guide to Fixing Hands, Eyes, and Faces",
     "slug": "the-ultimate-guide-to-fixing-hands-eyes-and-faces",
     "articleContent": [
+      {
+        "type": "p",
+        "content": "Hands with six fingers, eyes looking in different directions, distorted facial features—these are the classic, tell-tale signs of an AI-generated image. But why do AI models, which can render breathtakingly complex landscapes, struggle with basic human anatomy? The reason is twofold. First, hands and faces are incredibly complex and expressive, with a huge range of possible positions and configurations. The AI has to learn all of them from 2D images, which is a difficult task. Second, in most of the training data (photos on the internet), hands and faces are a relatively small part of the overall image. The AI, therefore, has less clear, high-resolution data to learn from compared to, say, trees or skies. This leads to it sometimes getting the details wrong, resulting in the infamous 'AI hands' or wonky eyes."
+      },
       {
         "type": "h2",
         "content": "Why AI Struggles with Anatomy"
@@ -214,6 +222,10 @@
     "slug": "from-chaos-to-control-mastering-inpainting-and-outpainting",
     "articleContent": [
       {
+        "type": "p",
+        "content": "You've generated a stunning, near-perfect image, but there's one glaring flaw: a character has six fingers, an object in the background looks strange, or a face has a distorted feature. In the past, you'd have to discard the entire image and start over, hoping the next roll of the dice was better. This is the problem that **inpainting** solves. Inpainting is a powerful feature that allows you to selectively regenerate a small portion of an existing image. Think of it as digital surgery. You use a brush to mask out the specific area you want to change, and then you provide a new, targeted prompt to tell the AI what to fill that space with. This gives you an incredible level of control and allows you to rescue and perfect your best creations."
+      },
+      {
         "type": "h2",
         "content": "Inpainting: The Art of Digital Surgery"
       },
@@ -295,6 +307,10 @@
     "slug": "creating-professional-ad-creatives-from-a-single-prompt",
     "articleContent": [
       {
+        "type": "p",
+        "content": "In the fast-paced world of digital marketing, the ability to rapidly generate high-quality, on-brand advertising creative is a superpower. Generative AI allows you to do just that, moving from a concept to a finished ad image in minutes. A perfect ad prompt is a carefully constructed recipe with several key ingredients. It's not just about showing the product; it's about creating a lifestyle, evoking an emotion, and adhering to a brand's aesthetic. The prompt needs to be a detailed brief, much like one you would give to a professional photographer and creative director. It needs to define the product, the setting, the target audience, and the overall mood."
+      },
+      {
         "type": "h2",
         "content": "The Anatomy of a Perfect Ad Prompt"
       },
@@ -368,15 +384,15 @@
       },
       {
         "type": "p",
-        "content": "- **Change the demographic:** Swap 'a woman in her early 30s' for 'a man in his late 20s' or 'a diverse group of friends.'"
+        "content": "- Change the demographic: Swap 'a woman in her early 30s' for 'a man in his late 20s' or 'a diverse group of friends.'"
       },
       {
         "type": "p",
-        "content": "- **Change the setting:** Swap 'a rustic wooden kitchen counter' for 'a sleek, modern office desk' or 'a campsite next to a tent.'"
+        "content": "- Change the setting: Swap 'a rustic wooden kitchen counter' for 'a sleek, modern office desk' or 'a campsite next to a tent.'"
       },
       {
         "type": "p",
-        "content": "- **Change the mood:** Swap 'calm and cozy mood' for 'energetic and vibrant mood' and 'soft, natural window light' for 'bright, direct sunlight.'"
+        "content": "- Change the mood: Swap 'calm and cozy mood' for 'energetic and vibrant mood' and 'soft, natural window light' for 'bright, direct sunlight.'"
       },
       {
         "type": "p",
