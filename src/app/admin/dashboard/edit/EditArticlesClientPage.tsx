@@ -62,7 +62,7 @@ export default function EditArticlesClientPage({ allArticlesByCategory }: EditAr
                                     ))}
                                 </div>
                             </section>
-                        )};
+                        )})}
                     </div>
                 ) : (
                     <div className="text-center py-10 text-muted-foreground">
@@ -76,5 +76,5 @@ export default function EditArticlesClientPage({ allArticlesByCategory }: EditAr
                 )}
             </CardContent>
         </Card>
-    )
+    );
 }
