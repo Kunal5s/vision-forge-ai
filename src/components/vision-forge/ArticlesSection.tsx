@@ -7,22 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-interface ArticleContentBlock {
-    type: 'h1' | 'h2' | 'h3' | 'p' | 'h4' | 'h5' | 'h6';
-    content: string;
-}
-
-interface Article {
-    image: string;
-    dataAiHint: string;
-    category: string;
-    title: string;
-    slug: string;
-    articleContent: ArticleContentBlock[];
-    keyTakeaways: string[];
-    conclusion: string;
-}
+import type { Article } from '@/lib/articles';
 
 interface ArticlesSectionProps {
     articles: Article[];
@@ -31,7 +16,7 @@ interface ArticlesSectionProps {
 
 export function ArticlesSection({ articles, category }: ArticlesSectionProps) {
 
-    const createSnippet = (content: ArticleContentBlock[], length = 150) => {
+    const createSnippet = (content: Article['articleContent'], length = 150) => {
         if (!content || !Array.isArray(content)) return '';
         const firstParagraph = content.find(item => item.type === 'p');
         const textToSnippet = firstParagraph ? firstParagraph.content : '';
@@ -58,8 +43,13 @@ export function ArticlesSection({ articles, category }: ArticlesSectionProps) {
                 const categorySlug = article.category.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
                 const articleUrl = `/${categorySlug}/${article.slug}`;
 
+                const isNew = article.publishedDate && (new Date().getTime() - new Date(article.publishedDate).getTime()) < 7 * 24 * 60 * 60 * 1000;
+
                 return (
-                    <Card key={`${article.slug}-${index}`} className={cn("flex flex-col overflow-hidden transition-shadow hover:shadow-lg animate-breathing-glow")}>
+                    <Card key={`${article.slug}-${index}`} className={cn("flex flex-col overflow-hidden transition-shadow hover:shadow-lg animate-breathing-glow relative")}>
+                        {isNew && (
+                            <Badge className="absolute top-2 right-2 bg-green-600 text-white z-10 border-green-700">New</Badge>
+                        )}
                         <CardHeader className="p-0">
                             <Link href={articleUrl}>
                                 <div className="aspect-video relative">

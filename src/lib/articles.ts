@@ -20,6 +20,7 @@ const ArticleSchema = z.object({
   category: z.string(),
   title: z.string().min(1),
   slug: z.string().min(1),
+  publishedDate: z.string().datetime().optional(), // Make date optional for older articles
   articleContent: z.array(ArticleContentBlockSchema),
   keyTakeaways: z.array(z.string()),
   conclusion: z.string().min(1),
@@ -42,7 +43,7 @@ const MODELS = [
 ];
 
 const JSON_PROMPT_STRUCTURE = `
-  You are an expert content creator and SEO specialist. Your task is to generate a high-quality, comprehensive, and engaging article about a given topic. The article must be approximately 2000 words long.
+  You are an expert content creator and SEO specialist. Your task is to generate a high-quality, comprehensive, and engaging article about a given topic. The article must be approximately 3500 words long.
 
   You MUST structure your response as a single, valid JSON object that adheres to the ArticleSchema. Do NOT include any markdown formatting like \`\`\`json \`\`\`.
 
@@ -50,13 +51,14 @@ const JSON_PROMPT_STRUCTURE = `
   - "image": A string containing a URL for a relevant, high-quality image. Generate this using Pollinations.ai. The prompt for the image should be creative and directly related to the article's core theme. The URL structure is \`https://image.pollinations.ai/prompt/{PROMPT}?width=600&height=400&seed={RANDOM_SEED}&nologo=true\`.
   - "dataAiHint": A two-word string describing the image for AI hint purposes.
   - "category": The category of the article, which will be provided.
-  - "title": A compelling, SEO-friendly title for the article.
+  - "title": A compelling, SEO-friendly title for the article (9-word topic).
   - "slug": A URL-friendly slug, generated from the title (e.g., 'the-new-realism-how-ai-is-redefining-photography').
-  - "articleContent": An array of objects, where each object represents a block of content. Each object must have a "type" (one of 'h2', 'h3', 'h4', 'h5', 'h6', 'p') and a "content" string. The article must be well-structured with multiple H2 and H3 headings. Ensure a logical flow and in-depth exploration of the topic.
+  - "publishedDate": The current date and time in ISO 8601 format (e.g., "2024-07-29T12:00:00.000Z").
+  - "articleContent": An array of objects, where each object represents a block of content. The VERY FIRST object must be a 'p' type with a 200-word summary of the article. The rest should be a mix of heading types (H2, H3, H4, H5, H6) and 'p' (paragraph) types. The article must be well-structured with multiple H2 and H3 headings. Ensure a logical flow and in-depth exploration of the topic. Paragraphs should be short and easy to read.
   - "keyTakeaways": An array of 4-5 strings, each being a key takeaway from the article.
   - "conclusion": A strong, summarizing conclusion for the article.
 
-  Your writing style should be authoritative, insightful, and accessible to a broad audience.
+  Your writing style should be authoritative, insightful, and accessible to a broad audience, using natural human tones and emotions. Do not use asterisks for bolding.
 `;
 
 const articleCache = new Map<string, Article[]>();
@@ -127,14 +129,20 @@ async function generateArticleForTopic(category: string, topic: string, retries 
             const data = await response.json();
             const jsonContent = data.choices[0].message.content;
             
+            // Add a publishedDate if the model didn't include it.
+            const rawArticle = JSON.parse(jsonContent);
+            if (!rawArticle.publishedDate) {
+                rawArticle.publishedDate = new Date().toISOString();
+            }
+
             // Validate the received JSON against our Zod schema
-            const parsedArticle = ArticleSchema.safeParse(JSON.parse(jsonContent));
+            const parsedArticle = ArticleSchema.safeParse(rawArticle);
 
             if (parsedArticle.success) {
                 console.log(`  - Successfully generated and validated article: "${parsedArticle.data.title}"`);
                 return parsedArticle.data;
             } else {
-                console.error("  - Zod validation failed:", parsedArticle.error);
+                console.error("  - Zod validation failed:", parsedArticle.error.flatten());
                 // The structure was wrong, so we treat it as a failure and try the next model.
                 throw new Error("Generated content failed Zod validation.");
             }
@@ -172,20 +180,20 @@ async function getShaForFile(octokit: Octokit, owner: string, repo: string, path
 }
 
 // Main function to generate and save articles for a given category
-export async function generateAndSaveArticles(category: string) {
+export async function generateAndSaveArticles(category: string, topics: string[]) {
     console.log(`Starting article generation process for category: ${category}`);
     
-    // For this simplified version, we will just create one new article.
-    const newArticle = await generateArticleForTopic(category, `A Deep Dive into ${category}`);
+    const generationPromises = topics.map(topic => generateArticleForTopic(category, topic));
+    const newArticles = (await Promise.all(generationPromises)).filter((article): article is Article => article !== null);
 
-    if (!newArticle) {
-        console.error(`Could not generate any new article for category: ${category}. Aborting save.`);
+    if (newArticles.length === 0) {
+        console.error(`Could not generate any new articles for category: ${category}. Aborting save.`);
         return;
     }
 
     // Always read the existing articles to append, not overwrite.
     const existingArticles = await getArticles(category);
-    const updatedArticles = [newArticle, ...existingArticles]; // Prepend the new article
+    const updatedArticles = [...newArticles, ...existingArticles]; // Prepend the new articles
 
     const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const filePath = path.join(process.cwd(), 'src', 'articles', `${categorySlug}.json`);
@@ -208,7 +216,7 @@ export async function generateAndSaveArticles(category: string) {
                 owner: GITHUB_REPO_OWNER,
                 repo: GITHUB_REPO_NAME,
                 path: repoPath,
-                message: `feat: ✨ Regenerate articles for ${category}`,
+                message: `feat: ✨ Add ${newArticles.length} new articles to ${category}`,
                 content: Buffer.from(fileContent).toString('base64'),
                 sha: fileSha,
             });
