@@ -34,12 +34,20 @@ const ArticleFileSchema = z.array(ArticleSchema);
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
 const MODELS = [
-  "nousresearch/nous-hermes-2-mixtral-8x7b-dpo",
-  "mistralai/mistral-7b-instruct",
-  "huggingfaceh4/zephyr-7b-beta",
-  "openai/gpt-3.5-turbo",
-  "google/gemini-pro",
-  "anthropic/claude-2",
+    "qwen/qwen3-32b-chat",
+    "qwen/qwen3-30b-a3b",
+    "qwen/qwen3-8b",
+    "shisaai/shisa-v2-llama3-70b",
+    "tencent/hunyuan-a13b-chat",
+    "mistralai/mixtral-8x7b-instruct",
+    "nousresearch/nous-hermes-2-mixtral",
+    "cognitivecomputations/dolphin-2.9",
+    "openchat/openchat-3.5",
+    "huggingfaceh4/zephyr-7b-beta",
+    "huggingfaceh4/zephyr-7b-alpha",
+    "openrouter/chronos-hermes-13b",
+    "gryphe/mythomax-l2-13b",
+    "samantha/samantha-1.1"
 ];
 
 const JSON_PROMPT_STRUCTURE = `
