@@ -19,7 +19,7 @@ interface Article {
     category: string;
     title: string;
     slug: string;
-    articleContent: ArticleContentBlock[] | string;
+    articleContent: ArticleContentBlock[];
     keyTakeaways: string[];
     conclusion: string;
 }
@@ -29,25 +29,12 @@ interface ArticlesSectionProps {
     category: string;
 }
 
-// The number of articles to display per category on main pages
-const ARTICLES_TO_SHOW = 4;
-
 export function ArticlesSection({ articles, category }: ArticlesSectionProps) {
 
-    const createSnippet = (content: ArticleContentBlock[] | string, length = 150) => {
-        if (!content) return '';
-
-        let textToSnippet = '';
-
-        if (Array.isArray(content)) {
-            // Find the first paragraph and use its content for the snippet
-            const firstParagraph = content.find(item => item.type === 'p');
-            textToSnippet = firstParagraph ? firstParagraph.content : '';
-        } else {
-            // Fallback for old string format
-            textToSnippet = content;
-        }
-
+    const createSnippet = (content: ArticleContentBlock[], length = 150) => {
+        if (!content || !Array.isArray(content)) return '';
+        const firstParagraph = content.find(item => item.type === 'p');
+        const textToSnippet = firstParagraph ? firstParagraph.content : '';
         if (textToSnippet.length <= length) return textToSnippet;
         return textToSnippet.substring(0, length) + '...';
     }
@@ -61,13 +48,13 @@ export function ArticlesSection({ articles, category }: ArticlesSectionProps) {
         )
     }
 
-    // On the "All Articles" page, we show everything. On other pages, we only show the latest 4.
-    const articlesToDisplay = category === 'All Articles' ? articles : articles.slice(0, ARTICLES_TO_SHOW);
+    const gridClasses = category === 'Featured' 
+        ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" // 6 articles in a 3x2 grid
+        : "grid-cols-1 md:grid-cols-2 lg:grid-cols-4"; // All other categories
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {articlesToDisplay.map((article, index) => {
-                // The slug for the category should be a clean, URL-friendly string.
+        <div className={cn("grid gap-8", gridClasses)}>
+            {articles.map((article, index) => {
                 const categorySlug = article.category.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
                 const articleUrl = `/${categorySlug}/${article.slug}`;
 
