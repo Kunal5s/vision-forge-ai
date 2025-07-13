@@ -75,15 +75,18 @@ export default async function ArticlePage({ params }: { params: { category: stri
             case 'h6':
                 return <h6 key={index} className="text-base font-semibold mt-6 mb-2">{block.content}</h6>;
             case 'p':
-                 // First paragraph (summary) is now handled outside the loop
-                return <p key={index} className="mb-6 leading-relaxed text-foreground/90">{block.content}</p>;
+                 return <p key={index} className="mb-6 leading-relaxed text-foreground/90" dangerouslySetInnerHTML={{ __html: block.content }} />;
             default:
-                return <p key={index}>{block.content}</p>;
+                return <p key={index} dangerouslySetInnerHTML={{ __html: block.content }} />;
         }
     };
     
     const summaryParagraph = article.articleContent.find(block => block.type === 'p');
-    const contentWithoutSummary = summaryParagraph ? article.articleContent.slice(1) : article.articleContent;
+    const contentWithoutSummary = summaryParagraph ? article.articleContent.slice(article.articleContent.findIndex(b => b.type !== 'p')) : article.articleContent;
+    
+    const summaryBlock = article.articleContent.find(block => block.type === 'p');
+    const restOfContent = article.articleContent.slice(1);
+
 
     return (
         <main className="container mx-auto py-12 px-4">
@@ -106,14 +109,15 @@ export default async function ArticlePage({ params }: { params: { category: stri
                     </header>
 
                     {/* Summary Paragraph */}
-                    {summaryParagraph && (
-                        <p className="text-lg text-muted-foreground leading-relaxed my-8 border-l-4 border-primary pl-4">
-                            {summaryParagraph.content}
-                        </p>
+                    {summaryBlock && (
+                        <p 
+                            className="text-lg text-muted-foreground leading-relaxed my-8 border-l-4 border-primary pl-4"
+                            dangerouslySetInnerHTML={{ __html: summaryBlock.content }}
+                        />
                     )}
 
                     <div className="prose prose-lg dark:prose-invert max-w-none text-foreground/90 mt-12">
-                        {contentWithoutSummary.map(renderContentBlock)}
+                        {restOfContent.map(renderContentBlock)}
                     </div>
                     
                     {/* Key Takeaways Section */}
@@ -141,7 +145,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
                     {article.conclusion && (
                          <div className="space-y-6 mt-12">
                             <h2 className="text-3xl font-bold border-b pb-2">Conclusion</h2>
-                            <p className="text-lg text-foreground/90 leading-relaxed">{article.conclusion}</p>
+                            <p className="text-lg text-foreground/90 leading-relaxed" dangerouslySetInnerHTML={{ __html: article.conclusion }}/>
                         </div>
                     )}
                 </article>

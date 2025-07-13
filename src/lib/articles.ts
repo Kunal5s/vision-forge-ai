@@ -96,7 +96,8 @@ export async function getArticles(category: string): Promise<Article[]> {
 
 // Function to clean markdown bolding from a string
 const cleanMarkdownBold = (text: string): string => {
-    return text.replace(/\*{1,2}(.*?)\*{1,2}/g, '&lt;strong&gt;$1&lt;/strong&gt;');
+    // This regex finds **word** or *word* and replaces it with <strong>word</strong>
+    return text.replace(/\*{1,2}(.*?)\*{1,2}/g, '<strong>$1</strong>');
 };
 
 // Function to generate a single article using a rotating list of models
