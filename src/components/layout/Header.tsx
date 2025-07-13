@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { SubscriptionManager } from '../vision-forge/SubscriptionManager';
 import React, { useEffect, useState } from 'react';
+import { AdminLogin } from '../vision-forge/AdminLogin';
 
 const navLinks = [
   { href: '/prompts', label: 'Prompts' },
@@ -52,6 +53,7 @@ export function Header() {
             </span>
           </Link>
           <div className="flex items-center gap-4">
+            <AdminLogin />
             <SubscriptionManager />
           </div>
         </div>
