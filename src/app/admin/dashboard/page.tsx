@@ -1,38 +1,25 @@
 // src/app/admin/dashboard/page.tsx
-"use client";
-
-import { useAdminAuth } from '@/hooks/use-admin-auth';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { getUser, logout } from '@/app/admin/actions';
+import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LayoutDashboard, PlusCircle, Edit, LogOut } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 
-export default function AdminDashboardPage() {
-  const { isAuthenticated, user, logout } = useAdminAuth();
-  const router = useRouter();
+export default async function AdminDashboardPage() {
+  const user = await getUser();
 
-  useEffect(() => {
-    // This effect runs on the client. If not authenticated, redirect to login.
-    if (!isAuthenticated) {
-      router.replace('/admin');
-    }
-  }, [isAuthenticated, router]);
-
-  // While checking auth, you can show a loader or nothing
-  if (!isAuthenticated) {
-    return null;
+  if (!user) {
+    redirect('/admin');
   }
 
-  const handleLogout = () => {
-    logout();
-    router.push('/admin');
-  };
-
-  const handleComingSoon = () => {
-    alert('This feature is coming soon!');
+  const handleComingSoon = async () => {
+    'use server';
+    // This is a server action, so alert won't work directly.
+    // In a real app, you'd handle this with a state update.
+    // For now, we'll keep it simple as it's a placeholder.
+    console.log("Feature coming soon!");
   };
 
   return (
@@ -46,10 +33,12 @@ export default function AdminDashboardPage() {
                 </h1>
                 <p className="text-muted-foreground mt-1">Welcome back, {user?.email}!</p>
             </div>
-            <Button onClick={handleLogout} variant="outline">
-                <LogOut className="mr-2 h-4 w-4" />
-                Logout
-            </Button>
+            <form action={logout}>
+              <Button type="submit" variant="outline">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+              </Button>
+            </form>
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -63,9 +52,11 @@ export default function AdminDashboardPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Button onClick={handleComingSoon} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                        Create New
-                    </Button>
+                    <form action={handleComingSoon}>
+                      <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+                          Create New (Soon)
+                      </Button>
+                    </form>
                 </CardContent>
             </Card>
 
@@ -79,9 +70,11 @@ export default function AdminDashboardPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                     <Button onClick={handleComingSoon} variant="secondary" className="w-full">
-                        Edit Existing
-                    </Button>
+                    <form action={handleComingSoon}>
+                      <Button type="submit" variant="secondary" className="w-full">
+                          Edit Existing (Soon)
+                      </Button>
+                    </form>
                 </CardContent>
             </Card>
 
@@ -95,9 +88,9 @@ export default function AdminDashboardPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Button onClick={handleComingSoon} variant="outline" className="w-full" disabled>
-                        Site Settings
-                    </Button>
+                  <Button variant="outline" className="w-full" disabled>
+                      Site Settings
+                  </Button>
                 </CardContent>
             </Card>
         </div>

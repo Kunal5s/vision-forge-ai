@@ -1,37 +1,25 @@
 // src/app/admin/page.tsx
 "use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAdminAuth } from '@/hooks/use-admin-auth';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useFormState, useFormStatus } from "react-dom";
+import { authenticate } from "@/app/admin/actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BrainCircuit, LogIn, AlertTriangle } from 'lucide-react';
 
+function LoginButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" className="w-full bg-foreground text-background hover:bg-foreground/90" aria-disabled={pending}>
+      <LogIn className="mr-2 h-4 w-4" /> {pending ? "Signing In..." : "Sign In"}
+    </Button>
+  );
+}
+
 export default function AdminLoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const { login, isAuthenticated } = useAdminAuth();
-  const router = useRouter();
-
-  // If user is already authenticated, redirect them to the dashboard
-  if (isAuthenticated) {
-    router.replace('/admin/dashboard');
-    return null;
-  }
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    if (login(email, password)) {
-      router.push('/admin/dashboard');
-    } else {
-      setError('Invalid email or password. Please try again.');
-    }
-  };
+  const [errorMessage, dispatch] = useFormState(authenticate, undefined);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
@@ -47,15 +35,14 @@ export default function AdminLoginPage() {
           <CardDescription>Enter your credentials to access the admin panel.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form action={dispatch} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
+                name="email"
                 placeholder="admin@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 required
                 className="bg-background"
               />
@@ -65,22 +52,19 @@ export default function AdminLoginPage() {
               <Input
                 id="password"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                name="password"
                 required
                  className="bg-background"
               />
             </div>
-            {error && (
+            {errorMessage && (
               <div className="flex items-center gap-2 text-sm text-destructive">
                 <AlertTriangle className="h-4 w-4" />
-                <p>{error}</p>
+                <p>{errorMessage}</p>
               </div>
             )}
             <div>
-              <Button type="submit" className="w-full bg-foreground text-background hover:bg-foreground/90">
-                <LogIn className="mr-2 h-4 w-4" /> Sign In
-              </Button>
+              <LoginButton />
             </div>
           </form>
         </CardContent>
