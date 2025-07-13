@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,161 +14,121 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useSubscription } from '@/hooks/use-subscription';
-import { UserCheck, UserX, ArrowUpCircle, CalendarDays } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import Link from 'next/link';
-import { Badge } from '@/components/ui/badge';
+import { authenticate, getUser, logout } from '@/app/admin/actions';
+import { LogIn, UserCheck, UserX } from 'lucide-react';
 
 export function SubscriptionManager() {
-  const { subscription, activateSubscription, deactivateSubscription, isLoading } = useSubscription();
-  const [email, setEmail] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+  const [user, setUser] = useState<Awaited<ReturnType<typeof getUser>> | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
-  const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
 
-  const handleActivate = () => {
-    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
-      toast({
-        title: 'Invalid Email',
-        description: 'Please enter a valid email address.',
-        variant: 'destructive',
-      });
-      return;
-    }
+  React.useEffect(() => {
+    getUser().then(setUser);
+  }, []);
 
-    const allowedDomains = ['gmail.com', 'yahoo.com'];
-    const domain = email.split('@')[1];
-    if (!allowedDomains.includes(domain.toLowerCase())) {
+  const handleLogin = async (formData: FormData) => {
+    const error = await authenticate(undefined, formData);
+    if (error) {
+      setErrorMessage(error);
       toast({
-        title: 'Invalid Email Provider',
-        description: 'For activation, please use a Gmail or Yahoo email address to prevent spam.',
-        variant: 'destructive',
-        duration: 7000,
+        title: 'Login Failed',
+        description: error,
+        variant: 'destructive'
       });
-      return;
-    }
-    
-    const success = activateSubscription(email);
-
-    if (success) {
-      toast({
-        title: 'Plan Activated!',
-        description: `Your new plan has been activated for ${email}.`,
-      });
-      setIsOpen(false);
     } else {
-       toast({
-        title: 'Activation Failed',
-        description: 'Email not found in purchase records. Please ensure you used the correct email or visit our pricing page to purchase a plan.',
-        variant: 'destructive',
-        duration: 7000,
-      });
+      setErrorMessage(undefined);
+      setIsOpen(false);
+      // No need to redirect here, the authenticate action handles it.
     }
   };
-  
-  const handleDeactivate = () => {
-    deactivateSubscription();
-    toast({
-      title: 'Plan Deactivated',
-      description: 'Your subscription has been deactivated. You are now on the Free plan.',
-    });
+
+  const handleLogout = async () => {
+    await logout();
+    setUser(null);
     setIsOpen(false);
-  }
-
-  const isFreePlan = !subscription || subscription.plan === 'free';
-
-  useEffect(() => {
-    if (isLoading || isFreePlan || !subscription || !subscription.purchaseDate) {
-      setDaysRemaining(null);
-      return;
-    }
-
-    const purchaseDate = new Date(subscription.purchaseDate);
-    const expiryDate = new Date(purchaseDate);
-    expiryDate.setDate(purchaseDate.getDate() + 30);
-    const now = new Date();
-    const remaining = Math.max(0, Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
-    setDaysRemaining(remaining);
-  }, [subscription, isLoading, isFreePlan]);
-
-
-  if (isLoading) {
-    return <Button variant="outline" disabled>Loading...</Button>;
-  }
+    toast({
+      title: 'Logged Out',
+      description: 'You have been successfully logged out.',
+    });
+    // Redirect is handled by the logout action
+  };
+  
+  const isLoggedIn = !!user;
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" className="text-xs h-8">
-          {isFreePlan ? <ArrowUpCircle className="mr-2 h-4 w-4 text-destructive" /> : <UserCheck className="mr-2 h-4 w-4 text-green-500" />}
-          {isFreePlan ? 'Activate Plan' : 'Manage Plan'}
+          {isLoggedIn ? (
+            <>
+              <UserCheck className="mr-2 h-4 w-4 text-green-500" />
+              Admin
+            </>
+          ) : (
+            <>
+              <LogIn className="mr-2 h-4 w-4" />
+              Admin Login
+            </>
+          )}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{isFreePlan ? 'Activate Your Purchased Plan' : 'Manage Your Subscription'}</DialogTitle>
+          <DialogTitle>{isLoggedIn ? 'Admin Controls' : 'Admin Panel Login'}</DialogTitle>
           <DialogDescription>
-            {subscription && !isFreePlan
-              ? "View your current plan details or deactivate your subscription."
-              : "To access premium features, please purchase a plan and activate it with your Gmail or Yahoo email."}
+            {isLoggedIn ? 'You are currently logged in as admin.' : 'Enter your credentials to access the admin dashboard.'}
           </DialogDescription>
         </DialogHeader>
-        
-        {isFreePlan ? (
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="email" className="text-right">
-                Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@gmail.com"
-                className="col-span-3"
-              />
-            </div>
-            <p className="text-xs text-center text-muted-foreground px-4">
-              For this prototype, use 'pro@gmail.com' or 'mega@yahoo.com' to test activation.
-            </p>
-             <p className="text-xs text-center text-muted-foreground px-4 mt-2">
-              Ready to upgrade?{' '}
-              <Link href="/pricing" className="text-foreground underline hover:text-foreground/80" onClick={() => setIsOpen(false)}>
-                View Plans
-              </Link>
+
+        {isLoggedIn ? (
+          <div className="py-4">
+             <p className="text-sm text-center text-muted-foreground">
+                Welcome back, <span className="font-semibold text-foreground">{user.email}</span>
             </p>
           </div>
         ) : (
-          <div className="space-y-4 py-4">
-            <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">Email:</span>
-                <span className="font-semibold text-foreground">{subscription?.email}</span>
-            </div>
-             <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">Plan:</span>
-                <Badge variant={subscription?.plan === 'mega' ? 'default' : 'secondary'} className="capitalize">{subscription?.plan}</Badge>
-            </div>
-             <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">Validity:</span>
-                 <div className="flex items-center gap-1 font-semibold text-foreground">
-                    <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                    {daysRemaining !== null ? `${daysRemaining} days remaining` : '...'}
-                 </div>
-            </div>
-          </div>
+           <form action={handleLogin} className="space-y-4 py-4">
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  name="email"
+                  placeholder="admin@example.com"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  name="password"
+                  required
+                />
+              </div>
+               {errorMessage && (
+                  <p className="text-sm text-destructive text-center">{errorMessage}</p>
+                )}
+              <DialogFooter>
+                <Button type="submit" className="w-full bg-foreground text-background hover:bg-foreground/90">
+                  <LogIn className="mr-2 h-4 w-4" /> Sign In
+                </Button>
+              </DialogFooter>
+           </form>
+        )}
+        
+        {isLoggedIn && (
+           <DialogFooter className="!justify-between gap-2">
+            <Button onClick={() => window.location.href='/admin/dashboard'} variant="secondary">Go to Dashboard</Button>
+            <Button onClick={handleLogout} variant="destructive">
+              <UserX className="mr-2 h-4 w-4" /> Logout
+            </Button>
+           </DialogFooter>
         )}
 
-        <DialogFooter>
-          {subscription && !isFreePlan ? (
-            <Button onClick={handleDeactivate} variant="destructive">
-              <UserX className="mr-2 h-4 w-4" /> Deactivate Plan
-            </Button>
-          ) : (
-            <Button onClick={handleActivate} type="submit" className='bg-primary text-primary-foreground hover:bg-primary/90'>Activate</Button>
-          )}
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
