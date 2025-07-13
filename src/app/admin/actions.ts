@@ -41,19 +41,19 @@ export async function authenticate(
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
     
-    // Securely compare credentials on the server
     if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
-      // Create the session
       const expires = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
       const session = await encrypt({ email, expires });
 
-      // Save the session in a cookie
       cookies().set('session', session, { expires, httpOnly: true });
-      
+      // Redirect will be handled on the client side upon successful login, or we can force it here.
     } else {
       return 'Invalid email or password.';
     }
   } catch (error) {
+    if (error instanceof Error && error.message.includes('credentialssignin')) {
+      return 'Invalid email or password.';
+    }
     console.error(error);
     return 'An unexpected error occurred.';
   }
