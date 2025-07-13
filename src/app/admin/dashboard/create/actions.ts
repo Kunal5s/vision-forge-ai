@@ -16,9 +16,8 @@ const FormSchema = z.object({
   style: z.string(),
   mood: z.string(),
   wordCount: z.string(),
+  apiKey: z.string().optional(), // API Key is optional
 });
-
-type FormInputs = z.infer<typeof FormSchema>;
 
 type GenerateArticleResult = {
   success: boolean;
@@ -35,10 +34,10 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
     return { success: false, error: 'Invalid input data.' };
   }
   
-  const { prompt, category, model, style, mood, wordCount } = validatedFields.data;
+  const { prompt, category, model, style, mood, wordCount, apiKey } = validatedFields.data;
 
   try {
-    const newArticle = await generateArticleForTopic({ prompt, category, model, style, mood, wordCount });
+    const newArticle = await generateArticleForTopic({ prompt, category, model, style, mood, wordCount, apiKey });
     if (!newArticle) {
       throw new Error('AI failed to generate the article. The model might be busy, the topic too complex, or the response format incorrect. Please try a different model or topic.');
     }

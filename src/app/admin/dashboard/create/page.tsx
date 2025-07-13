@@ -1,4 +1,4 @@
-// src/app/admin/dashboard/create/page.tsx
+
 'use client';
 
 import { useForm, Controller, type SubmitHandler } from 'react-hook-form';
@@ -17,7 +17,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { categorySlugMap, OPENROUTER_MODELS, WRITING_STYLES, ARTICLE_MOODS, WORD_COUNTS } from '@/lib/constants';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, Wand2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Wand2, KeyRound } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
 import { generateArticleAction } from './actions';
@@ -30,6 +30,7 @@ const articleSchema = z.object({
   style: z.string().min(1, 'Please select a writing style.'),
   mood: z.string().min(1, 'Please select an article mood.'),
   wordCount: z.string().min(1, 'Please select a word count.'),
+  apiKey: z.string().optional(),
 });
 
 type ArticleFormData = z.infer<typeof articleSchema>;
@@ -44,6 +45,7 @@ export default function CreateArticlePage() {
       style: WRITING_STYLES[0].value,
       mood: ARTICLE_MOODS[0].value,
       wordCount: WORD_COUNTS[1].value, // Default to Medium
+      apiKey: '',
     }
   });
 
@@ -217,6 +219,22 @@ export default function CreateArticlePage() {
                 />
                 {errors.wordCount && <p className="text-sm text-destructive mt-1">{errors.wordCount.message}</p>}
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="apiKey">OpenRouter API Key (Optional)</Label>
+              <div className="relative flex items-center">
+                  <KeyRound className="absolute left-3 h-5 w-5 text-muted-foreground" />
+                  <Input
+                      id="apiKey"
+                      type="password"
+                      placeholder="sk-or-v1-..."
+                      {...register('apiKey')}
+                      className="pl-10"
+                      disabled={isGenerating}
+                  />
+              </div>
+              <p className="text-xs text-muted-foreground">If you provide a key here, it will be used instead of the one on the server. This key is not stored.</p>
             </div>
 
 

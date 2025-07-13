@@ -22,9 +22,6 @@ const ArticleOutputSchema = z.object({
   conclusion: z.string().min(1).describe("A strong, summarizing conclusion for the article."),
 });
 
-// --- OPENROUTER & MODEL CONFIGURATION ---
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-
 const getJsonPromptStructure = (wordCount: string, style: string, mood: string) => `
   You are an expert content creator and SEO specialist. Your task is to generate a high-quality, comprehensive, and engaging article about a given topic.
 
@@ -49,13 +46,17 @@ interface GenerationParams {
     style: string;
     mood: string;
     wordCount: string;
+    apiKey?: string; // Optional API key from the user
 }
 
 export async function generateArticleForTopic(params: GenerationParams): Promise<Article | null> {
-    const { prompt, category, model, style, mood, wordCount } = params;
+    const { prompt, category, model, style, mood, wordCount, apiKey } = params;
 
-    if (!OPENROUTER_API_KEY) {
-        throw new Error("OPENROUTER_API_KEY environment variable is not set.");
+    // Use the user-provided API key if it exists, otherwise fall back to the environment variable.
+    const api_key_to_use = apiKey || process.env.OPENROUTER_API_KEY;
+
+    if (!api_key_to_use) {
+        throw new Error("OpenRouter API key is not set. Please provide one in the form or set the OPENROUTER_API_KEY environment variable on Vercel.");
     }
     console.log(`Generating article for topic: "${prompt}" in category: "${category}" using model: ${model}`);
 
@@ -65,7 +66,7 @@ export async function generateArticleForTopic(params: GenerationParams): Promise
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                "Authorization": `Bearer ${api_key_to_use}`,
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
@@ -81,7 +82,7 @@ export async function generateArticleForTopic(params: GenerationParams): Promise
         if (!response.ok) {
             const errorBody = await response.text();
             console.error(`API Error: ${response.status}`, errorBody);
-            throw new Error(`API request failed with status ${response.status}.`);
+            throw new Error(`API request failed with status ${response.status}. Please check the model name and your API key.`);
         }
 
         const data = await response.json();

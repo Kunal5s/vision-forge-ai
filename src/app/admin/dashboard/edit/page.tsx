@@ -69,9 +69,9 @@ export default async function EditArticlesPage() {
                                                         Slug: /{category.toLowerCase().replace(/ /g, '-')}/{article.slug}
                                                     </p>
                                                 </div>
-                                                <Button variant="secondary" size="sm" disabled>
+                                                <Button variant="secondary" size="sm" onClick={() => alert('Editing functionality is coming in the next update!')}>
                                                     <Edit className="mr-2 h-4 w-4" />
-                                                    Edit (Soon)
+                                                    Edit
                                                 </Button>
                                             </div>
                                         ))}
