@@ -109,9 +109,15 @@ function parseMarkdownToContent(markdown: string): Article['articleContent'] {
     if (line.startsWith('### ')) return { type: 'h3', content: line.substring(4) };
     if (line.startsWith('## ')) return { type: 'h2', content: line.substring(3) };
     // Note: We don't support H1 from markdown to prevent conflicting with the main article title.
+    if (line.startsWith('![')) { // Handle images: ![alt](src)
+        const match = /!\[(.*?)\]\((.*?)\)/.exec(line);
+        if (match) {
+            return { type: 'img', content: match[2], alt: match[1] };
+        }
+    }
     if (line.length > 0) return { type: 'p', content: line };
     return { type: 'p', content: '' }; // Should be filtered out
-  }).filter(block => block.content.length > 0);
+  }).filter(block => block.type && block.content.length > 0);
 }
 
 
@@ -185,10 +191,11 @@ export async function saveUpdatedArticles(category: string, articles: Article[],
     const repoPath = `src/articles/${categorySlug}.json`;
     const fileContent = JSON.stringify(articles, null, 2);
 
+    // Correctly reference environment variables in uppercase
     const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = process.env;
     if (!GITHUB_TOKEN || !GITHUB_REPO_OWNER || !GITHUB_REPO_NAME) {
         console.error("GitHub credentials are not configured on the server. Cannot save article.");
-        throw new Error("GitHub credentials not configured. Please check Vercel environment variables.");
+        throw new Error("GitHub credentials not configured. Please check Vercel environment variables. Make sure GITHUB_TOKEN, GITHUB_REPO_OWNER, and GITHUB_REPO_NAME are all set.");
     }
 
     try {
@@ -207,6 +214,6 @@ export async function saveUpdatedArticles(category: string, articles: Article[],
         console.log(`Successfully committed changes for "${category}" to GitHub.`);
     } catch (error) {
         console.error("Failed to commit changes to GitHub.", error);
-        throw new Error("Failed to save article to GitHub. Please check your credentials and repository permissions.");
+        throw new Error("Failed to save article to GitHub. Please check your credentials (token, owner, repo name) and repository permissions.");
     }
 }
