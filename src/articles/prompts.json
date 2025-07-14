@@ -25,14 +25,6 @@
         "content": "When you write a prompt or story set in this realm, your task isn’t just to describe gadgets and megacorps. It’s to breathe life into the city itself—to let readers feel the pulse of hover car traffic, taste the acid tang of neon rain, and hear the distant clamor of digital dissidents."
       },
       {
-        "type": "p",
-        "content": "This guide shows you how to build a deeply immersive world. You’ll learn to:\n\n- Pin down your core vision—what makes your cyberpunk future unique?\n- Layer environments so they feel lived-in, textured by human drama.\n- Sketch characters whose internal struggles mirror the city’s corruption.\n- Weave sensory details that engage sight, sound, smell, even touch.\n- Craft dialogue with the rough poetry of street slang and corporate doublespeak.\n- Assemble a final prompt that unlocks a fully realized world, ready for any sci-fi narrative or AI image-generation."
-      },
-      {
-        "type": "p",
-        "content": "Each chapter here unfolds in short, punchy paragraphs—no jargon, no dead space. By the end, you’ll have not only the bones of a cyberpunk setting, but the sinew, blood, and glowing veins that make it pulse with authenticity. Let’s light up those dark alleys together."
-      },
-      {
         "type": "h2",
         "content": "Igniting the Neon Spark: Defining Your Cyberpunk Vision"
       },
@@ -154,14 +146,6 @@
       },
       {
         "type": "p",
-        "content": "Short, punchy paragraphs keep pacing tight. Dive into:\n- Who they were before the neon haze settled\n- What they risk by chasing redemption or revolution\n- How their own cyber-graft reminds them of loss"
-      },
-      {
-        "type": "h3",
-        "content": "Tying Goals to Your World"
-      },
-      {
-        "type": "p",
         "content": "Conflict blooms when personal stakes mirror city-wide struggles. Your protagonist’s shattered relationships and moral doubts should reflect the megacorp’s tyranny or the net’s seductive pull. By layering inner turmoil (self-worth, fear of obsolescence) atop external challenges (data assassins, collapsing infrastructure), you create characters readers root for—no matter how many implants they carry."
       },
       {
@@ -175,7 +159,7 @@
       },
       {
         "type": "p",
-        "content": "Dialogue is where cyberpunk slang and real emotion collide. Toss in world-specific terms, but ground them in context so readers never feel lost. Use bullet-style insights:\n- Drop a one-liner like “Jack your creds here” then show a bouncer scanning retinas\n- Let a hacker slip “ghost-drop” into a warning, and let another character ask, “What’s a ghost-drop?”\n- Break up heavy tech talk with beats—footsteps, cockpit beeps, a flicker of holo-glow. Aim for rhythm: short exchanges that feel improvised, like street poets riffing on code. Keep contractions, fragments, and pauses—you want speech that breathes."
+        "content": "Dialogue is where cyberpunk slang and real emotion collide. Toss in world-specific terms, but ground them in context so readers never feel lost. Aim for rhythm: short exchanges that feel improvised, like street poets riffing on code. Keep contractions, fragments, and pauses—you want speech that breathes."
       },
       {
         "type": "h2",
@@ -183,7 +167,7 @@
       },
       {
         "type": "p",
-        "content": "A scene blueprint is your roadmap: where characters start, how tension builds, and when the neon rain begins to pour. Bullet points for a chase sequence:\n- Trigger: sirens wail as corporate sentinels march in line\n- Sensory hook: oil-slick streets reflect pink holo-ads in puddles\n- Rising pace: boots splash faster, drone headlights carve through smoke\n- Climax: a flicker of power loss, street lamps dying, escape into a hidden underpass. Short paragraphs let readers catch their breath before the next surge of action. Always tie back to your world’s rules—do cyber-reefs block escape? Can your hero hack the streetlights mid-chase?"
+        "content": "A scene blueprint is your roadmap: where characters start, how tension builds, and when the neon rain begins to pour. Short paragraphs let readers catch their breath before the next surge of action. Always tie back to your world’s rules—do cyber-reefs block escape? Can your hero hack the streetlights mid-chase?"
       },
       {
         "type": "h2",
@@ -199,7 +183,7 @@
       },
       {
         "type": "p",
-        "content": "Bring every element together in one master prompt:\n1. Open with your core vision (tone, tech flavor, emotional stakes)\n2. Layer in setting highlights (district details, sensory notes)\n3. Introduce protagonist and key conflict\n4. Sprinkle in dialogue snippets and social rituals\n5. Close with a scene hook that begs “What happens next?”\n\nTest your prompt by mentally “running” it: Can you picture every neon sign, every whispered codeword? If a detail trips you up, refine or remove it."
+        "content": "Bring every element together in one master prompt: Open with your core vision, layer in setting highlights, introduce protagonist and key conflict, sprinkle in dialogue snippets and social rituals, and close with a scene hook that begs “What happens next?” Test your prompt by mentally “running” it: Can you picture every neon sign, every whispered codeword? If a detail trips you up, refine or remove it."
       }
     ],
     "keyTakeaways": [
