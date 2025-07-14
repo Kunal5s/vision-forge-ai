@@ -87,6 +87,19 @@ export default async function ArticlePage({ params }: { params: { category: stri
                 return <h6 key={index} className="text-base font-semibold mt-6 mb-2" dangerouslySetInnerHTML={{ __html: processedContent }} />;
             case 'p':
                  return <p key={index} className="mb-6 leading-relaxed text-foreground/90" dangerouslySetInnerHTML={{ __html: processedContent }} />;
+            case 'img':
+                 return (
+                    <div key={index} className="my-8">
+                      <Image
+                        src={block.content}
+                        alt={block.alt || 'Article image'}
+                        width={800}
+                        height={450}
+                        className="rounded-lg shadow-lg mx-auto"
+                        data-ai-hint="in-article photography"
+                      />
+                    </div>
+                  );
             default:
                 return <p key={index} dangerouslySetInnerHTML={{ __html: processedContent }} />;
         }

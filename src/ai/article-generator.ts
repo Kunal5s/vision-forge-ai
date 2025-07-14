@@ -6,9 +6,11 @@ import type { Article } from '@/lib/articles';
 
 // Define the structure of an article part (e.g., h2, h3, p)
 const ArticleContentBlockSchema = z.object({
-  type: z.enum(['h2', 'h3', 'h4', 'h5', 'h6', 'p']),
+  type: z.enum(['h2', 'h3', 'h4', 'h5', 'h6', 'p', 'img']),
   content: z.string().min(1),
+  alt: z.string().optional(),
 });
+
 
 // Define the overall structure of a single article
 const ArticleOutputSchema = z.object({
@@ -17,7 +19,7 @@ const ArticleOutputSchema = z.object({
   category: z.string().describe("The category of the article."),
   title: z.string().min(1).describe("A compelling, SEO-friendly title for the article (9-word topic)."),
   slug: z.string().min(1).describe("A URL-friendly slug, generated from the title."),
-  articleContent: z.array(ArticleContentBlockSchema).describe("An array of content blocks. The VERY FIRST object must be a 'p' type with a summary of the article. The rest should be a well-structured mix of headings (h2-h6) and paragraphs (p). The total word count should match the user's request."),
+  articleContent: z.array(ArticleContentBlockSchema).describe("An array of content blocks. The VERY FIRST object must be a 'p' type with a summary of the article. Subsequent H2 headings should be followed by an image block (`{ \"type\": \"img\", \"content\": \"URL\", \"alt\": \"Description\" }`). Generate at least 5 images throughout the article. The total word count should match the user's request."),
   keyTakeaways: z.array(z.string()).describe("An array of 4-5 key takeaways from the article."),
   conclusion: z.string().min(1).describe("A strong, summarizing conclusion for the article."),
 });
@@ -29,10 +31,11 @@ const getJsonPromptStructure = (wordCount: string, style: string, mood: string) 
   - The article's total length MUST be approximately **${wordCount} words**.
   - The writing style MUST be **${style}**.
   - The overall mood and tone of the article MUST be **${mood}**.
+  - You MUST include at least 5 different, relevant images within the article content. Place an image block after most H2 headings.
 
   You MUST structure your response as a single, valid JSON object that adheres to the schema provided. Do NOT include any markdown formatting like \`\`\`json \`\`\`.
 
-  Specifically for the "image" field, you must create a descriptive and artistic prompt for Pollinations.ai based on the article's topic, and then construct the final URL. For example, if the topic is 'The Future of AI', your image prompt might be 'a glowing brain made of circuits and stars, digital art'. The final URL would then be 'https://image.pollinations.ai/prompt/a%20glowing%20brain%20made%20of%20circuits%20and%20stars%2C%20digital%20art?width=600&height=400&seed=...&nologo=true'.
+  Specifically for the "image" and "img" fields, you must create a descriptive and artistic prompt for Pollinations.ai based on the article's topic, and then construct the final URL. For example, if the topic is 'The Future of AI', your image prompt might be 'a glowing brain made of circuits and stars, digital art'. The final URL would then be 'https://image.pollinations.ai/prompt/a%20glowing%20brain%20made%20of%20circuits%20and%20stars%2C%20digital%20art?width=600&height=400&seed=...&nologo=true'. Each 'img' block needs a URL in its 'content' field and a descriptive 'alt' text.
 
   For the "articleContent", the VERY FIRST object must be a 'p' type with a summary of the article. The rest should be a mix of heading types (h2-h6) and 'p' (paragraph) types to create a well-structured article of the required word count. Paragraphs should be short and easy to read.
 
