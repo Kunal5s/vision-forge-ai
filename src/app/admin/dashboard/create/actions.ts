@@ -188,7 +188,7 @@ export async function saveUpdatedArticles(category: string, articles: Article[],
     const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = process.env;
     if (!GITHUB_TOKEN || !GITHUB_REPO_OWNER || !GITHUB_REPO_NAME) {
         console.error("GitHub credentials are not configured on the server. Cannot save article.");
-        throw new Error("GitHub credentials are not configured on the server. Article saving is disabled.");
+        throw new Error("GitHub credentials not configured. Please check Vercel environment variables.");
     }
 
     try {

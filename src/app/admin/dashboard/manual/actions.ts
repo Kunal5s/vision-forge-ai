@@ -63,7 +63,7 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
       keyTakeaways: keyTakeaways ? keyTakeaways.split(',').map(k => k.trim()) : [],
       conclusion,
       image: image || `https://placehold.co/600x400.png`,
-      dataAiHint: "manual content",
+      dataAiHint: "manual article photography",
       publishedDate: new Date().toISOString(),
     };
     
