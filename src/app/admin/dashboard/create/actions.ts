@@ -56,7 +56,8 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
     revalidatePath(`/${categorySlug}`);
     revalidatePath(`/${categorySlug}/${newArticle.slug}`);
     
-    return { success: true, title: newArticle.title };
+    // On success, redirect to the new article's edit page
+    redirect('/admin/dashboard/edit');
 
   } catch (error) {
     console.error('Error in generateArticleAction:', error);

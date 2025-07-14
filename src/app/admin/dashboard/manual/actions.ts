@@ -86,7 +86,7 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
     revalidatePath(`/${categorySlug}`);
     revalidatePath(`/${categorySlug}/${newArticle.slug}`);
     
-    return { success: true, title: newArticle.title };
+    redirect('/admin/dashboard/edit');
 
   } catch (error) {
     console.error('Error in createManualArticleAction:', error);
