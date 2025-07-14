@@ -10,8 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowLeft, Loader2, Save, Trash2, Bold, Italic, Heading2, Link as LinkIcon, List, ListOrdered, Quote as QuoteIcon, Image as ImageIcon } from 'lucide-react';
+import { useState, useRef, ChangeEvent } from 'react';
 import Link from 'next/link';
 import type { Article } from '@/lib/articles';
 import { editArticleAction, deleteArticleAction } from '../../../create/actions';
@@ -30,7 +30,7 @@ import {
 const editSchema = z.object({
   title: z.string().min(1, "Title is required."),
   slug: z.string().min(1, "Slug is required."),
-  content: z.string(), // This will now hold the raw Markdown content
+  content: z.string(), 
 });
 
 type EditFormData = z.infer<typeof editSchema>;
@@ -40,10 +40,10 @@ interface EditArticleFormProps {
     categoryName: string;
 }
 
-// Convert ArticleContent[] to a markdown string for the textarea
 const contentToMarkdown = (content: Article['articleContent']): string => {
     return content.map(block => {
         switch (block.type) {
+            case 'h1': return `# ${block.content}`;
             case 'h2': return `## ${block.content}`;
             case 'h3': return `### ${block.content}`;
             case 'h4': return `#### ${block.content}`;
@@ -53,15 +53,17 @@ const contentToMarkdown = (content: Article['articleContent']): string => {
             case 'img': return `![${block.alt || ''}](${block.content})`;
             default: return block.content;
         }
-    }).join('\n\n'); // Use double newline to separate blocks, which is standard in Markdown
+    }).join('\n\n'); 
 }
 
 export default function EditArticleForm({ article, categoryName }: EditArticleFormProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<EditFormData>({
+  const { register, handleSubmit, formState: { errors }, setValue, getValues } = useForm<EditFormData>({
     resolver: zodResolver(editSchema),
     defaultValues: {
       title: article.title,
@@ -69,6 +71,39 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
       content: contentToMarkdown(article.articleContent),
     }
   });
+
+  const insertText = (before: string, after: string = '') => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const selectedText = text.substring(start, end);
+    const newText = `${text.substring(0, start)}${before}${selectedText}${after}${text.substring(end)}`;
+    setValue('content', newText, { shouldValidate: true, shouldDirty: true });
+    
+    // Focus and set cursor position
+    setTimeout(() => {
+        textarea.focus();
+        textarea.selectionStart = start + before.length;
+        textarea.selectionEnd = start + before.length + selectedText.length;
+    }, 0);
+  };
+
+  const handleImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      toast({ title: "Uploading image...", description: "Please wait." });
+      // In a real app, you would upload to a service (like Firebase Storage)
+      // and get a URL back. For this demo, we'll use a placeholder.
+      // Simulating upload delay
+      await new Promise(res => setTimeout(res, 1000));
+      const imageUrl = `https://placehold.co/800x400.png`; // Replace with actual uploaded URL
+      
+      insertText(`![${file.name}](${imageUrl})`);
+      toast({ title: "Image Inserted!", description: "A placeholder image has been added to your content."});
+  };
 
   const onSubmit = async (data: EditFormData) => {
     setIsSaving(true);
@@ -84,7 +119,6 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
       toast({ title: "Error Saving", description: result.error, variant: 'destructive' });
     } else {
       toast({ title: "Article Saved!", description: `"${data.title}" has been updated.` });
-      // The action handles redirection, so no need to do it here
     }
     setIsSaving(false);
   };
@@ -100,9 +134,10 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
       setIsDeleting(false);
     } else {
       toast({ title: "Article Deleted", description: "The article has been successfully removed." });
-       // The action handles redirection, so no need to do it here
     }
   }
+
+  const { ref: formRef, ...rest } = register('content');
 
   return (
     <>
@@ -119,8 +154,7 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
         <CardHeader>
           <CardTitle className="text-2xl">Edit Article</CardTitle>
           <CardDescription>
-            Make changes to your article below. The content area now supports Markdown for formatting.
-            Use `##` for H2, `###` for H3, etc.
+            Make changes to your article below. Use the toolbar or Markdown syntax for formatting.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -140,14 +174,32 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
 
             <div>
               <Label htmlFor="content">Content (Markdown Supported)</Label>
-              <Textarea
-                id="content"
-                {...register('content')}
-                rows={20}
-                className="font-mono"
-                placeholder="## Your Heading&#10;&#10;Your paragraph content..."
-                disabled={isSaving || isDeleting}
-              />
+              <div className="border rounded-md mt-2">
+                <div className="p-2 border-b bg-muted/50 flex flex-wrap items-center gap-1">
+                  <Button type="button" variant="ghost" size="icon" onClick={() => insertText("## ")} title="Heading 2"><Heading2 className="h-4 w-4" /></Button>
+                  <Button type="button" variant="ghost" size="icon" onClick={() => insertText("**", "**")} title="Bold"><Bold className="h-4 w-4" /></Button>
+                  <Button type="button" variant="ghost" size="icon" onClick={() => insertText("*", "*")} title="Italic"><Italic className="h-4 w-4" /></Button>
+                  <Button type="button" variant="ghost" size="icon" onClick={() => insertText("[", "](url)")} title="Link"><LinkIcon className="h-4 w-4" /></Button>
+                  <Button type="button" variant="ghost" size="icon" onClick={() => insertText("- ")} title="Bullet List"><List className="h-4 w-4" /></Button>
+                  <Button type="button" variant="ghost" size="icon" onClick={() => insertText("1. ")} title="Numbered List"><ListOrdered className="h-4 w-4" /></Button>
+                  <Button type="button" variant="ghost" size="icon" onClick={() => insertText("> ")} title="Blockquote"><QuoteIcon className="h-4 w-4" /></Button>
+                  <Button type="button" variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} title="Upload Image"><ImageIcon className="h-4 w-4" /></Button>
+                  <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+                </div>
+                <Textarea
+                  id="content"
+                  {...rest}
+                  ref={(e) => {
+                    formRef(e);
+                    // @ts-ignore
+                    textareaRef.current = e;
+                  }}
+                  rows={20}
+                  className="font-mono border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                  placeholder="## Your Heading&#10;&#10;Your paragraph content..."
+                  disabled={isSaving || isDeleting}
+                />
+              </div>
                {errors.content && <p className="text-sm text-destructive mt-1">{errors.content.message}</p>}
             </div>
 

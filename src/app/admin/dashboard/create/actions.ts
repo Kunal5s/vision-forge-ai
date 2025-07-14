@@ -24,7 +24,6 @@ type GenerateArticleResult = {
   error?: string;
 };
 
-// Main server action
 export async function generateArticleAction(data: unknown): Promise<GenerateArticleResult> {
   const validatedFields = FormSchema.safeParse(data);
 
@@ -36,7 +35,6 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
   const { prompt, category, model, style, mood, wordCount, apiKey } = validatedFields.data;
 
   try {
-    // Correctly pass all parameters to the generation function
     const newArticle = await generateArticleForTopic({ 
       prompt, 
       category, 
@@ -51,10 +49,8 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
       throw new Error('AI failed to generate the article. The model might be busy, the topic too complex, or the response format incorrect. Please try a different model or topic, or check your API key credits.');
     }
     
-    // Save the article to file and optionally to GitHub
     await saveUpdatedArticles(category, [newArticle, ...(await getArticles(category))], `feat: ✨ Add new AI article "${newArticle.title}"`);
 
-    // Revalidate paths to show new content immediately
     revalidatePath('/');
     const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     revalidatePath(`/${categorySlug}`);
@@ -67,8 +63,6 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
     return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred.' };
   }
 }
-
-// --- Helper functions for saving ---
 
 async function getShaForFile(octokit: Octokit, owner: string, repo: string, path: string): Promise<string | undefined> {
     try {
@@ -89,37 +83,34 @@ async function getShaForFile(octokit: Octokit, owner: string, repo: string, path
     }
 }
 
-
 const EditSchema = z.object({
     title: z.string().min(1, "Title cannot be empty."),
     slug: z.string().min(1, "Slug cannot be empty."),
-    content: z.string(), // This will hold raw Markdown content from the textarea
+    content: z.string(), 
     originalSlug: z.string(),
     category: z.string(),
 });
 
-// Helper function to parse Markdown into article content blocks
 function parseMarkdownToContent(markdown: string): Article['articleContent'] {
-  const lines = markdown.split(/\n\s*\n/); // Split by blank lines
+  const lines = markdown.split(/\n\s*\n/); 
   return lines.map(line => {
     line = line.trim();
-    if (line.startsWith('###### ')) return { type: 'h6', content: line.substring(7) };
-    if (line.startsWith('##### ')) return { type: 'h5', content: line.substring(6) };
-    if (line.startsWith('#### ')) return { type: 'h4', content: line.substring(5) };
-    if (line.startsWith('### ')) return { type: 'h3', content: line.substring(4) };
+    if (line.startsWith('# ')) return { type: 'h1', content: line.substring(2) };
     if (line.startsWith('## ')) return { type: 'h2', content: line.substring(3) };
-    // Note: We don't support H1 from markdown to prevent conflicting with the main article title.
-    if (line.startsWith('![')) { // Handle images: ![alt](src)
+    if (line.startsWith('### ')) return { type: 'h3', content: line.substring(4) };
+    if (line.startsWith('#### ')) return { type: 'h4', content: line.substring(5) };
+    if (line.startsWith('##### ')) return { type: 'h5', content: line.substring(6) };
+    if (line.startsWith('###### ')) return { type: 'h6', content: line.substring(7) };
+    if (line.startsWith('![')) { 
         const match = /!\[(.*?)\]\((.*?)\)/.exec(line);
         if (match) {
             return { type: 'img', content: match[2], alt: match[1] };
         }
     }
     if (line.length > 0) return { type: 'p', content: line };
-    return { type: 'p', content: '' }; // Should be filtered out
-  }).filter(block => block.type && block.content.length > 0);
+    return { type: 'p', content: '' };
+  }).filter(block => (block.type && block.content.length > 0) || block.type === 'img');
 }
-
 
 export async function editArticleAction(data: unknown) {
   const validatedFields = EditSchema.safeParse(data);
@@ -136,7 +127,6 @@ export async function editArticleAction(data: unknown) {
       throw new Error("Article not found.");
     }
     
-    // Parse the markdown content back into the structured array
     const newArticleContent = parseMarkdownToContent(content);
 
     const updatedArticle = {
@@ -144,7 +134,7 @@ export async function editArticleAction(data: unknown) {
       title,
       slug,
       articleContent: newArticleContent,
-      publishedDate: new Date().toISOString(), // Update published date on edit
+      publishedDate: new Date().toISOString(), 
     };
 
     articles[articleIndex] = updatedArticle;
@@ -185,13 +175,11 @@ export async function deleteArticleAction(category: string, slug: string) {
     redirect('/admin/dashboard/edit');
 }
 
-// Universal function to save articles to GitHub
 export async function saveUpdatedArticles(category: string, articles: Article[], commitMessage: string) {
     const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const repoPath = `src/articles/${categorySlug}.json`;
     const fileContent = JSON.stringify(articles, null, 2);
 
-    // Correctly reference environment variables in uppercase
     const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = process.env;
     if (!GITHUB_TOKEN || !GITHUB_REPO_OWNER || !GITHUB_REPO_NAME) {
         console.error("GitHub credentials are not configured on the server. Cannot save article.");
@@ -209,7 +197,7 @@ export async function saveUpdatedArticles(category: string, articles: Article[],
             message: commitMessage,
             content: Buffer.from(fileContent).toString('base64'),
             sha: fileSha,
-            branch: 'main', // Explicitly specify the branch
+            branch: 'main', 
         });
         console.log(`Successfully committed changes for "${category}" to GitHub.`);
     } catch (error) {

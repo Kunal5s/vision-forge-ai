@@ -18,12 +18,11 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { categorySlugMap } from '@/lib/constants';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, FileSignature, ImageIcon } from 'lucide-react';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { ArrowLeft, Loader2, FileSignature, ImageIcon, Bold, Italic, Heading2, Link as LinkIcon, List, ListOrdered, Quote as QuoteIcon } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef, ChangeEvent } from 'react';
 import Link from 'next/link';
 import { createManualArticleAction } from './actions';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 
 const manualArticleSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters long.'),
@@ -40,8 +39,9 @@ export default function ManualPublishPage() {
   const [isPublishing, setIsPublishing] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-  const router = useRouter();
   const autosaveTimeout = useRef<NodeJS.Timeout | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const DRAFT_KEY = 'manual_article_draft';
 
   const { toast } = useToast();
@@ -133,6 +133,39 @@ export default function ManualPublishPage() {
     
     return () => clearTimeout(debounceTimer);
   }, [titleValue, categoryValue, fetchPreviewImage]);
+  
+  const insertText = (before: string, after: string = '') => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const selectedText = text.substring(start, end);
+    const newText = `${text.substring(0, start)}${before}${selectedText}${after}${text.substring(end)}`;
+    setValue('content', newText, { shouldValidate: true, shouldDirty: true });
+    
+    // Focus and set cursor position
+    setTimeout(() => {
+        textarea.focus();
+        textarea.selectionStart = start + before.length;
+        textarea.selectionEnd = start + before.length + selectedText.length;
+    }, 0);
+  };
+
+  const handleImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      toast({ title: "Uploading image...", description: "Please wait. This is a placeholder." });
+      // In a real app, you would upload to Firebase Storage and get a URL back.
+      // For this demo, we'll just use a placeholder URL.
+      // Simulating upload delay
+      await new Promise(res => setTimeout(res, 1000));
+      const imageUrl = `https://placehold.co/800x400.png`; // Replace with actual uploaded URL
+      
+      insertText(`![${file.name}](${imageUrl})`);
+      toast({ title: "Image Inserted!", description: "A placeholder image has been added to your content."});
+  };
 
   const onSubmit = async (data: ManualArticleFormData) => {
     setIsPublishing(true);
@@ -161,13 +194,11 @@ export default function ManualPublishPage() {
         title: 'Article Published Successfully!',
         description: `Your article "${result.title}" has been saved and is now live.`,
       });
-      // Clear the saved draft after successful submission
       try {
         localStorage.removeItem(DRAFT_KEY);
       } catch (e) {
         console.error("Failed to remove draft from localStorage", e);
       }
-      // Redirect is handled by the server action
     } else {
       toast({
         title: 'Error Publishing Article',
@@ -177,6 +208,8 @@ export default function ManualPublishPage() {
       setIsPublishing(false);
     }
   };
+  
+  const { ref: formRef, ...rest } = register('content');
 
   return (
     <main className="flex-grow container mx-auto py-12 px-4 bg-muted/20 min-h-screen">
@@ -195,7 +228,7 @@ export default function ManualPublishPage() {
                 <CardHeader>
                     <CardTitle className="text-2xl">Publish a New Article Manually</CardTitle>
                     <CardDescription>
-                    You have full control. Write your content using Markdown for formatting (e.g., `##` for a heading). Your work is auto-saved as a draft every 10 seconds.
+                    You have full control. Use the toolbar or Markdown for formatting. Your work is auto-saved as a draft every 10 seconds.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -241,17 +274,36 @@ export default function ManualPublishPage() {
                     </div>
 
                   <div>
-                    <Label htmlFor="content">Article Content (Markdown Supported)</Label>
-                    <Textarea
-                      id="content"
-                      {...register('content')}
-                      rows={20}
-                      className="font-mono"
-                      placeholder="## Your Main Heading&#10;&#10;Start writing your compelling article here. Use Markdown for headings, bold, and italic text."
-                      disabled={isPublishing}
-                    />
+                    <Label htmlFor="content">Article Content</Label>
+                    <div className="border rounded-md mt-2">
+                        <div className="p-2 border-b bg-muted/50 flex flex-wrap items-center gap-1">
+                            <Button type="button" variant="ghost" size="icon" onClick={() => insertText("## ")} title="Heading 2"><Heading2 className="h-4 w-4" /></Button>
+                            <Button type="button" variant="ghost" size="icon" onClick={() => insertText("**", "**")} title="Bold"><Bold className="h-4 w-4" /></Button>
+                            <Button type="button" variant="ghost" size="icon" onClick={() => insertText("*", "*")} title="Italic"><Italic className="h-4 w-4" /></Button>
+                            <Button type="button" variant="ghost" size="icon" onClick={() => insertText("[", "](url)")} title="Link"><LinkIcon className="h-4 w-4" /></Button>
+                            <Button type="button" variant="ghost" size="icon" onClick={() => insertText("\n- ")} title="Bullet List"><List className="h-4 w-4" /></Button>
+                            <Button type="button" variant="ghost" size="icon" onClick={() => insertText("\n1. ")} title="Numbered List"><ListOrdered className="h-4 w-4" /></Button>
+                            <Button type="button" variant="ghost" size="icon" onClick={() => insertText("\n> ")} title="Blockquote"><QuoteIcon className="h-4 w-4" /></Button>
+                            <Button type="button" variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} title="Upload Image"><ImageIcon className="h-4 w-4" /></Button>
+                            <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+                        </div>
+                        <Textarea
+                          id="content"
+                          {...rest}
+                           ref={(e) => {
+                                formRef(e);
+                                // @ts-ignore
+                                textareaRef.current = e;
+                            }}
+                          rows={20}
+                          className="font-mono border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-y"
+                          placeholder="## Your Main Heading&#10;&#10;Start writing your compelling article here. Use Markdown for headings, bold, and italic text."
+                          disabled={isPublishing}
+                        />
+                    </div>
                     {errors.content && <p className="text-sm text-destructive mt-1">{errors.content.message}</p>}
                   </div>
+
 
                   <div>
                     <Label htmlFor="keyTakeaways">Key Takeaways</Label>
@@ -301,8 +353,8 @@ export default function ManualPublishPage() {
                                   width={600}
                                   height={400}
                                   className="object-cover"
-                                  data-ai-hint="manual content"
-                                  key={previewImage} // Force re-render when image URL changes
+                                  data-ai-hint="manual content feature"
+                                  key={previewImage}
                                 />
                             ) : (
                                 <div className="text-center text-muted-foreground p-4">

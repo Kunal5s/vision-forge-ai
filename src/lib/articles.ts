@@ -6,48 +6,36 @@ import path from 'path';
 import { Octokit } from 'octokit';
 import { z } from 'zod';
 
-// Define the structure of an article part (e.g., h2, h3, p)
 const ArticleContentBlockSchema = z.object({
-  type: z.enum(['h2', 'h3', 'h4', 'h5', 'h6', 'p']),
-  content: z.string(), // Allow empty string for processing
+  type: z.enum(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'img']),
+  content: z.string(),
+  alt: z.string().optional(),
 });
 export type ArticleContentBlock = z.infer<typeof ArticleContentBlockSchema>;
 
-// Define the overall structure of a single article
 const ArticleSchema = z.object({
   image: z.string().url(),
   dataAiHint: z.string(),
   category: z.string(),
   title: z.string().min(1),
   slug: z.string().min(1),
-  publishedDate: z.string().datetime().optional(), // Make date optional for older articles
+  publishedDate: z.string().datetime().optional(),
   articleContent: z.array(ArticleContentBlockSchema),
   keyTakeaways: z.array(z.string()),
   conclusion: z.string().min(1),
 });
 export type Article = z.infer<typeof ArticleSchema>;
 
-// Define the structure of the JSON file (an array of articles)
 const ArticleFileSchema = z.array(ArticleSchema);
 
-// --- OPENROUTER & MODEL CONFIGURATION ---
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
 const MODELS = [
-    "qwen/qwen3-32b-chat",
-    "qwen/qwen3-30b-a3b",
-    "qwen/qwen3-8b",
-    "shisaai/shisa-v2-llama3-70b",
-    "tencent/hunyuan-a13b-chat",
-    "mistralai/mixtral-8x7b-instruct",
-    "nousresearch/nous-hermes-2-mixtral",
-    "cognitivecomputations/dolphin-2.9",
-    "openchat/openchat-3.5",
-    "huggingfaceh4/zephyr-7b-beta",
-    "huggingfaceh4/zephyr-7b-alpha",
-    "openrouter/chronos-hermes-13b",
-    "gryphe/mythomax-l2-13b",
-    "samantha/samantha-1.1"
+    "qwen/qwen-2-72b-instruct",
+    "meta-llama/llama-3-70b-instruct",
+    "mistralai/mixtral-8x22b-instruct",
+    "google/gemma-2-27b-it",
+    "anthropic/claude-3.5-sonnet",
 ];
 
 const JSON_PROMPT_STRUCTURE = `
@@ -62,7 +50,7 @@ const JSON_PROMPT_STRUCTURE = `
   - "title": A compelling, SEO-friendly title for the article (9-word topic).
   - "slug": A URL-friendly slug, generated from the title (e.g., 'the-new-realism-how-ai-is-redefining-photography').
   - "publishedDate": The current date and time in ISO 8601 format (e.g., "2024-07-29T12:00:00.000Z").
-  - "articleContent": An array of objects, where each object represents a block of content. The VERY FIRST object must be a 'p' type with a 200-word summary of the article. The rest should be a mix of heading types (H2, H3, H4, H5, H6) and 'p' (paragraph) types. The article must be well-structured with multiple H2 and H3 headings. Ensure a logical flow and in-depth exploration of the topic. Paragraphs should be short and easy to read.
+  - "articleContent": An array of objects. The VERY FIRST object must be a 'p' type with a 200-word summary of the article. Subsequent H2 headings should be followed by an image block (\`{ "type": "img", "content": "URL", "alt": "Description" }\`). Generate at least 5 images throughout the article. The total word count should be ~3500 words.
   - "keyTakeaways": An array of 4-5 strings, each being a key takeaway from the article.
   - "conclusion": A strong, summarizing conclusion for the article.
 
@@ -83,17 +71,18 @@ export async function getArticles(category: string): Promise<Article[]> {
     try {
         await fs.access(filePath);
         const fileContent = await fs.readFile(filePath, 'utf-8');
-        const articles: Article[] = JSON.parse(fileContent);
+        const articlesData = JSON.parse(fileContent);
 
-        if (Array.isArray(articles)) {
-            // Validate each article against the schema
-            const validatedArticles = articles.map(article => ArticleSchema.safeParse(article)).filter(result => result.success).map(result => (result as any).data);
-            articleCache.set(cacheKey, validatedArticles);
-            return validatedArticles;
+        const validatedArticles = ArticleFileSchema.safeParse(articlesData);
+
+        if (validatedArticles.success) {
+            articleCache.set(cacheKey, validatedArticles.data);
+            return validatedArticles.data;
+        } else {
+             console.warn(`Zod validation failed for ${categorySlug}.json.`, validatedArticles.error.flatten());
+             return [];
         }
 
-        console.warn(`Data in ${categorySlug}.json is not an array.`);
-        return [];
     } catch (error: any) {
         if (error.code === 'ENOENT') {
             console.log(`No local articles file found for "${category}". An empty array will be used.`);
@@ -106,7 +95,7 @@ export async function getArticles(category: string): Promise<Article[]> {
 
 
 // Function to generate a single article using a rotating list of models
-async function generateArticleForTopic(category: string, topic: string, retries = MODELS.length): Promise<Article | null> {
+async function generateArticleForTopic(category: string, topic: string): Promise<Article | null> {
     if (!OPENROUTER_API_KEY) {
         throw new Error("OPENROUTER_API_KEY environment variable is not set.");
     }
@@ -140,35 +129,27 @@ async function generateArticleForTopic(category: string, topic: string, retries 
             const data = await response.json();
             const jsonContent = data.choices[0].message.content;
             
-            // Add a publishedDate if the model didn't include it.
             const rawArticle = JSON.parse(jsonContent);
-            if (!rawArticle.publishedDate) {
-                rawArticle.publishedDate = new Date().toISOString();
-            }
-
-            // Validate the received JSON against our Zod schema
+            
             const parsedArticle = ArticleSchema.safeParse(rawArticle);
 
             if (parsedArticle.success) {
                 console.log(`  - Successfully generated and validated article: "${parsedArticle.data.title}"`);
-                return parsedArticle.data;
+                return { ...parsedArticle.data, publishedDate: new Date().toISOString() };
             } else {
                 console.error("  - Zod validation failed:", parsedArticle.error.flatten());
-                // The structure was wrong, so we treat it as a failure and try the next model.
                 throw new Error("Generated content failed Zod validation.");
             }
 
         } catch (error) {
             console.error(`  - Failed to generate article with model ${model}. Error:`, error);
             if (i === MODELS.length - 1) {
-                // This was the last model, so we fail permanently for this topic.
                 console.error(`All models failed for topic: "${topic}".`);
                 return null;
             }
-            // Otherwise, the loop will continue to the next model.
         }
     }
-    return null; // Should not be reached, but for type safety
+    return null;
 }
 
 async function getShaForFile(octokit: Octokit, owner: string, repo: string, path: string): Promise<string | undefined> {
@@ -184,13 +165,12 @@ async function getShaForFile(octokit: Octokit, owner: string, repo: string, path
         return data.sha;
     } catch (error: any) {
         if (error.status === 404) {
-            return undefined; // File doesn't exist
+            return undefined; 
         }
         throw error;
     }
 }
 
-// Main function to generate and save articles for a given category
 export async function generateAndSaveArticles(category: string, topics: string[]) {
     console.log(`Starting article generation process for category: ${category}`);
     
@@ -202,19 +182,16 @@ export async function generateAndSaveArticles(category: string, topics: string[]
         return;
     }
 
-    // Always read the existing articles to append, not overwrite.
     const existingArticles = await getArticles(category);
-    const updatedArticles = [...newArticles, ...existingArticles]; // Prepend the new articles
+    const updatedArticles = [...newArticles, ...existingArticles]; 
 
     const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const filePath = path.join(process.cwd(), 'src', 'articles', `${categorySlug}.json`);
     const fileContent = JSON.stringify(updatedArticles, null, 2);
 
-    // Save to local file system
     await fs.writeFile(filePath, fileContent, 'utf-8');
     console.log(`Successfully saved ${updatedArticles.length} articles locally to ${filePath}`);
     
-    // --- GitHub Integration ---
     const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = process.env;
 
     if (GITHUB_TOKEN && GITHUB_REPO_OWNER && GITHUB_REPO_NAME) {
@@ -239,6 +216,5 @@ export async function generateAndSaveArticles(category: string, topics: string[]
         console.log("GitHub credentials not set. Skipping commit.");
     }
 
-    // Invalidate local cache after update
     articleCache.delete(category);
 }
