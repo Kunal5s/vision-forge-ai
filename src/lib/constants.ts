@@ -105,6 +105,7 @@ export const WORD_COUNTS: StyleOption[] = [
     { label: 'Short (~1500 words)', value: '1500' },
     { label: 'Medium (~3000 words)', value: '3000' },
     { label: 'Long (~5000 words)', value: '5000' },
+    { label: 'Extra Long (~7000 words)', value: '7000' },
 ];
 
 

@@ -295,7 +295,7 @@ export default function ManualPublishPage() {
                                 // @ts-ignore
                                 textareaRef.current = e;
                             }}
-                          rows={20}
+                          rows={30}
                           className="font-mono border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-y"
                           placeholder="## Your Main Heading&#10;&#10;Start writing your compelling article here. Use Markdown for headings, bold, and italic text."
                           disabled={isPublishing}
