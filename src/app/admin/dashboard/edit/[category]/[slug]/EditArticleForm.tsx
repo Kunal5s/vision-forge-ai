@@ -50,6 +50,7 @@ const contentToMarkdown = (content: Article['articleContent']): string => {
             case 'h5': return `##### ${block.content}`;
             case 'h6': return `###### ${block.content}`;
             case 'p': return block.content;
+            case 'img': return `![${block.alt || ''}](${block.content})`;
             default: return block.content;
         }
     }).join('\n\n'); // Use double newline to separate blocks, which is standard in Markdown
