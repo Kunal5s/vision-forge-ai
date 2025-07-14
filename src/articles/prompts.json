@@ -1,7 +1,7 @@
 
 [
   {
-    "image": "https://image.pollinations.ai/prompt/a%20gritty%2C%20cyberpunk%20character%20with%20glowing%20cybernetic%20implants%20looking%20out%20over%20a%20dystopian%20city%2C%20cinematic%2C%20moody%20lighting?width=600&height=400&seed=202409055&nologo=true",
+    "image": "https://image.pollinations.ai/prompt/a%20gritty%2C%20cyberpunk%20character%20with%20glowing%20cybernetic%20implants%20looking%20out%20over%20a%20dystopian%20city%2C%20cinematic%2C%20moody%20lighting?width=600&height=400&seed=20240906&nologo=true",
     "dataAiHint": "cyberpunk city",
     "category": "Prompts",
     "title": "Make Cyberpunk Worlds Real: A Sci-Fi Prompt Guide",
@@ -200,85 +200,6 @@
       {
         "type": "p",
         "content": "Bring every element together in one master prompt:\n1. Open with your core vision (tone, tech flavor, emotional stakes)\n2. Layer in setting highlights (district details, sensory notes)\n3. Introduce protagonist and key conflict\n4. Sprinkle in dialogue snippets and social rituals\n5. Close with a scene hook that begs “What happens next?”\n\nTest your prompt by mentally “running” it: Can you picture every neon sign, every whispered codeword? If a detail trips you up, refine or remove it."
-      }
-    ],
-    "keyTakeaways": [
-      "Anchor characters’ desires to world conflicts for emotional resonance.",
-      "Use context to drop slang—no glossary needed.",
-      "Blueprint scenes with sensory hooks and clear pacing beats.",
-      "Weave contrast—harsh dystopia and small sparks of warmth.",
-      "Maintain a consistent, human voice through every twist and neon glow.",
-      "Craft one comprehensive prompt that integrates theme, setting, characters, and stakes."
-    ],
-    "conclusion": "Crafting a living, breathing cyberpunk world is more than sketching neon signs and shadowy alleys—it’s about weaving together vivid senses, driven characters, and the pulsing tensions between power and resistance. You’ve learned how to anchor your core vision, build immersive districts, and give every augmentation and data network a purpose that reflects deeper human motivations. By layering in the clash of corporate overreach and underground defiance, seasoning each scene with smell, texture, and sound, you transform mere description into an experience readers can feel in their bones. Remember, your narrative voice is the thread that binds it all. Whether you lean into gritty realism or moments of rebel warmth, keep your tone consistent and your stakes personal. Use the scene blueprints as launchpads for dramatic set pieces, employ authentic dialogue to ground even the most futuristic slang, and continually test your master prompt until every neon flicker and whispered codeword snaps into place. Above all, trust your imagination. This guide has handed you the tools—the structure, sensory tricks, and storytelling beats—to make cyberpunk worlds that pulse with life. Now it’s your turn: refine, experiment, and let your unique spark ignite the neon night. Your readers are waiting to step into the glow."
-  },
-  {
-    "image": "https://image.pollinations.ai/prompt/a%20dystopian%20cyberpunk%20cityscape%20at%20night%2C%20with%20towering%20skyscrapers%2C%20glowing%20neon%20signs%2C%20and%20flying%20vehicles%2C%20digital%20painting?width=600&height=400&seed=20240905&nologo=true",
-    "dataAiHint": "cyberpunk cityscape",
-    "category": "Prompts",
-    "title": "A Creator's Guide to Building a Cyberpunk World",
-    "slug": "guide-to-building-cyberpunk-world",
-    "publishedDate": "2024-09-05T10:00:00.000Z",
-    "articleContent": [
-      {
-        "type": "h2",
-        "content": "Protagonists in Crisis: Structuring Your Core Characters"
-      },
-      {
-        "type": "p",
-        "content": "Conflict blooms when personal stakes mirror city-wide struggles. Your protagonist’s shattered relationships and moral doubts should reflect the megacorp’s tyranny or the net’s seductive pull. By layering inner turmoil (self-worth, fear of obsolescence) atop external challenges (data assassins, collapsing infrastructure), you create characters readers root for—no matter how many implants they carry."
-      },
-      {
-        "type": "h2",
-        "content": "Dialogue in Code: Crafting Raw, Authentic Speech"
-      },
-      {
-        "type": "p",
-        "content": "Dialogue is where cyberpunk slang and real emotion collide. Toss in world-specific terms, but ground them in context so readers never feel lost. Use bullet-style insights:\n- Drop a one-liner like “Jack your creds here” then show a bouncer scanning retinas\n- Let a hacker slip “ghost-drop” into a warning, and let another character ask, “What’s a ghost-drop?”\n- Break up heavy tech talk with beats—footsteps, cockpit beeps, a flicker of holo-glow. Aim for rhythm: short exchanges that feel improvised, like street poets riffing on code. Keep contractions, fragments, and pauses—you want speech that breathes."
-      },
-      {
-        "type": "img",
-        "content": "https://image.pollinations.ai/prompt/A%20hacker%20in%20a%20darkly%20lit%20room%2C%20holographic%20data%20streams%20reflecting%20in%20their%20cybernetic%20eyes%2C%20intense%20focus%20on%20their%20face%2C%20cinematic?width=800&height=450&seed=202409051&nologo=true",
-        "alt": "Cyberpunk hacker processing holographic data in a neon-lit room"
-      },
-      {
-        "type": "h2",
-        "content": "Scene Blueprints: Prompting Action and Atmosphere"
-      },
-      {
-        "type": "p",
-        "content": "A scene blueprint is your roadmap: where characters start, how tension builds, and when the neon rain begins to pour. Bullet points for a chase sequence:\n- Trigger: sirens wail as corporate sentinels march in line\n- Sensory hook: oil-slick streets reflect pink holo-ads in puddles\n- Rising pace: boots splash faster, drone headlights carve through smoke\n- Climax: a flicker of power loss, street lamps dying, escape into a hidden underpass. Short paragraphs let readers catch their breath before the next surge of action. Always tie back to your world’s rules—do cyber-reefs block escape? Can your hero hack the streetlights mid-chase?"
-      },
-      {
-        "type": "img",
-        "content": "https://image.pollinations.ai/prompt/An%20intense%20chase%20sequence%20down%20a%20rain-slicked%20cyberpunk%20alley%2C%20neon%20reflections%20in%20puddles%2C%20sense%20of%20motion%20and%20urgency%2C%20dynamic%20action?width=800&height=450&seed=202409052&nologo=true",
-        "alt": "High-speed chase through a rainy neon cyberpunk alleyway"
-      },
-      {
-        "type": "h2",
-        "content": "Mood & Tone: Balancing Dystopia, Hope, and Humanity"
-      },
-      {
-        "type": "p",
-        "content": "Cyberpunk thrives in gray areas. Even amid brutality, sprinkle moments of warmth—an augmented child’s laugh, a barter for stolen soup, an old song echoing in a ruined plaza.\n• Use contrast: describe the harsh glare of sniper drones, then the soft hum of a street musician’s synth-riff.\n• Anchor readers with recurring “safe spaces”: a hidden bar, a rooftop garden where bioluminescent flowers glow.\n• Maintain a consistent narrative voice—whether it’s cynical, weary, or quietly optimistic—so your shorts feel deliberate, not jarring."
-      },
-      {
-        "type": "img",
-        "content": "https://image.pollinations.ai/prompt/A%20quiet%20moment%20in%20a%20cyberpunk%20world%2C%20a%20character%20tending%20to%20a%20glowing%20bioluminescent%20plant%20on%20a%20rooftop%20garden%20overlooking%20the%20dystopian%20city?width=800&height=450&seed=202409053&nologo=true",
-        "alt": "A moment of peace with glowing plants on a cyberpunk rooftop"
-      },
-      {
-        "type": "h2",
-        "content": "The Ultimate Prompt: Weaving It All into a Living World"
-      },
-      {
-        "type": "p",
-        "content": "Bring every element together in one master prompt:\n1. Open with your core vision (tone, tech flavor, emotional stakes)\n2. Layer in setting highlights (district details, sensory notes)\n3. Introduce protagonist and key conflict\n4. Sprinkle in dialogue snippets and social rituals\n5. Close with a scene hook that begs “What happens next?”\n\nTest your prompt by mentally “running” it: Can you picture every neon sign, every whispered codeword? If a detail trips you up, refine or remove it."
-      },
-      {
-        "type": "img",
-        "content": "https://image.pollinations.ai/prompt/A%20complex%20holographic%20blueprint%20of%20a%20cyberpunk%20world%2C%20showing%20interconnected%20layers%20of%20setting%2C%20characters%2C%20and%20plot%20points%2C%20digital%20art?width=800&height=450&seed=202409054&nologo=true",
-        "alt": "Intricate holographic blueprint mapping out a cyberpunk narrative"
       }
     ],
     "keyTakeaways": [
