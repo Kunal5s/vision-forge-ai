@@ -87,7 +87,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
             case 'h6':
                 return <h6 key={index} className="text-base font-semibold mt-6 mb-2" dangerouslySetInnerHTML={{ __html: processedContent }} />;
             case 'p':
-                 return <p key={index} className="text-lg mb-6 leading-relaxed text-foreground/90" dangerouslySetInnerHTML={{ __html: processedContent }} />;
+                 return <p key={index} className="text-23px mb-6 leading-relaxed text-foreground/90" dangerouslySetInnerHTML={{ __html: processedContent }} />;
             case 'img':
                  return (
                     <div key={index} className="my-8">
@@ -102,7 +102,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
                     </div>
                   );
             default:
-                return <p key={index} className="text-lg" dangerouslySetInnerHTML={{ __html: processedContent }} />;
+                return <p key={index} className="text-23px" dangerouslySetInnerHTML={{ __html: processedContent }} />;
         }
     };
     
@@ -155,7 +155,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
                     {article.conclusion && (
                          <div className="space-y-6 mt-12">
                             <h2 className="text-3xl font-bold border-b pb-2">Conclusion</h2>
-                            <p className="text-lg text-foreground/90 leading-relaxed" dangerouslySetInnerHTML={{ __html: parseMarkdown(article.conclusion) }} />
+                            <p className="text-23px text-foreground/90 leading-relaxed" dangerouslySetInnerHTML={{ __html: parseMarkdown(article.conclusion) }} />
                         </div>
                     )}
                 </article>
@@ -170,7 +170,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <ol className="space-y-2 list-decimal">
+                            <ol className="space-y-2 list-inside list-decimal">
                                 {toc.map((item, index) => (
                                     <li key={item.slug} className="ml-4">
                                         <a 

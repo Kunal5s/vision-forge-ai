@@ -72,7 +72,7 @@ export function ArticlesSection({ articles, category }: ArticlesSectionProps) {
                                     {article.title}
                                 </Link>
                             </CardTitle>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm text-foreground">
                                 {createSnippet(article.articleContent)}
                             </p>
                         </CardContent>
