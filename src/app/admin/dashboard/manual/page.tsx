@@ -23,6 +23,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { createManualArticleAction } from './actions';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 const manualArticleSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters long.'),
@@ -38,6 +39,7 @@ type ManualArticleFormData = z.infer<typeof manualArticleSchema>;
 export default function ManualPublishPage() {
   const [isPublishing, setIsPublishing] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const router = useRouter();
 
   const { toast } = useToast();
   const { register, handleSubmit, control, formState: { errors }, watch, setValue } = useForm<ManualArticleFormData>({
@@ -88,7 +90,7 @@ export default function ManualPublishPage() {
     setIsPublishing(true);
     toast({
       title: 'Publishing Your Article...',
-      description: `Saving "${data.title}" to the ${data.category} category.`,
+      description: `Saving "${data.title}" to GitHub. Please wait.`,
     });
 
     if (!previewImage) {
@@ -111,14 +113,15 @@ export default function ManualPublishPage() {
         title: 'Article Published Successfully!',
         description: `Your article "${result.title}" has been saved and is now live.`,
       });
+      // Redirect is handled by the server action
     } else {
       toast({
         title: 'Error Publishing Article',
         description: result.error,
         variant: 'destructive',
       });
+      setIsPublishing(false);
     }
-    setIsPublishing(false);
   };
 
   return (

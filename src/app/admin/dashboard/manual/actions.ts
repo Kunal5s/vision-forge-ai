@@ -5,6 +5,7 @@ import { getArticles, Article, ArticleContentBlock } from '@/lib/articles';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { saveUpdatedArticles } from '../create/actions'; // Import the universal save function
+import { redirect } from 'next/navigation';
 
 const ManualArticleSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters long.'),
@@ -78,10 +79,14 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
     revalidatePath(`/${categorySlug}`);
     revalidatePath(`/${categorySlug}/${newArticle.slug}`);
     
+    // Return success but let redirection handle the UI change
     return { success: true, title: newArticle.title };
 
   } catch (error) {
     console.error('Error in createManualArticleAction:', error);
     return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred.' };
   }
+  
+  // Redirect after successful save and revalidation
+  redirect('/admin/dashboard/edit');
 }
