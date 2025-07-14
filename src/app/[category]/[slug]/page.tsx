@@ -8,6 +8,7 @@ import { CheckCircle, List } from 'lucide-react';
 import type { Metadata } from 'next';
 import { categorySlugMap } from '@/lib/constants';
 import type { Article } from '@/lib/articles';
+import { cn } from '@/lib/utils';
 
 // Function to find the article
 async function getArticleData(categorySlug: string, articleSlug: string): Promise<Article | undefined> {
@@ -86,7 +87,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
             case 'h6':
                 return <h6 key={index} className="text-base font-semibold mt-6 mb-2" dangerouslySetInnerHTML={{ __html: processedContent }} />;
             case 'p':
-                 return <p key={index} className="mb-6 leading-relaxed text-foreground/90" dangerouslySetInnerHTML={{ __html: processedContent }} />;
+                 return <p key={index} className="text-lg mb-6 leading-relaxed text-foreground/90" dangerouslySetInnerHTML={{ __html: processedContent }} />;
             case 'img':
                  return (
                     <div key={index} className="my-8">
@@ -101,7 +102,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
                     </div>
                   );
             default:
-                return <p key={index} dangerouslySetInnerHTML={{ __html: processedContent }} />;
+                return <p key={index} className="text-lg" dangerouslySetInnerHTML={{ __html: processedContent }} />;
         }
     };
     
@@ -161,7 +162,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
 
                 {/* Table of Contents (Sticky Sidebar) */}
                 <aside className="lg:col-span-3 lg:sticky lg:top-24 h-fit">
-                    <Card className="bg-background/80 backdrop-blur-sm">
+                    <Card className={cn("bg-background/80 backdrop-blur-sm animate-breathing-glow")}>
                         <CardHeader>
                             <CardTitle className="text-xl flex items-center gap-2">
                                 <List className="h-5 w-5" />
@@ -169,17 +170,17 @@ export default async function ArticlePage({ params }: { params: { category: stri
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <ul className="space-y-2">
-                                {toc.map(item => (
-                                    <li key={item.slug}>
+                            <ol className="space-y-2 list-decimal list-inside">
+                                {toc.map((item, index) => (
+                                    <li key={item.slug} className="ml-2">
                                         <a 
                                             href={`#${item.slug}`} 
-                                            className="text-sm text-muted-foreground hover:text-primary transition-colors block"
+                                            className="text-sm text-foreground hover:text-primary hover:underline transition-colors"
                                             dangerouslySetInnerHTML={{ __html: parseMarkdown(item.title) }}
                                         />
                                     </li>
                                 ))}
-                            </ul>
+                            </ol>
                         </CardContent>
                     </Card>
                 </aside>
