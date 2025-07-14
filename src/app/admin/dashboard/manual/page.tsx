@@ -45,6 +45,7 @@ export default function ManualPublishPage() {
   });
 
   const categoryValue = watch('category');
+  const titleValue = watch('title');
 
   const generateSlug = (title: string) => {
     return title
@@ -60,11 +61,11 @@ export default function ManualPublishPage() {
     setValue('slug', generateSlug(newTitle));
   }, [setValue]);
   
-  const fetchPreviewImage = useCallback(async (category: string) => {
-    if (!category) return;
+  const fetchPreviewImage = useCallback(async (topic: string, category: string) => {
+    if (!topic || !category) return;
     try {
         const seed = Math.floor(Math.random() * 1_000_000);
-        const finalPrompt = `A creative, artistic representation for an article about ${category}, digital art`;
+        const finalPrompt = `${topic}, in the style of ${category}, digital art`;
         const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=600&height=400&seed=${seed}&nologo=true`;
         setPreviewImage(pollinationsUrl);
     } catch (e) {
@@ -74,10 +75,14 @@ export default function ManualPublishPage() {
   }, []);
 
   useEffect(() => {
-    if (categoryValue) {
-      fetchPreviewImage(categoryValue);
-    }
-  }, [categoryValue, fetchPreviewImage]);
+    const debounceTimer = setTimeout(() => {
+        if (titleValue && categoryValue) {
+            fetchPreviewImage(titleValue, categoryValue);
+        }
+    }, 1000); // Wait 1 second after user stops typing
+    
+    return () => clearTimeout(debounceTimer);
+  }, [titleValue, categoryValue, fetchPreviewImage]);
 
   const onSubmit = async (data: ManualArticleFormData) => {
     setIsPublishing(true);
@@ -240,7 +245,7 @@ export default function ManualPublishPage() {
                             ) : (
                                 <div className="text-center text-muted-foreground p-4">
                                   <ImageIcon className="mx-auto h-10 w-10" />
-                                  <p className="text-sm mt-2">Select a category to generate a preview image.</p>
+                                  <p className="text-sm mt-2">Enter a title and select a category to generate a preview image.</p>
                                 </div>
                             )}
                         </div>
