@@ -170,9 +170,9 @@ export default async function ArticlePage({ params }: { params: { category: stri
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <ol className="space-y-2 list-decimal list-inside">
+                            <ol className="space-y-2 list-decimal">
                                 {toc.map((item, index) => (
-                                    <li key={item.slug} className="ml-2">
+                                    <li key={item.slug} className="ml-4">
                                         <a 
                                             href={`#${item.slug}`} 
                                             className="text-sm text-foreground hover:text-primary hover:underline transition-colors"
