@@ -28,10 +28,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ArrowLeft, Loader2, Wand2, KeyRound } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { generateArticleAction } from './actions';
+import { generateTopicsAction, generateArticleAction } from './actions';
+import { Textarea } from '@/components/ui/textarea';
 
-const FormSchema = z.object({
-  topic: z.string().min(1, 'Please enter a topic.'),
+const TopicFormSchema = z.object({
+  prompt: z.string().min(1, 'Please enter a prompt for topic ideas.'),
+});
+
+const ArticleFormSchema = z.object({
+  topic: z.string().min(1, 'Please select a topic.'),
   category: z.string().min(1, 'Please select a category.'),
   provider: z.enum(['openrouter', 'sambanova']),
   model: z.string().min(1, 'Please select an AI model.'),
@@ -43,14 +48,24 @@ const FormSchema = z.object({
   sambaNovaApiKey: z.string().optional(),
 });
 
-type FormData = z.infer<typeof FormSchema>;
+type TopicFormData = z.infer<typeof TopicFormSchema>;
+type ArticleFormData = z.infer<typeof ArticleFormSchema>;
 
 export default function CreateArticlePage() {
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [stage, setStage] = useState<'topic' | 'article'>('topic');
+  const [isTopicLoading, setIsTopicLoading] = useState(false);
+  const [isArticleLoading, setIsArticleLoading] = useState(false);
+  const [generatedTopics, setGeneratedTopics] = useState<string[]>([]);
+  
   const { toast } = useToast();
 
-  const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm<FormData>({
-    resolver: zodResolver(FormSchema),
+  const topicForm = useForm<TopicFormData>({
+    resolver: zodResolver(TopicFormSchema),
+    defaultValues: { prompt: '' },
+  });
+
+  const articleForm = useForm<ArticleFormData>({
+    resolver: zodResolver(ArticleFormSchema),
     defaultValues: {
       provider: 'openrouter',
       model: OPENROUTER_MODELS[0],
@@ -63,18 +78,35 @@ export default function CreateArticlePage() {
     },
   });
 
-  const provider = watch('provider');
+  const provider = articleForm.watch('provider');
 
   useEffect(() => {
     if (provider === 'openrouter') {
-      setValue('model', OPENROUTER_MODELS[0]);
+      articleForm.setValue('model', OPENROUTER_MODELS[0]);
     } else {
-      setValue('model', SAMBANOVA_MODELS[0]);
+      articleForm.setValue('model', SAMBANOVA_MODELS[0]);
     }
-  }, [provider, setValue]);
+  }, [provider, articleForm]);
 
-  const handleArticleGeneration = async (data: FormData) => {
-    setIsGenerating(true);
+  const handleTopicGeneration = async (data: TopicFormData) => {
+    setIsTopicLoading(true);
+    const result = await generateTopicsAction(data);
+    if (result.success && result.topics) {
+      setGeneratedTopics(result.topics);
+      setStage('article');
+      articleForm.setValue('topic', result.topics[0]); // Pre-select the first topic
+    } else {
+      toast({
+        title: 'Error Generating Topics',
+        description: result.error,
+        variant: 'destructive',
+      });
+    }
+    setIsTopicLoading(false);
+  };
+  
+  const handleArticleGeneration = async (data: ArticleFormData) => {
+    setIsArticleLoading(true);
     toast({
       title: 'Starting AI Article Generation...',
       description: `Using provider: ${data.provider}, model: ${data.model}. This might take a minute or two.`,
@@ -91,9 +123,11 @@ export default function CreateArticlePage() {
         duration: 9000,
       });
     }
-    setIsGenerating(false);
+    setIsArticleLoading(false);
   };
-  
+
+  const isGenerating = isTopicLoading || isArticleLoading;
+
   return (
     <main className="flex-grow container mx-auto py-12 px-4 bg-muted/20 min-h-screen">
       <div className="mb-8">
@@ -109,78 +143,99 @@ export default function CreateArticlePage() {
         <CardHeader>
           <CardTitle className="text-2xl">Create a New Article with AI</CardTitle>
           <CardDescription>
-            Choose a topic, category, and AI model. The AI will generate a complete, SEO-friendly article for you.
+            {stage === 'topic' 
+              ? 'Start by entering a core idea. The AI will suggest several compelling article titles for you to choose from.'
+              : 'Now, choose a title and configure the settings. The AI will generate a complete, SEO-friendly article for you.'}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form
-            onSubmit={handleSubmit(handleArticleGeneration)}
-            className="space-y-6"
-          >
-            <div>
-              <Label htmlFor="topic">Article Prompt / Topic</Label>
-              <Input
-                id="topic"
-                placeholder="e.g., The Ultimate Guide to AI-Powered Photography"
-                {...register('topic')}
-                disabled={isGenerating}
-              />
-              {errors.topic && <p className="text-sm text-destructive mt-1">{errors.topic.message}</p>}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Controller name="category" control={control} render={({ field }) => ( <div className="space-y-2"> <Label>Category</Label> <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isGenerating}> <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger> <SelectContent>{Object.entries(categorySlugMap).map(([slug, name]) => (<SelectItem key={slug} value={name}>{name}</SelectItem>))}</SelectContent> </Select> {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>} </div> )} />
-              
-              <Controller name="provider" control={control} render={({ field }) => ( <div className="space-y-2"> <Label>AI Provider</Label> <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isGenerating}> <SelectTrigger><SelectValue placeholder="Select a provider" /></SelectTrigger> <SelectContent><SelectItem value="openrouter">OpenRouter</SelectItem><SelectItem value="sambanova">SambaNova</SelectItem></SelectContent> </Select> {errors.provider && <p className="text-sm text-destructive mt-1">{errors.provider.message}</p>} </div> )} />
-              
-              <Controller name="model" control={control} render={({ field }) => ( <div className="space-y-2"> <Label>AI Model</Label> <Select onValueChange={field.onChange} value={field.value} disabled={isGenerating}> <SelectTrigger><SelectValue placeholder="Select an AI model" /></SelectTrigger> <SelectContent>{(provider === 'openrouter' ? OPENROUTER_MODELS : SAMBANOVA_MODELS).map(model => (<SelectItem key={model} value={model}>{model}</SelectItem>))}</SelectContent> </Select> {errors.model && <p className="text-sm text-destructive mt-1">{errors.model.message}</p>} </div> )} />
-              <Controller name="style" control={control} render={({ field }) => ( <div className="space-y-2"> <Label>Writing Style</Label> <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isGenerating}> <SelectTrigger><SelectValue placeholder="Select a style" /></SelectTrigger> <SelectContent>{WRITING_STYLES.map(opt => (<SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>))}</SelectContent> </Select> {errors.style && <p className="text-sm text-destructive mt-1">{errors.style.message}</p>} </div> )} />
-              <Controller name="mood" control={control} render={({ field }) => ( <div className="space-y-2"> <Label>Article Mood</Label> <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isGenerating}> <SelectTrigger><SelectValue placeholder="Select a mood" /></SelectTrigger> <SelectContent>{ARTICLE_MOODS.map(opt => (<SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>))}</SelectContent> </Select> {errors.mood && <p className="text-sm text-destructive mt-1">{errors.mood.message}</p>} </div> )} />
-              <Controller name="wordCount" control={control} render={({ field }) => ( <div className="space-y-2"> <Label>Word Count</Label> <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isGenerating}> <SelectTrigger><SelectValue placeholder="Select a word count" /></SelectTrigger> <SelectContent>{WORD_COUNTS.map(opt => (<SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>))}</SelectContent> </Select> {errors.wordCount && <p className="text-sm text-destructive mt-1">{errors.wordCount.message}</p>} </div> )} />
-              <Controller name="imageCount" control={control} render={({ field }) => ( <div className="space-y-2"> <Label>Number of Images</Label> <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isGenerating}> <SelectTrigger><SelectValue placeholder="Select image count" /></SelectTrigger> <SelectContent>{IMAGE_COUNTS.map(opt => (<SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>))}</SelectContent> </Select> {errors.imageCount && <p className="text-sm text-destructive mt-1">{errors.imageCount.message}</p>} </div> )} />
-            </div>
-
-            <div className="space-y-4 border-t pt-6">
-              <div className="space-y-2">
-                <Label htmlFor="openRouterApiKey">OpenRouter API Key (Optional)</Label>
-                 <div className="relative flex items-center">
-                    <KeyRound className="absolute left-3 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      id="openRouterApiKey"
-                      type="password"
-                      placeholder="sk-or-v1-..."
-                      {...register('openRouterApiKey')}
-                      className="pl-10"
-                      disabled={isGenerating}
-                    />
-                </div>
-                <p className="text-xs text-muted-foreground">If you provide a key here, it will be used instead of the one on the server for OpenRouter.</p>
+          {stage === 'topic' ? (
+            <form onSubmit={topicForm.handleSubmit(handleTopicGeneration)} className="space-y-6">
+              <div>
+                <Label htmlFor="prompt">Core Idea or Prompt</Label>
+                <Textarea
+                  id="prompt"
+                  placeholder="e.g., The future of AI in photography, how to make money with NFTs..."
+                  {...topicForm.register('prompt')}
+                  rows={4}
+                  disabled={isTopicLoading}
+                />
+                {topicForm.formState.errors.prompt && <p className="text-sm text-destructive mt-1">{topicForm.formState.errors.prompt.message}</p>}
               </div>
-
-               <div className="space-y-2">
-                <Label htmlFor="sambaNovaApiKey">SambaNova API Key (Optional)</Label>
-                 <div className="relative flex items-center">
-                    <KeyRound className="absolute left-3 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      id="sambaNovaApiKey"
-                      type="password"
-                      placeholder="Your SambaNova API Key"
-                      {...register('sambaNovaApiKey')}
-                      className="pl-10"
-                      disabled={isGenerating}
-                    />
-                </div>
-                <p className="text-xs text-muted-foreground">If you provide a key here, it will be used instead of the one on the server for SambaNova.</p>
-              </div>
-            </div>
-
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-medium mb-2">Actions</h3>
-              <Button type="submit" className="w-full" disabled={isGenerating}>
-                {isGenerating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating Article...</> : <><Wand2 className="mr-2 h-4 w-4" /> Generate Article with AI</>}
+              <Button type="submit" className="w-full" disabled={isTopicLoading}>
+                {isTopicLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating Topics...</> : <><Wand2 className="mr-2 h-4 w-4" /> Generate Topics</>}
               </Button>
-            </div>
-          </form>
+            </form>
+          ) : (
+            <form onSubmit={articleForm.handleSubmit(handleArticleGeneration)} className="space-y-6">
+              <div>
+                <Label htmlFor="topic">Choose Your Article Topic</Label>
+                 <Controller name="topic" control={articleForm.control} render={({ field }) => (
+                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isGenerating}>
+                    <SelectTrigger><SelectValue placeholder="Select a generated topic" /></SelectTrigger>
+                    <SelectContent>
+                      {generatedTopics.map((topic, index) => (
+                        <SelectItem key={index} value={topic}>{topic}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                 )} />
+                {articleForm.formState.errors.topic && <p className="text-sm text-destructive mt-1">{articleForm.formState.errors.topic.message}</p>}
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Controller name="category" control={articleForm.control} render={({ field }) => ( <div className="space-y-2"> <Label>Category</Label> <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isGenerating}> <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger> <SelectContent>{Object.entries(categorySlugMap).map(([slug, name]) => (<SelectItem key={slug} value={name}>{name}</SelectItem>))}</SelectContent> </Select> {articleForm.formState.errors.category && <p className="text-sm text-destructive mt-1">{articleForm.formState.errors.category.message}</p>} </div> )} />
+                <Controller name="provider" control={articleForm.control} render={({ field }) => ( <div className="space-y-2"> <Label>AI Provider</Label> <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isGenerating}> <SelectTrigger><SelectValue placeholder="Select a provider" /></SelectTrigger> <SelectContent><SelectItem value="openrouter">OpenRouter</SelectItem><SelectItem value="sambanova">SambaNova</SelectItem></SelectContent> </Select> {articleForm.formState.errors.provider && <p className="text-sm text-destructive mt-1">{articleForm.formState.errors.provider.message}</p>} </div> )} />
+                <Controller name="model" control={articleForm.control} render={({ field }) => ( <div className="space-y-2"> <Label>AI Model</Label> <Select onValueChange={field.onChange} value={field.value} disabled={isGenerating}> <SelectTrigger><SelectValue placeholder="Select an AI model" /></SelectTrigger> <SelectContent>{(provider === 'openrouter' ? OPENROUTER_MODELS : SAMBANOVA_MODELS).map(model => (<SelectItem key={model} value={model}>{model}</SelectItem>))}</SelectContent> </Select> {articleForm.formState.errors.model && <p className="text-sm text-destructive mt-1">{articleForm.formState.errors.model.message}</p>} </div> )} />
+                <Controller name="style" control={articleForm.control} render={({ field }) => ( <div className="space-y-2"> <Label>Writing Style</Label> <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isGenerating}> <SelectTrigger><SelectValue placeholder="Select a style" /></SelectTrigger> <SelectContent>{WRITING_STYLES.map(opt => (<SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>))}</SelectContent> </Select> {articleForm.formState.errors.style && <p className="text-sm text-destructive mt-1">{articleForm.formState.errors.style.message}</p>} </div> )} />
+                <Controller name="mood" control={articleForm.control} render={({ field }) => ( <div className="space-y-2"> <Label>Article Mood</Label> <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isGenerating}> <SelectTrigger><SelectValue placeholder="Select a mood" /></SelectTrigger> <SelectContent>{ARTICLE_MOODS.map(opt => (<SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>))}</SelectContent> </Select> {articleForm.formState.errors.mood && <p className="text-sm text-destructive mt-1">{articleForm.formState.errors.mood.message}</p>} </div> )} />
+                <Controller name="wordCount" control={articleForm.control} render={({ field }) => ( <div className="space-y-2"> <Label>Word Count</Label> <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isGenerating}> <SelectTrigger><SelectValue placeholder="Select a word count" /></SelectTrigger> <SelectContent>{WORD_COUNTS.map(opt => (<SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>))}</SelectContent> </Select> {articleForm.formState.errors.wordCount && <p className="text-sm text-destructive mt-1">{articleForm.formState.errors.wordCount.message}</p>} </div> )} />
+                <Controller name="imageCount" control={articleForm.control} render={({ field }) => ( <div className="space-y-2"> <Label>Number of Images</Label> <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isGenerating}> <SelectTrigger><SelectValue placeholder="Select image count" /></SelectTrigger> <SelectContent>{IMAGE_COUNTS.map(opt => (<SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>))}</SelectContent> </Select> {articleForm.formState.errors.imageCount && <p className="text-sm text-destructive mt-1">{articleForm.formState.errors.imageCount.message}</p>} </div> )} />
+              </div>
+
+              <div className="space-y-4 border-t pt-6">
+                <div className="space-y-2">
+                  <Label htmlFor="openRouterApiKey">OpenRouter API Key (Optional)</Label>
+                  <div className="relative flex items-center">
+                      <KeyRound className="absolute left-3 h-5 w-5 text-muted-foreground" />
+                      <Input
+                        id="openRouterApiKey"
+                        type="password"
+                        placeholder="sk-or-v1-..."
+                        {...articleForm.register('openRouterApiKey')}
+                        className="pl-10"
+                        disabled={isGenerating}
+                      />
+                  </div>
+                  <p className="text-xs text-muted-foreground">If you provide a key here, it will be used instead of the one on the server for OpenRouter.</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sambaNovaApiKey">SambaNova API Key (Optional)</Label>
+                  <div className="relative flex items-center">
+                      <KeyRound className="absolute left-3 h-5 w-5 text-muted-foreground" />
+                      <Input
+                        id="sambaNovaApiKey"
+                        type="password"
+                        placeholder="Your SambaNova API Key"
+                        {...articleForm.register('sambaNovaApiKey')}
+                        className="pl-10"
+                        disabled={isGenerating}
+                      />
+                  </div>
+                  <p className="text-xs text-muted-foreground">If you provide a key here, it will be used instead of the one on the server for SambaNova.</p>
+                </div>
+              </div>
+
+              <div className="border-t pt-6 flex flex-col sm:flex-row items-center gap-4">
+                 <Button type="button" variant="secondary" onClick={() => { setStage('topic'); setGeneratedTopics([]); }}>
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
+                </Button>
+                <Button type="submit" className="w-full" disabled={isArticleLoading}>
+                  {isArticleLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating Article...</> : <><Wand2 className="mr-2 h-4 w-4" /> Generate Article with AI</>}
+                </Button>
+              </div>
+            </form>
+          )}
         </CardContent>
       </Card>
     </main>

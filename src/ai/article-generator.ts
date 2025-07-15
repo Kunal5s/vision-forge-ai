@@ -23,7 +23,7 @@ const ArticleOutputSchema = z.object({
 });
 
 const getJsonPromptStructureForArticle = (wordCount: string, style: string, mood: string, imageCount: string) => `
-  You are an expert content creator and SEO specialist. Your task is to generate a high-quality, comprehensive, and engaging article about a given topic.
+  You are an expert content creator and SEO specialist. Your task is to generate a high-quality, comprehensive, and engaging article about a given topic. The article structure must include H1, H2, H3, H4, H5 and H6 subheadings where appropriate for a well-organized and deep article.
 
   **CRITICAL INSTRUCTIONS:**
   - The article's total length MUST be approximately **${wordCount} words**.
