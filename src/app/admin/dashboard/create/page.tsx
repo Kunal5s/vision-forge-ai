@@ -79,6 +79,50 @@ export default function CreateArticlePage() {
   });
 
   const provider = articleForm.watch('provider');
+  const openRouterApiKey = articleForm.watch('openRouterApiKey');
+  const sambaNovaApiKey = articleForm.watch('sambaNovaApiKey');
+
+  // Load API keys from localStorage on initial render
+  useEffect(() => {
+    try {
+        const savedOpenRouterKey = localStorage.getItem('openRouterApiKey');
+        const savedSambaNovaKey = localStorage.getItem('sambaNovaApiKey');
+        if (savedOpenRouterKey) {
+            articleForm.setValue('openRouterApiKey', savedOpenRouterKey);
+        }
+        if (savedSambaNovaKey) {
+            articleForm.setValue('sambaNovaApiKey', savedSambaNovaKey);
+        }
+    } catch (error) {
+        console.error("Could not access localStorage. API keys will not be persisted.", error);
+    }
+  }, [articleForm]);
+
+  // Save API keys to localStorage whenever they change
+  useEffect(() => {
+      try {
+        if (openRouterApiKey) {
+            localStorage.setItem('openRouterApiKey', openRouterApiKey);
+        } else {
+            localStorage.removeItem('openRouterApiKey');
+        }
+      } catch (error) {
+        // Silently fail if localStorage is not available
+      }
+  }, [openRouterApiKey]);
+
+  useEffect(() => {
+    try {
+        if (sambaNovaApiKey) {
+            localStorage.setItem('sambaNovaApiKey', sambaNovaApiKey);
+        } else {
+            localStorage.removeItem('sambaNovaApiKey');
+        }
+    } catch (error) {
+        // Silently fail if localStorage is not available
+    }
+  }, [sambaNovaApiKey]);
+
 
   useEffect(() => {
     if (provider === 'openrouter') {
@@ -201,13 +245,13 @@ export default function CreateArticlePage() {
                       <Input
                         id="openRouterApiKey"
                         type="password"
-                        placeholder="sk-or-v1-..."
+                        placeholder="sk-or-v1-... (leave blank to use server key)"
                         {...articleForm.register('openRouterApiKey')}
                         className="pl-10"
                         disabled={isGenerating}
                       />
                   </div>
-                  <p className="text-xs text-muted-foreground">If you provide a key here, it will be used instead of the one on the server for OpenRouter.</p>
+                  <p className="text-xs text-muted-foreground">This key is saved in your browser and will be used instead of the server key.</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="sambaNovaApiKey">SambaNova API Key (Optional)</Label>
@@ -216,13 +260,13 @@ export default function CreateArticlePage() {
                       <Input
                         id="sambaNovaApiKey"
                         type="password"
-                        placeholder="Your SambaNova API Key"
+                        placeholder="Your SambaNova API Key (leave blank to use server key)"
                         {...articleForm.register('sambaNovaApiKey')}
                         className="pl-10"
                         disabled={isGenerating}
                       />
                   </div>
-                  <p className="text-xs text-muted-foreground">If you provide a key here, it will be used instead of the one on the server for SambaNova.</p>
+                  <p className="text-xs text-muted-foreground">This key is saved in your browser and will be used instead of the server key.</p>
                 </div>
               </div>
 
