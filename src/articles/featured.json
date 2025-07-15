@@ -1,4 +1,3 @@
-
 [
   {
     "image": "https://image.pollinations.ai/prompt/a%20photorealistic%20lion%20with%20a%20golden%20mane%2C%20looking%20majestic%20and%20wise%2C%20cinematic%20lighting?width=600&height=400&seed=12345&nologo=true",
@@ -105,7 +104,7 @@
       },
       {
         "type": "h2",
-        "content": "The Uncanny Valley and How to Escape It"
+        "content": "The Uncanny Valley and How to Escape It key"
       },
       {
         "type": "p",
@@ -130,7 +129,8 @@
       "Incorporate principles of composition like the 'rule of thirds' to create more dynamic and visually appealing images.",
       "Embrace imperfection. Adding subtle flaws like 'film grain' can make an image feel more authentic and escape the 'uncanny valley'."
     ],
-    "conclusion": "The new realism powered by AI is not about replacing photographers; it's about expanding the definition of photography itself. It's a collaboration between human intent and artificial intelligence, a dance between the specific and the stochastic. By learning to speak the language of light, lens, and composition, we can guide these powerful models to create not just images, but worlds. We can capture moments that never happened, photograph subjects that never existed, and visit places that live only in our dreams. The camera of the imagination has arrived, and its potential is as limitless as the prompts we can conceive."
+    "conclusion": "The new realism powered by AI is not about replacing photographers; it's about expanding the definition of photography itself. It's a collaboration between human intent and artificial intelligence, a dance between the specific and the stochastic. By learning to speak the language of light, lens, and composition, we can guide these powerful models to create not just images, but worlds. We can capture moments that never happened, photograph subjects that never existed, and visit places that live only in our dreams. The camera of the imagination has arrived, and its potential is as limitless as the prompts we can conceive.",
+    "publishedDate": "2025-07-15T04:39:52.115Z"
   },
   {
     "image": "https://image.pollinations.ai/prompt/A%20glowing%20brain%20with%20intricate%20neural%20pathways%2C%20representing%20the%20art%20of%20crafting%20AI%20prompts%2C%20high%20detail%2C%20vibrant%2C%20professional%20photo?width=600&height=400&seed=278190380&nologo=true",
