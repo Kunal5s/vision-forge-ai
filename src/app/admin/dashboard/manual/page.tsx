@@ -7,7 +7,6 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -18,14 +17,12 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { categorySlugMap } from '@/lib/constants';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, FileSignature, ImageIcon, Bold, Italic, Heading2, Link as LinkIcon, List, ListOrdered, Quote as QuoteIcon, PlusCircle, Trash2 } from 'lucide-react';
-import { useState, useEffect, useCallback, useRef, ChangeEvent } from 'react';
+import { ArrowLeft, Loader2, FileSignature, PlusCircle, Trash2, ImageIcon } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { createManualArticleAction } from './actions';
 import Image from 'next/image';
-import { cn } from '@/lib/utils';
-import ReactMarkdown from 'react-markdown';
-
+import { RichTextEditor } from '@/components/vision-forge/RichTextEditor';
 
 const manualArticleSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters long.'),
@@ -43,15 +40,14 @@ export default function ManualPublishPage() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const autosaveTimeout = useRef<NodeJS.Timeout | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const DRAFT_KEY = 'manual_article_draft';
 
   const { toast } = useToast();
   const { register, handleSubmit, control, formState: { errors }, watch, setValue, getValues } = useForm<ManualArticleFormData>({
     resolver: zodResolver(manualArticleSchema),
     defaultValues: {
-      keyTakeaways: [{ value: '' }, { value: '' }, { value: '' }, { value: '' }, { value: '' }],
+      content: '',
+      keyTakeaways: [{ value: '' }, { value: '' }, { value: '' }],
     }
   });
 
@@ -62,7 +58,6 @@ export default function ManualPublishPage() {
 
   const categoryValue = watch('category');
   const titleValue = watch('title');
-  const contentValue = watch('content');
   const formValues = watch();
 
   // Load draft from localStorage on initial render
@@ -146,38 +141,6 @@ export default function ManualPublishPage() {
     return () => clearTimeout(debounceTimer);
   }, [titleValue, categoryValue, fetchPreviewImage]);
   
-  const insertText = (before: string, after: string = '') => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = textarea.value;
-    const selectedText = text.substring(start, end);
-    const newText = `${text.substring(0, start)}${before}${selectedText || ''}${after}${text.substring(end)}`;
-    setValue('content', newText, { shouldValidate: true, shouldDirty: true });
-    
-    // Focus and set cursor position
-    setTimeout(() => {
-        textarea.focus();
-        textarea.selectionStart = start + before.length;
-        textarea.selectionEnd = start + before.length + selectedText.length;
-    }, 0);
-  };
-
-  const handleImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (!file) return;
-
-      toast({ title: "Uploading image...", description: "Please wait. This is a placeholder." });
-      // In a real app, you would upload to Firebase Storage and get a URL back.
-      // For this demo, we'll just use a placeholder URL.
-      // Simulating upload delay
-      await new Promise(res => setTimeout(res, 1000));
-      const imageUrl = `https://placehold.co/800x400.png`; // Replace with actual uploaded URL
-      
-      insertText(`\n\n![${file.name}](${imageUrl})\n\n`);
-      toast({ title: "Image Inserted!", description: "A placeholder image has been added to your content."});
-  };
 
   const onSubmit = async (data: ManualArticleFormData) => {
     setIsPublishing(true);
@@ -217,11 +180,10 @@ export default function ManualPublishPage() {
         description: result.error,
         variant: 'destructive',
       });
-      setIsPublishing(false);
     }
+    setIsPublishing(false);
   };
   
-  const { ref: formRef, ...rest } = register('content');
 
   return (
     <main className="flex-grow container mx-auto py-12 px-4 bg-muted/20 min-h-screen">
@@ -240,7 +202,7 @@ export default function ManualPublishPage() {
                 <CardHeader>
                     <CardTitle className="text-2xl">Publish a New Article Manually</CardTitle>
                     <CardDescription>
-                    You have full control. Use the toolbar or Markdown for formatting. Your work is auto-saved as a draft every 10 seconds.
+                    You have full control. Use the toolbar for live formatting. Your work is auto-saved as a draft every 10 seconds.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -286,44 +248,18 @@ export default function ManualPublishPage() {
                     </div>
 
                   <div>
-                    <Label htmlFor="content">Article Content (Live Preview)</Label>
-                    <div className="border rounded-md mt-2">
-                      <div className="p-2 border-b bg-muted/50 flex flex-wrap items-center gap-1">
-                          <Button type="button" variant="ghost" size="icon" onClick={() => insertText("## ", "")} title="Heading 2"><Heading2 className="h-4 w-4" /></Button>
-                          <Button type="button" variant="ghost" size="icon" onClick={() => insertText("**", "**")} title="Bold"><Bold className="h-4 w-4" /></Button>
-                          <Button type="button" variant="ghost" size="icon" onClick={() => insertText("*", "*")} title="Italic"><Italic className="h-4 w-4" /></Button>
-                          <Button type="button" variant="ghost" size="icon" onClick={() => insertText("[", "](url)")} title="Link"><LinkIcon className="h-4 w-4" /></Button>
-                          <Button type="button" variant="ghost" size="icon" onClick={() => insertText("\n- ", "")} title="Bullet List"><List className="h-4 w-4" /></Button>
-                          <Button type="button" variant="ghost" size="icon" onClick={() => insertText("\n1. ", "")} title="Numbered List"><ListOrdered className="h-4 w-4" /></Button>
-                          <Button type="button" variant="ghost" size="icon" onClick={() => insertText("\n> ", "")} title="Blockquote"><QuoteIcon className="h-4 w-4" /></Button>
-                          <Button type="button" variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} title="Upload Image"><ImageIcon className="h-4 w-4" /></Button>
-                          <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2">
-                        <Textarea
-                          id="content"
-                          {...rest}
-                           ref={(e) => {
-                                formRef(e);
-                                // @ts-ignore
-                                textareaRef.current = e;
-                            }}
-                          rows={25}
-                          className="font-mono border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-y md:border-r"
-                          placeholder="## Your Main Heading&#10;&#10;Start writing your compelling article here. Use Markdown for headings, bold, and italic text."
-                          disabled={isPublishing}
-                        />
-                         <div className="prose prose-sm dark:prose-invert max-w-none p-4 bg-background overflow-y-auto h-[532px] hidden md:block">
-                           <ReactMarkdown
-                             components={{
-                               img: ({node, ...props}) => <Image {...props} width={400} height={200} className="rounded-md" data-ai-hint="in-article photography" unoptimized />
-                             }}
-                           >
-                            {contentValue || "Your formatted content will appear here..."}
-                           </ReactMarkdown>
-                         </div>
-                      </div>
-                    </div>
+                    <Label htmlFor="content">Article Content</Label>
+                    <Controller
+                        name="content"
+                        control={control}
+                        render={({ field }) => (
+                            <RichTextEditor 
+                                value={field.value} 
+                                onChange={field.onChange}
+                                disabled={isPublishing}
+                            />
+                        )}
+                    />
                     {errors.content && <p className="text-sm text-destructive mt-1">{errors.content.message}</p>}
                   </div>
 
@@ -350,7 +286,7 @@ export default function ManualPublishPage() {
                       size="sm"
                       className="mt-2"
                       onClick={() => append({ value: "" })}
-                       disabled={isPublishing || fields.length >= 5}
+                       disabled={isPublishing || fields.length >= 6}
                     >
                       <PlusCircle className="mr-2 h-4 w-4" />
                       Add Takeaway
@@ -359,12 +295,17 @@ export default function ManualPublishPage() {
 
                   <div>
                     <Label htmlFor="conclusion">Conclusion</Label>
-                    <Textarea
-                      id="conclusion"
-                      {...register('conclusion')}
-                      rows={4}
-                      placeholder="Summarize the main points of your article and provide a concluding thought."
-                      disabled={isPublishing}
+                     <Controller
+                        name="conclusion"
+                        control={control}
+                        render={({ field }) => (
+                             <RichTextEditor 
+                                value={field.value} 
+                                onChange={field.onChange}
+                                disabled={isPublishing}
+                                simpleToolbar={true}
+                            />
+                        )}
                     />
                     {errors.conclusion && <p className="text-sm text-destructive mt-1">{errors.conclusion.message}</p>}
                   </div>

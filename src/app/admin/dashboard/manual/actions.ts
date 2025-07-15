@@ -6,31 +6,36 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { saveUpdatedArticles } from '../create/actions'; // Import the universal save function
 import { redirect } from 'next/navigation';
+import parse, { Element } from 'html-react-parser';
 
-// Helper function to parse Markdown into article content blocks
-function parseMarkdownToContent(markdown: string): Article['articleContent'] {
-  const lines = markdown.split(/\n\s*(?:\n)/); // Split by one or more blank lines
-  return lines.map(line => {
-    line = line.trim();
-    if (line.startsWith('## ')) return { type: 'h2', content: line.substring(3) };
-    if (line.startsWith('### ')) return { type: 'h3', content: line.substring(4) };
-    if (line.startsWith('#### ')) return { type: 'h4', content: line.substring(5) };
-    if (line.startsWith('##### ')) return { type: 'h5', content: line.substring(6) };
-    if (line.startsWith('###### ')) return { type: 'h6', content: line.substring(7) };
-    if (line.startsWith('# ')) return { type: 'h1', content: line.substring(2) }; // Keep h1 as a fallback
-    if (line.startsWith('![')) { // Handle images: ![alt](src)
-        const match = /!\[(.*?)\]\((.*?)\)/.exec(line);
-        if (match) {
-            return { type: 'img', content: match[2], alt: match[1] };
+// Helper function to parse HTML into article content blocks
+function parseHtmlToContent(html: string): Article['articleContent'] {
+  const content: Article['articleContent'] = [];
+  const parsed = parse(html, {
+    replace: (domNode) => {
+      if (domNode instanceof Element && domNode.attribs) {
+        const { tagName, children } = domNode;
+        const textContent = (children[0] as any)?.data || '';
+        
+        if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p'].includes(tagName)) {
+          // Simplistic text extraction; a more robust solution would recursively get text.
+           const extractText = (nodes: any[]): string => {
+                return nodes.map(node => {
+                    if (node.type === 'text') return node.data;
+                    if (node.children) return extractText(node.children);
+                    return '';
+                }).join('');
+            };
+          content.push({ type: tagName as any, content: extractText(domNode.children) });
+        } else if (tagName === 'img' && domNode.attribs.src) {
+           content.push({ type: 'img', content: domNode.attribs.src, alt: domNode.attribs.alt || '' });
         }
+      }
     }
-    // Handle lists (unordered and ordered) by splitting lines inside a block
-    if (line.startsWith('- ') || line.startsWith('* ') || /^\d+\.\s/.test(line)) {
-        return { type: 'p', content: line }; // For simplicity, we'll treat lists as paragraphs with markdown
-    }
-    if (line.length > 0) return { type: 'p', content: line };
-    return { type: 'p', content: '' }; // Should be filtered out
-  }).filter(block => (block.type && block.content.length > 0) || (block.type === 'img'));
+  });
+
+  // Filter out empty paragraphs that might result from parsing
+  return content.filter(block => block.content.trim() !== '' || block.type === 'img');
 }
 
 
@@ -63,7 +68,7 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
   const { title, slug, category, content, keyTakeaways, conclusion, image } = validatedFields.data;
 
   try {
-    const articleContent = parseMarkdownToContent(content);
+    const articleContent = parseHtmlToContent(content);
     
     // Create a new article object
     const newArticle: Article = {

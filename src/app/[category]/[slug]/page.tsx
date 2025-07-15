@@ -62,9 +62,9 @@ export default async function ArticlePage({ params }: { params: { category: stri
 
     // This function will parse basic markdown-like syntax for bold and italic.
     const parseMarkdown = (text: string) => {
-        return text
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
-            .replace(/\*(.*?)\*/g, '<em>$1</em>');           // Italic
+        if (typeof text !== 'string') return '';
+        // This is a simplified parser. For full HTML support, we let dangerouslySetInnerHTML handle it.
+        return text;
     }
 
     // Component to render individual content blocks, with dangerouslySetInnerHTML
@@ -73,9 +73,12 @@ export default async function ArticlePage({ params }: { params: { category: stri
             ? block.content.replace(/<[^>]*>?/gm, '').toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '')
             : undefined;
         
-        const processedContent = parseMarkdown(block.content);
+        // Since content can be HTML now, we pass it directly
+        const processedContent = block.content;
 
         switch (block.type) {
+            case 'h1':
+                return <h1 key={index} className="text-4xl font-bold mt-12 mb-4" dangerouslySetInnerHTML={{ __html: processedContent }} />;
             case 'h2':
                 return <h2 key={index} id={slug} className="text-3xl font-bold mt-12 mb-4 border-b pb-2 scroll-mt-24" dangerouslySetInnerHTML={{ __html: processedContent }} />;
             case 'h3':
@@ -87,7 +90,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
             case 'h6':
                 return <h6 key={index} className="text-base font-semibold mt-6 mb-2" dangerouslySetInnerHTML={{ __html: processedContent }} />;
             case 'p':
-                 return <p key={index} className="text-23px mb-6 leading-relaxed text-foreground/90" dangerouslySetInnerHTML={{ __html: processedContent }} />;
+                 return <p key={index} className="mb-6 leading-relaxed" dangerouslySetInnerHTML={{ __html: processedContent }} />;
             case 'img':
                  return (
                     <div key={index} className="my-8">
@@ -102,7 +105,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
                     </div>
                   );
             default:
-                return <p key={index} className="text-23px" dangerouslySetInnerHTML={{ __html: processedContent }} />;
+                return <div key={index} dangerouslySetInnerHTML={{ __html: processedContent }} />;
         }
     };
     
@@ -155,7 +158,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
                     {article.conclusion && (
                          <div className="space-y-6 mt-12">
                             <h2 className="text-3xl font-bold border-b pb-2">Conclusion</h2>
-                            <p className="text-23px text-foreground/90 leading-relaxed" dangerouslySetInnerHTML={{ __html: parseMarkdown(article.conclusion) }} />
+                            <div className="prose prose-lg dark:prose-invert max-w-none text-foreground/90 leading-relaxed" dangerouslySetInnerHTML={{ __html: parseMarkdown(article.conclusion) }} />
                         </div>
                     )}
                 </article>
