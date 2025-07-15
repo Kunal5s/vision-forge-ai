@@ -124,9 +124,15 @@ export const WORD_COUNTS: StyleOption[] = [
 ];
 
 export const IMAGE_COUNTS: StyleOption[] = [
+    { label: '1 Image', value: '1' },
+    { label: '2 Images', value: '2' },
     { label: '3 Images', value: '3' },
+    { label: '4 Images', value: '4' },
     { label: '5 Images', value: '5' },
+    { label: '6 Images', value: '6' },
     { label: '7 Images', value: '7' },
+    { label: '8 Images', value: '8' },
+    { label: '9 Images', value: '9' },
     { label: '10 Images', value: '10' },
 ];
 
