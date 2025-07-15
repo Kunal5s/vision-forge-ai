@@ -65,12 +65,13 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
   }
 }
 
-async function getShaForFile(octokit: Octokit, owner: string, repo: string, path: string): Promise<string | undefined> {
+async function getShaForFile(octokit: Octokit, owner: string, repo: string, path: string, branch: string): Promise<string | undefined> {
     try {
         const { data } = await octokit.rest.repos.getContent({
             owner,
             repo,
             path,
+            ref: branch,
         });
         if (Array.isArray(data) || !('sha' in data)) {
             return undefined;
@@ -176,6 +177,31 @@ export async function deleteArticleAction(category: string, slug: string) {
     redirect('/admin/dashboard/edit');
 }
 
+async function getPrimaryBranch(octokit: Octokit, owner: string, repo: string): Promise<string> {
+    // 1. Check for GITHUB_BRANCH environment variable first for manual override
+    if (process.env.GITHUB_BRANCH) {
+        return process.env.GITHUB_BRANCH;
+    }
+    // 2. Try 'main' first, as it's the modern default
+    try {
+        await octokit.rest.repos.getBranch({ owner, repo, branch: 'main' });
+        return 'main';
+    } catch (error: any) {
+        // If 'main' doesn't exist (404), fall back to 'master'
+        if (error.status === 404) {
+            try {
+                await octokit.rest.repos.getBranch({ owner, repo, branch: 'master' });
+                return 'master';
+            } catch (masterError) {
+                 console.error("Could not find 'main' or 'master' branch.", masterError);
+                 throw new Error("Could not determine primary branch. Neither 'main' nor 'master' found.");
+            }
+        }
+        // Rethrow other errors
+        throw error;
+    }
+}
+
 export async function saveUpdatedArticles(category: string, articles: Article[], commitMessage: string) {
     const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const repoPath = `src/articles/${categorySlug}.json`;
@@ -189,7 +215,8 @@ export async function saveUpdatedArticles(category: string, articles: Article[],
 
     try {
         const octokit = new Octokit({ auth: GITHUB_TOKEN });
-        const fileSha = await getShaForFile(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME, repoPath);
+        const branch = await getPrimaryBranch(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME);
+        const fileSha = await getShaForFile(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME, repoPath, branch);
         
         await octokit.rest.repos.createOrUpdateFileContents({
             owner: GITHUB_REPO_OWNER,
@@ -198,9 +225,9 @@ export async function saveUpdatedArticles(category: string, articles: Article[],
             message: commitMessage,
             content: Buffer.from(fileContent).toString('base64'),
             sha: fileSha,
-            branch: 'main', 
+            branch: branch,
         });
-        console.log(`Successfully committed changes for "${category}" to GitHub.`);
+        console.log(`Successfully committed changes for "${category}" to GitHub on branch "${branch}".`);
     } catch (error) {
         console.error("Failed to commit changes to GitHub.", error);
         throw new Error("Failed to save article to GitHub. Please check your credentials (token, owner, repo name) and repository permissions.");
