@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import {
   categorySlugMap,
   OPENROUTER_MODELS,
+  SAMBANOVA_MODELS,
   WRITING_STYLES,
   ARTICLE_MOODS,
   WORD_COUNTS,
@@ -25,20 +26,21 @@ import {
 } from '@/lib/constants';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Loader2, Wand2, KeyRound } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { generateArticleAction } from './actions';
 
-// This is the new, combined schema for the simplified form
 const FormSchema = z.object({
   topic: z.string().min(1, 'Please enter a topic.'),
   category: z.string().min(1, 'Please select a category.'),
+  provider: z.enum(['openrouter', 'sambanova']),
   model: z.string().min(1, 'Please select an AI model.'),
   style: z.string().min(1, 'Please select a writing style.'),
   mood: z.string().min(1, 'Please select an article mood.'),
   wordCount: z.string().min(1, 'Please select a word count.'),
   imageCount: z.string().min(1, 'Please select the number of images.'),
   openRouterApiKey: z.string().optional(),
+  sambaNovaApiKey: z.string().optional(),
 });
 
 type FormData = z.infer<typeof FormSchema>;
@@ -47,23 +49,35 @@ export default function CreateArticlePage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
-  const { register, handleSubmit, control, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
+      provider: 'openrouter',
       model: OPENROUTER_MODELS[0],
       style: WRITING_STYLES[0].value,
       mood: ARTICLE_MOODS[0].value,
       wordCount: WORD_COUNTS[1].value,
       imageCount: IMAGE_COUNTS[1].value,
       openRouterApiKey: '',
+      sambaNovaApiKey: '',
     },
   });
+
+  const provider = watch('provider');
+
+  useEffect(() => {
+    if (provider === 'openrouter') {
+      setValue('model', OPENROUTER_MODELS[0]);
+    } else {
+      setValue('model', SAMBANOVA_MODELS[0]);
+    }
+  }, [provider, setValue]);
 
   const handleArticleGeneration = async (data: FormData) => {
     setIsGenerating(true);
     toast({
       title: 'Starting AI Article Generation...',
-      description: `Using model: ${data.model}. This might take a minute or two.`,
+      description: `Using provider: ${data.provider}, model: ${data.model}. This might take a minute or two.`,
     });
 
     const result = await generateArticleAction(data);
@@ -116,7 +130,10 @@ export default function CreateArticlePage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Controller name="category" control={control} render={({ field }) => ( <div className="space-y-2"> <Label>Category</Label> <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isGenerating}> <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger> <SelectContent>{Object.entries(categorySlugMap).map(([slug, name]) => (<SelectItem key={slug} value={name}>{name}</SelectItem>))}</SelectContent> </Select> {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>} </div> )} />
-              <Controller name="model" control={control} render={({ field }) => ( <div className="space-y-2"> <Label>AI Model</Label> <Select onValueChange={field.onChange} value={field.value} disabled={isGenerating}> <SelectTrigger><SelectValue placeholder="Select an AI model" /></SelectTrigger> <SelectContent>{OPENROUTER_MODELS.map(model => (<SelectItem key={model} value={model}>{model}</SelectItem>))}</SelectContent> </Select> {errors.model && <p className="text-sm text-destructive mt-1">{errors.model.message}</p>} </div> )} />
+              
+              <Controller name="provider" control={control} render={({ field }) => ( <div className="space-y-2"> <Label>AI Provider</Label> <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isGenerating}> <SelectTrigger><SelectValue placeholder="Select a provider" /></SelectTrigger> <SelectContent><SelectItem value="openrouter">OpenRouter</SelectItem><SelectItem value="sambanova">SambaNova</SelectItem></SelectContent> </Select> {errors.provider && <p className="text-sm text-destructive mt-1">{errors.provider.message}</p>} </div> )} />
+              
+              <Controller name="model" control={control} render={({ field }) => ( <div className="space-y-2"> <Label>AI Model</Label> <Select onValueChange={field.onChange} value={field.value} disabled={isGenerating}> <SelectTrigger><SelectValue placeholder="Select an AI model" /></SelectTrigger> <SelectContent>{(provider === 'openrouter' ? OPENROUTER_MODELS : SAMBANOVA_MODELS).map(model => (<SelectItem key={model} value={model}>{model}</SelectItem>))}</SelectContent> </Select> {errors.model && <p className="text-sm text-destructive mt-1">{errors.model.message}</p>} </div> )} />
               <Controller name="style" control={control} render={({ field }) => ( <div className="space-y-2"> <Label>Writing Style</Label> <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isGenerating}> <SelectTrigger><SelectValue placeholder="Select a style" /></SelectTrigger> <SelectContent>{WRITING_STYLES.map(opt => (<SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>))}</SelectContent> </Select> {errors.style && <p className="text-sm text-destructive mt-1">{errors.style.message}</p>} </div> )} />
               <Controller name="mood" control={control} render={({ field }) => ( <div className="space-y-2"> <Label>Article Mood</Label> <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isGenerating}> <SelectTrigger><SelectValue placeholder="Select a mood" /></SelectTrigger> <SelectContent>{ARTICLE_MOODS.map(opt => (<SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>))}</SelectContent> </Select> {errors.mood && <p className="text-sm text-destructive mt-1">{errors.mood.message}</p>} </div> )} />
               <Controller name="wordCount" control={control} render={({ field }) => ( <div className="space-y-2"> <Label>Word Count</Label> <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isGenerating}> <SelectTrigger><SelectValue placeholder="Select a word count" /></SelectTrigger> <SelectContent>{WORD_COUNTS.map(opt => (<SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>))}</SelectContent> </Select> {errors.wordCount && <p className="text-sm text-destructive mt-1">{errors.wordCount.message}</p>} </div> )} />
@@ -137,7 +154,23 @@ export default function CreateArticlePage() {
                       disabled={isGenerating}
                     />
                 </div>
-                <p className="text-xs text-muted-foreground">If you provide a key here, it will be used instead of the one on the server. This key is not stored.</p>
+                <p className="text-xs text-muted-foreground">If you provide a key here, it will be used instead of the one on the server for OpenRouter.</p>
+              </div>
+
+               <div className="space-y-2">
+                <Label htmlFor="sambaNovaApiKey">SambaNova API Key (Optional)</Label>
+                 <div className="relative flex items-center">
+                    <KeyRound className="absolute left-3 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      id="sambaNovaApiKey"
+                      type="password"
+                      placeholder="Your SambaNova API Key"
+                      {...register('sambaNovaApiKey')}
+                      className="pl-10"
+                      disabled={isGenerating}
+                    />
+                </div>
+                <p className="text-xs text-muted-foreground">If you provide a key here, it will be used instead of the one on the server for SambaNova.</p>
               </div>
             </div>
 

@@ -74,7 +74,6 @@ export const QUALITY_OPTIONS: StyleOption[] = [
 export const OPENROUTER_MODELS: string[] = [
     "google/gemma-2-9b-it",
     "qwen/qwen3-32b-chat",
-    "qwen/qwen3-30b-a3b",
     "qwen/qwen3-8b",
     "shisaai/shisa-v2-llama3-70b",
     "tencent/hunyuan-a13b-chat",
@@ -86,6 +85,19 @@ export const OPENROUTER_MODELS: string[] = [
     "meta-llama/llama-3-8b-instruct",
     "openrouter/chronos-hermes-13b",
 ];
+
+export const SAMBANOVA_MODELS: string[] = [
+    "Llama-4-Maverick-17B-128E-Instruct",
+    "DeepSeek-R1-0528",
+    "DeepSeek-R1-Distill-Llama-70B",
+    "Qwen3-32B",
+    "DeepSeek-V3-0324",
+    "Llama-3.3-Swallow-70B-Instruct-v0.4",
+    "Meta-Llama-3.1-8B-Instruct",
+    "Meta-Llama-3.3-70B-Instruct",
+    "Whisper-Large-v3"
+];
+
 
 export const WRITING_STYLES: StyleOption[] = [
     { label: 'SEO Optimized', value: 'SEO Optimized and informative' },

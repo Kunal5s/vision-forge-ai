@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import type { Article } from '@/lib/articles';
-import { OPENROUTER_MODELS } from '@/lib/constants';
+import { OPENROUTER_MODELS, SAMBANOVA_MODELS } from '@/lib/constants';
 import { OpenAI } from 'openai';
 
 // Define the overall structure of a single article
@@ -49,40 +49,62 @@ const getJsonPromptStructureForArticle = (wordCount: string, style: string, mood
 interface ArticleGenerationParams {
     topic: string;
     category: string;
-    provider: 'openrouter'; // Simplified to only support openrouter
+    provider: 'openrouter' | 'sambanova';
     model: string;
     style: string;
     mood: string;
     wordCount: string;
     imageCount: string;
-    apiKey?: string;
+    openRouterApiKey?: string;
+    sambaNovaApiKey?: string;
 }
 
-const getOpenRouterApiClient = (apiKey?: string) => {
-    const api_key_to_use = apiKey || process.env.OPENROUTER_API_KEY;
-    if (!api_key_to_use) {
-        throw new Error("OpenRouter API key is not set. Please provide one in the form or set the OPENROUTER_API_KEY environment variable.");
+const getApiClient = (provider: 'openrouter' | 'sambanova', openRouterApiKey?: string, sambaNovaApiKey?: string) => {
+    if (provider === 'openrouter') {
+        const apiKey = openRouterApiKey || process.env.OPENROUTER_API_KEY;
+        if (!apiKey) {
+            throw new Error("OpenRouter API key is not set. Please provide one or set the OPENROUTER_API_KEY environment variable.");
+        }
+        return new OpenAI({
+            apiKey: apiKey,
+            baseURL: "https://openrouter.ai/api/v1",
+        });
+    } else { // provider === 'sambanova'
+        const apiKey = sambaNovaApiKey || process.env.SAMBANOVA_API_KEY;
+        if (!apiKey) {
+            throw new Error("SambaNova API key is not set. Please provide one or set the SAMBANOVA_API_KEY environment variable.");
+        }
+        return new OpenAI({
+            apiKey: apiKey,
+            baseURL: "https://api.cloud.sambanova.ai/v1",
+        });
     }
-    return new OpenAI({
-        apiKey: api_key_to_use,
-        baseURL: "https://openrouter.ai/api/v1",
-    });
 };
 
 export async function generateArticleForTopic(params: ArticleGenerationParams): Promise<Article | null> {
-    const { topic, category, provider, style, mood, wordCount, imageCount, apiKey } = params;
-    let preferredModel = params.model;
+    const { 
+        topic, 
+        category, 
+        provider, 
+        model: preferredModel, 
+        style, 
+        mood, 
+        wordCount, 
+        imageCount, 
+        openRouterApiKey, 
+        sambaNovaApiKey 
+    } = params;
     
-    const client = getOpenRouterApiClient(apiKey);
+    const client = getApiClient(provider, openRouterApiKey, sambaNovaApiKey);
 
-    const availableModels = OPENROUTER_MODELS;
+    const availableModels = provider === 'openrouter' ? OPENROUTER_MODELS : SAMBANOVA_MODELS;
     
     // Create a prioritized list of models to try, starting with the user's preferred model
     const modelsToTry = [preferredModel, ...availableModels.filter(m => m !== preferredModel)];
     const JSON_PROMPT_STRUCTURE = getJsonPromptStructureForArticle(wordCount, style, mood, imageCount);
     
     for (const model of modelsToTry) {
-        console.log(`Attempting to generate article for topic: "${topic}" in category: "${category}" using model: ${model}`);
+        console.log(`Attempting to generate article for topic: "${topic}" in category: "${category}" using provider: ${provider} and model: ${model}`);
         try {
             const response = await client.chat.completions.create({
                 model: model,
@@ -96,7 +118,7 @@ export async function generateArticleForTopic(params: ArticleGenerationParams): 
             const jsonContent = response.choices[0].message.content;
             
             if (!jsonContent) {
-                console.warn(`Model ${model} returned empty content.`);
+                console.warn(`Model ${model} from ${provider} returned empty content.`);
                 continue; // Try the next model
             }
 
@@ -104,7 +126,7 @@ export async function generateArticleForTopic(params: ArticleGenerationParams): 
             const parsedResult = ArticleOutputSchema.safeParse(rawArticle);
 
             if (!parsedResult.success) {
-                console.warn(`Zod validation failed for model ${model}:`, parsedResult.error.flatten());
+                console.warn(`Zod validation failed for model ${model} from ${provider}:`, parsedResult.error.flatten());
                 continue; // Try the next model
             }
 
@@ -113,15 +135,15 @@ export async function generateArticleForTopic(params: ArticleGenerationParams): 
                 publishedDate: new Date().toISOString(),
             };
 
-            console.log(`- Successfully generated and validated article: "${finalArticle.title}" with model: ${model}`);
+            console.log(`- Successfully generated and validated article: "${finalArticle.title}" with provider: ${provider}, model: ${model}`);
             return finalArticle;
 
         } catch (error) {
-            console.error(`- An unexpected error occurred with model ${model}. Trying next model. Error:`, error);
+            console.error(`- An unexpected error occurred with provider ${provider} and model ${model}. Trying next model. Error:`, error);
             // The loop will automatically continue to the next model
         }
     }
 
     // If all models in the list fail
-    throw new Error('All AI models failed to generate the article. Please check your API key, the complexity of the topic, or try again later.');
+    throw new Error(`All AI models for provider ${provider} failed to generate the article. Please check your API key, the complexity of the topic, or try again later.`);
 }
