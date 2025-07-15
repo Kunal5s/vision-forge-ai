@@ -76,6 +76,9 @@ export async function addImagesToArticleAction(content: string, imageCount: numb
                 const img = document.createElement('img');
                 img.src = pollinationsUrl;
                 img.alt = topic;
+                img.style.display = 'block';
+                img.style.margin = '2rem auto';
+                img.style.borderRadius = '6px';
                 
                 // Insert the image after the heading element
                 heading.parentNode?.insertBefore(img, heading.nextSibling);

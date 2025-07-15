@@ -76,7 +76,7 @@ export default function EditArticleForm({ article, categoryName, categorySlug }:
   const [isDeleting, setIsDeleting] = useState(false);
   const [isAddingImages, setIsAddingImages] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [imageCount, setImageCount] = useState(IMAGE_COUNTS[1].value); // Default to 5 images
+  const [imageCount, setImageCount] = useState(IMAGE_COUNTS[1].value); // Default to 2 images
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { toast } = useToast();
