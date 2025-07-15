@@ -4,7 +4,7 @@
 import { z } from 'zod';
 import type { Article } from '@/lib/articles';
 import { OPENROUTER_MODELS, SAMBANOVA_MODELS } from '@/lib/constants';
-import { OpenAI } from 'openai';
+import OpenAI from 'openai';
 
 // Define the overall structure of a single article
 const ArticleOutputSchema = z.object({
@@ -60,26 +60,30 @@ interface ArticleGenerationParams {
     sambaNovaApiKey?: string;
 }
 
-const getApiClient = (provider: 'openrouter' | 'sambanova', openRouterApiKey?: string, sambaNovaApiKey?: string) => {
+const getApiClient = (provider: 'openrouter' | 'sambanova', apiKey?: string): OpenAI => {
     if (provider === 'openrouter') {
-        const apiKey = openRouterApiKey || process.env.OPENROUTER_API_KEY;
-        if (!apiKey) {
-            throw new Error("OpenRouter API key is not set. Please provide one or set the OPENROUTER_API_KEY environment variable.");
+        const finalApiKey = apiKey || process.env.OPENROUTER_API_KEY;
+        if (!finalApiKey) {
+            throw new Error("OpenRouter API key is not set. Please provide one in the UI or set the OPENROUTER_API_KEY environment variable.");
         }
         return new OpenAI({
-            apiKey: apiKey,
+            apiKey: finalApiKey,
             baseURL: "https://openrouter.ai/api/v1",
+            defaultHeaders: {
+                "X-Title": "Imagen BrainAi",
+            },
         });
     } else { // provider === 'sambanova'
-        const apiKey = sambaNovaApiKey || process.env.SAMBANOVA_API_KEY;
-        if (!apiKey) {
-            throw new Error("SambaNova API key is not set. Please provide one or set the SAMBANOVA_API_KEY environment variable.");
+        const finalApiKey = apiKey || process.env.SAMBANOVA_API_KEY;
+        if (!finalApiKey) {
+            throw new Error("SambaNova API key is not set. Please provide one in the UI or set the SAMBANOVA_API_KEY environment variable.");
         }
-        // SambaNova expects a Bearer token, not a simple apiKey.
-        // We pass it in the default headers. The apiKey property can be a dummy value.
         return new OpenAI({
-            apiKey: `bearer ${apiKey}`, // This is a common way to handle bearer tokens with the OpenAI lib.
+            apiKey: finalApiKey,
             baseURL: "https://api.cloud.sambanova.ai/v1",
+            defaultHeaders: {
+              Authorization: `Bearer ${finalApiKey}`,
+            },
         });
     }
 };
@@ -94,11 +98,12 @@ export async function generateArticleForTopic(params: ArticleGenerationParams): 
         mood, 
         wordCount, 
         imageCount, 
-        openRouterApiKey, 
+        openRouterApiKey,
         sambaNovaApiKey 
     } = params;
     
-    const client = getApiClient(provider, openRouterApiKey, sambaNovaApiKey);
+    const clientApiKey = provider === 'openrouter' ? openRouterApiKey : sambaNovaApiKey;
+    const client = getApiClient(provider, clientApiKey);
 
     const availableModels = provider === 'openrouter' ? OPENROUTER_MODELS : SAMBANOVA_MODELS;
     
@@ -116,6 +121,7 @@ export async function generateArticleForTopic(params: ArticleGenerationParams): 
                     { role: "user", content: `Generate an article for the category "${category}" on the topic: "${topic}".` }
                 ],
                 response_format: { type: "json_object" },
+                max_tokens: 4096, // Increased max tokens for safety with long articles
             });
 
             const jsonContent = response.choices[0].message.content;
@@ -162,10 +168,7 @@ export async function humanizeTextAction(text: string): Promise<{ success: boole
     return { success: false, error: "OpenRouter API key is not configured on the server." };
   }
 
-  const client = new OpenAI({
-    apiKey: apiKey,
-    baseURL: "https://openrouter.ai/api/v1",
-  });
+  const client = getApiClient('openrouter', apiKey);
 
   try {
     const response = await client.chat.completions.create({
