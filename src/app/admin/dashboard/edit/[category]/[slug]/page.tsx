@@ -30,7 +30,9 @@ export default async function EditArticlePage({ params }: { params: { category: 
 
     return (
         <main className="flex-grow container mx-auto py-12 px-4 bg-muted/20 min-h-screen">
-           <EditArticleForm article={article} categoryName={categoryName} />
+           <EditArticleForm article={article} categoryName={categoryName} categorySlug={params.category} />
         </main>
     );
 }
+
+    

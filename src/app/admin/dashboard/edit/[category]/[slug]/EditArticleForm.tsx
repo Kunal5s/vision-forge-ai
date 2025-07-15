@@ -9,8 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, Save, Trash2, Wand2, Eye, PlusCircle } from 'lucide-react';
-import { useState, useCallback } from 'react';
+import { ArrowLeft, Loader2, Save, Trash2, Wand2, Eye, PlusCircle, RotateCcw } from 'lucide-react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import type { Article } from '@/lib/articles';
 import { editArticleAction, deleteArticleAction } from '../../../create/actions';
@@ -51,6 +51,7 @@ type EditFormData = z.infer<typeof editSchema>;
 interface EditArticleFormProps {
     article: Article;
     categoryName: string;
+    categorySlug: string;
 }
 
 const contentToHtml = (content: Article['articleContent']): string => {
@@ -70,16 +71,18 @@ const contentToHtml = (content: Article['articleContent']): string => {
     }).join(''); 
 }
 
-export default function EditArticleForm({ article, categoryName }: EditArticleFormProps) {
+export default function EditArticleForm({ article, categoryName, categorySlug }: EditArticleFormProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isAddingImages, setIsAddingImages] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [imageCount, setImageCount] = useState(IMAGE_COUNTS[1].value); // Default to 5 images
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { toast } = useToast();
+  const DRAFT_KEY = `draft-article-${categorySlug}-${article.slug}`;
 
-  const { register, handleSubmit, formState: { errors }, control, getValues, setValue, watch } = useForm<EditFormData>({
+  const { register, handleSubmit, formState: { errors, isDirty }, control, getValues, setValue, watch, reset } = useForm<EditFormData>({
     resolver: zodResolver(editSchema),
     defaultValues: {
       title: article.title.replace(/<[^>]*>?/gm, ''),
@@ -90,23 +93,62 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
     }
   });
 
+  const formValues = watch();
+
+  useEffect(() => {
+    try {
+      const savedDraft = localStorage.getItem(DRAFT_KEY);
+      if (savedDraft) {
+        const draftData = JSON.parse(savedDraft);
+        reset(draftData); // Use reset to update form values
+        toast({
+          title: "Draft Restored",
+          description: "Your unsaved changes have been loaded.",
+        });
+      }
+    } catch (e) {
+      console.error("Failed to load draft from localStorage", e);
+    }
+  }, [DRAFT_KEY, reset, toast]);
+
+  useEffect(() => {
+    const subscription = watch((value) => {
+      if (isDirty) {
+        if (debounceTimeoutRef.current) {
+          clearTimeout(debounceTimeoutRef.current);
+        }
+        debounceTimeoutRef.current = setTimeout(() => {
+          try {
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(value));
+            console.log("Draft saved to localStorage");
+          } catch (e) {
+            console.error("Failed to save draft to localStorage", e);
+          }
+        }, 2000); // Save every 2 seconds after user stops typing
+      }
+    });
+    return () => {
+      subscription.unsubscribe();
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, [watch, DRAFT_KEY, isDirty]);
+
+
   const { fields, append, remove } = useFieldArray({
     control,
     name: "keyTakeaways",
   });
-
-  const contentValue = watch('content');
-  const conclusionValue = watch('conclusion');
-  const takeawaysValue = watch('keyTakeaways');
-  const titleValue = watch('title');
-
+  
   const getFullArticleHtml = useCallback(() => {
-    const takeawaysHtml = (takeawaysValue || [])
+    const currentValues = getValues();
+    const takeawaysHtml = (currentValues.keyTakeaways || [])
       .map(t => t.value ? `<li>${t.value}</li>` : '')
       .join('');
     
-    return `${contentValue}<h2>Key Takeaways</h2><ul>${takeawaysHtml}</ul><h2>Conclusion</h2>${conclusionValue}`;
-  }, [contentValue, takeawaysValue, conclusionValue]);
+    return `${currentValues.content}<h2>Key Takeaways</h2><ul>${takeawaysHtml}</ul><h2>Conclusion</h2>${currentValues.conclusion}`;
+  }, [getValues]);
 
 
   const onSubmit = async (data: EditFormData) => {
@@ -126,6 +168,12 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
       toast({ title: "Error Saving", description: result.error, variant: 'destructive' });
     } else {
       toast({ title: "Article Saved!", description: `"${data.title}" has been updated.` });
+      // Clear the auto-saved draft from localStorage on successful save
+      try {
+        localStorage.removeItem(DRAFT_KEY);
+      } catch (e) {
+        console.error("Failed to remove draft from localStorage", e);
+      }
     }
     setIsSaving(false);
   };
@@ -141,6 +189,11 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
       setIsDeleting(false);
     } else {
       toast({ title: "Article Deleted", description: "The article has been successfully removed." });
+       try {
+        localStorage.removeItem(DRAFT_KEY);
+      } catch (e) {
+        console.error("Failed to remove draft from localStorage", e);
+      }
     }
   }
 
@@ -178,7 +231,7 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
       <ArticlePreview 
         isOpen={isPreviewOpen}
         onOpenChange={setIsPreviewOpen}
-        title={titleValue}
+        title={watch('title')}
         content={getFullArticleHtml()}
         category={categoryName}
         image={article.image}
@@ -196,7 +249,7 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
         <CardHeader>
           <CardTitle className="text-2xl">Edit Article</CardTitle>
           <CardDescription>
-            Make changes to your article below. Pasting content from other sources will preserve its formatting.
+            Make changes to your article below. Your work is auto-saved as a draft every few seconds.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -327,3 +380,5 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
     </>
   );
 }
+
+    
