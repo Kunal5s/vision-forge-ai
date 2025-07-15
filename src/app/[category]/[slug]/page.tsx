@@ -66,23 +66,21 @@ export default async function ArticlePage({ params }: { params: { category: stri
             ? block.content.replace(/<[^>]*>?/gm, '').toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '')
             : undefined;
         
-        const processedContent = block.content;
+        const processedContent = parse(block.content);
 
         switch (block.type) {
-            case 'h1':
-                return <h1 key={index} className="text-4xl font-bold mt-12 mb-4">{parse(processedContent)}</h1>;
             case 'h2':
-                return <h2 key={index} id={slug} className="text-3xl font-bold mt-12 mb-4 border-b pb-2 scroll-mt-24">{parse(processedContent)}</h2>;
+                return <h2 key={index} id={slug} className="text-3xl font-bold mt-12 mb-4 border-b pb-2 scroll-mt-24">{processedContent}</h2>;
             case 'h3':
-                return <h3 key={index} className="text-2xl font-bold mt-10 mb-3">{parse(processedContent)}</h3>;
+                return <h3 key={index} className="text-2xl font-bold mt-10 mb-3">{processedContent}</h3>;
             case 'h4':
-                return <h4 key={index} className="text-xl font-semibold mt-8 mb-2">{parse(processedContent)}</h4>;
+                return <h4 key={index} className="text-xl font-semibold mt-8 mb-2">{processedContent}</h4>;
             case 'h5':
-                return <h5 key={index} className="text-lg font-semibold mt-6 mb-2">{parse(processedContent)}</h5>;
+                return <h5 key={index} className="text-lg font-semibold mt-6 mb-2">{processedContent}</h5>;
             case 'h6':
-                return <h6 key={index} className="text-base font-semibold mt-6 mb-2">{parse(processedContent)}</h6>;
+                return <h6 key={index} className="text-base font-semibold mt-6 mb-2">{processedContent}</h6>;
             case 'p':
-                 return <p key={index} className="mb-6 leading-relaxed">{parse(processedContent)}</p>;
+                 return <p key={index} className="mb-6 leading-relaxed">{processedContent}</p>;
             case 'img':
                  return (
                     <div key={index} className="my-8">
@@ -97,7 +95,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
                     </div>
                   );
             default:
-                return <div key={index}>{parse(processedContent)}</div>;
+                return <div key={index}>{processedContent}</div>;
         }
     };
     
