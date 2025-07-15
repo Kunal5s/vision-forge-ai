@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { categorySlugMap } from '@/lib/constants';
+import { categorySlugMap, IMAGE_COUNTS } from '@/lib/constants';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Loader2, FileSignature, PlusCircle, Trash2, ImageIcon, Wand2, Eye } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
@@ -31,7 +31,7 @@ const manualArticleSchema = z.object({
   slug: z.string().min(5, 'Slug must be at least 5 characters long. Use dashes instead of spaces.').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and dashes.'),
   category: z.string().min(1, 'Please select a category.'),
   content: z.string().min(50, 'Content must be at least 50 characters long.'),
-  keyTakeaways: z.array(z.object({ value: z.string() })).optional(),
+  keyTakeaways: z.array(z.object({ value: z.string().min(1, 'Takeaway cannot be empty.') })).optional(),
   conclusion: z.string().min(20, 'Conclusion must be at least 20 characters long.'),
 });
 
@@ -43,6 +43,7 @@ export default function ManualPublishPage() {
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isAddingImagesToArticle, setIsAddingImagesToArticle] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [imageCount, setImageCount] = useState(IMAGE_COUNTS[1].value); // Default to 5 images
 
 
   const { toast } = useToast();
@@ -78,10 +79,10 @@ export default function ManualPublishPage() {
   }, []);
   
   useEffect(() => {
-      if (titleValue) { // Added a check to ensure titleValue is not undefined/empty
+    if (titleValue) {
         const newSlug = generateSlug(titleValue);
         setValue('slug', newSlug, { shouldValidate: true });
-      }
+    }
   }, [titleValue, setValue, generateSlug]);
   
   const fetchPreviewImage = useCallback(async (topic: string) => {
@@ -121,10 +122,10 @@ export default function ManualPublishPage() {
             setIsAddingImagesToArticle(false);
             return;
         }
-        const result = await addImagesToArticleAction(currentContent);
+        const result = await addImagesToArticleAction(currentContent, parseInt(imageCount, 10));
 
         if (result.success && result.content) {
-            setValue('content', result.content, { shouldDirty: true });
+            setValue('content', result.content, { shouldDirty: true, shouldValidate: true });
             toast({ title: 'Images Added!', description: 'AI has added contextual images to your article.' });
         } else {
             throw new Error(result.error || "Failed to add images.");
@@ -242,9 +243,9 @@ export default function ManualPublishPage() {
                     {errors.content && <p className="text-sm text-destructive mt-1">{errors.content.message}</p>}
                   </div>
                   
-                  <div>
-                    <Label className="text-lg font-semibold">Key Takeaways</Label>
-                    <div className="space-y-2">
+                  <div className="border-t pt-4">
+                    <Label className="text-lg font-semibold">Key Takeaways &amp; AI Tools</Label>
+                    <div className="space-y-2 mt-2">
                       {fields.map((field, index) => (
                         <div key={field.id} className="flex items-center gap-2">
                           <Input
@@ -259,7 +260,7 @@ export default function ManualPublishPage() {
                       ))}
                     </div>
                      {errors.keyTakeaways && <p className="text-sm text-destructive mt-1">{errors.keyTakeaways.root?.message || (errors.keyTakeaways as any)[0]?.value?.message}</p>}
-                    <div className="flex items-center gap-4 mt-2">
+                    <div className="flex flex-wrap items-center gap-4 mt-2">
                       <Button
                         type="button"
                         variant="outline"
@@ -270,20 +271,34 @@ export default function ManualPublishPage() {
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add Takeaway
                       </Button>
-                      <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          onClick={addImagesToArticle}
-                          disabled={isAddingImagesToArticle || isPublishing}
-                      >
-                          {isAddingImagesToArticle ? (
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          ) : (
-                              <Wand2 className="mr-2 h-4 w-4" />
-                          )}
-                          Generate & Add Images to Article
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={addImagesToArticle}
+                            disabled={isAddingImagesToArticle || isPublishing}
+                        >
+                            {isAddingImagesToArticle ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <Wand2 className="mr-2 h-4 w-4" />
+                            )}
+                            Generate & Add Images
+                        </Button>
+                        <Select onValueChange={setImageCount} defaultValue={imageCount} disabled={isAddingImagesToArticle || isPublishing}>
+                            <SelectTrigger className="w-[180px] h-9 text-sm">
+                                <SelectValue placeholder="Number of Images" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {IMAGE_COUNTS.map(opt => (
+                                    <SelectItem key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   </div>
 

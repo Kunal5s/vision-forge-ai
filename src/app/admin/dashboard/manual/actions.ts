@@ -35,17 +35,38 @@ function parseHtmlToContent(html: string): Article['articleContent'] {
   return content.filter(block => (block.content && block.content.trim() !== '') || block.type === 'img');
 }
 
-export async function addImagesToArticleAction(content: string): Promise<{success: boolean, content?: string, error?: string}> {
+export async function addImagesToArticleAction(content: string, imageCount: number = 5): Promise<{success: boolean, content?: string, error?: string}> {
     try {
         const dom = new JSDOM(content);
         const document = dom.window.document;
-        const headings = document.querySelectorAll('h2, h3');
+        // Prioritize H2 headings for image placement
+        let headings = Array.from(document.querySelectorAll('h2, h3'));
 
-        for (const heading of Array.from(headings)) {
+        // If not enough headings, add paragraphs to the list of potential insertion points
+        if (headings.length < imageCount) {
+            const paragraphs = Array.from(document.querySelectorAll('p'));
+            headings = [...headings, ...paragraphs];
+        }
+
+        // Remove existing AI-generated images to avoid duplicates on re-runs
+        document.querySelectorAll('img[src*="pollinations.ai"]').forEach(img => img.remove());
+        
+        // Filter out very short headings/paragraphs and get the best candidates
+        const validHeadings = headings.filter(h => h.textContent && h.textContent.trim().split(' ').length > 3);
+        
+        // Distribute images evenly among the best candidate headings
+        const numImagesToAdd = Math.min(imageCount, validHeadings.length);
+        const step = Math.floor(validHeadings.length / numImagesToAdd);
+
+        for (let i = 0; i < numImagesToAdd; i++) {
+            // Pick headings at even intervals
+            const headingIndex = Math.min(i * step, validHeadings.length - 1);
+            const heading = validHeadings[headingIndex];
             const topic = heading.textContent?.trim();
-            if (topic && topic.split(' ').length > 2) { // Only generate for reasonably descriptive headings
+
+            if (topic) {
                 const seed = Math.floor(Math.random() * 1_000_000);
-                const finalPrompt = `${topic}, relevant photography, high detail`;
+                const finalPrompt = `${topic}, relevant photography, high detail, cinematic`;
                 const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=800&height=450&seed=${seed}&nologo=true`;
 
                 const img = document.createElement('img');

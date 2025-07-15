@@ -28,6 +28,15 @@ import {
 } from "@/components/ui/alert-dialog"
 import { RichTextEditor } from '@/components/vision-forge/RichTextEditor';
 import { ArticlePreview } from '@/components/vision-forge/ArticlePreview';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { IMAGE_COUNTS } from '@/lib/constants';
+
 
 const editSchema = z.object({
   title: z.string().min(1, "Title is required."),
@@ -64,6 +73,7 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
   const [isDeleting, setIsDeleting] = useState(false);
   const [isAddingImages, setIsAddingImages] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [imageCount, setImageCount] = useState(IMAGE_COUNTS[1].value); // Default to 5 images
 
   const { toast } = useToast();
 
@@ -120,7 +130,7 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
             setIsAddingImages(false);
             return;
         }
-        const result = await addImagesToArticleAction(currentContent);
+        const result = await addImagesToArticleAction(currentContent, parseInt(imageCount, 10));
 
         if (result.success && result.content) {
             setValue('content', result.content, { shouldDirty: true, shouldValidate: true });
@@ -196,7 +206,7 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
             </div>
 
             <div className="border-t pt-6 flex flex-wrap justify-between items-center gap-4">
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button type="submit" disabled={isSaving || isDeleting || isAddingImages}>
                   {isSaving ? (
                     <>
@@ -210,19 +220,33 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
                     </>
                   )}
                 </Button>
-                 <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={handleAddImages}
-                    disabled={isAddingImages || isSaving || isDeleting}
-                >
-                    {isAddingImages ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                        <Wand2 className="mr-2 h-4 w-4" />
-                    )}
-                    Generate & Add Images
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={handleAddImages}
+                        disabled={isAddingImages || isSaving || isDeleting}
+                    >
+                        {isAddingImages ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                            <Wand2 className="mr-2 h-4 w-4" />
+                        )}
+                        Generate & Add Images
+                    </Button>
+                    <Select onValueChange={setImageCount} defaultValue={imageCount} disabled={isAddingImages || isSaving || isDeleting}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Number of Images" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {IMAGE_COUNTS.map(opt => (
+                                <SelectItem key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
                 <Button type="button" variant="outline" onClick={() => setIsPreviewOpen(true)}>
                     <Eye className="mr-2 h-4 w-4" />
                     Preview Article
