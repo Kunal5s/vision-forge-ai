@@ -101,79 +101,52 @@ export default async function ArticlePage({ params }: { params: { category: stri
     
     return (
         <main className="container mx-auto py-12 px-4">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-                <div className="lg:col-span-9">
-                    <header className="mb-8">
-                        <Badge variant="secondary" className="mb-4">{article.category}</Badge>
-                        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">{parse(article.title)}</h1>
-                        <div className="relative aspect-video w-full rounded-lg overflow-hidden mt-6 shadow-lg">
-                            <Image
-                                src={article.image}
-                                alt={article.title.replace(/<[^>]*>?/gm, '')}
-                                layout="fill"
-                                objectFit="cover"
-                                data-ai-hint={article.dataAiHint}
-                                priority
-                            />
-                        </div>
-                    </header>
-                    
-                    <article className="prose prose-lg dark:prose-invert max-w-none">
-                        {article.articleContent.map(renderContentBlock)}
-                    </article>
-                    
-                    {article.keyTakeaways && article.keyTakeaways.length > 0 && (
-                        <section className="my-12">
-                            <Card className="bg-muted/50 border-border">
-                                <CardHeader>
-                                    <CardTitle className="text-2xl font-semibold">Key Takeaways</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <ul className="space-y-4">
-                                        {article.keyTakeaways.map((takeaway, index) => (
-                                            <li key={index} className="flex items-start gap-3">
-                                                <CheckCircle className="h-5 w-5 text-primary mt-1 shrink-0" />
-                                                <span className="text-foreground/80">{parse(takeaway)}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </CardContent>
-                            </Card>
-                        </section>
-                    )}
+            <div className="max-w-3xl mx-auto">
+                <header className="mb-8">
+                    <Badge variant="secondary" className="mb-4">{article.category}</Badge>
+                    <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">{parse(article.title)}</h1>
+                    <div className="relative aspect-video w-full rounded-lg overflow-hidden mt-6 shadow-lg">
+                        <Image
+                            src={article.image}
+                            alt={article.title.replace(/<[^>]*>?/gm, '')}
+                            layout="fill"
+                            objectFit="cover"
+                            data-ai-hint={article.dataAiHint}
+                            priority
+                        />
+                    </div>
+                </header>
+                
+                <article className="prose dark:prose-invert max-w-none">
+                    {article.articleContent.map(renderContentBlock)}
+                </article>
+                
+                {article.keyTakeaways && article.keyTakeaways.length > 0 && (
+                    <section className="my-12">
+                        <Card className="bg-muted/50 border-border">
+                            <CardHeader>
+                                <CardTitle className="text-2xl font-semibold">Key Takeaways</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <ul className="space-y-4">
+                                    {article.keyTakeaways.map((takeaway, index) => (
+                                        <li key={index} className="flex items-start gap-3">
+                                            <CheckCircle className="h-5 w-5 text-primary mt-1 shrink-0" />
+                                            <span className="text-foreground/80">{parse(takeaway)}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </CardContent>
+                        </Card>
+                    </section>
+                )}
 
-                    {article.conclusion && (
-                         <div className="prose prose-lg dark:prose-invert max-w-none space-y-6 mt-12">
-                            <h2 className="!mb-4">Conclusion</h2>
-                            <div>{parse(article.conclusion)}</div>
-                        </div>
-                    )}
-                </div>
-
-                <aside className="lg:col-span-3 lg:sticky lg:top-24 h-fit">
-                    <Card className={cn("bg-background/80 backdrop-blur-sm animate-breathing-glow")}>
-                        <CardHeader>
-                            <CardTitle className="text-xl flex items-center gap-2">
-                                <List className="h-5 w-5" />
-                                Table of Contents
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ol className="space-y-2 list-inside list-decimal">
-                                {toc.map((item) => (
-                                    <li key={item.slug} className="ml-4">
-                                        <a 
-                                            href={`#${item.slug}`} 
-                                            className="text-sm text-foreground hover:text-primary hover:underline transition-colors"
-                                        >
-                                          {parse(item.title)}
-                                        </a>
-                                    </li>
-                                ))}
-                            </ol>
-                        </CardContent>
-                    </Card>
-                </aside>
+                {article.conclusion && (
+                     <div className="prose dark:prose-invert max-w-none space-y-6 mt-12">
+                        <h2>Conclusion</h2>
+                        <div>{parse(article.conclusion)}</div>
+                    </div>
+                )}
             </div>
         </main>
     );

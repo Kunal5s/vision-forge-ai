@@ -42,39 +42,6 @@
     --ring: 240 10% 3.9%;
 
     --radius: 0.5rem;
-
-    --prose-body: hsl(var(--foreground));
-    --prose-headings: hsl(var(--foreground));
-    --prose-lead: hsl(var(--muted-foreground));
-    --prose-links: 145 75% 39%; /* #1a8917 Green */
-    --prose-bold: hsl(var(--foreground));
-    --prose-counters: hsl(var(--muted-foreground));
-    --prose-bullets: hsl(var(--muted-foreground));
-    --prose-hr: hsl(var(--border));
-    --prose-quotes: hsl(var(--foreground));
-    --prose-quote-borders: hsl(var(--border));
-    --prose-captions: hsl(var(--muted-foreground));
-    --prose-code: hsl(var(--foreground));
-    --prose-pre-code: hsl(var(--secondary-foreground));
-    --prose-pre-bg: hsl(var(--secondary));
-    --prose-th-borders: hsl(var(--border));
-    --prose-td-borders: hsl(var(--border));
-    --prose-invert-body: hsl(var(--foreground));
-    --prose-invert-headings: hsl(var(--foreground));
-    --prose-invert-lead: hsl(var(--muted-foreground));
-    --prose-invert-links: 145 85% 45%; /* Brighter Green for Dark Mode */
-    --prose-invert-bold: hsl(var(--foreground));
-    --prose-invert-counters: hsl(var(--muted-foreground));
-    --prose-invert-bullets: hsl(var(--muted-foreground));
-    --prose-invert-hr: hsl(var(--border));
-    --prose-invert-quotes: hsl(var(--foreground));
-    --prose-invert-quote-borders: hsl(var(--border));
-    --prose-invert-captions: hsl(var(--muted-foreground));
-    --prose-invert-code: hsl(var(--foreground));
-    --prose-invert-pre-code: hsl(var(--secondary-foreground));
-    --prose-invert-pre-bg: hsl(var(--secondary));
-    --prose-invert-th-borders: hsl(var(--border));
-    --prose-invert-td-borders: hsl(var(--border));
   }
 
   .dark {
@@ -123,4 +90,87 @@
   html {
     font-family: 'Charter', Georgia, Cambria, 'Times New Roman', serif;
   }
+
+  .prose {
+    --prose-body: hsl(var(--foreground));
+    --prose-headings: hsl(var(--foreground));
+    --prose-lead: hsl(var(--muted-foreground));
+    --prose-links: #1a8917; /* Medium Green */
+    --prose-bold: hsl(var(--foreground));
+    --prose-counters: hsl(var(--muted-foreground));
+    --prose-bullets: hsl(var(--muted-foreground));
+    --prose-hr: hsl(var(--border));
+    --prose-quotes: hsl(var(--muted-foreground));
+    --prose-quote-borders: #ccc;
+    --prose-captions: hsl(var(--muted-foreground));
+    --prose-code: hsl(var(--foreground));
+    --prose-pre-code: hsl(var(--secondary-foreground));
+    --prose-pre-bg: hsl(var(--secondary));
+    --prose-th-borders: hsl(var(--border));
+    --prose-td-borders: hsl(var(--border));
+    
+    --prose-invert-body: hsl(var(--foreground));
+    --prose-invert-headings: hsl(var(--foreground));
+    --prose-invert-lead: hsl(var(--muted-foreground));
+    --prose-invert-links: #29b431; /* Brighter Green */
+    --prose-invert-bold: hsl(var(--foreground));
+    --prose-invert-counters: hsl(var(--muted-foreground));
+    --prose-invert-bullets: hsl(var(--muted-foreground));
+    --prose-invert-hr: hsl(var(--border));
+    --prose-invert-quotes: hsl(var(--muted-foreground));
+    --prose-invert-quote-borders: #4a4a4a;
+    --prose-invert-captions: hsl(var(--muted-foreground));
+    --prose-invert-code: hsl(var(--foreground));
+    --prose-invert-pre-code: hsl(var(--secondary-foreground));
+    --prose-invert-pre-bg: hsl(var(--secondary));
+    --prose-invert-th-borders: hsl(var(--border));
+    --prose-invert-td-borders: hsl(var(--border));
+  }
+
+  .prose p {
+    font-size: clamp(16px, 1.5vw, 21px);
+    line-height: 1.6;
+    font-weight: 400;
+  }
+
+  .prose h1 {
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 700;
+  }
+  .prose h2 {
+    font-size: clamp(24px, 4vw, 36px);
+    font-weight: 600;
+  }
+  .prose h3 {
+    font-size: clamp(20px, 3vw, 30px);
+    font-weight: 500;
+  }
+
+  .prose blockquote {
+    font-style: italic;
+    margin: 1rem 0 1rem 1rem;
+    padding-left: 1rem;
+  }
+
+  .prose img {
+    display: block;
+    margin: 2rem auto;
+    max-width: 100%;
+    border-radius: 6px;
+  }
+
+  @media (max-width: 768px) {
+    .prose p, .prose li {
+      font-size: 17px;
+    }
+  
+    .prose h1 {
+      font-size: 36px;
+    }
+  
+    .prose h2 {
+      font-size: 28px;
+    }
+  }
+
 }
