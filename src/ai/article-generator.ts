@@ -79,8 +79,11 @@ const getApiClient = (provider: 'openrouter' | 'sambanova', apiKey?: string): Op
             throw new Error("SambaNova API key is not set. Please provide one in the UI or set the SAMBANOVA_API_KEY environment variable.");
         }
         return new OpenAI({
-            apiKey: finalApiKey, // For SambaNova, this is treated as the Bearer token by the SDK
+            apiKey: 'EMPTY', // This is ignored when we set the Authorization header
             baseURL: "https://api.cloud.sambanova.ai/v1",
+            defaultHeaders: {
+                Authorization: `Bearer ${finalApiKey}`,
+            },
         });
     }
 };
@@ -99,7 +102,7 @@ export async function generateArticleForTopic(params: ArticleGenerationParams): 
         sambaNovaApiKey 
     } = params;
     
-    // Correctly select the API key based on the provider
+    // Correctly select the API key based on the provider, then create the client
     const clientApiKey = provider === 'openrouter' ? openRouterApiKey : sambaNovaApiKey;
     const client = getApiClient(provider, clientApiKey);
 
@@ -154,3 +157,52 @@ export async function generateArticleForTopic(params: ArticleGenerationParams): 
     // If all models in the list fail
     throw new Error(`All AI models for provider ${provider} failed to generate the article. Please check your API key, the complexity of the topic, or try again later.`);
 }
+
+export async function humanizeTextAction(text: string): Promise<{ success: boolean; humanizedText?: string; error?: string }> {
+  if (!text || text.trim().length === 0) {
+    return { success: false, error: "No text provided to humanize." };
+  }
+
+  // Use the OpenRouter key by default, assuming it's the most common one configured.
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) {
+    return { success: false, error: "OpenRouter API key is not configured on the server." };
+  }
+
+  const client = new OpenAI({
+    apiKey: apiKey,
+    baseURL: "https://openrouter.ai/api/v1",
+    defaultHeaders: {
+        "X-Title": "Imagen BrainAi",
+    },
+  });
+
+  try {
+    const response = await client.chat.completions.create({
+      model: "google/gemma-2-9b-it", // A good, fast model for editing tasks
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert editor. Rewrite the following text to be more human-like, engaging, and conversational. Correct any grammar or spelling mistakes. Only return the rewritten text, with no extra commentary.",
+        },
+        { role: "user", content: text },
+      ],
+      temperature: 0.7,
+      top_p: 1,
+    });
+
+    const humanizedText = response.choices[0].message.content;
+    if (!humanizedText) {
+      throw new Error("AI returned an empty response.");
+    }
+
+    return { success: true, humanizedText };
+
+  } catch (error) {
+    console.error("Error in humanizeTextAction:", error);
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred while humanizing the text.";
+    return { success: false, error: errorMessage };
+  }
+}
+
+    
