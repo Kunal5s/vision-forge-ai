@@ -3,26 +3,8 @@
 
 import { z } from 'zod';
 import type { Article } from '@/lib/articles';
-import { OPENROUTER_MODELS, SAMBANOVA_MODELS } from '@/lib/constants';
+import { OPENROUTER_MODELS } from '@/lib/constants';
 import { OpenAI } from 'openai';
-
-
-// ---- Topic Generation (Now Unused but kept for reference) ----
-const TopicSuggestionInputSchema = z.object({
-  prompt: z.string().min(10, 'Prompt must be at least 10 characters long.'),
-});
-
-const TopicSuggestionOutputSchema = z.object({
-  topics: z.array(z.string()).length(5).describe("An array of 5 compelling, SEO-friendly, 9-word article titles based on the user's prompt."),
-});
-
-// ---- Article Generation Schemas ----
-const ArticleContentBlockSchema = z.object({
-  type: z.enum(['h2', 'h3', 'h4', 'h5', 'h6', 'p', 'img']),
-  content: z.string().min(1),
-  alt: z.string().optional(),
-});
-
 
 // Define the overall structure of a single article
 const ArticleOutputSchema = z.object({
@@ -31,7 +13,11 @@ const ArticleOutputSchema = z.object({
   category: z.string().describe("The category of the article."),
   title: z.string().min(1).describe("The compelling, SEO-friendly title for the article."),
   slug: z.string().min(1).describe("A URL-friendly slug, generated from the title."),
-  articleContent: z.array(ArticleContentBlockSchema).describe("An array of content blocks. The VERY FIRST object must be a 'p' type with a summary of the article. Subsequent H2 headings should be followed by an image block (`{ \"type\": \"img\", \"content\": \"URL\", \"alt\": \"Description\" }`). Generate the specified number of images throughout the article. The total word count should match the user's request. **IMPORTANT: For all 'p', 'h2', 'h3' etc. blocks, the 'content' string MUST include rich HTML formatting like <strong> for bold, <em> for italic, and <u> for underline where appropriate to make the article engaging.**"),
+  articleContent: z.array(z.object({
+    type: z.enum(['h2', 'h3', 'h4', 'h5', 'h6', 'p', 'img']),
+    content: z.string().min(1),
+    alt: z.string().optional(),
+  })).describe("An array of content blocks. The VERY FIRST object must be a 'p' type with a summary of the article. Subsequent H2 headings should be followed by an image block (`{ \"type\": \"img\", \"content\": \"URL\", \"alt\": \"Description\" }`). Generate the specified number of images throughout the article. The total word count should match the user's request. **IMPORTANT: For all 'p', 'h2', 'h3' etc. blocks, the 'content' string MUST include rich HTML formatting like <strong> for bold, <em> for italic, and <u> for underline where appropriate to make the article engaging.**"),
   keyTakeaways: z.array(z.string()).describe("An array of 4-5 key takeaways from the article."),
   conclusion: z.string().min(1).describe("A strong, summarizing conclusion for the article. **This conclusion MUST also be formatted with HTML tags like <strong> and <em> for emphasis.**"),
 });
@@ -63,7 +49,7 @@ const getJsonPromptStructureForArticle = (wordCount: string, style: string, mood
 interface ArticleGenerationParams {
     topic: string;
     category: string;
-    provider: 'openrouter' | 'sambanova';
+    provider: 'openrouter'; // Simplified to only support openrouter
     model: string;
     style: string;
     mood: string;
@@ -83,33 +69,20 @@ const getOpenRouterApiClient = (apiKey?: string) => {
     });
 };
 
-const getSambaNovaApiClient = (apiKey?: string) => {
-    const api_key_to_use = apiKey || process.env.SAMBANOVA_API_KEY;
-    if (!api_key_to_use) {
-        throw new Error("SambaNova API key is not set. Please provide one in the form or set the SAMBANOVA_API_KEY environment variable.");
-    }
-    return new OpenAI({
-        apiKey: api_key_to_use,
-        baseURL: "https://api.cloud.sambanova.ai/v1",
-    });
-};
-
-
 export async function generateArticleForTopic(params: ArticleGenerationParams): Promise<Article | null> {
     const { topic, category, provider, style, mood, wordCount, imageCount, apiKey } = params;
     let preferredModel = params.model;
     
-    const client = provider === 'sambanova' 
-        ? getSambaNovaApiClient(apiKey)
-        : getOpenRouterApiClient(apiKey);
+    const client = getOpenRouterApiClient(apiKey);
 
-    const availableModels = provider === 'sambanova' ? SAMBANOVA_MODELS : OPENROUTER_MODELS;
+    const availableModels = OPENROUTER_MODELS;
     
+    // Create a prioritized list of models to try, starting with the user's preferred model
     const modelsToTry = [preferredModel, ...availableModels.filter(m => m !== preferredModel)];
     const JSON_PROMPT_STRUCTURE = getJsonPromptStructureForArticle(wordCount, style, mood, imageCount);
     
     for (const model of modelsToTry) {
-        console.log(`Attempting to generate article for topic: "${topic}" in category: "${category}" using ${provider} model: ${model}`);
+        console.log(`Attempting to generate article for topic: "${topic}" in category: "${category}" using model: ${model}`);
         try {
             const response = await client.chat.completions.create({
                 model: model,
@@ -124,7 +97,7 @@ export async function generateArticleForTopic(params: ArticleGenerationParams): 
             
             if (!jsonContent) {
                 console.warn(`Model ${model} returned empty content.`);
-                continue;
+                continue; // Try the next model
             }
 
             const rawArticle = JSON.parse(jsonContent);
@@ -132,7 +105,7 @@ export async function generateArticleForTopic(params: ArticleGenerationParams): 
 
             if (!parsedResult.success) {
                 console.warn(`Zod validation failed for model ${model}:`, parsedResult.error.flatten());
-                continue;
+                continue; // Try the next model
             }
 
             const finalArticle: Article = {
@@ -145,10 +118,10 @@ export async function generateArticleForTopic(params: ArticleGenerationParams): 
 
         } catch (error) {
             console.error(`- An unexpected error occurred with model ${model}. Trying next model. Error:`, error);
+            // The loop will automatically continue to the next model
         }
     }
 
+    // If all models in the list fail
     throw new Error('All AI models failed to generate the article. Please check your API key, the complexity of the topic, or try again later.');
 }
-
-    

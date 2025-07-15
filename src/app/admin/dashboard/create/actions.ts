@@ -13,14 +13,12 @@ import { JSDOM } from 'jsdom';
 const ArticleFormSchema = z.object({
   topic: z.string().min(1, 'Please enter a topic.'),
   category: z.string().min(1, 'Please select a category.'),
-  provider: z.enum(['openrouter', 'sambanova']),
   model: z.string().min(1, 'Please select an AI model.'),
   style: z.string().min(1, 'Please select a writing style.'),
   mood: z.string().min(1, 'Please select an article mood.'),
   wordCount: z.string().min(1, 'Please select a word count.'),
   imageCount: z.string().min(1, 'Please select the number of images.'),
   openRouterApiKey: z.string().optional(),
-  sambaNovaApiKey: z.string().optional(),
 });
 
 type GenerateArticleResult = {
@@ -40,29 +38,25 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
   const { 
     topic, 
     category, 
-    provider,
     model, 
     style, 
     mood, 
     wordCount, 
     imageCount, 
     openRouterApiKey,
-    sambaNovaApiKey
   } = validatedFields.data;
-  
-  const apiKey = provider === 'sambanova' ? sambaNovaApiKey : openRouterApiKey;
 
   try {
-    const newArticle = await generateArticleForTopic({ 
+    const newArticle = await generateArticleForTopic({
       topic, 
       category, 
-      provider,
+      provider: 'openrouter', // Hardcoded as we removed the provider dropdown
       model, 
       style, 
       mood, 
       wordCount,
       imageCount,
-      apiKey 
+      apiKey: openRouterApiKey // Pass the optional key
     });
 
     if (!newArticle) {
@@ -251,5 +245,3 @@ export async function saveUpdatedArticles(category: string, articles: Article[],
         throw new Error("Failed to save article to GitHub. Please check your credentials (token, owner, repo name) and repository permissions.");
     }
 }
-
-    
