@@ -40,7 +40,6 @@ export async function addImagesToArticleAction(content: string): Promise<{succes
         const dom = new JSDOM(content);
         const document = dom.window.document;
         const headings = document.querySelectorAll('h2, h3');
-        let newContent = document.body;
 
         for (const heading of Array.from(headings)) {
             const topic = heading.textContent?.trim();
@@ -53,11 +52,12 @@ export async function addImagesToArticleAction(content: string): Promise<{succes
                 img.src = pollinationsUrl;
                 img.alt = topic;
                 
+                // Insert the image after the heading element
                 heading.parentNode?.insertBefore(img, heading.nextSibling);
             }
         }
         
-        return { success: true, content: newContent.innerHTML };
+        return { success: true, content: document.body.innerHTML };
     } catch (e: any) {
         console.error("Failed to add images to article content on server:", e);
         return { success: false, error: "Could not process article content to add images." };
@@ -87,8 +87,9 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
 
   if (!validatedFields.success) {
     console.error("Validation Errors:", validatedFields.error.flatten());
-    const errorMessage = JSON.stringify(validatedFields.error.flatten().fieldErrors) || 'Invalid input data.';
-    return { success: false, error: errorMessage };
+    const errorMessages = validatedFields.error.flatten().fieldErrors;
+    const formattedError = Object.entries(errorMessages).map(([field, errors]) => `${field}: ${errors?.join(', ')}`).join('; ');
+    return { success: false, error: formattedError || 'Invalid input data.' };
   }
   
   const { title, slug, category, content, keyTakeaways, conclusion, image } = validatedFields.data;
@@ -105,7 +106,7 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
       dataAiHint: "manual content upload",
       publishedDate: new Date().toISOString(),
       articleContent,
-      keyTakeaways: keyTakeaways ? keyTakeaways.map(k => k.value).filter(v => v.trim() !== '') : [],
+      keyTakeaways: keyTakeaways ? keyTakeaways.map(k => k.value).filter(v => v && v.trim() !== '') : [],
       conclusion,
     };
     
@@ -121,10 +122,10 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
     revalidatePath(`/${categorySlug}`);
     revalidatePath(`/${categorySlug}/${newArticle.slug}`);
     
-    redirect('/admin/dashboard/edit');
-
   } catch (error) {
     console.error('Error in createManualArticleAction:', error);
     return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred.' };
   }
+  
+  redirect('/admin/dashboard/edit');
 }

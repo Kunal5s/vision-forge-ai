@@ -30,7 +30,7 @@ const manualArticleSchema = z.object({
   slug: z.string().min(5, 'Slug must be at least 5 characters long. Use dashes instead of spaces.').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and dashes.'),
   category: z.string().min(1, 'Please select a category.'),
   content: z.string().min(50, 'Content must be at least 50 characters long.'),
-  keyTakeaways: z.array(z.object({ value: z.string().min(1, 'Takeaway cannot be empty.') })).min(1, "Please provide at least one key takeaway.").optional(),
+  keyTakeaways: z.array(z.object({ value: z.string() })).optional(),
   conclusion: z.string().min(20, 'Conclusion must be at least 20 characters long.'),
 });
 
@@ -107,6 +107,11 @@ export default function ManualPublishPage() {
     
     try {
         const currentContent = getValues('content');
+        if (!currentContent || currentContent.length < 50) {
+            toast({ title: 'Content Too Short', description: 'Please write more content before adding images.', variant: 'destructive' });
+            setIsAddingImagesToArticle(false);
+            return;
+        }
         const result = await addImagesToArticleAction(currentContent);
 
         if (result.success && result.content) {
@@ -141,13 +146,17 @@ export default function ManualPublishPage() {
         setIsPublishing(false);
         return;
     }
+    
+    const takeaways = (data.keyTakeaways || []).filter(item => item && item.value.trim() !== '');
 
     const result = await createManualArticleAction({
       ...data,
+      keyTakeaways: takeaways.length > 0 ? takeaways : undefined,
       image: previewImage
     });
 
     if (result.success) {
+      // The action now handles redirection, so we might not see this toast if all goes well.
       toast({
         title: 'Article Published Successfully!',
         description: `Your article "${result.title}" has been saved and is now live.`,
@@ -157,6 +166,7 @@ export default function ManualPublishPage() {
         title: 'Error Publishing Article',
         description: result.error,
         variant: 'destructive',
+        duration: 9000,
       });
     }
     setIsPublishing(false);
