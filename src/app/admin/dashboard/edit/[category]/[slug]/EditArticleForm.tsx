@@ -9,11 +9,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, Trash2, Wand2 } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
 import type { Article } from '@/lib/articles';
 import { editArticleAction, deleteArticleAction } from '../../../create/actions';
+import { addImagesToArticleAction } from '../../../manual/actions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,9 +61,10 @@ const contentToHtml = (content: Article['articleContent']): string => {
 export default function EditArticleForm({ article, categoryName }: EditArticleFormProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isAddingImages, setIsAddingImages] = useState(false);
   const { toast } = useToast();
 
-  const { register, handleSubmit, formState: { errors }, control } = useForm<EditFormData>({
+  const { register, handleSubmit, formState: { errors }, control, getValues, setValue } = useForm<EditFormData>({
     resolver: zodResolver(editSchema),
     defaultValues: {
       title: article.title.replace(/<[^>]*>?/gm, ''),
@@ -103,6 +105,34 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
       toast({ title: "Article Deleted", description: "The article has been successfully removed." });
     }
   }
+
+  const handleAddImages = async () => {
+    setIsAddingImages(true);
+    toast({ title: 'AI is reading your article...', description: 'Generating and adding relevant images. This may take a moment.' });
+    
+    try {
+        const currentContent = getValues('content');
+        if (!currentContent || currentContent.length < 50) {
+            toast({ title: 'Content Too Short', description: 'Please write more content before adding images.', variant: 'destructive' });
+            setIsAddingImages(false);
+            return;
+        }
+        const result = await addImagesToArticleAction(currentContent);
+
+        if (result.success && result.content) {
+            setValue('content', result.content, { shouldDirty: true, shouldValidate: true });
+            toast({ title: 'Images Added!', description: 'AI has added contextual images to your article.' });
+        } else {
+            throw new Error(result.error || "Failed to add images.");
+        }
+
+    } catch (e: any) {
+        console.error("Failed to add images to article", e);
+        toast({ title: 'Error Adding Images', description: e.message || 'Could not automatically add images.', variant: 'destructive' });
+    } finally {
+        setIsAddingImages(false);
+    }
+  };
 
 
   return (
@@ -147,31 +177,46 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
                       <RichTextEditor 
                           value={field.value} 
                           onChange={field.onChange}
-                          disabled={isSaving || isDeleting}
+                          disabled={isSaving || isDeleting || isAddingImages}
                       />
                   )}
               />
               {errors.content && <p className="text-sm text-destructive mt-1">{errors.content.message}</p>}
             </div>
 
-            <div className="border-t pt-6 flex justify-between items-center">
-              <Button type="submit" disabled={isSaving || isDeleting}>
-                {isSaving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save Changes
-                  </>
-                )}
-              </Button>
+            <div className="border-t pt-6 flex flex-wrap justify-between items-center gap-4">
+              <div className="flex gap-2">
+                <Button type="submit" disabled={isSaving || isDeleting || isAddingImages}>
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Save Changes
+                    </>
+                  )}
+                </Button>
+                 <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleAddImages}
+                    disabled={isAddingImages || isSaving || isDeleting}
+                >
+                    {isAddingImages ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                        <Wand2 className="mr-2 h-4 w-4" />
+                    )}
+                    Generate & Add Images
+                </Button>
+              </div>
               
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                   <Button type="button" variant="destructive" disabled={isSaving || isDeleting}>
+                   <Button type="button" variant="destructive" disabled={isSaving || isDeleting || isAddingImages}>
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete Article
                    </Button>
