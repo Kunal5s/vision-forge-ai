@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEditor, EditorContent, BubbleMenu, Editor } from '@tiptap/react';
@@ -33,9 +32,10 @@ interface RichTextEditorProps {
     value: string;
     onChange: (richText: string) => void;
     disabled?: boolean;
+    placeholder?: string;
 }
 
-export function RichTextEditor({ value, onChange, disabled }: RichTextEditorProps) {
+export function RichTextEditor({ value, onChange, disabled, placeholder = "Start writing..." }: RichTextEditorProps) {
     const editor = useEditor({
         extensions: [
             StarterKit,
@@ -50,7 +50,7 @@ export function RichTextEditor({ value, onChange, disabled }: RichTextEditorProp
                 allowBase64: true,
             }),
             Placeholder.configure({
-                placeholder: 'Write your article here...',
+                placeholder,
             }),
         ],
         content: value,
@@ -61,7 +61,7 @@ export function RichTextEditor({ value, onChange, disabled }: RichTextEditorProp
         editorProps: {
             attributes: {
                 class: cn(
-                    "min-h-[400px] w-full bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus:outline-none",
+                    "min-h-[250px] w-full bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus:outline-none",
                     "prose dark:prose-invert max-w-full"
                 ),
             },
@@ -80,6 +80,16 @@ export function RichTextEditor({ value, onChange, disabled }: RichTextEditorProp
         }
         editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
     }, [editor]);
+    
+    // Add image handler
+    const addImage = useCallback(() => {
+        const url = window.prompt('Image URL');
+
+        if (url && editor) {
+            editor.chain().focus().setImage({ src: url }).run();
+        }
+    }, [editor]);
+
 
     if (!editor) {
         return null;

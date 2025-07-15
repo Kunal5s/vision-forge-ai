@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -9,8 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, Save, Trash2, Image as ImageIcon } from 'lucide-react';
-import { useState, useRef, useCallback } from 'react';
+import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import Link from 'next/link';
 import type { Article } from '@/lib/articles';
 import { editArticleAction, deleteArticleAction } from '../../../create/actions';
@@ -30,7 +29,7 @@ import { RichTextEditor } from '@/components/vision-forge/RichTextEditor';
 const editSchema = z.object({
   title: z.string().min(1, "Title is required."),
   slug: z.string().min(1, "Slug is required."),
-  content: z.string(), 
+  content: z.string().min(50, 'Content must be at least 50 characters.'), 
 });
 
 type EditFormData = z.infer<typeof editSchema>;
@@ -61,7 +60,7 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
 
-  const { register, handleSubmit, formState: { errors }, setValue, control } = useForm<EditFormData>({
+  const { register, handleSubmit, formState: { errors }, control } = useForm<EditFormData>({
     resolver: zodResolver(editSchema),
     defaultValues: {
       title: article.title,
@@ -119,7 +118,7 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
         <CardHeader>
           <CardTitle className="text-2xl">Edit Article</CardTitle>
           <CardDescription>
-            Make changes to your article below. Select text to reveal formatting options.
+            Make changes to your article below. Pasting content from other sources will preserve its formatting.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -180,7 +179,7 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                         <AlertDialogDescription>
                             This action cannot be undone. This will permanently delete the article from your GitHub repository.
-                        </GridDescription>
+                        </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>

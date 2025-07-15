@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation';
 import { categorySlugMap } from '@/lib/constants';
 import EditArticleForm from './EditArticleForm';
 
+// This page now uses the same form component as the create page, ensuring consistency.
+
 // Function to find the article
 async function getArticleData(categorySlug: string, articleSlug: string): Promise<{ article: Article, categoryName: string } | undefined> {
     const categoryName = Object.entries(categorySlugMap).find(([slug]) => slug === categorySlug)?.[1];

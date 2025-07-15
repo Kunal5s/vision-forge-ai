@@ -26,10 +26,10 @@ import { RichTextEditor } from '@/components/vision-forge/RichTextEditor';
 
 const manualArticleSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters long.'),
-  slug: z.string().min(5, 'Slug must be at least 5 characters long. Use dashes instead of spaces.'),
+  slug: z.string().min(5, 'Slug must be at least 5 characters long. Use dashes instead of spaces.').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and dashes.'),
   category: z.string().min(1, 'Please select a category.'),
   content: z.string().min(50, 'Content must be at least 50 characters long.'),
-  keyTakeaways: z.array(z.object({ value: z.string().min(1, 'Takeaway cannot be empty.') })).optional(),
+  keyTakeaways: z.array(z.object({ value: z.string().min(1, 'Takeaway cannot be empty.') })).min(1, "Please provide at least one key takeaway.").optional(),
   conclusion: z.string().min(20, 'Conclusion must be at least 20 characters long.'),
 });
 
@@ -43,11 +43,11 @@ export default function ManualPublishPage() {
   const DRAFT_KEY = 'manual_article_draft';
 
   const { toast } = useToast();
-  const { register, handleSubmit, control, formState: { errors }, watch, setValue, getValues } = useForm<ManualArticleFormData>({
+  const { register, handleSubmit, control, formState: { errors }, watch, setValue, getValues, trigger } = useForm<ManualArticleFormData>({
     resolver: zodResolver(manualArticleSchema),
     defaultValues: {
       content: '',
-      keyTakeaways: [{ value: '' }, { value: '' }, { value: '' }, { value: '' }, { value: '' }],
+      keyTakeaways: [{ value: '' }],
     }
   });
 
@@ -56,7 +56,6 @@ export default function ManualPublishPage() {
     name: "keyTakeaways",
   });
 
-  const categoryValue = watch('category');
   const titleValue = watch('title');
   const formValues = watch();
 
@@ -65,11 +64,14 @@ export default function ManualPublishPage() {
     try {
       const savedDraft = localStorage.getItem(DRAFT_KEY);
       if (savedDraft) {
-        const draftData = JSON.parse(savedDraft) as ManualArticleFormData;
-        Object.keys(draftData).forEach(key => {
-          setValue(key as keyof ManualArticleFormData, draftData[key as keyof ManualArticleFormData]);
-        });
-        toast({ title: "Draft Loaded", description: "Your previously unsaved draft has been restored." });
+        const draftData = JSON.parse(savedDraft);
+        const result = manualArticleSchema.partial().safeParse(draftData);
+        if (result.success) {
+            Object.keys(result.data).forEach(key => {
+              setValue(key as keyof ManualArticleFormData, result.data[key as keyof ManualArticleFormData]);
+            });
+            toast({ title: "Draft Loaded", description: "Your previously unsaved draft has been restored." });
+        }
       }
     } catch (e) {
       console.error("Failed to load draft from localStorage", e);
@@ -78,49 +80,49 @@ export default function ManualPublishPage() {
 
   // Autosave functionality
   useEffect(() => {
-    const handler = () => {
-      try {
-        const currentData = getValues();
-        localStorage.setItem(DRAFT_KEY, JSON.stringify(currentData));
-        console.log("Draft saved to localStorage");
-      } catch (e) {
-        console.error("Failed to save draft to localStorage", e);
-      }
-    };
-
-    if (autosaveTimeout.current) {
-      clearTimeout(autosaveTimeout.current);
-    }
-    autosaveTimeout.current = setTimeout(handler, 10000); // Autosave every 10 seconds
-
+    const subscription = watch((value) => {
+        if (autosaveTimeout.current) {
+          clearTimeout(autosaveTimeout.current);
+        }
+        autosaveTimeout.current = setTimeout(() => {
+          try {
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(value));
+            console.log("Draft saved to localStorage");
+          } catch (e) {
+            console.error("Failed to save draft to localStorage", e);
+          }
+        }, 5000); // Autosave every 5 seconds
+    });
     return () => {
-      if (autosaveTimeout.current) {
-        clearTimeout(autosaveTimeout.current);
-      }
+        subscription.unsubscribe();
+        if (autosaveTimeout.current) {
+            clearTimeout(autosaveTimeout.current);
+        }
     };
-  }, [formValues, getValues]);
+  }, [watch]);
 
 
-  const generateSlug = (title: string) => {
+  const generateSlug = useCallback((title: string) => {
     return title
       .toLowerCase()
+      .replace(/<[^>]*>?/gm, '') // strip html
       .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
       .replace(/\s+/g, '-')
       .replace(/^-+|-+$/g, '');
-  };
+  }, []);
   
-  const handleTitleChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const newTitle = event.target.value;
-    setValue('title', newTitle);
-    setValue('slug', generateSlug(newTitle));
-  }, [setValue]);
+  useEffect(() => {
+      const newSlug = generateSlug(titleValue || '');
+      setValue('slug', newSlug, { shouldValidate: true });
+  }, [titleValue, setValue, generateSlug]);
   
-  const fetchPreviewImage = useCallback(async (topic: string, category: string) => {
-    if (!topic || !category) return;
+  const fetchPreviewImage = useCallback(async (topic: string) => {
+    if (!topic) return;
     setIsGeneratingImage(true);
     try {
         const seed = Math.floor(Math.random() * 1_000_000);
-        const finalPrompt = `${topic}, in the style of ${category}, digital art`;
+        const finalPrompt = `${topic}, digital art, high detail`;
         const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=600&height=400&seed=${seed}&nologo=true`;
         setPreviewImage(pollinationsUrl);
     } catch (e) {
@@ -133,13 +135,13 @@ export default function ManualPublishPage() {
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
-        if (titleValue && categoryValue) {
-            fetchPreviewImage(titleValue, categoryValue);
+        if (titleValue) {
+            fetchPreviewImage(titleValue);
         }
-    }, 1000); // Wait 1 second after user stops typing
+    }, 1500); // Wait 1.5 seconds after user stops typing
     
     return () => clearTimeout(debounceTimer);
-  }, [titleValue, categoryValue, fetchPreviewImage]);
+  }, [titleValue, fetchPreviewImage]);
   
 
   const onSubmit = async (data: ManualArticleFormData) => {
@@ -202,7 +204,7 @@ export default function ManualPublishPage() {
                 <CardHeader>
                     <CardTitle className="text-2xl">Publish a New Article Manually</CardTitle>
                     <CardDescription>
-                    Write your article below. Select text to reveal formatting options. Your work is auto-saved as a draft every 10 seconds.
+                    Write your article below. Pasting content from other sources will preserve its formatting. Your work is auto-saved.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -212,7 +214,7 @@ export default function ManualPublishPage() {
                         <Input 
                           id="title" 
                           placeholder="Your engaging article title"
-                          {...register('title', { onChange: handleTitleChange })} 
+                          {...register('title')} 
                           disabled={isPublishing} 
                         />
                         {errors.title && <p className="text-sm text-destructive mt-1">{errors.title.message}</p>}
@@ -230,7 +232,7 @@ export default function ManualPublishPage() {
                         name="category"
                         control={control}
                         render={({ field }) => (
-                          <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isPublishing}>
+                          <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={isPublishing}>
                             <SelectTrigger id="category">
                               <SelectValue placeholder="Select a category for your article" />
                             </SelectTrigger>
@@ -279,7 +281,7 @@ export default function ManualPublishPage() {
                         </div>
                       ))}
                     </div>
-                     {errors.keyTakeaways && <p className="text-sm text-destructive mt-1">{errors.keyTakeaways[0]?.value?.message || errors.keyTakeaways.message}</p>}
+                     {errors.keyTakeaways && <p className="text-sm text-destructive mt-1">{errors.keyTakeaways.root?.message || (errors.keyTakeaways as any)[0]?.value?.message}</p>}
                     <Button
                       type="button"
                       variant="outline"
@@ -303,6 +305,7 @@ export default function ManualPublishPage() {
                                 value={field.value} 
                                 onChange={field.onChange}
                                 disabled={isPublishing}
+                                placeholder="Write your conclusion here..."
                             />
                         )}
                     />
@@ -339,7 +342,7 @@ export default function ManualPublishPage() {
                             ) : (
                                 <div className="text-center text-muted-foreground p-4">
                                   <ImageIcon className="mx-auto h-10 w-10" />
-                                  <p className="text-sm mt-2">Enter a title and select a category to generate a preview image.</p>
+                                  <p className="text-sm mt-2">Enter a title to generate a preview image.</p>
                                 </div>
                             )}
                         </div>
