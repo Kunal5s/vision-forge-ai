@@ -117,7 +117,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
                     </div>
                 </header>
 
-                {article.summary && (
+                {article.summary && article.summary.length > 10 && (
                     <Card className="my-8 bg-muted/50 border-border">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-2xl font-semibold">

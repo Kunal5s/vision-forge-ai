@@ -39,49 +39,41 @@ export async function addImagesToArticleAction(content: string, imageCount: numb
     try {
         const dom = new JSDOM(`<body>${content}</body>`);
         const document = dom.window.document;
-        // Prioritize H2 headings for image placement
-        let headings = Array.from(document.querySelectorAll('h2, h3'));
 
-        // If not enough headings, add paragraphs to the list of potential insertion points
-        if (headings.length < imageCount) {
-            const paragraphs = Array.from(document.querySelectorAll('p'));
-            headings = [...headings, ...paragraphs];
-        }
+        // Find all potential insertion points (after H2, H3, or P tags)
+        const insertionPoints = Array.from(document.querySelectorAll('h2, h3, p'));
 
         // Remove existing AI-generated images to avoid duplicates on re-runs
         document.querySelectorAll('img[src*="pollinations.ai"]').forEach(img => img.remove());
         
-        // Filter out very short headings/paragraphs and get the best candidates
-        const validHeadings = headings.filter(h => h.textContent && h.textContent.trim().split(' ').length > 3);
+        // Filter out very short paragraphs and get the best candidates
+        const validInsertionPoints = insertionPoints.filter(h => h.textContent && h.textContent.trim().split(' ').length > 5);
         
-        // Distribute images evenly among the best candidate headings
-        const numImagesToAdd = Math.min(imageCount, validHeadings.length);
+        const numImagesToAdd = Math.min(imageCount, validInsertionPoints.length);
         if (numImagesToAdd === 0) {
-            return { success: false, error: "No suitable headings found in the article to add images after. Try adding more H2 or H3 headings." };
+            return { success: false, error: "No suitable locations found in the article to add images. Try adding more headings or longer paragraphs." };
         }
         
-        const step = Math.floor(validHeadings.length / numImagesToAdd);
+        // Distribute images evenly among the best candidate locations
+        const step = Math.max(1, Math.floor(validInsertionPoints.length / numImagesToAdd));
 
         for (let i = 0; i < numImagesToAdd; i++) {
-            // Pick headings at even intervals
-            const headingIndex = Math.min(i * step, validHeadings.length - 1);
-            const heading = validHeadings[headingIndex];
-            const topic = heading.textContent?.trim();
+            const pointIndex = Math.min(i * step, validInsertionPoints.length - 1);
+            const insertionPoint = validInsertionPoints[pointIndex];
+            const topic = insertionPoint.textContent?.trim() || "relevant photography";
 
             if (topic) {
                 const seed = Math.floor(Math.random() * 1_000_000);
-                const finalPrompt = `${topic}, relevant photography, high detail, cinematic`;
+                // Create a more descriptive prompt for better images
+                const finalPrompt = `${topic.substring(0, 100)}, relevant photography, high detail, cinematic`;
                 const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=800&height=450&seed=${seed}&nologo=true`;
 
                 const img = document.createElement('img');
                 img.src = pollinationsUrl;
                 img.alt = topic;
-                img.style.display = 'block';
-                img.style.margin = '2rem auto';
-                img.style.borderRadius = '6px';
                 
-                // Insert the image after the heading element
-                heading.parentNode?.insertBefore(img, heading.nextSibling);
+                // Insert the image after the chosen insertion point
+                insertionPoint.parentNode?.insertBefore(img, insertionPoint.nextSibling);
             }
         }
         

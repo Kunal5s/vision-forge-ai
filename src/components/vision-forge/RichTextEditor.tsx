@@ -196,18 +196,23 @@ export function RichTextEditor({ value, onChange, disabled, placeholder = "Start
             }),
             Underline,
             Link.configure({ openOnClick: false, autolink: true, linkOnPaste: true }),
-            Image.configure({ inline: false, allowBase64: true }),
+            Image.configure({
+                inline: false,
+                allowBase64: true,
+                HTMLAttributes: {
+                  class: 'rounded-lg shadow-md mx-auto',
+                },
+            }),
             Placeholder.configure({ placeholder }),
             FontFamily,
             TextStyle,
             Color,
             TextAlign.configure({
-                types: ['heading', 'paragraph'],
+                types: ['heading', 'paragraph', 'image'],
             }),
             Dropcursor.configure({
                 color: '#4094F7',
                 width: 2,
-                class: 'drop-cursor'
             })
         ],
         content: value,
