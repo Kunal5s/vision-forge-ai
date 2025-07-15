@@ -102,7 +102,7 @@ export async function generateArticleForTopic(params: ArticleGenerationParams): 
         sambaNovaApiKey 
     } = params;
     
-    // Correctly select the API key based on the provider, then create the client
+    // **FIXED LOGIC**: Select the correct API key based on the chosen provider.
     const clientApiKey = provider === 'openrouter' ? openRouterApiKey : sambaNovaApiKey;
     const client = getApiClient(provider, clientApiKey);
 
@@ -204,5 +204,3 @@ export async function humanizeTextAction(text: string): Promise<{ success: boole
     return { success: false, error: errorMessage };
   }
 }
-
-    
