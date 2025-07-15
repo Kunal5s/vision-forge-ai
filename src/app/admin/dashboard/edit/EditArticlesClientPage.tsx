@@ -5,27 +5,64 @@ import type { Article } from '@/lib/articles';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Edit, FileText, Folder } from 'lucide-react';
+import { Edit, FileText, Folder, Search } from 'lucide-react';
 import Image from 'next/image';
 import { categorySlugMap } from '@/lib/constants';
+import { useState, useMemo } from 'react';
+import { Input } from '@/components/ui/input';
 
 interface EditArticlesClientPageProps {
     allArticlesByCategory: { category: string, articles: Article[] }[];
 }
 
 export default function EditArticlesClientPage({ allArticlesByCategory }: EditArticlesClientPageProps) {
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const getSnippet = (content: Article['articleContent']) => {
+        return (content.find(c => c.type === 'p')?.content || '').substring(0, 150);
+    };
+
+    const filteredArticles = useMemo(() => {
+        if (!searchTerm) {
+            return allArticlesByCategory;
+        }
+        
+        const lowercasedFilter = searchTerm.toLowerCase();
+
+        return allArticlesByCategory
+            .map(categoryData => {
+                const filtered = categoryData.articles.filter(article =>
+                    article.title.toLowerCase().includes(lowercasedFilter) ||
+                    getSnippet(article.articleContent).toLowerCase().includes(lowercasedFilter)
+                );
+                return { ...categoryData, articles: filtered };
+            })
+            .filter(categoryData => categoryData.articles.length > 0);
+
+    }, [searchTerm, allArticlesByCategory]);
+
     return (
         <Card>
             <CardHeader>
                 <CardTitle className="text-3xl">Manage All Articles</CardTitle>
                 <CardDescription>
-                    Here you can find all articles published on the site, organized by category. Click 'Edit' to modify an article.
+                    Here you can find all articles published on the site. Use the search bar to filter articles by title or content.
                 </CardDescription>
+                <div className="relative pt-4">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                        type="text"
+                        placeholder="Search for an article..."
+                        className="pl-10 w-full md:w-1/2 lg:w-1/3"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
             </CardHeader>
             <CardContent>
-                {allArticlesByCategory.length > 0 ? (
+                {filteredArticles.length > 0 ? (
                     <div className="space-y-8">
-                        {allArticlesByCategory.map(({ category, articles }) => {
+                        {filteredArticles.map(({ category, articles }) => {
                             const categorySlug = Object.entries(categorySlugMap).find(([, name]) => name === category)?.[0] || category.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
                             return (
                             <section key={category}>
@@ -47,7 +84,7 @@ export default function EditArticlesClientPage({ allArticlesByCategory }: EditAr
                                             <div className="flex-grow">
                                                 <h3 className="font-semibold text-lg text-foreground">{article.title}</h3>
                                                 <p className="text-sm text-muted-foreground line-clamp-2">
-                                                    {(article.articleContent.find(c => c.type === 'p')?.content || '').substring(0, 150)}...
+                                                    {getSnippet(article.articleContent)}...
                                                 </p>
                                                  <p className="text-xs text-muted-foreground mt-1">
                                                     Slug: /{categorySlug}/{article.slug}
@@ -69,10 +106,12 @@ export default function EditArticlesClientPage({ allArticlesByCategory }: EditAr
                     <div className="text-center py-10 text-muted-foreground">
                         <FileText size={48} className="mx-auto mb-4" />
                         <h3 className="text-xl font-semibold">No Articles Found</h3>
-                        <p>It looks like there are no articles yet. Go ahead and create one!</p>
-                        <Button asChild className="mt-4">
-                            <Link href="/admin/dashboard/create">Create New Article</Link>
-                        </Button>
+                        <p>{searchTerm ? "No articles found matching your search." : "It looks like there are no articles yet."}</p>
+                        {!searchTerm && (
+                            <Button asChild className="mt-4">
+                                <Link href="/admin/dashboard/create">Create New Article</Link>
+                            </Button>
+                        )}
                     </div>
                 )}
             </CardContent>
