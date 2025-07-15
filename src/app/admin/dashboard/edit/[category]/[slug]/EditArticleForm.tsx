@@ -12,7 +12,7 @@ import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
 import type { Article } from '@/lib/articles';
-import { editArticleAction, deleteArticleAction } from '../create/actions';
+import { editArticleAction, deleteArticleAction } from '../../../create/actions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -63,7 +63,7 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
   const { register, handleSubmit, formState: { errors }, control } = useForm<EditFormData>({
     resolver: zodResolver(editSchema),
     defaultValues: {
-      title: article.title,
+      title: article.title.replace(/<[^>]*>?/gm, ''),
       slug: article.slug,
       content: contentToHtml(article.articleContent),
     }
