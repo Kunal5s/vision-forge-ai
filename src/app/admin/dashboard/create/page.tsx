@@ -53,17 +53,14 @@ export default function CreateArticlePage() {
     setIsGenerating(true);
     toast({
       title: 'Starting AI Article Generation...',
-      description: `Using model: ${data.model}. This might take a minute or two.`,
+      description: `Using model: ${data.model}. This might take a minute or two. If one model fails, we'll try the next.`,
     });
 
     const result = await generateArticleAction(data);
 
-    if (result.success) {
-      toast({
-        title: 'Article Generated Successfully!',
-        description: `New article "${result.title}" has been created and saved.`,
-      });
-    } else {
+    // The redirect on success is handled by the server action itself.
+    // We only need to handle the error case here.
+    if (!result.success) {
       toast({
         title: 'Error Generating Article',
         description: result.error,

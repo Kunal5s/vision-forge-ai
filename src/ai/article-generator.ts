@@ -3,6 +3,7 @@
 
 import { z } from 'zod';
 import type { Article } from '@/lib/articles';
+import { OPENROUTER_MODELS } from '@/lib/constants';
 
 // Define the structure of an article part (e.g., h2, h3, p)
 const ArticleContentBlockSchema = z.object({
@@ -54,11 +55,12 @@ interface GenerationParams {
     style: string;
     mood: string;
     wordCount: string;
-    apiKey?: string; // Optional API key from the user
+    apiKey?: string;
 }
 
 export async function generateArticleForTopic(params: GenerationParams): Promise<Article | null> {
-    const { prompt, category, model, style, mood, wordCount, apiKey } = params;
+    const { prompt, category, style, mood, wordCount, apiKey } = params;
+    let preferredModel = params.model;
 
     // Use the user-provided API key if it exists, otherwise fall back to the environment variable.
     const api_key_to_use = apiKey || process.env.OPENROUTER_API_KEY;
@@ -66,58 +68,64 @@ export async function generateArticleForTopic(params: GenerationParams): Promise
     if (!api_key_to_use) {
         throw new Error("OpenRouter API key is not set. Please provide one in the form or set the OPENROUTER_API_KEY environment variable on Vercel.");
     }
-    console.log(`Generating article for topic: "${prompt}" in category: "${category}" using model: ${model}`);
-
+    
+    // Create a prioritized list of models, starting with the user's preferred choice
+    const modelsToTry = [preferredModel, ...OPENROUTER_MODELS.filter(m => m !== preferredModel)];
     const JSON_PROMPT_STRUCTURE = getJsonPromptStructure(wordCount, style, mood);
+    
+    for (const model of modelsToTry) {
+        console.log(`Attempting to generate article for topic: "${prompt}" in category: "${category}" using model: ${model}`);
+        try {
+            const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${api_key_to_use}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    model: model,
+                    messages: [
+                        { role: "system", content: JSON_PROMPT_STRUCTURE },
+                        { role: "user", content: `Generate an article for the category "${category}" on the topic: "${prompt}".` }
+                    ],
+                    response_format: { type: "json_object" },
+                })
+            });
 
-    try {
-        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${api_key_to_use}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                model: model,
-                messages: [
-                    { role: "system", content: JSON_PROMPT_STRUCTURE },
-                    { role: "user", content: `Generate an article for the category "${category}" on the topic: "${prompt}".` }
-                ],
-                response_format: { type: "json_object" },
-            })
-        });
+            if (!response.ok) {
+                const errorBody = await response.text();
+                console.warn(`API Error with model ${model}: ${response.status}`, errorBody);
+                // Don't throw, just continue to the next model in the loop
+                continue; 
+            }
 
-        if (!response.ok) {
-            const errorBody = await response.text();
-            console.error(`API Error: ${response.status}`, errorBody);
-            throw new Error(`API request failed with status ${response.status}. Please check the model name and your API key.`);
+            const data = await response.json();
+            const jsonContent = data.choices[0].message.content;
+
+            const rawArticle = JSON.parse(jsonContent);
+            const parsedResult = ArticleOutputSchema.safeParse(rawArticle);
+
+            if (!parsedResult.success) {
+                console.warn(`Zod validation failed for model ${model}:`, parsedResult.error.flatten());
+                // Content was generated but invalid, try next model
+                continue;
+            }
+
+            // Success! Add the current date and return.
+            const finalArticle: Article = {
+                ...parsedResult.data,
+                publishedDate: new Date().toISOString(),
+            };
+
+            console.log(`- Successfully generated and validated article: "${finalArticle.title}" with model: ${model}`);
+            return finalArticle;
+
+        } catch (error) {
+            console.error(`- An unexpected error occurred with model ${model}. Trying next model. Error:`, error);
+            // Continue to the next model in case of network errors etc.
         }
-
-        const data = await response.json();
-        const jsonContent = data.choices[0].message.content;
-
-        const rawArticle = JSON.parse(jsonContent);
-
-        // Validate and parse the generated content
-        const parsedResult = ArticleOutputSchema.safeParse(rawArticle);
-
-        if (!parsedResult.success) {
-            console.error("Zod validation failed:", parsedResult.error.flatten());
-            throw new Error("Generated content failed validation. The AI's response did not match the required format.");
-        }
-
-        // Add the current date as publishedDate before returning
-        const finalArticle: Article = {
-            ...parsedResult.data,
-            publishedDate: new Date().toISOString(),
-        };
-
-        console.log(`- Successfully generated and validated article: "${finalArticle.title}"`);
-        return finalArticle;
-
-    } catch (error) {
-        console.error(`- Failed to generate article with model ${model}. Error:`, error);
-        // Re-throw the error to be caught by the server action
-        throw error;
     }
+
+    // If the loop completes without returning, all models have failed.
+    throw new Error('All AI models failed to generate the article. Please check your API key, the complexity of the topic, or try again later.');
 }

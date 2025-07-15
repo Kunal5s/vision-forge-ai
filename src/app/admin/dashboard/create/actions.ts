@@ -47,7 +47,7 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
     });
 
     if (!newArticle) {
-      throw new Error('AI failed to generate the article. The model might be busy, the topic too complex, or the response format incorrect. Please try a different model or topic, or check your API key credits.');
+      throw new Error('AI failed to generate the article. This could be due to model unavailability, a complex topic, or an incorrect response format. Please try again with a different model or topic, or check your API key credits.');
     }
     
     await saveUpdatedArticles(category, [newArticle, ...(await getArticles(category))], `feat: ✨ Add new AI article "${newArticle.title}"`);
