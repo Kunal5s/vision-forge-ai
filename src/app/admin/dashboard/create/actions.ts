@@ -2,7 +2,7 @@
 'use server';
 
 import { generateArticleForTopic } from '@/ai/article-generator';
-import { getArticles, Article } from '@/lib/articles';
+import { getAllArticlesAdmin, Article } from '@/lib/articles';
 import { z } from 'zod';
 import { Octokit } from 'octokit';
 import { revalidatePath } from 'next/cache';
@@ -70,7 +70,8 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
       throw new Error('AI failed to generate the article. This could be due to model unavailability, a complex topic, or an incorrect response format. Please try again with a different model or topic, or check your API key credits.');
     }
     
-    await saveUpdatedArticles(category, [newArticle, ...(await getArticles(category))], `feat: ✨ Add new AI article "${newArticle.title}"`);
+    const articles = await getAllArticlesAdmin(category);
+    await saveUpdatedArticles(category, [newArticle, ...articles], `feat: ✨ Add new AI article "${newArticle.title}"`);
 
     revalidatePath('/');
     const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -114,6 +115,7 @@ const EditSchema = z.object({
     conclusion: z.string(),
     originalSlug: z.string(),
     category: z.string(),
+    status: z.enum(['published', 'draft']),
 });
 
 function parseHtmlToContent(html: string): Article['articleContent'] {
@@ -145,10 +147,10 @@ export async function editArticleAction(data: unknown) {
   if (!validatedFields.success) {
     return { success: false, error: "Invalid data." };
   }
-  const { title, slug, summary, content, keyTakeaways, conclusion, originalSlug, category } = validatedFields.data;
+  const { title, slug, summary, content, keyTakeaways, conclusion, originalSlug, category, status } = validatedFields.data;
 
   try {
-    const articles = await getArticles(category);
+    const articles = await getAllArticlesAdmin(category);
     const articleIndex = articles.findIndex(a => a.slug === originalSlug);
 
     if (articleIndex === -1) {
@@ -162,6 +164,7 @@ export async function editArticleAction(data: unknown) {
       title,
       slug,
       summary,
+      status, // Save the new status
       articleContent: newArticleContent,
       keyTakeaways: keyTakeaways || [],
       conclusion: conclusion,
@@ -186,7 +189,7 @@ export async function editArticleAction(data: unknown) {
 
 export async function deleteArticleAction(category: string, slug: string) {
     try {
-        const articles = await getArticles(category);
+        const articles = await getAllArticlesAdmin(category);
         const updatedArticles = articles.filter(a => a.slug !== slug);
         
         if (articles.length === updatedArticles.length) {

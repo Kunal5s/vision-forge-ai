@@ -1,9 +1,9 @@
 
-import { getArticles, type Article } from '@/lib/articles';
+import { getAllArticlesAdmin, type Article } from '@/lib/articles';
 import { categorySlugMap } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, FileText } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import EditArticlesClientPage from './EditArticlesClientPage';
 
 // This function fetches all articles from all known categories.
@@ -11,7 +11,8 @@ async function getAllArticles(): Promise<{ category: string, articles: Article[]
     const categories = Object.values(categorySlugMap);
     const allArticlesData = await Promise.all(
         categories.map(async (categoryName) => {
-            const articles = await getArticles(categoryName);
+            // Use the admin function to get all articles, including drafts
+            const articles = await getAllArticlesAdmin(categoryName);
             return { category: categoryName, articles };
         })
     );

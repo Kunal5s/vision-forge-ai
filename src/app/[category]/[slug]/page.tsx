@@ -17,8 +17,14 @@ async function getArticleData(categorySlug: string, articleSlug: string): Promis
     const categoryName = Object.entries(categorySlugMap).find(([, slug]) => slug.toLowerCase().replace(/[^a-z0-9]+/g, '-') === categorySlug)?.[1];
     if (!categoryName) return undefined;
     
+    // Use the public getArticles which only fetches 'published' articles
     const articles = await getArticles(categoryName);
-    return articles.find(article => article.slug === articleSlug);
+    const article = articles.find(article => article.slug === articleSlug);
+
+    // If an article is found, it must be published. If not found, it's either a draft or doesn't exist.
+    if (!article) return undefined;
+
+    return article;
 }
 
 // Function to generate metadata

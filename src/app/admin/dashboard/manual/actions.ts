@@ -1,7 +1,7 @@
 
 'use server';
 
-import { getArticles, Article } from '@/lib/articles';
+import { getAllArticlesAdmin, Article } from '@/lib/articles';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { saveUpdatedArticles } from '../create/actions'; // Import the universal save function
@@ -89,6 +89,7 @@ const ManualArticleSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters long.'),
   slug: z.string().min(5, 'Slug must be at least 5 characters long.'),
   category: z.string().min(1, 'Please select a category.'),
+  status: z.enum(['published', 'draft']),
   summary: z.string().optional(),
   content: z.string().min(50, 'Content must be at least 50 characters long.'),
   keyTakeaways: z.array(z.object({ value: z.string() })).optional(),
@@ -113,7 +114,7 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
     return { success: false, error: formattedError || 'Invalid input data.' };
   }
   
-  const { title, slug, category, summary, content, keyTakeaways, conclusion, image } = validatedFields.data;
+  const { title, slug, category, status, summary, content, keyTakeaways, conclusion, image } = validatedFields.data;
 
   try {
     const articleContent = parseHtmlToContent(content);
@@ -123,6 +124,7 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
       title,
       slug,
       category,
+      status, // Save the status
       image,
       dataAiHint: "manual content upload",
       publishedDate: new Date().toISOString(),
@@ -132,7 +134,7 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
       conclusion,
     };
     
-    const existingArticles = await getArticles(category);
+    const existingArticles = await getAllArticlesAdmin(category);
     const updatedArticles = [newArticle, ...existingArticles];
     
     // Save the article to GitHub

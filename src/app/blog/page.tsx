@@ -26,9 +26,13 @@ async function AllArticlesList() {
     // Flatten the array of arrays into a single array of all articles
     const allArticles = articlesByCategory.flat();
 
-    // Sort all articles by title for a consistent order.
-    // In a real application, you might sort by a 'publishedDate' field if it existed.
-    allArticles.sort((a, b) => a.title.localeCompare(b.title));
+    // Sort all articles by published date if available, otherwise by title.
+    allArticles.sort((a, b) => {
+        if (a.publishedDate && b.publishedDate) {
+            return new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime();
+        }
+        return a.title.localeCompare(b.title);
+    });
 
     // The ArticlesSection component will display all articles passed to it.
     return <ArticlesSection articles={allArticles} category="All Articles" />;

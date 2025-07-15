@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, Save, Trash2, Wand2, Eye, PlusCircle, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, Trash2, Wand2, Eye, PlusCircle, Globe, FileText } from 'lucide-react';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import type { Article } from '@/lib/articles';
@@ -41,6 +41,7 @@ import { IMAGE_COUNTS } from '@/lib/constants';
 const editSchema = z.object({
   title: z.string().min(1, "Title is required."),
   slug: z.string().min(1, "Slug is required."),
+  status: z.enum(['published', 'draft']),
   summary: z.string().optional(),
   content: z.string().min(50, 'Content must be at least 50 characters.'),
   keyTakeaways: z.array(z.object({ value: z.string().min(1, 'Takeaway cannot be empty.') })).optional(),
@@ -88,6 +89,7 @@ export default function EditArticleForm({ article, categoryName, categorySlug }:
     defaultValues: {
       title: article.title.replace(/<[^>]*>?/gm, ''),
       slug: article.slug,
+      status: article.status || 'published',
       summary: article.summary || '',
       content: contentToHtml(article.articleContent),
       keyTakeaways: article.keyTakeaways?.map(t => ({ value: t })) || [{ value: '' }],
@@ -267,6 +269,28 @@ export default function EditArticleForm({ article, categoryName, categorySlug }:
                   <Input id="slug" {...register('slug')} disabled={isSaving || isDeleting} />
                   {errors.slug && <p className="text-sm text-destructive mt-1">{errors.slug.message}</p>}
                 </div>
+            </div>
+             <div>
+                <Label htmlFor="status">Status</Label>
+                <Controller
+                    name="status"
+                    control={control}
+                    render={({ field }) => (
+                        <Select onValueChange={field.onChange} value={field.value} disabled={isSaving || isDeleting}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select status..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="published">
+                                    <div className="flex items-center gap-2"><Globe className="h-4 w-4 text-green-500" /> Published</div>
+                                </SelectItem>
+                                <SelectItem value="draft">
+                                    <div className="flex items-center gap-2"><FileText className="h-4 w-4 text-yellow-500" /> Draft</div>
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                    )}
+                />
             </div>
 
             <div>

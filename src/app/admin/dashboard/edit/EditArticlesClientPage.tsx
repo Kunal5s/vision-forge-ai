@@ -5,11 +5,13 @@ import type { Article } from '@/lib/articles';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Edit, FileText, Folder, Search } from 'lucide-react';
+import { Edit, FileText, Folder, Search, CheckCircle, Edit3 } from 'lucide-react';
 import Image from 'next/image';
 import { categorySlugMap } from '@/lib/constants';
 import { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 interface EditArticlesClientPageProps {
     allArticlesByCategory: { category: string, articles: Article[] }[];
@@ -33,6 +35,7 @@ export default function EditArticlesClientPage({ allArticlesByCategory }: EditAr
             .map(categoryData => {
                 const filtered = categoryData.articles.filter(article =>
                     article.title.toLowerCase().includes(lowercasedFilter) ||
+                    (article.status && article.status.toLowerCase().includes(lowercasedFilter)) ||
                     getSnippet(article.articleContent).toLowerCase().includes(lowercasedFilter)
                 );
                 return { ...categoryData, articles: filtered };
@@ -46,13 +49,13 @@ export default function EditArticlesClientPage({ allArticlesByCategory }: EditAr
             <CardHeader>
                 <CardTitle className="text-3xl">Manage All Articles</CardTitle>
                 <CardDescription>
-                    Here you can find all articles published on the site. Use the search bar to filter articles by title or content.
+                    Here you can find all published articles and drafts. Use the search bar to filter by title, content, or status.
                 </CardDescription>
                 <div className="relative pt-4">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <Input
                         type="text"
-                        placeholder="Search for an article..."
+                        placeholder="Search articles (e.g., 'AI' or 'draft')..."
                         className="pl-10 w-full md:w-1/2 lg:w-1/3"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -83,14 +86,20 @@ export default function EditArticlesClientPage({ allArticlesByCategory }: EditAr
                                             />
                                             <div className="flex-grow">
                                                 <h3 className="font-semibold text-lg text-foreground">{article.title}</h3>
+                                                <div className="flex items-center gap-2 mt-1 mb-2">
+                                                    <Badge variant={article.status === 'published' ? 'default' : 'secondary'} className={cn(article.status === 'published' ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-500 hover:bg-yellow-600', 'text-white')}>
+                                                        {article.status === 'published' ? <CheckCircle className="mr-1.5 h-3.5 w-3.5" /> : <Edit3 className="mr-1.5 h-3.5 w-3.5" />}
+                                                        {article.status}
+                                                    </Badge>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Slug: /{categorySlug}/{article.slug}
+                                                    </p>
+                                                </div>
                                                 <p className="text-sm text-muted-foreground line-clamp-2">
                                                     {getSnippet(article.articleContent)}...
                                                 </p>
-                                                 <p className="text-xs text-muted-foreground mt-1">
-                                                    Slug: /{categorySlug}/{article.slug}
-                                                </p>
                                             </div>
-                                            <Button asChild variant="secondary" size="sm">
+                                            <Button asChild variant="secondary" size="sm" className="shrink-0">
                                                 <Link href={`/admin/dashboard/edit/${categorySlug}/${article.slug}`}>
                                                     <Edit className="mr-2 h-4 w-4" />
                                                     Edit

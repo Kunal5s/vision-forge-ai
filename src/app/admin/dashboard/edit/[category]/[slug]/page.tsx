@@ -1,5 +1,5 @@
 
-import { getArticles, type Article } from '@/lib/articles';
+import { getAllArticlesAdmin, type Article } from '@/lib/articles';
 import { notFound } from 'next/navigation';
 import { categorySlugMap } from '@/lib/constants';
 import EditArticleForm from './EditArticleForm';
@@ -11,7 +11,8 @@ async function getArticleData(categorySlug: string, articleSlug: string): Promis
     const categoryName = Object.entries(categorySlugMap).find(([slug]) => slug === categorySlug)?.[1];
     if (!categoryName) return undefined;
     
-    const articles = await getArticles(categoryName);
+    // Use the admin function to get all articles, including drafts
+    const articles = await getAllArticlesAdmin(categoryName);
     const article = articles.find(article => article.slug === articleSlug);
 
     if (!article) return undefined;
@@ -34,5 +35,3 @@ export default async function EditArticlePage({ params }: { params: { category: 
         </main>
     );
 }
-
-    
