@@ -67,48 +67,6 @@ export default {
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
   		},
-      typography: ({ theme }: { theme: any }) => ({
-        DEFAULT: {
-          css: {
-            '--prose-links': theme('colors.green[700]'),
-            '--prose-invert-links': theme('colors.green[400]'),
-            a: {
-              textDecoration: 'underline',
-              '&:hover': {
-                opacity: '0.8',
-              },
-            },
-            p: {
-              fontSize: 'clamp(1rem, 1.5vw, 1.15rem)', // ~16px to 18.4px
-              lineHeight: '1.7',
-            },
-            h1: {
-              fontSize: 'clamp(1.75rem, 5vw, 2.5rem)', // ~28px to 40px
-              fontWeight: '700',
-            },
-            h2: {
-              fontSize: 'clamp(1.5rem, 4vw, 2rem)', // ~24px to 32px
-              fontWeight: '600',
-            },
-            h3: {
-              fontSize: 'clamp(1.25rem, 3vw, 1.75rem)', // ~20px to 28px
-              fontWeight: '600',
-            },
-             blockquote: {
-              fontStyle: 'italic',
-              borderLeftWidth: '4px',
-              borderLeftColor: theme('colors.border'),
-              paddingLeft: '1rem',
-              color: theme('colors.muted.foreground'),
-            },
-            'img, video': {
-              marginLeft: 'auto',
-              marginRight: 'auto',
-              borderRadius: theme('borderRadius.lg'),
-            },
-          }
-        }
-      }),
   		keyframes: {
   			'accordion-down': {
   				from: {
