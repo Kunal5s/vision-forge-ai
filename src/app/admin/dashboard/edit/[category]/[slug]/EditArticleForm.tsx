@@ -36,11 +36,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { IMAGE_COUNTS } from '@/lib/constants';
+import { Textarea } from '@/components/ui/textarea';
 
 
 const editSchema = z.object({
   title: z.string().min(1, "Title is required."),
   slug: z.string().min(1, "Slug is required."),
+  summary: z.string().optional(),
   content: z.string().min(50, 'Content must be at least 50 characters.'),
   keyTakeaways: z.array(z.object({ value: z.string().min(1, 'Takeaway cannot be empty.') })).optional(),
   conclusion: z.string().min(20, 'Conclusion must be at least 20 characters long.'),
@@ -87,6 +89,7 @@ export default function EditArticleForm({ article, categoryName, categorySlug }:
     defaultValues: {
       title: article.title.replace(/<[^>]*>?/gm, ''),
       slug: article.slug,
+      summary: article.summary || '',
       content: contentToHtml(article.articleContent),
       keyTakeaways: article.keyTakeaways?.map(t => ({ value: t })) || [{ value: '' }],
       conclusion: article.conclusion,
@@ -265,6 +268,18 @@ export default function EditArticleForm({ article, categoryName, categorySlug }:
                   <Input id="slug" {...register('slug')} disabled={isSaving || isDeleting} />
                   {errors.slug && <p className="text-sm text-destructive mt-1">{errors.slug.message}</p>}
                 </div>
+            </div>
+
+            <div>
+              <Label htmlFor="summary">Summary</Label>
+              <Textarea
+                id="summary"
+                {...register('summary')}
+                disabled={isSaving || isDeleting}
+                placeholder="A short, engaging summary for the top of the article."
+                rows={3}
+              />
+              {errors.summary && <p className="text-sm text-destructive mt-1">{errors.summary.message}</p>}
             </div>
 
             <div>

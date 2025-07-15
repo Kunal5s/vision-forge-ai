@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, List } from 'lucide-react';
+import { CheckCircle, BookOpen, List } from 'lucide-react';
 import type { Metadata } from 'next';
 import { categorySlugMap } from '@/lib/constants';
 import type { Article } from '@/lib/articles';
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: { params: { category: string;
     };
   }
   
-  const description = (article.articleContent.find(c => c.type === 'p')?.content || '').substring(0, 160);
+  const description = (article.summary || article.articleContent.find(c => c.type === 'p')?.content || '').substring(0, 160);
 
   return {
     title: article.title.replace(/<[^>]*>?/gm, ''), // Strip HTML for metadata
@@ -116,6 +116,44 @@ export default async function ArticlePage({ params }: { params: { category: stri
                         />
                     </div>
                 </header>
+
+                {article.summary && (
+                    <Card className="my-8 bg-muted/50 border-border">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-2xl font-semibold">
+                                <BookOpen className="h-6 w-6 text-primary" />
+                                Summary
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="prose prose-sm dark:prose-invert max-w-none">
+                                {parse(article.summary)}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {toc.length > 0 && (
+                     <Card className="my-8 bg-muted/50 border-border">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-2xl font-semibold">
+                                <List className="h-6 w-6 text-primary" />
+                                Table of Contents
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <ul className="space-y-2">
+                                {toc.map((item, index) => (
+                                    <li key={index}>
+                                        <a href={`#${item.slug}`} className="text-foreground/80 hover:text-primary transition-colors">
+                                            {item.title}
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        </CardContent>
+                    </Card>
+                )}
                 
                 <article className="prose dark:prose-invert max-w-none">
                     {article.articleContent.map(renderContentBlock)}

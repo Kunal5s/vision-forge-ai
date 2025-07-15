@@ -24,12 +24,14 @@ import { createManualArticleAction, addImagesToArticleAction } from './actions';
 import Image from 'next/image';
 import { RichTextEditor } from '@/components/vision-forge/RichTextEditor';
 import { ArticlePreview } from '@/components/vision-forge/ArticlePreview';
+import { Textarea } from '@/components/ui/textarea';
 
 
 const manualArticleSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters long.'),
   slug: z.string().min(5, 'Slug must be at least 5 characters long. Use dashes instead of spaces.').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and dashes.'),
   category: z.string().min(1, 'Please select a category.'),
+  summary: z.string().min(10, 'Summary must be at least 10 characters long.').optional(),
   content: z.string().min(50, 'Content must be at least 50 characters long.'),
   keyTakeaways: z.array(z.object({ value: z.string().min(1, 'Takeaway cannot be empty.') })).optional(),
   conclusion: z.string().min(20, 'Conclusion must be at least 20 characters long.'),
@@ -43,7 +45,7 @@ export default function ManualPublishPage() {
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isAddingImagesToArticle, setIsAddingImagesToArticle] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [imageCount, setImageCount] = useState(IMAGE_COUNTS[1].value); // Default to 5 images
+  const [imageCount, setImageCount] = useState(IMAGE_COUNTS[1].value); // Default to 2 images
 
 
   const { toast } = useToast();
@@ -52,6 +54,7 @@ export default function ManualPublishPage() {
     defaultValues: {
       title: '',
       slug: '',
+      summary: '',
       content: '',
       keyTakeaways: [{ value: '' }],
       conclusion: '',
@@ -232,6 +235,19 @@ export default function ManualPublishPage() {
                     {errors.title && <p className="text-sm text-destructive mt-1">{errors.title.message}</p>}
                     <Input id="slug" placeholder="your-slug-will-be-here" {...register('slug')} disabled className="border-0 px-0 h-auto text-sm text-muted-foreground" />
                     {errors.slug && <p className="text-sm text-destructive mt-1">{errors.slug.message}</p>}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="summary" className="text-lg font-semibold">Summary</Label>
+                    <Textarea
+                      id="summary"
+                      {...register('summary')}
+                      disabled={isPublishing}
+                      placeholder="A short, engaging summary for the top of the article."
+                      rows={3}
+                      className="mt-1"
+                    />
+                    {errors.summary && <p className="text-sm text-destructive mt-1">{errors.summary.message}</p>}
                   </div>
 
                   <div>

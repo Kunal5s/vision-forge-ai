@@ -108,6 +108,7 @@ async function getShaForFile(octokit: Octokit, owner: string, repo: string, path
 const EditSchema = z.object({
     title: z.string().min(1, "Title cannot be empty."),
     slug: z.string().min(1, "Slug cannot be empty."),
+    summary: z.string().optional(),
     content: z.string(), 
     keyTakeaways: z.array(z.string()).optional(),
     conclusion: z.string(),
@@ -144,7 +145,7 @@ export async function editArticleAction(data: unknown) {
   if (!validatedFields.success) {
     return { success: false, error: "Invalid data." };
   }
-  const { title, slug, content, keyTakeaways, conclusion, originalSlug, category } = validatedFields.data;
+  const { title, slug, summary, content, keyTakeaways, conclusion, originalSlug, category } = validatedFields.data;
 
   try {
     const articles = await getArticles(category);
@@ -160,6 +161,7 @@ export async function editArticleAction(data: unknown) {
       ...articles[articleIndex],
       title,
       slug,
+      summary,
       articleContent: newArticleContent,
       keyTakeaways: keyTakeaways || [],
       conclusion: conclusion,

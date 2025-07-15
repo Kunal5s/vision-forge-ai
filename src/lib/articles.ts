@@ -19,6 +19,7 @@ const ArticleSchema = z.object({
   title: z.string().min(1),
   slug: z.string().min(1),
   publishedDate: z.string().datetime().optional(),
+  summary: z.string().optional(),
   articleContent: z.array(ArticleContentBlockSchema),
   keyTakeaways: z.array(z.string()),
   conclusion: z.string().min(1),

@@ -97,6 +97,7 @@ const ManualArticleSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters long.'),
   slug: z.string().min(5, 'Slug must be at least 5 characters long.'),
   category: z.string().min(1, 'Please select a category.'),
+  summary: z.string().optional(),
   content: z.string().min(50, 'Content must be at least 50 characters long.'),
   keyTakeaways: z.array(z.object({ value: z.string() })).optional(),
   conclusion: z.string().min(20, 'Conclusion must be at least 20 characters long.'),
@@ -120,7 +121,7 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
     return { success: false, error: formattedError || 'Invalid input data.' };
   }
   
-  const { title, slug, category, content, keyTakeaways, conclusion, image } = validatedFields.data;
+  const { title, slug, category, summary, content, keyTakeaways, conclusion, image } = validatedFields.data;
 
   try {
     const articleContent = parseHtmlToContent(content);
@@ -133,6 +134,7 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
       image,
       dataAiHint: "manual content upload",
       publishedDate: new Date().toISOString(),
+      summary: summary || '',
       articleContent,
       keyTakeaways: keyTakeaways ? keyTakeaways.map(k => k.value).filter(v => v && v.trim() !== '') : [],
       conclusion,

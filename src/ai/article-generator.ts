@@ -13,6 +13,7 @@ const ArticleOutputSchema = z.object({
   category: z.string().describe("The category of the article."),
   title: z.string().min(1).describe("The compelling, SEO-friendly title for the article."),
   slug: z.string().min(1).describe("A URL-friendly slug, generated from the title."),
+  summary: z.string().min(1).describe("A concise, engaging summary of the article, around 2-3 sentences long. This will be displayed prominently at the top."),
   articleContent: z.array(z.object({
     type: z.enum(['h2', 'h3', 'h4', 'h5', 'h6', 'p', 'img']),
     content: z.string().min(1),
@@ -33,7 +34,7 @@ const getJsonPromptStructureForArticle = (wordCount: string, style: string, mood
   - You MUST write in a human-like, conversational, and engaging tone. Use storytelling techniques, personal anecdotes (where appropriate), and a natural narrative flow. Avoid robotic language and overly formal structures. The goal is to create content that resonates emotionally with the reader and feels like it was written by an expert human author.
 
   **FORMATTING INSTRUCTIONS:**
-  - For all text-based content within the JSON (like 'title', 'content' for 'p' and 'h' tags, 'keyTakeaways', and 'conclusion'), you MUST embed appropriate HTML tags for rich formatting.
+  - For all text-based content within the JSON (like 'title', 'summary', 'content' for 'p' and 'h' tags, 'keyTakeaways', and 'conclusion'), you MUST embed appropriate HTML tags for rich formatting.
   - Use <strong> for bolding important keywords and phrases.
   - Use <em> for emphasizing points with italics.
   - Use <u> for underlining where it makes sense stylistically.
