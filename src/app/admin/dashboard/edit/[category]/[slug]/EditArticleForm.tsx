@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm, Controller } from 'react-hook-form';
@@ -41,16 +42,17 @@ interface EditArticleFormProps {
 
 const contentToHtml = (content: Article['articleContent']): string => {
     return content.map(block => {
+        const contentWithTags = block.content;
         switch (block.type) {
-            case 'h1': return `<h1>${block.content}</h1>`;
-            case 'h2': return `<h2>${block.content}</h2>`;
-            case 'h3': return `<h3>${block.content}</h3>`;
-            case 'h4': return `<h4>${block.content}</h4>`;
-            case 'h5': return `<h5>${block.content}</h5>`;
-            case 'h6': return `<h6>${block.content}</h6>`;
-            case 'p': return `<p>${block.content}</p>`;
+            case 'h1': return `<h1>${contentWithTags}</h1>`;
+            case 'h2': return `<h2>${contentWithTags}</h2>`;
+            case 'h3': return `<h3>${contentWithTags}</h3>`;
+            case 'h4': return `<h4>${contentWithTags}</h4>`;
+            case 'h5': return `<h5>${contentWithTags}</h5>`;
+            case 'h6': return `<h6>${contentWithTags}</h6>`;
+            case 'p': return `<p>${contentWithTags}</p>`;
             case 'img': return `<img src="${block.content}" alt="${block.alt || ''}" />`;
-            default: return `<p>${block.content}</p>`;
+            default: return `<p>${contentWithTags}</p>`;
         }
     }).join(''); 
 }
