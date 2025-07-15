@@ -72,15 +72,19 @@ export const QUALITY_OPTIONS: StyleOption[] = [
 // --- ARTICLE GENERATOR CONSTANTS ---
 
 export const OPENROUTER_MODELS: string[] = [
-    "google/gemma-2-9b-it", // Recommended free model
-    "openrouter/mistral-7b-instruct-free", // Fast free model
-    "microsoft/phi-3-mini-128k-instruct", // Good small model
-    "cognitivecomputations/dolphin-mixtral-8x7b",
-    "google/gemma-7b-it",
-    "nousresearch/nous-hermes-2-mixtral-8x7b-dpo",
-    "mistralai/mistral-7b-instruct",
-    "nousresearch/nous-hermes-2-mistral-7b-dpo",
+    "google/gemma-2-9b-it",
+    "meta-llama/llama-3-8b-instruct",
+    "qwen/qwen3-32b-chat",
+    "qwen/qwen3-30b-a3b",
+    "qwen/qwen3-8b",
+    "shisaai/shisa-v2-llama3-70b",
+    "tencent/hunyuan-a13b-chat",
+    "mistralai/mixtral-8x7b-instruct",
+    "nousresearch/nous-hermes-2-mixtral",
+    "cognitivecomputations/dolphin-2.9",
+    "openchat/openchat-3.5",
     "huggingfaceh4/zephyr-7b-beta",
+    "openrouter/chronos-hermes-13b",
 ];
 
 
