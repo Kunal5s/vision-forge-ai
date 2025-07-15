@@ -38,8 +38,8 @@ export default async function AdminDashboardPage() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <Card className="hover:shadow-lg hover:-translate-y-1 transition-all">
-            <Link href="/admin/dashboard/create" className="block h-full">
+          <Link href="/admin/dashboard/create" className="block h-full transition-all hover:shadow-lg hover:-translate-y-1">
+            <Card className="h-full flex flex-col">
               <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-2xl">
                       <PlusCircle className="text-primary" /> Create with AI
@@ -48,16 +48,16 @@ export default async function AdminDashboardPage() {
                       Generate a new SEO-friendly article with AI assistance.
                   </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="mt-auto">
                   <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
                       Generate Article
                   </Button>
               </CardContent>
-            </Link>
-          </Card>
+            </Card>
+          </Link>
 
-          <Card className="hover:shadow-lg hover:-translate-y-1 transition-all">
-            <Link href="/admin/dashboard/manual" className="block h-full">
+          <Link href="/admin/dashboard/manual" className="block h-full transition-all hover:shadow-lg hover:-translate-y-1">
+            <Card className="h-full flex flex-col">
               <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-2xl">
                       <FileSignature className="text-green-600" /> Manual Publish
@@ -66,16 +66,16 @@ export default async function AdminDashboardPage() {
                       Write, format, and publish your own articles from scratch.
                   </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="mt-auto">
                 <Button className="w-full" variant="outline">
                     Write Manually
                 </Button>
               </CardContent>
-            </Link>
-          </Card>
+            </Card>
+          </Link>
 
-          <Card className="hover:shadow-lg hover:-translate-y-1 transition-all">
-            <Link href="/admin/dashboard/edit" className="block h-full">
+          <Link href="/admin/dashboard/edit" className="block h-full transition-all hover:shadow-lg hover:-translate-y-1">
+            <Card className="h-full flex flex-col">
               <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-2xl">
                       <Edit className="text-accent" /> Manage Articles
@@ -84,13 +84,13 @@ export default async function AdminDashboardPage() {
                       Find, modify, and manage all previously published articles.
                   </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="mt-auto">
                 <Button variant="secondary" className="w-full">
                     Manage Content
                 </Button>
               </CardContent>
-            </Link>
-          </Card>
+            </Card>
+          </Link>
 
       </div>
     </main>
