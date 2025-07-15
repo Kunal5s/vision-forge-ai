@@ -271,6 +271,9 @@ export async function humanizeTextAction(text: string): Promise<{ success: boole
   const client = new OpenAI({
     apiKey: apiKey,
     baseURL: "https://openrouter.ai/api/v1",
+    defaultHeaders: {
+        "X-Title": "Imagen BrainAi",
+    },
   });
 
   try {
