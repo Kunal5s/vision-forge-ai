@@ -35,7 +35,7 @@ const ManualArticleSchema = z.object({
   slug: z.string().min(5, 'Slug must be at least 5 characters long.'),
   category: z.string().min(1, 'Please select a category.'),
   content: z.string().min(50, 'Content must be at least 50 characters long.'),
-  keyTakeaways: z.string().optional(), // Make optional
+  keyTakeaways: z.array(z.object({ value: z.string() })).optional(),
   conclusion: z.string().min(20, 'Conclusion must be at least 20 characters long.'),
   image: z.string().url('A valid image URL is required.'),
 });
@@ -70,7 +70,7 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
       dataAiHint: "manual content upload",
       publishedDate: new Date().toISOString(),
       articleContent,
-      keyTakeaways: keyTakeaways ? keyTakeaways.split(',').map(k => k.trim()) : [],
+      keyTakeaways: keyTakeaways ? keyTakeaways.map(k => k.value).filter(v => v.trim() !== '') : [],
       conclusion,
     };
     
@@ -93,3 +93,5 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
     return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred.' };
   }
 }
+
+    

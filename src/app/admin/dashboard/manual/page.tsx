@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { categorySlugMap } from '@/lib/constants';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, FileSignature, ImageIcon, Bold, Italic, Heading2, Link as LinkIcon, List, ListOrdered, Quote as QuoteIcon } from 'lucide-react';
+import { ArrowLeft, Loader2, FileSignature, ImageIcon, Bold, Italic, Heading2, Link as LinkIcon, List, ListOrdered, Quote as QuoteIcon, PlusCircle, X } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef, ChangeEvent } from 'react';
 import Link from 'next/link';
 import { createManualArticleAction } from './actions';
@@ -29,7 +29,7 @@ const manualArticleSchema = z.object({
   slug: z.string().min(5, 'Slug must be at least 5 characters long. Use dashes instead of spaces.'),
   category: z.string().min(1, 'Please select a category.'),
   content: z.string().min(50, 'Content must be at least 50 characters long.'),
-  keyTakeaways: z.string().optional(),
+  keyTakeaways: z.array(z.object({ value: z.string().min(1, 'Takeaway cannot be empty.') })).optional(),
   conclusion: z.string().min(20, 'Conclusion must be at least 20 characters long.'),
 });
 
@@ -47,6 +47,14 @@ export default function ManualPublishPage() {
   const { toast } = useToast();
   const { register, handleSubmit, control, formState: { errors }, watch, setValue, getValues } = useForm<ManualArticleFormData>({
     resolver: zodResolver(manualArticleSchema),
+    defaultValues: {
+      keyTakeaways: [{ value: '' }],
+    }
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "keyTakeaways",
   });
 
   const categoryValue = watch('category');
@@ -306,15 +314,33 @@ export default function ManualPublishPage() {
 
 
                   <div>
-                    <Label htmlFor="keyTakeaways">Key Takeaways</Label>
-                    <Input 
-                      id="keyTakeaways" 
-                      placeholder="Takeaway one, Takeaway two, Takeaway three"
-                      {...register('keyTakeaways')}
-                      disabled={isPublishing} 
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">Separate each takeaway with a comma.</p>
-                    {errors.keyTakeaways && <p className="text-sm text-destructive mt-1">{errors.keyTakeaways.message}</p>}
+                    <Label>Key Takeaways</Label>
+                    <div className="space-y-2">
+                      {fields.map((field, index) => (
+                        <div key={field.id} className="flex items-center gap-2">
+                          <Input
+                            {...register(`keyTakeaways.${index}.value`)}
+                            placeholder={`Takeaway #${index + 1}`}
+                            disabled={isPublishing}
+                          />
+                          <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={isPublishing || fields.length <= 1}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                     {errors.keyTakeaways && <p className="text-sm text-destructive mt-1">{errors.keyTakeaways.message}</p>}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="mt-2"
+                      onClick={() => append({ value: "" })}
+                       disabled={isPublishing || fields.length >= 5}
+                    >
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Add Takeaway
+                    </Button>
                   </div>
 
                   <div>
@@ -384,3 +410,5 @@ export default function ManualPublishPage() {
     </main>
   );
 }
+
+    
