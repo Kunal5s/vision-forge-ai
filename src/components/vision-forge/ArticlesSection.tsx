@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Article } from '@/lib/articles';
+import parse from 'html-react-parser';
 
 interface ArticlesSectionProps {
     articles: Article[];
@@ -19,7 +20,9 @@ export function ArticlesSection({ articles, category }: ArticlesSectionProps) {
     const createSnippet = (content: Article['articleContent'], length = 150) => {
         if (!content || !Array.isArray(content)) return '';
         const firstParagraph = content.find(item => item.type === 'p');
-        const textToSnippet = firstParagraph ? firstParagraph.content : '';
+        let textToSnippet = firstParagraph ? firstParagraph.content : '';
+        // Strip HTML tags for snippet
+        textToSnippet = textToSnippet.replace(/<[^>]*>?/gm, ''); 
         if (textToSnippet.length <= length) return textToSnippet;
         return textToSnippet.substring(0, length) + '...';
     }
@@ -55,7 +58,7 @@ export function ArticlesSection({ articles, category }: ArticlesSectionProps) {
                                 <div className="aspect-video relative">
                                     <Image
                                         src={article.image}
-                                        alt={article.title}
+                                        alt={article.title.replace(/<[^>]*>?/gm, '')}
                                         layout="fill"
                                         objectFit="cover"
                                         data-ai-hint={article.dataAiHint}
@@ -69,7 +72,7 @@ export function ArticlesSection({ articles, category }: ArticlesSectionProps) {
                             <Badge variant="secondary" className="mb-2">{article.category}</Badge>
                             <CardTitle className="text-lg font-semibold leading-snug mb-2">
                                 <Link href={articleUrl} className={'hover:text-primary'}>
-                                    {article.title}
+                                    {parse(article.title)}
                                 </Link>
                             </CardTitle>
                             <p className="text-sm text-foreground">

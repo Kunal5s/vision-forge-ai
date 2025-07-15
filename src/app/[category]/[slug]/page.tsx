@@ -9,6 +9,8 @@ import type { Metadata } from 'next';
 import { categorySlugMap } from '@/lib/constants';
 import type { Article } from '@/lib/articles';
 import { cn } from '@/lib/utils';
+import parse from 'html-react-parser';
+
 
 // Function to find the article
 async function getArticleData(categorySlug: string, articleSlug: string): Promise<Article | undefined> {
@@ -45,7 +47,6 @@ export default async function ArticlePage({ params }: { params: { category: stri
         notFound();
     }
     
-    // Function to extract H2 headings for Table of Contents, now cleaning HTML
     const getTableOfContents = (content: Article['articleContent']) => {
         return content
             .filter(block => block.type === 'h2')
@@ -60,37 +61,28 @@ export default async function ArticlePage({ params }: { params: { category: stri
     
     const toc = getTableOfContents(article.articleContent);
 
-    // This function will parse basic markdown-like syntax for bold and italic.
-    const parseMarkdown = (text: string) => {
-        if (typeof text !== 'string') return '';
-        // This is a simplified parser. For full HTML support, we let dangerouslySetInnerHTML handle it.
-        return text;
-    }
-
-    // Component to render individual content blocks, with dangerouslySetInnerHTML
     const renderContentBlock = (block: Article['articleContent'][0], index: number) => {
         const slug = block.type === 'h2' 
             ? block.content.replace(/<[^>]*>?/gm, '').toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '')
             : undefined;
         
-        // Since content can be HTML now, we pass it directly
         const processedContent = block.content;
 
         switch (block.type) {
             case 'h1':
-                return <h1 key={index} className="text-4xl font-bold mt-12 mb-4" dangerouslySetInnerHTML={{ __html: processedContent }} />;
+                return <h1 key={index} className="text-4xl font-bold mt-12 mb-4">{parse(processedContent)}</h1>;
             case 'h2':
-                return <h2 key={index} id={slug} className="text-3xl font-bold mt-12 mb-4 border-b pb-2 scroll-mt-24" dangerouslySetInnerHTML={{ __html: processedContent }} />;
+                return <h2 key={index} id={slug} className="text-3xl font-bold mt-12 mb-4 border-b pb-2 scroll-mt-24">{parse(processedContent)}</h2>;
             case 'h3':
-                return <h3 key={index} className="text-2xl font-bold mt-10 mb-3" dangerouslySetInnerHTML={{ __html: processedContent }} />;
+                return <h3 key={index} className="text-2xl font-bold mt-10 mb-3">{parse(processedContent)}</h3>;
             case 'h4':
-                return <h4 key={index} className="text-xl font-semibold mt-8 mb-2" dangerouslySetInnerHTML={{ __html: processedContent }} />;
+                return <h4 key={index} className="text-xl font-semibold mt-8 mb-2">{parse(processedContent)}</h4>;
             case 'h5':
-                return <h5 key={index} className="text-lg font-semibold mt-6 mb-2" dangerouslySetInnerHTML={{ __html: processedContent }} />;
+                return <h5 key={index} className="text-lg font-semibold mt-6 mb-2">{parse(processedContent)}</h5>;
             case 'h6':
-                return <h6 key={index} className="text-base font-semibold mt-6 mb-2" dangerouslySetInnerHTML={{ __html: processedContent }} />;
+                return <h6 key={index} className="text-base font-semibold mt-6 mb-2">{parse(processedContent)}</h6>;
             case 'p':
-                 return <p key={index} className="mb-6 leading-relaxed" dangerouslySetInnerHTML={{ __html: processedContent }} />;
+                 return <p key={index} className="mb-6 leading-relaxed">{parse(processedContent)}</p>;
             case 'img':
                  return (
                     <div key={index} className="my-8">
@@ -105,18 +97,17 @@ export default async function ArticlePage({ params }: { params: { category: stri
                     </div>
                   );
             default:
-                return <div key={index} dangerouslySetInnerHTML={{ __html: processedContent }} />;
+                return <div key={index}>{parse(processedContent)}</div>;
         }
     };
     
     return (
         <main className="container mx-auto py-12 px-4">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-                {/* Main Article Content */}
-                <article className="lg:col-span-9">
-                    <header className="mb-8">
+                <article className="lg:col-span-9 prose prose-lg dark:prose-invert max-w-none text-foreground/90">
+                    <header className="mb-8 not-prose">
                         <Badge variant="secondary" className="mb-4">{article.category}</Badge>
-                        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4" dangerouslySetInnerHTML={{ __html: article.title }} />
+                        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">{parse(article.title)}</h1>
                         <div className="relative aspect-video w-full rounded-lg overflow-hidden mt-6 shadow-lg">
                             <Image
                                 src={article.image}
@@ -129,13 +120,12 @@ export default async function ArticlePage({ params }: { params: { category: stri
                         </div>
                     </header>
                     
-                    <div className="prose prose-lg dark:prose-invert max-w-none text-foreground/90 mt-12">
+                    <div className="mt-12">
                         {article.articleContent.map(renderContentBlock)}
                     </div>
                     
-                    {/* Key Takeaways Section */}
                     {article.keyTakeaways && article.keyTakeaways.length > 0 && (
-                        <section className="my-12">
+                        <section className="my-12 not-prose">
                             <Card className="bg-muted/50 border-border">
                                 <CardHeader>
                                     <CardTitle className="text-2xl font-semibold">Key Takeaways</CardTitle>
@@ -145,7 +135,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
                                         {article.keyTakeaways.map((takeaway, index) => (
                                             <li key={index} className="flex items-start gap-3">
                                                 <CheckCircle className="h-5 w-5 text-primary mt-1 shrink-0" />
-                                                <span className="text-foreground/80" dangerouslySetInnerHTML={{ __html: parseMarkdown(takeaway) }} />
+                                                <span className="text-foreground/80">{parse(takeaway)}</span>
                                             </li>
                                         ))}
                                     </ul>
@@ -154,16 +144,14 @@ export default async function ArticlePage({ params }: { params: { category: stri
                         </section>
                     )}
 
-                    {/* Conclusion Section */}
                     {article.conclusion && (
                          <div className="space-y-6 mt-12">
                             <h2 className="text-3xl font-bold border-b pb-2">Conclusion</h2>
-                            <div className="prose prose-lg dark:prose-invert max-w-none text-foreground/90 leading-relaxed" dangerouslySetInnerHTML={{ __html: parseMarkdown(article.conclusion) }} />
+                            <div>{parse(article.conclusion)}</div>
                         </div>
                     )}
                 </article>
 
-                {/* Table of Contents (Sticky Sidebar) */}
                 <aside className="lg:col-span-3 lg:sticky lg:top-24 h-fit">
                     <Card className={cn("bg-background/80 backdrop-blur-sm animate-breathing-glow")}>
                         <CardHeader>
@@ -179,8 +167,9 @@ export default async function ArticlePage({ params }: { params: { category: stri
                                         <a 
                                             href={`#${item.slug}`} 
                                             className="text-sm text-foreground hover:text-primary hover:underline transition-colors"
-                                            dangerouslySetInnerHTML={{ __html: parseMarkdown(item.title) }}
-                                        />
+                                        >
+                                          {parse(item.title)}
+                                        </a>
                                     </li>
                                 ))}
                             </ol>

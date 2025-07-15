@@ -47,7 +47,7 @@ export default function ManualPublishPage() {
     resolver: zodResolver(manualArticleSchema),
     defaultValues: {
       content: '',
-      keyTakeaways: [{ value: '' }, { value: '' }, { value: '' }],
+      keyTakeaways: [{ value: '' }, { value: '' }, { value: '' }, { value: '' }, { value: '' }],
     }
   });
 
@@ -202,7 +202,7 @@ export default function ManualPublishPage() {
                 <CardHeader>
                     <CardTitle className="text-2xl">Publish a New Article Manually</CardTitle>
                     <CardDescription>
-                    You have full control. Use the toolbar for live formatting. Your work is auto-saved as a draft every 10 seconds.
+                    Write your article below. Select text to reveal formatting options. Your work is auto-saved as a draft every 10 seconds.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -303,7 +303,6 @@ export default function ManualPublishPage() {
                                 value={field.value} 
                                 onChange={field.onChange}
                                 disabled={isPublishing}
-                                simpleToolbar={true}
                             />
                         )}
                     />

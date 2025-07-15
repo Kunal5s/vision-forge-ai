@@ -3,7 +3,6 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import { Octokit } from 'octokit';
 import { z } from 'zod';
 
 const ArticleContentBlockSchema = z.object({
@@ -66,10 +65,4 @@ export async function getArticles(category: string): Promise<Article[]> {
         }
         return [];
     }
-}
-
-// Deprecated function stubs - logic moved to server actions
-export async function generateAndSaveArticles(category: string, topics: string[]) {
-    console.warn("generateAndSaveArticles is deprecated. Use generateArticleAction in the admin panel.");
-    return;
 }

@@ -6,36 +6,33 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { saveUpdatedArticles } from '../create/actions'; // Import the universal save function
 import { redirect } from 'next/navigation';
-import parse, { Element } from 'html-react-parser';
+import { JSDOM } from 'jsdom';
 
 // Helper function to parse HTML into article content blocks
 function parseHtmlToContent(html: string): Article['articleContent'] {
+  const dom = new JSDOM(html);
+  const document = dom.window.document;
   const content: Article['articleContent'] = [];
-  const parsed = parse(html, {
-    replace: (domNode) => {
-      if (domNode instanceof Element && domNode.attribs) {
-        const { tagName, children } = domNode;
-        const textContent = (children[0] as any)?.data || '';
-        
-        if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p'].includes(tagName)) {
-          // Simplistic text extraction; a more robust solution would recursively get text.
-           const extractText = (nodes: any[]): string => {
-                return nodes.map(node => {
-                    if (node.type === 'text') return node.data;
-                    if (node.children) return extractText(node.children);
-                    return '';
-                }).join('');
-            };
-          content.push({ type: tagName as any, content: extractText(domNode.children) });
-        } else if (tagName === 'img' && domNode.attribs.src) {
-           content.push({ type: 'img', content: domNode.attribs.src, alt: domNode.attribs.alt || '' });
+  
+  // Iterate over direct children of the body
+  document.body.childNodes.forEach(node => {
+    if (node.nodeType === dom.window.Node.ELEMENT_NODE) {
+      const element = node as HTMLElement;
+      const tagName = element.tagName.toLowerCase();
+
+      if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p'].includes(tagName)) {
+        const textContent = element.innerHTML.trim(); // Use innerHTML to preserve inline tags like <strong>
+        if (textContent) {
+          content.push({ type: tagName as any, content: textContent });
         }
+      } else if (tagName === 'img' && element.hasAttribute('src')) {
+        content.push({ type: 'img', content: element.getAttribute('src')!, alt: element.getAttribute('alt') || '' });
       }
     }
   });
-
-  // Filter out empty paragraphs that might result from parsing
-  return content.filter(block => block.content.trim() !== '' || block.type === 'img');
+  
+  // Filter out empty blocks that might result from parsing
+  return content.filter(block => (block.content && block.content.trim() !== '') || block.type === 'img');
 }
 
 

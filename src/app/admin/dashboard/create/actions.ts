@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { Octokit } from 'octokit';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { JSDOM } from 'jsdom';
 
 const FormSchema = z.object({
   prompt: z.string().min(10, 'Prompt must be at least 10 characters long.'),
@@ -93,25 +94,28 @@ const EditSchema = z.object({
     category: z.string(),
 });
 
-function parseMarkdownToContent(markdown: string): Article['articleContent'] {
-  const lines = markdown.split(/\n\s*\n/); 
-  return lines.map(line => {
-    line = line.trim();
-    if (line.startsWith('## ')) return { type: 'h2', content: line.substring(3) };
-    if (line.startsWith('### ')) return { type: 'h3', content: line.substring(4) };
-    if (line.startsWith('#### ')) return { type: 'h4', content: line.substring(5) };
-    if (line.startsWith('##### ')) return { type: 'h5', content: line.substring(6) };
-    if (line.startsWith('###### ')) return { type: 'h6', content: line.substring(7) };
-    if (line.startsWith('# ')) return { type: 'h1', content: line.substring(2) };
-    if (line.startsWith('![')) { 
-        const match = /!\[(.*?)\]\((.*?)\)/.exec(line);
-        if (match) {
-            return { type: 'img', content: match[2], alt: match[1] };
+function parseHtmlToContent(html: string): Article['articleContent'] {
+  const dom = new JSDOM(html);
+  const document = dom.window.document;
+  const content: Article['articleContent'] = [];
+  
+  document.body.childNodes.forEach(node => {
+    if (node.nodeType === dom.window.Node.ELEMENT_NODE) {
+      const element = node as HTMLElement;
+      const tagName = element.tagName.toLowerCase();
+
+      if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p'].includes(tagName)) {
+        const textContent = element.innerHTML.trim();
+        if (textContent) {
+          content.push({ type: tagName as any, content: textContent });
         }
+      } else if (tagName === 'img' && element.hasAttribute('src')) {
+        content.push({ type: 'img', content: element.getAttribute('src')!, alt: element.getAttribute('alt') || '' });
+      }
     }
-    if (line.length > 0) return { type: 'p', content: line };
-    return { type: 'p', content: '' };
-  }).filter(block => (block.type && block.content.length > 0) || block.type === 'img');
+  });
+
+  return content.filter(block => (block.content && block.content.trim() !== '') || block.type === 'img');
 }
 
 export async function editArticleAction(data: unknown) {
@@ -129,7 +133,7 @@ export async function editArticleAction(data: unknown) {
       throw new Error("Article not found.");
     }
     
-    const newArticleContent = parseMarkdownToContent(content);
+    const newArticleContent = parseHtmlToContent(content);
 
     const updatedArticle = {
       ...articles[articleIndex],
@@ -178,16 +182,13 @@ export async function deleteArticleAction(category: string, slug: string) {
 }
 
 async function getPrimaryBranch(octokit: Octokit, owner: string, repo: string): Promise<string> {
-    // 1. Check for GITHUB_BRANCH environment variable first for manual override
     if (process.env.GITHUB_BRANCH) {
         return process.env.GITHUB_BRANCH;
     }
-    // 2. Try 'main' first, as it's the modern default
     try {
         await octokit.rest.repos.getBranch({ owner, repo, branch: 'main' });
         return 'main';
     } catch (error: any) {
-        // If 'main' doesn't exist (404), fall back to 'master'
         if (error.status === 404) {
             try {
                 await octokit.rest.repos.getBranch({ owner, repo, branch: 'master' });
@@ -197,7 +198,6 @@ async function getPrimaryBranch(octokit: Octokit, owner: string, repo: string): 
                  throw new Error("Could not determine primary branch. Neither 'main' nor 'master' found.");
             }
         }
-        // Rethrow other errors
         throw error;
     }
 }
