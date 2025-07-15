@@ -58,8 +58,8 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
 
   if (!validatedFields.success) {
     console.error("Validation Errors:", validatedFields.error.flatten());
-    const errorMessage = validatedFields.error.flatten().fieldErrors;
-    return { success: false, error: JSON.stringify(errorMessage) || 'Invalid input data.' };
+    const errorMessage = JSON.stringify(validatedFields.error.flatten().fieldErrors) || 'Invalid input data.';
+    return { success: false, error: errorMessage };
   }
   
   const { title, slug, category, content, keyTakeaways, conclusion, image } = validatedFields.data;

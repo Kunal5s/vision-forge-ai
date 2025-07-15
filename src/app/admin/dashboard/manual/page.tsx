@@ -17,12 +17,13 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { categorySlugMap } from '@/lib/constants';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, FileSignature, PlusCircle, Trash2, ImageIcon } from 'lucide-react';
+import { ArrowLeft, Loader2, FileSignature, PlusCircle, Trash2, ImageIcon, Wand2 } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { createManualArticleAction } from './actions';
 import Image from 'next/image';
 import { RichTextEditor } from '@/components/vision-forge/RichTextEditor';
+import { JSDOM } from 'jsdom';
 
 const manualArticleSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters long.'),
@@ -39,6 +40,7 @@ export default function ManualPublishPage() {
   const [isPublishing, setIsPublishing] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [isAddingImagesToArticle, setIsAddingImagesToArticle] = useState(false);
   const autosaveTimeout = useRef<NodeJS.Timeout | null>(null);
   const DRAFT_KEY = 'manual_article_draft';
 
@@ -57,50 +59,6 @@ export default function ManualPublishPage() {
   });
 
   const titleValue = watch('title');
-  const formValues = watch();
-
-  // Load draft from localStorage on initial render
-  useEffect(() => {
-    try {
-      const savedDraft = localStorage.getItem(DRAFT_KEY);
-      if (savedDraft) {
-        const draftData = JSON.parse(savedDraft);
-        const result = manualArticleSchema.partial().safeParse(draftData);
-        if (result.success) {
-            Object.keys(result.data).forEach(key => {
-              setValue(key as keyof ManualArticleFormData, result.data[key as keyof ManualArticleFormData]);
-            });
-            toast({ title: "Draft Loaded", description: "Your previously unsaved draft has been restored." });
-        }
-      }
-    } catch (e) {
-      console.error("Failed to load draft from localStorage", e);
-    }
-  }, [setValue, toast]);
-
-  // Autosave functionality
-  useEffect(() => {
-    const subscription = watch((value) => {
-        if (autosaveTimeout.current) {
-          clearTimeout(autosaveTimeout.current);
-        }
-        autosaveTimeout.current = setTimeout(() => {
-          try {
-            localStorage.setItem(DRAFT_KEY, JSON.stringify(value));
-            console.log("Draft saved to localStorage");
-          } catch (e) {
-            console.error("Failed to save draft to localStorage", e);
-          }
-        }, 5000); // Autosave every 5 seconds
-    });
-    return () => {
-        subscription.unsubscribe();
-        if (autosaveTimeout.current) {
-            clearTimeout(autosaveTimeout.current);
-        }
-    };
-  }, [watch]);
-
 
   const generateSlug = useCallback((title: string) => {
     return title
@@ -113,8 +71,10 @@ export default function ManualPublishPage() {
   }, []);
   
   useEffect(() => {
-      const newSlug = generateSlug(titleValue || '');
-      setValue('slug', newSlug, { shouldValidate: true });
+      if (titleValue) {
+        const newSlug = generateSlug(titleValue);
+        setValue('slug', newSlug, { shouldValidate: true });
+      }
   }, [titleValue, setValue, generateSlug]);
   
   const fetchPreviewImage = useCallback(async (topic: string) => {
@@ -127,7 +87,7 @@ export default function ManualPublishPage() {
         setPreviewImage(pollinationsUrl);
     } catch (e) {
         console.error("Failed to generate preview image", e);
-        setPreviewImage(`https://placehold.co/600x400.png`); // Fallback
+        setPreviewImage(`https://placehold.co/600x400.png`);
     } finally {
         setIsGeneratingImage(false);
     }
@@ -138,10 +98,48 @@ export default function ManualPublishPage() {
         if (titleValue) {
             fetchPreviewImage(titleValue);
         }
-    }, 1500); // Wait 1.5 seconds after user stops typing
+    }, 1500);
     
     return () => clearTimeout(debounceTimer);
   }, [titleValue, fetchPreviewImage]);
+
+  const addImagesToArticle = useCallback(async () => {
+    setIsAddingImagesToArticle(true);
+    toast({ title: 'AI is reading your article...', description: 'Generating and adding relevant images. This may take a moment.' });
+    
+    try {
+        const currentContent = getValues('content');
+        const dom = new JSDOM(currentContent);
+        const document = dom.window.document;
+        const headings = document.querySelectorAll('h2, h3');
+        let newContent = document.body;
+
+        for (const heading of Array.from(headings)) {
+            const topic = heading.textContent?.trim();
+            if (topic && topic.split(' ').length > 2) { // Only generate for reasonably descriptive headings
+                const seed = Math.floor(Math.random() * 1_000_000);
+                const finalPrompt = `${topic}, relevant photography, high detail`;
+                const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=800&height=450&seed=${seed}&nologo=true`;
+
+                const img = document.createElement('img');
+                img.src = pollinationsUrl;
+                img.alt = topic;
+                
+                // Insert the image after the heading
+                heading.parentNode?.insertBefore(img, heading.nextSibling);
+            }
+        }
+        
+        setValue('content', newContent.innerHTML, { shouldDirty: true });
+        toast({ title: 'Images Added!', description: 'AI has added contextual images to your article.' });
+
+    } catch (e) {
+        console.error("Failed to add images to article", e);
+        toast({ title: 'Error Adding Images', description: 'Could not automatically add images.', variant: 'destructive' });
+    } finally {
+        setIsAddingImagesToArticle(false);
+    }
+  }, [getValues, setValue, toast]);
   
 
   const onSubmit = async (data: ManualArticleFormData) => {
@@ -171,11 +169,6 @@ export default function ManualPublishPage() {
         title: 'Article Published Successfully!',
         description: `Your article "${result.title}" has been saved and is now live.`,
       });
-      try {
-        localStorage.removeItem(DRAFT_KEY);
-      } catch (e) {
-        console.error("Failed to remove draft from localStorage", e);
-      }
     } else {
       toast({
         title: 'Error Publishing Article',
@@ -204,53 +197,26 @@ export default function ManualPublishPage() {
                 <CardHeader>
                     <CardTitle className="text-2xl">Publish a New Article Manually</CardTitle>
                     <CardDescription>
-                    Write your article below. Pasting content from other sources will preserve its formatting. Your work is auto-saved.
+                    Write your article below. Pasting content from other sources will preserve its formatting.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="title">Article Title</Label>
-                        <Input 
-                          id="title" 
-                          placeholder="Your engaging article title"
-                          {...register('title')} 
-                          disabled={isPublishing} 
-                        />
-                        {errors.title && <p className="text-sm text-destructive mt-1">{errors.title.message}</p>}
-                      </div>
-                      <div>
-                        <Label htmlFor="slug">URL Slug</Label>
-                        <Input id="slug" placeholder="your-engaging-article-title" {...register('slug')} disabled={isPublishing} />
-                        {errors.slug && <p className="text-sm text-destructive mt-1">{errors.slug.message}</p>}
-                      </div>
+                  <div>
+                    <Label htmlFor="title" className="text-lg font-semibold">Article Title</Label>
+                    <Input 
+                      id="title" 
+                      placeholder="Your engaging article title..."
+                      {...register('title')} 
+                      disabled={isPublishing}
+                      className="text-2xl font-bold h-auto py-2 border-0 shadow-none px-0 focus-visible:ring-0" 
+                    />
+                    {errors.title && <p className="text-sm text-destructive mt-1">{errors.title.message}</p>}
+                    <Input id="slug" placeholder="your-slug-will-be-here" {...register('slug')} disabled className="border-0 px-0 h-auto text-sm text-muted-foreground" />
+                    {errors.slug && <p className="text-sm text-destructive mt-1">{errors.slug.message}</p>}
                   </div>
 
                   <div>
-                      <Label htmlFor="category">Category</Label>
-                      <Controller
-                        name="category"
-                        control={control}
-                        render={({ field }) => (
-                          <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={isPublishing}>
-                            <SelectTrigger id="category">
-                              <SelectValue placeholder="Select a category for your article" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Object.entries(categorySlugMap).map(([slug, name]) => (
-                                <SelectItem key={slug} value={name}>
-                                  {name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                      {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>}
-                    </div>
-
-                  <div>
-                    <Label htmlFor="content">Article Content</Label>
+                    <Label htmlFor="content" className="text-lg font-semibold">Content</Label>
                     <Controller
                         name="content"
                         control={control}
@@ -264,9 +230,9 @@ export default function ManualPublishPage() {
                     />
                     {errors.content && <p className="text-sm text-destructive mt-1">{errors.content.message}</p>}
                   </div>
-
+                  
                   <div>
-                    <Label>Key Takeaways</Label>
+                    <Label className="text-lg font-semibold">Key Takeaways</Label>
                     <div className="space-y-2">
                       {fields.map((field, index) => (
                         <div key={field.id} className="flex items-center gap-2">
@@ -282,21 +248,36 @@ export default function ManualPublishPage() {
                       ))}
                     </div>
                      {errors.keyTakeaways && <p className="text-sm text-destructive mt-1">{errors.keyTakeaways.root?.message || (errors.keyTakeaways as any)[0]?.value?.message}</p>}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="mt-2"
-                      onClick={() => append({ value: "" })}
-                       disabled={isPublishing || fields.length >= 6}
-                    >
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Add Takeaway
-                    </Button>
+                    <div className="flex items-center gap-4 mt-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => append({ value: "" })}
+                        disabled={isPublishing || fields.length >= 6}
+                      >
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Takeaway
+                      </Button>
+                      <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={addImagesToArticle}
+                          disabled={isAddingImagesToArticle || isPublishing}
+                      >
+                          {isAddingImagesToArticle ? (
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                              <Wand2 className="mr-2 h-4 w-4" />
+                          )}
+                          Generate & Add Images to Article
+                      </Button>
+                    </div>
                   </div>
 
                   <div>
-                    <Label htmlFor="conclusion">Conclusion</Label>
+                    <Label htmlFor="conclusion" className="text-lg font-semibold">Conclusion</Label>
                      <Controller
                         name="conclusion"
                         control={control}
@@ -305,7 +286,7 @@ export default function ManualPublishPage() {
                                 value={field.value} 
                                 onChange={field.onChange}
                                 disabled={isPublishing}
-                                placeholder="Write your conclusion here..."
+                                placeholder="Write your powerful conclusion here..."
                             />
                         )}
                     />
@@ -318,9 +299,31 @@ export default function ManualPublishPage() {
         <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24">
             <Card>
                 <CardHeader>
-                    <CardTitle>Article Preview & Publish</CardTitle>
+                    <CardTitle>Publishing Tools</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                    <div>
+                      <Label htmlFor="category">Category</Label>
+                      <Controller
+                        name="category"
+                        control={control}
+                        render={({ field }) => (
+                          <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value || ''} disabled={isPublishing}>
+                            <SelectTrigger id="category">
+                              <SelectValue placeholder="Select a category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Object.entries(categorySlugMap).map(([slug, name]) => (
+                                <SelectItem key={slug} value={name}>
+                                  {name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                      {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>}
+                    </div>
                     <div>
                         <Label>Featured Image</Label>
                         <div className="mt-2 aspect-video w-full rounded-md border bg-muted flex items-center justify-center overflow-hidden">
