@@ -9,11 +9,16 @@ import Placeholder from '@tiptap/extension-placeholder';
 import { useCallback } from 'react';
 import { 
     Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon, 
-    Heading1, Heading2, Heading3
+    Heading1, Heading2, Heading3, Heading4, Heading5, Heading6,
+    Palette, Pilcrow
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Surface } from "@/components/ui/surface";
+import TextStyle from '@tiptap/extension-text-style';
+import { Color } from '@tiptap/extension-color';
+import FontFamily from '@tiptap/extension-font-family';
+import TextAlign from '@tiptap/extension-text-align';
 
 const ToolbarButton = ({ onClick, children, isActive = false, title }: { onClick: () => void, children: React.ReactNode, isActive?: boolean, title?: string }) => (
     <Button
@@ -38,7 +43,11 @@ interface RichTextEditorProps {
 export function RichTextEditor({ value, onChange, disabled, placeholder = "Start writing..." }: RichTextEditorProps) {
     const editor = useEditor({
         extensions: [
-            StarterKit,
+            StarterKit.configure({
+                heading: {
+                    levels: [1, 2, 3, 4, 5, 6],
+                },
+            }),
             Underline,
             Link.configure({
                 openOnClick: false,
@@ -51,6 +60,12 @@ export function RichTextEditor({ value, onChange, disabled, placeholder = "Start
             }),
             Placeholder.configure({
                 placeholder,
+            }),
+            TextStyle,
+            Color,
+            FontFamily,
+            TextAlign.configure({
+                types: ['heading', 'paragraph'],
             }),
         ],
         content: value,
@@ -81,16 +96,6 @@ export function RichTextEditor({ value, onChange, disabled, placeholder = "Start
         editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
     }, [editor]);
     
-    // Add image handler
-    const addImage = useCallback(() => {
-        const url = window.prompt('Image URL');
-
-        if (url && editor) {
-            editor.chain().focus().setImage({ src: url }).run();
-        }
-    }, [editor]);
-
-
     if (!editor) {
         return null;
     }
@@ -99,7 +104,7 @@ export function RichTextEditor({ value, onChange, disabled, placeholder = "Start
         <div className="relative border rounded-lg">
             {editor && (
                 <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }}>
-                    <Surface className="p-1 flex items-center gap-1">
+                    <Surface className="p-1 flex items-center gap-1 flex-wrap">
                         <ToolbarButton title="Bold" onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')}><Bold className="h-4 w-4" /></ToolbarButton>
                         <ToolbarButton title="Italic" onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')}><Italic className="h-4 w-4" /></ToolbarButton>
                         <ToolbarButton title="Underline" onClick={() => editor.chain().focus().toggleUnderline().run()} isActive={editor.isActive('underline')}><UnderlineIcon className="h-4 w-4" /></ToolbarButton>
@@ -107,6 +112,17 @@ export function RichTextEditor({ value, onChange, disabled, placeholder = "Start
                         <ToolbarButton title="Heading 1" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} isActive={editor.isActive('heading', { level: 1 })}><Heading1 className="h-4 w-4" /></ToolbarButton>
                         <ToolbarButton title="Heading 2" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} isActive={editor.isActive('heading', { level: 2 })}><Heading2 className="h-4 w-4" /></ToolbarButton>
                         <ToolbarButton title="Heading 3" onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} isActive={editor.isActive('heading', { level: 3 })}><Heading3 className="h-4 w-4" /></ToolbarButton>
+                        <ToolbarButton title="Paragraph" onClick={() => editor.chain().focus().setParagraph().run()} isActive={editor.isActive('paragraph')}><Pilcrow className="h-4 w-4" /></ToolbarButton>
+                        
+                        <div className="flex items-center">
+                            <input
+                                type="color"
+                                onInput={event => editor.chain().focus().setColor((event.target as HTMLInputElement).value).run()}
+                                value={editor.getAttributes('textStyle').color || '#000000'}
+                                className="w-8 h-8 p-1 border-none bg-transparent cursor-pointer"
+                                title="Text Color"
+                            />
+                        </div>
                     </Surface>
                 </BubbleMenu>
             )}

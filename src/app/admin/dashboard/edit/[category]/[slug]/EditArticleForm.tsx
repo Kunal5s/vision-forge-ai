@@ -12,7 +12,7 @@ import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
 import type { Article } from '@/lib/articles';
-import { editArticleAction, deleteArticleAction } from '../../../create/actions';
+import { editArticleAction, deleteArticleAction } from '../create/actions';
 import {
   AlertDialog,
   AlertDialogAction,

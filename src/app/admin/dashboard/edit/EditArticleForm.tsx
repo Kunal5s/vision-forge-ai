@@ -1,20 +1,19 @@
 
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, Save, Trash2, Bold, Italic, Heading2, Link as LinkIcon, List, ListOrdered, Quote as QuoteIcon, Image as ImageIcon } from 'lucide-react';
-import { useState, useRef, ChangeEvent } from 'react';
+import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import Link from 'next/link';
 import type { Article } from '@/lib/articles';
-import { editArticleAction, deleteArticleAction } from '../../../create/actions';
+import { editArticleAction, deleteArticleAction } from '../create/actions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,11 +25,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { RichTextEditor } from '@/components/vision-forge/RichTextEditor';
 
 const editSchema = z.object({
   title: z.string().min(1, "Title is required."),
   slug: z.string().min(1, "Slug is required."),
-  content: z.string(), 
+  content: z.string().min(50, 'Content must be at least 50 characters.'), 
 });
 
 type EditFormData = z.infer<typeof editSchema>;
@@ -40,70 +40,36 @@ interface EditArticleFormProps {
     categoryName: string;
 }
 
-const contentToMarkdown = (content: Article['articleContent']): string => {
+const contentToHtml = (content: Article['articleContent']): string => {
     return content.map(block => {
         switch (block.type) {
-            case 'h1': return `# ${block.content}`;
-            case 'h2': return `## ${block.content}`;
-            case 'h3': return `### ${block.content}`;
-            case 'h4': return `#### ${block.content}`;
-            case 'h5': return `##### ${block.content}`;
-            case 'h6': return `###### ${block.content}`;
-            case 'p': return block.content;
-            case 'img': return `![${block.alt || ''}](${block.content})`;
-            default: return block.content;
+            case 'h1': return `<h1>${block.content}</h1>`;
+            case 'h2': return `<h2>${block.content}</h2>`;
+            case 'h3': return `<h3>${block.content}</h3>`;
+            case 'h4': return `<h4>${block.content}</h4>`;
+            case 'h5': return `<h5>${block.content}</h5>`;
+            case 'h6': return `<h6>${block.content}</h6>`;
+            case 'p': return `<p>${block.content}</p>`;
+            case 'img': return `<img src="${block.content}" alt="${block.alt || ''}" />`;
+            default: return `<p>${block.content}</p>`;
         }
-    }).join('\n\n'); 
+    }).join(''); 
 }
 
 export default function EditArticleForm({ article, categoryName }: EditArticleFormProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { register, handleSubmit, formState: { errors }, setValue, getValues } = useForm<EditFormData>({
+  const { register, handleSubmit, formState: { errors }, control } = useForm<EditFormData>({
     resolver: zodResolver(editSchema),
     defaultValues: {
       title: article.title,
       slug: article.slug,
-      content: contentToMarkdown(article.articleContent),
+      content: contentToHtml(article.articleContent),
     }
   });
 
-  const insertText = (before: string, after: string = '') => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = textarea.value;
-    const selectedText = text.substring(start, end);
-    const newText = `${text.substring(0, start)}${before}${selectedText}${after}${text.substring(end)}`;
-    setValue('content', newText, { shouldValidate: true, shouldDirty: true });
-    
-    // Focus and set cursor position
-    setTimeout(() => {
-        textarea.focus();
-        textarea.selectionStart = start + before.length;
-        textarea.selectionEnd = start + before.length + selectedText.length;
-    }, 0);
-  };
-
-  const handleImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (!file) return;
-
-      toast({ title: "Uploading image...", description: "Please wait." });
-      // In a real app, you would upload to a service (like Firebase Storage)
-      // and get a URL back. For this demo, we'll use a placeholder.
-      // Simulating upload delay
-      await new Promise(res => setTimeout(res, 1000));
-      const imageUrl = `https://placehold.co/800x400.png`; // Replace with actual uploaded URL
-      
-      insertText(`\n\n![${file.name}](${imageUrl})\n\n`);
-      toast({ title: "Image Inserted!", description: "A placeholder image has been added to your content."});
-  };
 
   const onSubmit = async (data: EditFormData) => {
     setIsSaving(true);
@@ -137,7 +103,6 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
     }
   }
 
-  const { ref: formRef, ...rest } = register('content');
 
   return (
     <>
@@ -154,7 +119,7 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
         <CardHeader>
           <CardTitle className="text-2xl">Edit Article</CardTitle>
           <CardDescription>
-            Make changes to your article below. Use the toolbar or Markdown syntax for formatting.
+            Make changes to your article below. Pasting content from other sources will preserve its formatting.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -173,34 +138,19 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
             </div>
 
             <div>
-              <Label htmlFor="content">Content (Markdown Supported)</Label>
-              <div className="border rounded-md mt-2">
-                <div className="p-2 border-b bg-muted/50 flex flex-wrap items-center gap-1">
-                  <Button type="button" variant="ghost" size="icon" onClick={() => insertText("## ")} title="Heading 2"><Heading2 className="h-4 w-4" /></Button>
-                  <Button type="button" variant="ghost" size="icon" onClick={() => insertText("**", "**")} title="Bold"><Bold className="h-4 w-4" /></Button>
-                  <Button type="button" variant="ghost" size="icon" onClick={() => insertText("*", "*")} title="Italic"><Italic className="h-4 w-4" /></Button>
-                  <Button type="button" variant="ghost" size="icon" onClick={() => insertText("[", "](url)")} title="Link"><LinkIcon className="h-4 w-4" /></Button>
-                  <Button type="button" variant="ghost" size="icon" onClick={() => insertText("\n- ", "")} title="Bullet List"><List className="h-4 w-4" /></Button>
-                  <Button type="button" variant="ghost" size="icon" onClick={() => insertText("\n1. ", "")} title="Numbered List"><ListOrdered className="h-4 w-4" /></Button>
-                  <Button type="button" variant="ghost" size="icon" onClick={() => insertText("\n> ", "")} title="Blockquote"><QuoteIcon className="h-4 w-4" /></Button>
-                  <Button type="button" variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} title="Upload Image"><ImageIcon className="h-4 w-4" /></Button>
-                  <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
-                </div>
-                <Textarea
-                  id="content"
-                  {...rest}
-                  ref={(e) => {
-                    formRef(e);
-                    // @ts-ignore
-                    textareaRef.current = e;
-                  }}
-                  rows={20}
-                  className="font-mono border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                  placeholder="## Your Heading&#10;&#10;Your paragraph content..."
-                  disabled={isSaving || isDeleting}
-                />
-              </div>
-               {errors.content && <p className="text-sm text-destructive mt-1">{errors.content.message}</p>}
+              <Label htmlFor="content">Content</Label>
+              <Controller
+                  name="content"
+                  control={control}
+                  render={({ field }) => (
+                      <RichTextEditor 
+                          value={field.value} 
+                          onChange={field.onChange}
+                          disabled={isSaving || isDeleting}
+                      />
+                  )}
+              />
+              {errors.content && <p className="text-sm text-destructive mt-1">{errors.content.message}</p>}
             </div>
 
             <div className="border-t pt-6 flex justify-between items-center">
