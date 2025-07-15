@@ -36,7 +36,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { IMAGE_COUNTS } from '@/lib/constants';
-import { Textarea } from '@/components/ui/textarea';
 
 
 const editSchema = z.object({
@@ -272,13 +271,18 @@ export default function EditArticleForm({ article, categoryName, categorySlug }:
 
             <div>
               <Label htmlFor="summary">Summary</Label>
-              <Textarea
-                id="summary"
-                {...register('summary')}
-                disabled={isSaving || isDeleting}
-                placeholder="A short, engaging summary for the top of the article."
-                rows={3}
-              />
+                <Controller
+                    name="summary"
+                    control={control}
+                    render={({ field }) => (
+                        <RichTextEditor
+                            value={field.value || ''}
+                            onChange={field.onChange}
+                            disabled={isSaving || isDeleting}
+                            placeholder="A short, engaging summary for the top of the article."
+                        />
+                    )}
+                />
               {errors.summary && <p className="text-sm text-destructive mt-1">{errors.summary.message}</p>}
             </div>
 

@@ -24,7 +24,6 @@ import { createManualArticleAction, addImagesToArticleAction } from './actions';
 import Image from 'next/image';
 import { RichTextEditor } from '@/components/vision-forge/RichTextEditor';
 import { ArticlePreview } from '@/components/vision-forge/ArticlePreview';
-import { Textarea } from '@/components/ui/textarea';
 
 
 const manualArticleSchema = z.object({
@@ -239,13 +238,17 @@ export default function ManualPublishPage() {
 
                   <div>
                     <Label htmlFor="summary" className="text-lg font-semibold">Summary</Label>
-                    <Textarea
-                      id="summary"
-                      {...register('summary')}
-                      disabled={isPublishing}
-                      placeholder="A short, engaging summary for the top of the article."
-                      rows={3}
-                      className="mt-1"
+                    <Controller
+                        name="summary"
+                        control={control}
+                        render={({ field }) => (
+                            <RichTextEditor 
+                                value={field.value || ''} 
+                                onChange={field.onChange}
+                                disabled={isPublishing}
+                                placeholder="A short, engaging summary for the top of the article."
+                            />
+                        )}
                     />
                     {errors.summary && <p className="text-sm text-destructive mt-1">{errors.summary.message}</p>}
                   </div>
