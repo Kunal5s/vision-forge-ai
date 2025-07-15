@@ -7,7 +7,7 @@ import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { 
     Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon, Image as ImageIcon,
     Heading1, Heading2, Heading3, Heading4, Heading5, Heading6, Palette, AlignLeft, AlignCenter, AlignRight
@@ -21,6 +21,8 @@ import TextAlign from '@tiptap/extension-text-align';
 
 
 const EditorToolbar = ({ editor }: { editor: Editor | null }) => {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     const setLink = useCallback(() => {
         if (!editor) return;
         const previousUrl = editor.getAttributes('link').href;
@@ -34,14 +36,24 @@ const EditorToolbar = ({ editor }: { editor: Editor | null }) => {
         editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
     }, [editor]);
 
-     const addImage = useCallback(() => {
+    const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         if (!editor) return;
-        const url = window.prompt('Enter image URL');
-
-        if (url) {
-        editor.chain().focus().setImage({ src: url }).run();
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const src = e.target?.result as string;
+                if (src) {
+                    editor.chain().focus().setImage({ src }).run();
+                }
+            };
+            reader.readAsDataURL(file);
         }
     }, [editor]);
+
+    const handleImageClick = () => {
+        fileInputRef.current?.click();
+    };
 
     if (!editor) {
         return null;
@@ -63,9 +75,16 @@ const EditorToolbar = ({ editor }: { editor: Editor | null }) => {
             <Button variant="ghost" size="sm" onClick={setLink} className={cn({'bg-background': editor.isActive('link')})}>
                 <LinkIcon className="h-4 w-4" />
             </Button>
-             <Button variant="ghost" size="sm" onClick={addImage}>
+             <Button variant="ghost" size="sm" onClick={handleImageClick}>
                 <ImageIcon className="h-4 w-4" />
             </Button>
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/*"
+                className="hidden"
+            />
             <div className="h-6 border-l mx-1" />
             <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} className={cn({'bg-background': editor.isActive('heading', { level: 1 })})}>
                 <Heading1 className="h-4 w-4" />
