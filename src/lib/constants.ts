@@ -72,6 +72,7 @@ export const QUALITY_OPTIONS: StyleOption[] = [
 // --- ARTICLE GENERATOR CONSTANTS ---
 
 export const OPENROUTER_MODELS: string[] = [
+    "moonshotai/kimi-k2:free",
     "google/gemma-2-9b-it",
     "qwen/qwen3-32b-chat",
     "qwen/qwen3-8b",
@@ -149,3 +150,5 @@ export const categorySlugMap: { [key: string]: string } = {
     'technology': 'Technology',
     'nft': 'NFT'
 };
+
+    
