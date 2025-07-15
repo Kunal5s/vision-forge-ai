@@ -11,10 +11,6 @@
   scrollbar-width: none; /* Firefox */
 }
 
-body {
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-}
-
 @layer base {
   :root {
     --background: 0 0% 100%; /* White */
@@ -46,6 +42,39 @@ body {
     --ring: 240 10% 3.9%;
 
     --radius: 0.5rem;
+
+    --prose-body: hsl(var(--foreground));
+    --prose-headings: hsl(var(--foreground));
+    --prose-lead: hsl(var(--muted-foreground));
+    --prose-links: 145 75% 39%; /* #1a8917 Green */
+    --prose-bold: hsl(var(--foreground));
+    --prose-counters: hsl(var(--muted-foreground));
+    --prose-bullets: hsl(var(--muted-foreground));
+    --prose-hr: hsl(var(--border));
+    --prose-quotes: hsl(var(--foreground));
+    --prose-quote-borders: hsl(var(--border));
+    --prose-captions: hsl(var(--muted-foreground));
+    --prose-code: hsl(var(--foreground));
+    --prose-pre-code: hsl(var(--secondary-foreground));
+    --prose-pre-bg: hsl(var(--secondary));
+    --prose-th-borders: hsl(var(--border));
+    --prose-td-borders: hsl(var(--border));
+    --prose-invert-body: hsl(var(--foreground));
+    --prose-invert-headings: hsl(var(--foreground));
+    --prose-invert-lead: hsl(var(--muted-foreground));
+    --prose-invert-links: 145 85% 45%; /* Brighter Green for Dark Mode */
+    --prose-invert-bold: hsl(var(--foreground));
+    --prose-invert-counters: hsl(var(--muted-foreground));
+    --prose-invert-bullets: hsl(var(--muted-foreground));
+    --prose-invert-hr: hsl(var(--border));
+    --prose-invert-quotes: hsl(var(--foreground));
+    --prose-invert-quote-borders: hsl(var(--border));
+    --prose-invert-captions: hsl(var(--muted-foreground));
+    --prose-invert-code: hsl(var(--foreground));
+    --prose-invert-pre-code: hsl(var(--secondary-foreground));
+    --prose-invert-pre-bg: hsl(var(--secondary));
+    --prose-invert-th-borders: hsl(var(--border));
+    --prose-invert-td-borders: hsl(var(--border));
   }
 
   .dark {
@@ -89,5 +118,9 @@ body {
   }
   .text-23px {
     font-size: 23px;
+  }
+  
+  html {
+    font-family: 'Charter', Georgia, Cambria, 'Times New Roman', serif;
   }
 }

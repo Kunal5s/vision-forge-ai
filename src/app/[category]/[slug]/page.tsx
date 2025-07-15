@@ -70,17 +70,17 @@ export default async function ArticlePage({ params }: { params: { category: stri
 
         switch (block.type) {
             case 'h2':
-                return <h2 key={index} id={slug} className="text-3xl font-bold mt-12 mb-4 border-b pb-2 scroll-mt-24">{processedContent}</h2>;
+                return <h2 key={index} id={slug} className="scroll-mt-24">{processedContent}</h2>;
             case 'h3':
-                return <h3 key={index} className="text-2xl font-bold mt-10 mb-3">{processedContent}</h3>;
+                return <h3 key={index}>{processedContent}</h3>;
             case 'h4':
-                return <h4 key={index} className="text-xl font-semibold mt-8 mb-2">{processedContent}</h4>;
+                return <h4 key={index}>{processedContent}</h4>;
             case 'h5':
-                return <h5 key={index} className="text-lg font-semibold mt-6 mb-2">{processedContent}</h5>;
+                return <h5 key={index}>{processedContent}</h5>;
             case 'h6':
-                return <h6 key={index} className="text-base font-semibold mt-6 mb-2">{processedContent}</h6>;
+                return <h6 key={index}>{processedContent}</h6>;
             case 'p':
-                 return <p key={index} className="mb-6 leading-relaxed">{processedContent}</p>;
+                 return <p key={index}>{processedContent}</p>;
             case 'img':
                  return (
                     <div key={index} className="my-8">
@@ -102,8 +102,8 @@ export default async function ArticlePage({ params }: { params: { category: stri
     return (
         <main className="container mx-auto py-12 px-4">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-                <article className="lg:col-span-9 prose prose-lg dark:prose-invert max-w-none text-foreground/90">
-                    <header className="mb-8 not-prose">
+                <div className="lg:col-span-9">
+                    <header className="mb-8">
                         <Badge variant="secondary" className="mb-4">{article.category}</Badge>
                         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">{parse(article.title)}</h1>
                         <div className="relative aspect-video w-full rounded-lg overflow-hidden mt-6 shadow-lg">
@@ -118,12 +118,12 @@ export default async function ArticlePage({ params }: { params: { category: stri
                         </div>
                     </header>
                     
-                    <div className="mt-12">
+                    <article className="prose prose-lg dark:prose-invert max-w-none">
                         {article.articleContent.map(renderContentBlock)}
-                    </div>
+                    </article>
                     
                     {article.keyTakeaways && article.keyTakeaways.length > 0 && (
-                        <section className="my-12 not-prose">
+                        <section className="my-12">
                             <Card className="bg-muted/50 border-border">
                                 <CardHeader>
                                     <CardTitle className="text-2xl font-semibold">Key Takeaways</CardTitle>
@@ -143,12 +143,12 @@ export default async function ArticlePage({ params }: { params: { category: stri
                     )}
 
                     {article.conclusion && (
-                         <div className="space-y-6 mt-12">
-                            <h2 className="text-3xl font-bold border-b pb-2">Conclusion</h2>
+                         <div className="prose prose-lg dark:prose-invert max-w-none space-y-6 mt-12">
+                            <h2 className="!mb-4">Conclusion</h2>
                             <div>{parse(article.conclusion)}</div>
                         </div>
                     )}
-                </article>
+                </div>
 
                 <aside className="lg:col-span-3 lg:sticky lg:top-24 h-fit">
                     <Card className={cn("bg-background/80 backdrop-blur-sm animate-breathing-glow")}>
@@ -160,7 +160,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
                         </CardHeader>
                         <CardContent>
                             <ol className="space-y-2 list-inside list-decimal">
-                                {toc.map((item, index) => (
+                                {toc.map((item) => (
                                     <li key={item.slug} className="ml-4">
                                         <a 
                                             href={`#${item.slug}`} 
