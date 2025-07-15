@@ -24,9 +24,13 @@ function parseMarkdownToContent(markdown: string): Article['articleContent'] {
             return { type: 'img', content: match[2], alt: match[1] };
         }
     }
+    // Handle lists (unordered and ordered) by splitting lines inside a block
+    if (line.startsWith('- ') || line.startsWith('* ') || /^\d+\.\s/.test(line)) {
+        return { type: 'p', content: line }; // For simplicity, we'll treat lists as paragraphs with markdown
+    }
     if (line.length > 0) return { type: 'p', content: line };
     return { type: 'p', content: '' }; // Should be filtered out
-  }).filter(block => block.content.length > 0);
+  }).filter(block => (block.type && block.content.length > 0) || (block.type === 'img'));
 }
 
 
@@ -93,5 +97,3 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
     return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred.' };
   }
 }
-
-    

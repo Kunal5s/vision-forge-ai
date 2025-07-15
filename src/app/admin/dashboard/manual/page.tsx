@@ -18,7 +18,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { categorySlugMap } from '@/lib/constants';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, FileSignature, ImageIcon, Bold, Italic, Heading2, Link as LinkIcon, List, ListOrdered, Quote as QuoteIcon, PlusCircle, X } from 'lucide-react';
+import { ArrowLeft, Loader2, FileSignature, ImageIcon, Bold, Italic, Heading2, Link as LinkIcon, List, ListOrdered, Quote as QuoteIcon, PlusCircle, X, Trash2 } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef, ChangeEvent } from 'react';
 import Link from 'next/link';
 import { createManualArticleAction } from './actions';
@@ -48,7 +48,7 @@ export default function ManualPublishPage() {
   const { register, handleSubmit, control, formState: { errors }, watch, setValue, getValues } = useForm<ManualArticleFormData>({
     resolver: zodResolver(manualArticleSchema),
     defaultValues: {
-      keyTakeaways: [{ value: '' }],
+      keyTakeaways: [{ value: '' }, { value: '' }, { value: '' }, { value: '' }, { value: '' }],
     }
   });
 
@@ -171,7 +171,7 @@ export default function ManualPublishPage() {
       await new Promise(res => setTimeout(res, 1000));
       const imageUrl = `https://placehold.co/800x400.png`; // Replace with actual uploaded URL
       
-      insertText(`![${file.name}](${imageUrl})`);
+      insertText(`\n\n![${file.name}](${imageUrl})\n\n`);
       toast({ title: "Image Inserted!", description: "A placeholder image has been added to your content."});
   };
 
@@ -285,13 +285,13 @@ export default function ManualPublishPage() {
                     <Label htmlFor="content">Article Content</Label>
                     <div className="border rounded-md mt-2">
                         <div className="p-2 border-b bg-muted/50 flex flex-wrap items-center gap-1">
-                            <Button type="button" variant="ghost" size="icon" onClick={() => insertText("## ")} title="Heading 2"><Heading2 className="h-4 w-4" /></Button>
+                            <Button type="button" variant="ghost" size="icon" onClick={() => insertText("## ", "")} title="Heading 2"><Heading2 className="h-4 w-4" /></Button>
                             <Button type="button" variant="ghost" size="icon" onClick={() => insertText("**", "**")} title="Bold"><Bold className="h-4 w-4" /></Button>
                             <Button type="button" variant="ghost" size="icon" onClick={() => insertText("*", "*")} title="Italic"><Italic className="h-4 w-4" /></Button>
                             <Button type="button" variant="ghost" size="icon" onClick={() => insertText("[", "](url)")} title="Link"><LinkIcon className="h-4 w-4" /></Button>
-                            <Button type="button" variant="ghost" size="icon" onClick={() => insertText("\n- ")} title="Bullet List"><List className="h-4 w-4" /></Button>
-                            <Button type="button" variant="ghost" size="icon" onClick={() => insertText("\n1. ")} title="Numbered List"><ListOrdered className="h-4 w-4" /></Button>
-                            <Button type="button" variant="ghost" size="icon" onClick={() => insertText("\n> ")} title="Blockquote"><QuoteIcon className="h-4 w-4" /></Button>
+                            <Button type="button" variant="ghost" size="icon" onClick={() => insertText("\n- ", "")} title="Bullet List"><List className="h-4 w-4" /></Button>
+                            <Button type="button" variant="ghost" size="icon" onClick={() => insertText("\n1. ", "")} title="Numbered List"><ListOrdered className="h-4 w-4" /></Button>
+                            <Button type="button" variant="ghost" size="icon" onClick={() => insertText("\n> ", "")} title="Blockquote"><QuoteIcon className="h-4 w-4" /></Button>
                             <Button type="button" variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} title="Upload Image"><ImageIcon className="h-4 w-4" /></Button>
                             <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
                         </div>
@@ -324,7 +324,7 @@ export default function ManualPublishPage() {
                             disabled={isPublishing}
                           />
                           <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={isPublishing || fields.length <= 1}>
-                            <X className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       ))}
@@ -410,5 +410,3 @@ export default function ManualPublishPage() {
     </main>
   );
 }
-
-    
