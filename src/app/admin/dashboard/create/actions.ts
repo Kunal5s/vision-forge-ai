@@ -8,10 +8,16 @@ import { Octokit } from 'octokit';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { JSDOM } from 'jsdom';
+import OpenAI from 'openai';
+
+// Schema for topic generation
+const TopicFormSchema = z.object({
+  prompt: z.string().min(1, 'Please enter a prompt for topic ideas.'),
+});
 
 // Schema for the final article generation submission
 const ArticleFormSchema = z.object({
-  topic: z.string().min(1, 'Please enter a topic.'),
+  topic: z.string().min(1, 'Please select a topic.'),
   category: z.string().min(1, 'Please select a category.'),
   provider: z.enum(['openrouter', 'sambanova']),
   model: z.string().min(1, 'Please select an AI model.'),
@@ -22,6 +28,55 @@ const ArticleFormSchema = z.object({
   openRouterApiKey: z.string().optional(),
   sambaNovaApiKey: z.string().optional(),
 });
+
+type GenerateTopicsResult = {
+  success: boolean;
+  topics?: string[];
+  error?: string;
+};
+
+export async function generateTopicsAction(data: unknown): Promise<GenerateTopicsResult> {
+    const validatedFields = TopicFormSchema.safeParse(data);
+
+    if (!validatedFields.success) {
+      return { success: false, error: 'Invalid input data for topic generation.' };
+    }
+
+    const { prompt } = validatedFields.data;
+    const client = new OpenAI({
+        apiKey: process.env.OPENROUTER_API_KEY,
+        baseURL: "https://openrouter.ai/api/v1",
+    });
+
+    try {
+        const response = await client.chat.completions.create({
+            model: "google/gemma-2-9b-it",
+            messages: [
+                { role: "system", content: "You are an expert SEO content strategist. Generate 5 compelling, 9-word article titles based on the user's prompt. Each title should be a unique angle on the topic. Return ONLY a JSON object with a single key 'topics' which is an array of 5 strings. Do not include any other text or markdown." },
+                { role: "user", content: `Generate 5 titles for the topic: "${prompt}".` }
+            ],
+            response_format: { type: "json_object" },
+        });
+
+        const jsonContent = response.choices[0].message.content;
+        if (!jsonContent) {
+            throw new Error("AI returned empty content for topics.");
+        }
+        
+        const parsed = JSON.parse(jsonContent);
+
+        if (parsed.topics && Array.isArray(parsed.topics) && parsed.topics.length > 0) {
+            return { success: true, topics: parsed.topics.slice(0, 5) };
+        } else {
+            throw new Error("AI did not return the expected 'topics' array.");
+        }
+
+    } catch (error) {
+        console.error('Error in generateTopicsAction:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred while generating topics.' };
+    }
+}
+
 
 type GenerateArticleResult = {
   success: boolean;
@@ -75,7 +130,7 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
     revalidatePath(`/${categorySlug}`);
     revalidatePath(`/${categorySlug}/${newArticle.slug}`);
     
-    redirect('/admin/dashboard/edit');
+    redirect(`/admin/dashboard/edit/${categorySlug}/${newArticle.slug}`);
 
   } catch (error) {
     console.error('Error in generateArticleAction:', error);
@@ -107,6 +162,8 @@ const EditSchema = z.object({
     title: z.string().min(1, "Title cannot be empty."),
     slug: z.string().min(1, "Slug cannot be empty."),
     content: z.string(), 
+    keyTakeaways: z.array(z.string()).optional(),
+    conclusion: z.string(),
     originalSlug: z.string(),
     category: z.string(),
 });
@@ -140,7 +197,7 @@ export async function editArticleAction(data: unknown) {
   if (!validatedFields.success) {
     return { success: false, error: "Invalid data." };
   }
-  const { title, slug, content, originalSlug, category } = validatedFields.data;
+  const { title, slug, content, keyTakeaways, conclusion, originalSlug, category } = validatedFields.data;
 
   try {
     const articles = await getArticles(category);
@@ -157,6 +214,8 @@ export async function editArticleAction(data: unknown) {
       title,
       slug,
       articleContent: newArticleContent,
+      keyTakeaways: keyTakeaways || [],
+      conclusion: conclusion,
       publishedDate: new Date().toISOString(), 
     };
 

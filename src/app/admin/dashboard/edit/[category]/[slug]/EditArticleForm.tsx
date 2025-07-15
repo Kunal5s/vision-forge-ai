@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -9,8 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, Save, Trash2, Wand2, Eye } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowLeft, Loader2, Save, Trash2, Wand2, Eye, PlusCircle } from 'lucide-react';
+import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import type { Article } from '@/lib/articles';
 import { editArticleAction, deleteArticleAction } from '../../../create/actions';
@@ -41,7 +41,9 @@ import { IMAGE_COUNTS } from '@/lib/constants';
 const editSchema = z.object({
   title: z.string().min(1, "Title is required."),
   slug: z.string().min(1, "Slug is required."),
-  content: z.string().min(50, 'Content must be at least 50 characters.'), 
+  content: z.string().min(50, 'Content must be at least 50 characters.'),
+  keyTakeaways: z.array(z.object({ value: z.string().min(1, 'Takeaway cannot be empty.') })).optional(),
+  conclusion: z.string().min(20, 'Conclusion must be at least 20 characters long.'),
 });
 
 type EditFormData = z.infer<typeof editSchema>;
@@ -77,22 +79,45 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
 
   const { toast } = useToast();
 
-  const { register, handleSubmit, formState: { errors }, control, getValues, setValue } = useForm<EditFormData>({
+  const { register, handleSubmit, formState: { errors }, control, getValues, setValue, watch } = useForm<EditFormData>({
     resolver: zodResolver(editSchema),
     defaultValues: {
       title: article.title.replace(/<[^>]*>?/gm, ''),
       slug: article.slug,
       content: contentToHtml(article.articleContent),
+      keyTakeaways: article.keyTakeaways?.map(t => ({ value: t })) || [{ value: '' }],
+      conclusion: article.conclusion,
     }
   });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "keyTakeaways",
+  });
+
+  const contentValue = watch('content');
+  const conclusionValue = watch('conclusion');
+  const takeawaysValue = watch('keyTakeaways');
+  const titleValue = watch('title');
+
+  const getFullArticleHtml = useCallback(() => {
+    const takeawaysHtml = (takeawaysValue || [])
+      .map(t => t.value ? `<li>${t.value}</li>` : '')
+      .join('');
+    
+    return `${contentValue}<h2>Key Takeaways</h2><ul>${takeawaysHtml}</ul><h2>Conclusion</h2>${conclusionValue}`;
+  }, [contentValue, takeawaysValue, conclusionValue]);
 
 
   const onSubmit = async (data: EditFormData) => {
     setIsSaving(true);
     toast({ title: "Saving...", description: "Updating your article." });
 
+    const takeaways = (data.keyTakeaways || []).filter(item => item && item.value.trim() !== '');
+
     const result = await editArticleAction({
       ...data,
+      keyTakeaways: takeaways.length > 0 ? takeaways.map(t => t.value) : undefined,
       originalSlug: article.slug,
       category: categoryName
     });
@@ -153,8 +178,8 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
       <ArticlePreview 
         isOpen={isPreviewOpen}
         onOpenChange={setIsPreviewOpen}
-        title={getValues('title')}
-        content={getValues('content')}
+        title={titleValue}
+        content={getFullArticleHtml()}
         category={categoryName}
         image={article.image}
       />
@@ -190,7 +215,7 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
             </div>
 
             <div>
-              <Label htmlFor="content">Content</Label>
+              <Label htmlFor="content">Main Content</Label>
               <Controller
                   name="content"
                   control={control}
@@ -205,45 +230,65 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
               {errors.content && <p className="text-sm text-destructive mt-1">{errors.content.message}</p>}
             </div>
 
+             <div className="space-y-2 border-t pt-4">
+              <Label className="text-lg font-semibold">Key Takeaways</Label>
+                {fields.map((field, index) => (
+                  <div key={field.id} className="flex items-center gap-2">
+                    <Input
+                      {...register(`keyTakeaways.${index}.value`)}
+                      placeholder={`Takeaway #${index + 1}`}
+                      disabled={isSaving || isDeleting}
+                    />
+                    <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={isSaving || isDeleting || fields.length <= 1}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              {errors.keyTakeaways && <p className="text-sm text-destructive mt-1">{errors.keyTakeaways.root?.message || (errors.keyTakeaways as any)[0]?.value?.message}</p>}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => append({ value: "" })}
+                disabled={isSaving || isDeleting || fields.length >= 6}
+              >
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Takeaway
+              </Button>
+            </div>
+
+            <div>
+              <Label htmlFor="conclusion">Conclusion</Label>
+               <Controller
+                  name="conclusion"
+                  control={control}
+                  render={({ field }) => (
+                       <RichTextEditor 
+                          value={field.value} 
+                          onChange={field.onChange}
+                          disabled={isSaving || isDeleting}
+                          placeholder="Write your powerful conclusion here..."
+                      />
+                  )}
+              />
+              {errors.conclusion && <p className="text-sm text-destructive mt-1">{errors.conclusion.message}</p>}
+            </div>
+
             <div className="border-t pt-6 flex flex-wrap justify-between items-center gap-4">
               <div className="flex flex-wrap items-center gap-2">
                 <Button type="submit" disabled={isSaving || isDeleting || isAddingImages}>
-                  {isSaving ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="mr-2 h-4 w-4" />
-                      Save Changes
-                    </>
-                  )}
+                  {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  Save Changes
                 </Button>
                 <div className="flex items-center gap-2">
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={handleAddImages}
-                        disabled={isAddingImages || isSaving || isDeleting}
-                    >
-                        {isAddingImages ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                            <Wand2 className="mr-2 h-4 w-4" />
-                        )}
+                    <Button type="button" variant="secondary" onClick={handleAddImages} disabled={isAddingImages || isSaving || isDeleting}>
+                        {isAddingImages ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
                         Generate & Add Images
                     </Button>
                     <Select onValueChange={setImageCount} defaultValue={imageCount} disabled={isAddingImages || isSaving || isDeleting}>
-                        <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Number of Images" />
-                        </SelectTrigger>
+                        <SelectTrigger className="w-[180px]"><SelectValue placeholder="Number of Images" /></SelectTrigger>
                         <SelectContent>
-                            {IMAGE_COUNTS.map(opt => (
-                                <SelectItem key={opt.value} value={opt.value}>
-                                    {opt.label}
-                                </SelectItem>
-                            ))}
+                            {IMAGE_COUNTS.map(opt => (<SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>))}
                         </SelectContent>
                     </Select>
                 </div>

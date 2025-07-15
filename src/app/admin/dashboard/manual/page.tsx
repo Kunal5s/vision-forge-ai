@@ -54,6 +54,7 @@ export default function ManualPublishPage() {
       slug: '',
       content: '',
       keyTakeaways: [{ value: '' }],
+      conclusion: '',
     }
   });
 
@@ -102,13 +103,13 @@ export default function ManualPublishPage() {
   }, []);
 
   useEffect(() => {
-    const debounceTimer = setTimeout(() => {
-        if (titleValue) {
+    if (titleValue) {
+        const debounceTimer = setTimeout(() => {
             fetchPreviewImage(titleValue);
-        }
-    }, 1500);
-    
-    return () => clearTimeout(debounceTimer);
+        }, 1500);
+        
+        return () => clearTimeout(debounceTimer);
+    }
   }, [titleValue, fetchPreviewImage]);
 
   const addImagesToArticle = async () => {
@@ -181,7 +182,13 @@ export default function ManualPublishPage() {
     setIsPublishing(false);
   };
 
-  const fullArticleContent = `${contentValue}<h2>Key Takeaways</h2><ul>${(takeawaysValue || []).map(t => t.value ? `<li>${t.value}</li>` : '').join('')}</ul><h2>Conclusion</h2>${conclusionValue}`;
+  const getFullArticleHtml = useCallback(() => {
+    const takeawaysHtml = (takeawaysValue || [])
+      .map(t => t.value ? `<li>${t.value}</li>` : '')
+      .join('');
+    
+    return `${contentValue}<h2>Key Takeaways</h2><ul>${takeawaysHtml}</ul><h2>Conclusion</h2>${conclusionValue}`;
+  }, [contentValue, takeawaysValue, conclusionValue]);
   
 
   return (
@@ -190,7 +197,7 @@ export default function ManualPublishPage() {
         isOpen={isPreviewOpen}
         onOpenChange={setIsPreviewOpen}
         title={titleValue}
-        content={fullArticleContent}
+        content={getFullArticleHtml()}
         category={categoryValue}
         image={previewImage || ''}
       />
