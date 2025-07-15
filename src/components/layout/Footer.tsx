@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { BrainCircuit, Twitter, Instagram, Facebook, Linkedin, Github, Youtube } from 'lucide-react';
+import { BrainCircuit, Twitter, Instagram, Facebook, Linkedin, Youtube } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
@@ -61,9 +61,6 @@ export function Footer() {
               </a>
               <a href="https://linkedin.com/company/ImagenBrainAi" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="text-foreground/80 hover:text-foreground">
                 <Linkedin className="h-6 w-6" />
-              </a>
-              <a href="https://github.com/ImagenBrainAi" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="text-foreground/80 hover:text-foreground">
-                <Github className="h-6 w-6" />
               </a>
               <a href="https://youtube.com/c/ImagenBrainAi" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="text-foreground/80 hover:text-foreground">
                 <Youtube className="h-6 w-6" />
