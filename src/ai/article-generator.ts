@@ -46,7 +46,6 @@ const getJsonPromptStructureForArticle = (wordCount: string, style: string, mood
   For the "articleContent", the VERY FIRST object must be a 'p' type with a summary of the article. The rest should be a mix of heading types (h2-h6) and 'p' (paragraph) types to create a well-structured article of the required word count. Paragraphs should be short and easy to read.
 `;
 
-
 interface ArticleGenerationParams {
     topic: string;
     category: string;
@@ -60,102 +59,113 @@ interface ArticleGenerationParams {
     sambaNovaApiKey?: string;
 }
 
-const getApiClient = (provider: 'openrouter' | 'sambanova', apiKey?: string): OpenAI => {
-    if (provider === 'openrouter') {
-        const finalApiKey = apiKey || process.env.OPENROUTER_API_KEY;
-        if (!finalApiKey) {
-            throw new Error("OpenRouter API key is not set. Please provide one in the UI or set the OPENROUTER_API_KEY environment variable.");
-        }
-        return new OpenAI({
-            apiKey: finalApiKey,
-            baseURL: "https://openrouter.ai/api/v1",
-            defaultHeaders: {
-                "X-Title": "Imagen BrainAi",
-            },
-        });
-    } else { // provider === 'sambanova'
-        const finalApiKey = apiKey || process.env.SAMBANOVA_API_KEY;
-        if (!finalApiKey) {
-            throw new Error("SambaNova API key is not set. Please provide one in the UI or set the SAMBANOVA_API_KEY environment variable.");
-        }
-        return new OpenAI({
-            apiKey: 'EMPTY', // This is ignored when we set the Authorization header
-            baseURL: "https://api.cloud.sambanova.ai/v1",
-            defaultHeaders: {
-                Authorization: `Bearer ${finalApiKey}`,
-            },
-        });
+// Separate function for OpenRouter
+async function generateWithOpenRouter(params: ArticleGenerationParams): Promise<Article | null> {
+    const { topic, category, model, style, mood, wordCount, imageCount, openRouterApiKey } = params;
+    const finalApiKey = openRouterApiKey || process.env.OPENROUTER_API_KEY;
+    if (!finalApiKey) {
+        throw new Error("OpenRouter API key is not set. Please provide one in the UI or set the OPENROUTER_API_KEY environment variable.");
     }
-};
+    const client = new OpenAI({
+        apiKey: finalApiKey,
+        baseURL: "https://openrouter.ai/api/v1",
+        defaultHeaders: { "X-Title": "Imagen BrainAi" },
+    });
+    const JSON_PROMPT_STRUCTURE = getJsonPromptStructureForArticle(wordCount, style, mood, imageCount);
+
+    console.log(`Attempting to generate with OpenRouter model: ${model}`);
+    const response = await client.chat.completions.create({
+        model,
+        messages: [
+            { role: "system", content: JSON_PROMPT_STRUCTURE },
+            { role: "user", content: `Generate an article for the category "${category}" on the topic: "${topic}".` }
+        ],
+        response_format: { type: "json_object" },
+        max_tokens: 4096,
+    });
+
+    const jsonContent = response.choices[0].message.content;
+    if (!jsonContent) return null;
+
+    const rawArticle = JSON.parse(jsonContent);
+    const parsedResult = ArticleOutputSchema.safeParse(rawArticle);
+
+    if (!parsedResult.success) {
+        console.warn(`Zod validation failed for OpenRouter model ${model}:`, parsedResult.error.flatten());
+        return null;
+    }
+
+    return { ...parsedResult.data, publishedDate: new Date().toISOString() };
+}
+
+// Separate function for SambaNova
+async function generateWithSambaNova(params: ArticleGenerationParams): Promise<Article | null> {
+    const { topic, category, model, style, mood, wordCount, imageCount, sambaNovaApiKey } = params;
+    const finalApiKey = sambaNovaApiKey || process.env.SAMBANOVA_API_KEY;
+    if (!finalApiKey) {
+        throw new Error("SambaNova API key is not set. Please provide one in the UI or set the SAMBANOVA_API_KEY environment variable.");
+    }
+    const client = new OpenAI({
+        apiKey: finalApiKey, // For SambaNova, this is used as a Bearer token.
+        baseURL: "https://api.cloud.sambanova.ai/v1",
+    });
+    const JSON_PROMPT_STRUCTURE = getJsonPromptStructureForArticle(wordCount, style, mood, imageCount);
+
+    console.log(`Attempting to generate with SambaNova model: ${model}`);
+    const response = await client.chat.completions.create({
+        model,
+        messages: [
+            { role: "system", content: JSON_PROMPT_STRUCTURE },
+            { role: "user", content: `Generate an article for the category "${category}" on the topic: "${topic}".` }
+        ],
+        response_format: { type: "json_object" },
+        max_tokens: 4096,
+    });
+
+    const jsonContent = response.choices[0].message.content;
+    if (!jsonContent) return null;
+
+    const rawArticle = JSON.parse(jsonContent);
+    const parsedResult = ArticleOutputSchema.safeParse(rawArticle);
+
+    if (!parsedResult.success) {
+        console.warn(`Zod validation failed for SambaNova model ${model}:`, parsedResult.error.flatten());
+        return null;
+    }
+    return { ...parsedResult.data, publishedDate: new Date().toISOString() };
+}
+
 
 export async function generateArticleForTopic(params: ArticleGenerationParams): Promise<Article | null> {
-    const { 
-        topic, 
-        category, 
-        provider, 
-        model: preferredModel, 
-        style, 
-        mood, 
-        wordCount, 
-        imageCount, 
-        openRouterApiKey,
-        sambaNovaApiKey 
-    } = params;
-    
-    // **FIXED LOGIC**: Select the correct API key based on the chosen provider.
-    const clientApiKey = provider === 'openrouter' ? openRouterApiKey : sambaNovaApiKey;
-    const client = getApiClient(provider, clientApiKey);
-
-    const availableModels = provider === 'openrouter' ? OPENROUTER_MODELS : SAMBANOVA_MODELS;
-    
-    // Create a prioritized list of models to try, starting with the user's preferred model
-    const modelsToTry = [preferredModel, ...availableModels.filter(m => m !== preferredModel)];
-    const JSON_PROMPT_STRUCTURE = getJsonPromptStructureForArticle(wordCount, style, mood, imageCount);
+    const availableModels = params.provider === 'openrouter' ? OPENROUTER_MODELS : SAMBANOVA_MODELS;
+    const modelsToTry = [params.model, ...availableModels.filter(m => m !== params.model)];
     
     for (const model of modelsToTry) {
-        console.log(`Attempting to generate article for topic: "${topic}" in category: "${category}" using provider: ${provider} and model: ${model}`);
         try {
-            const response = await client.chat.completions.create({
-                model: model,
-                messages: [
-                    { role: "system", content: JSON_PROMPT_STRUCTURE },
-                    { role: "user", content: `Generate an article for the category "${category}" on the topic: "${topic}".` }
-                ],
-                response_format: { type: "json_object" },
-                max_tokens: 4096, // Increased max tokens for safety with long articles
-            });
-
-            const jsonContent = response.choices[0].message.content;
+            console.log(`Attempting to generate article for topic: "${params.topic}" with provider: ${params.provider} and model: ${model}`);
             
-            if (!jsonContent) {
-                console.warn(`Model ${model} from ${provider} returned empty content.`);
-                continue; // Try the next model
+            let article: Article | null = null;
+            const currentParams = { ...params, model };
+
+            if (params.provider === 'openrouter') {
+                article = await generateWithOpenRouter(currentParams);
+            } else if (params.provider === 'sambanova') {
+                article = await generateWithSambaNova(currentParams);
             }
 
-            const rawArticle = JSON.parse(jsonContent);
-            const parsedResult = ArticleOutputSchema.safeParse(rawArticle);
-
-            if (!parsedResult.success) {
-                console.warn(`Zod validation failed for model ${model} from ${provider}:`, parsedResult.error.flatten());
-                continue; // Try the next model
+            if (article) {
+                console.log(`- Successfully generated and validated article: "${article.title}" with provider: ${params.provider}, model: ${model}`);
+                return article;
+            } else {
+                console.warn(`Model ${model} from ${params.provider} returned empty or invalid content. Trying next model.`);
             }
-
-            const finalArticle: Article = {
-                ...parsedResult.data,
-                publishedDate: new Date().toISOString(),
-            };
-
-            console.log(`- Successfully generated and validated article: "${finalArticle.title}" with provider: ${provider}, model: ${model}`);
-            return finalArticle;
 
         } catch (error) {
-            console.error(`- An unexpected error occurred with provider ${provider} and model ${model}. Trying next model. Error:`, error);
-            // The loop will automatically continue to the next model
+            console.error(`- An unexpected error occurred with provider ${params.provider} and model ${model}. Error:`, error);
         }
     }
 
-    // If all models in the list fail
-    throw new Error(`All AI models for provider ${provider} failed to generate the article. Please check your API key, the complexity of the topic, or try again later.`);
+    throw new Error(`All AI models for provider ${params.provider} failed to generate the article. Please check your API key, the complexity of the topic, or try again later.`);
 }
 
 export async function humanizeTextAction(text: string): Promise<{ success: boolean; humanizedText?: string; error?: string }> {
@@ -163,7 +173,6 @@ export async function humanizeTextAction(text: string): Promise<{ success: boole
     return { success: false, error: "No text provided to humanize." };
   }
 
-  // Use the OpenRouter key by default, assuming it's the most common one configured.
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     return { success: false, error: "OpenRouter API key is not configured on the server." };
@@ -172,14 +181,12 @@ export async function humanizeTextAction(text: string): Promise<{ success: boole
   const client = new OpenAI({
     apiKey: apiKey,
     baseURL: "https://openrouter.ai/api/v1",
-    defaultHeaders: {
-        "X-Title": "Imagen BrainAi",
-    },
+    defaultHeaders: { "X-Title": "Imagen BrainAi" },
   });
 
   try {
     const response = await client.chat.completions.create({
-      model: "google/gemma-2-9b-it", // A good, fast model for editing tasks
+      model: "google/gemma-2-9b-it",
       messages: [
         {
           role: "system",
