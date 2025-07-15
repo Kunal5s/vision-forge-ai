@@ -12,12 +12,12 @@ function parseMarkdownToContent(markdown: string): Article['articleContent'] {
   const lines = markdown.split(/\n\s*(?:\n)/); // Split by one or more blank lines
   return lines.map(line => {
     line = line.trim();
-    if (line.startsWith('# ')) return { type: 'h1', content: line.substring(2) };
     if (line.startsWith('## ')) return { type: 'h2', content: line.substring(3) };
     if (line.startsWith('### ')) return { type: 'h3', content: line.substring(4) };
     if (line.startsWith('#### ')) return { type: 'h4', content: line.substring(5) };
     if (line.startsWith('##### ')) return { type: 'h5', content: line.substring(6) };
     if (line.startsWith('###### ')) return { type: 'h6', content: line.substring(7) };
+    if (line.startsWith('# ')) return { type: 'h1', content: line.substring(2) }; // Keep h1 as a fallback
     if (line.startsWith('![')) { // Handle images: ![alt](src)
         const match = /!\[(.*?)\]\((.*?)\)/.exec(line);
         if (match) {

@@ -18,11 +18,14 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { categorySlugMap } from '@/lib/constants';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, FileSignature, ImageIcon, Bold, Italic, Heading2, Link as LinkIcon, List, ListOrdered, Quote as QuoteIcon, PlusCircle, X, Trash2 } from 'lucide-react';
+import { ArrowLeft, Loader2, FileSignature, ImageIcon, Bold, Italic, Heading2, Link as LinkIcon, List, ListOrdered, Quote as QuoteIcon, PlusCircle, Trash2 } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef, ChangeEvent } from 'react';
 import Link from 'next/link';
 import { createManualArticleAction } from './actions';
 import Image from 'next/image';
+import { cn } from '@/lib/utils';
+import ReactMarkdown from 'react-markdown';
+
 
 const manualArticleSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters long.'),
@@ -59,6 +62,7 @@ export default function ManualPublishPage() {
 
   const categoryValue = watch('category');
   const titleValue = watch('title');
+  const contentValue = watch('content');
   const formValues = watch();
 
   // Load draft from localStorage on initial render
@@ -149,7 +153,7 @@ export default function ManualPublishPage() {
     const end = textarea.selectionEnd;
     const text = textarea.value;
     const selectedText = text.substring(start, end);
-    const newText = `${text.substring(0, start)}${before}${selectedText}${after}${text.substring(end)}`;
+    const newText = `${text.substring(0, start)}${before}${selectedText || ''}${after}${text.substring(end)}`;
     setValue('content', newText, { shouldValidate: true, shouldDirty: true });
     
     // Focus and set cursor position
@@ -282,19 +286,20 @@ export default function ManualPublishPage() {
                     </div>
 
                   <div>
-                    <Label htmlFor="content">Article Content</Label>
+                    <Label htmlFor="content">Article Content (Live Preview)</Label>
                     <div className="border rounded-md mt-2">
-                        <div className="p-2 border-b bg-muted/50 flex flex-wrap items-center gap-1">
-                            <Button type="button" variant="ghost" size="icon" onClick={() => insertText("## ", "")} title="Heading 2"><Heading2 className="h-4 w-4" /></Button>
-                            <Button type="button" variant="ghost" size="icon" onClick={() => insertText("**", "**")} title="Bold"><Bold className="h-4 w-4" /></Button>
-                            <Button type="button" variant="ghost" size="icon" onClick={() => insertText("*", "*")} title="Italic"><Italic className="h-4 w-4" /></Button>
-                            <Button type="button" variant="ghost" size="icon" onClick={() => insertText("[", "](url)")} title="Link"><LinkIcon className="h-4 w-4" /></Button>
-                            <Button type="button" variant="ghost" size="icon" onClick={() => insertText("\n- ", "")} title="Bullet List"><List className="h-4 w-4" /></Button>
-                            <Button type="button" variant="ghost" size="icon" onClick={() => insertText("\n1. ", "")} title="Numbered List"><ListOrdered className="h-4 w-4" /></Button>
-                            <Button type="button" variant="ghost" size="icon" onClick={() => insertText("\n> ", "")} title="Blockquote"><QuoteIcon className="h-4 w-4" /></Button>
-                            <Button type="button" variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} title="Upload Image"><ImageIcon className="h-4 w-4" /></Button>
-                            <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
-                        </div>
+                      <div className="p-2 border-b bg-muted/50 flex flex-wrap items-center gap-1">
+                          <Button type="button" variant="ghost" size="icon" onClick={() => insertText("## ", "")} title="Heading 2"><Heading2 className="h-4 w-4" /></Button>
+                          <Button type="button" variant="ghost" size="icon" onClick={() => insertText("**", "**")} title="Bold"><Bold className="h-4 w-4" /></Button>
+                          <Button type="button" variant="ghost" size="icon" onClick={() => insertText("*", "*")} title="Italic"><Italic className="h-4 w-4" /></Button>
+                          <Button type="button" variant="ghost" size="icon" onClick={() => insertText("[", "](url)")} title="Link"><LinkIcon className="h-4 w-4" /></Button>
+                          <Button type="button" variant="ghost" size="icon" onClick={() => insertText("\n- ", "")} title="Bullet List"><List className="h-4 w-4" /></Button>
+                          <Button type="button" variant="ghost" size="icon" onClick={() => insertText("\n1. ", "")} title="Numbered List"><ListOrdered className="h-4 w-4" /></Button>
+                          <Button type="button" variant="ghost" size="icon" onClick={() => insertText("\n> ", "")} title="Blockquote"><QuoteIcon className="h-4 w-4" /></Button>
+                          <Button type="button" variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} title="Upload Image"><ImageIcon className="h-4 w-4" /></Button>
+                          <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2">
                         <Textarea
                           id="content"
                           {...rest}
@@ -303,15 +308,24 @@ export default function ManualPublishPage() {
                                 // @ts-ignore
                                 textareaRef.current = e;
                             }}
-                          rows={30}
-                          className="font-mono border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-y"
+                          rows={25}
+                          className="font-mono border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-y md:border-r"
                           placeholder="## Your Main Heading&#10;&#10;Start writing your compelling article here. Use Markdown for headings, bold, and italic text."
                           disabled={isPublishing}
                         />
+                         <div className="prose prose-sm dark:prose-invert max-w-none p-4 bg-background overflow-y-auto h-[532px] hidden md:block">
+                           <ReactMarkdown
+                             components={{
+                               img: ({node, ...props}) => <Image {...props} width={400} height={200} className="rounded-md" data-ai-hint="in-article photography" unoptimized />
+                             }}
+                           >
+                            {contentValue || "Your formatted content will appear here..."}
+                           </ReactMarkdown>
+                         </div>
+                      </div>
                     </div>
                     {errors.content && <p className="text-sm text-destructive mt-1">{errors.content.message}</p>}
                   </div>
-
 
                   <div>
                     <Label>Key Takeaways</Label>
@@ -329,7 +343,7 @@ export default function ManualPublishPage() {
                         </div>
                       ))}
                     </div>
-                     {errors.keyTakeaways && <p className="text-sm text-destructive mt-1">{errors.keyTakeaways.message}</p>}
+                     {errors.keyTakeaways && <p className="text-sm text-destructive mt-1">{errors.keyTakeaways[0]?.value?.message || errors.keyTakeaways.message}</p>}
                     <Button
                       type="button"
                       variant="outline"
