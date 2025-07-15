@@ -30,6 +30,7 @@ const getJsonPromptStructureForArticle = (wordCount: string, style: string, mood
   - The writing style MUST be **${style}**.
   - The overall mood and tone of the article MUST be **${mood}**.
   - You MUST include exactly **${imageCount}** different, relevant images within the article content. Place an image block after most H2 headings.
+  - You MUST write in a human-like, conversational, and engaging tone. Use storytelling techniques, personal anecdotes (where appropriate), and a natural narrative flow. Avoid robotic language and overly formal structures. The goal is to create content that resonates emotionally with the reader and feels like it was written by an expert human author.
 
   **FORMATTING INSTRUCTIONS:**
   - For all text-based content within the JSON (like 'title', 'content' for 'p' and 'h' tags, 'keyTakeaways', and 'conclusion'), you MUST embed appropriate HTML tags for rich formatting.
