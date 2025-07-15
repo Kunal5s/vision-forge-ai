@@ -64,7 +64,6 @@ async function generateWithOpenRouter(params: ArticleGenerationParams): Promise<
     const { topic, category, model, style, mood, wordCount, imageCount, openRouterApiKey } = params;
     
     // This logic ensures we use the UI key if provided, otherwise fallback to the server's environment variable.
-    // This must be done on the server-side to access process.env securely.
     const finalApiKey = openRouterApiKey || process.env.OPENROUTER_API_KEY;
     
     if (!finalApiKey) {
