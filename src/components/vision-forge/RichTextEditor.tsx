@@ -21,7 +21,7 @@ import TextAlign from '@tiptap/extension-text-align';
 import { humanizeTextAction } from '@/app/admin/dashboard/create/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { Drop } from '@tiptap/extension-dropcursor';
+import Dropcursor from '@tiptap/extension-dropcursor';
 
 
 const EditorToolbar = ({ editor }: { editor: Editor | null }) => {
@@ -204,7 +204,7 @@ export function RichTextEditor({ value, onChange, disabled, placeholder = "Start
             TextAlign.configure({
                 types: ['heading', 'paragraph'],
             }),
-            Drop.configure({
+            Dropcursor.configure({
                 color: '#4094F7',
                 width: 2,
                 class: 'drop-cursor'
