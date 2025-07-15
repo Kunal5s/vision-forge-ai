@@ -68,6 +68,7 @@ export default function CreateArticlePage() {
         title: 'Error Generating Article',
         description: result.error,
         variant: 'destructive',
+        duration: 9000,
       });
     }
     setIsGenerating(false);
