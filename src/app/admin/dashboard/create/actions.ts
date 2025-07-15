@@ -1,4 +1,3 @@
-
 'use server';
 
 import { generateArticleForTopic } from '@/ai/article-generator';
@@ -308,4 +307,48 @@ export async function saveUpdatedArticles(category: string, articles: Article[],
         console.error("Failed to commit changes to GitHub.", error);
         throw new Error("Failed to save article to GitHub. Please check your credentials (token, owner, repo name) and repository permissions.");
     }
+}
+
+export async function humanizeTextAction(text: string): Promise<{ success: boolean; humanizedText?: string; error?: string }> {
+  if (!text || text.trim().length === 0) {
+    return { success: false, error: "No text provided to humanize." };
+  }
+
+  // Use the OpenRouter key by default, assuming it's the most common one configured.
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) {
+    return { success: false, error: "OpenRouter API key is not configured on the server." };
+  }
+
+  const client = new OpenAI({
+    apiKey: apiKey,
+    baseURL: "https://openrouter.ai/api/v1",
+  });
+
+  try {
+    const response = await client.chat.completions.create({
+      model: "google/gemma-2-9b-it", // A good, fast model for editing tasks
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert editor. Rewrite the following text to be more human-like, engaging, and conversational. Correct any grammar or spelling mistakes. Only return the rewritten text, with no extra commentary.",
+        },
+        { role: "user", content: text },
+      ],
+      temperature: 0.7,
+      top_p: 1,
+    });
+
+    const humanizedText = response.choices[0].message.content;
+    if (!humanizedText) {
+      throw new Error("AI returned an empty response.");
+    }
+
+    return { success: true, humanizedText };
+
+  } catch (error) {
+    console.error("Error in humanizeTextAction:", error);
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred while humanizing the text.";
+    return { success: false, error: errorMessage };
+  }
 }

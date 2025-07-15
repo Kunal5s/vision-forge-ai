@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEditor, EditorContent, Editor, BubbleMenu } from '@tiptap/react';
@@ -7,10 +6,10 @@ import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { 
     Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon, Image as ImageIcon,
-    Heading1, Heading2, Heading3, Heading4, Heading5, Heading6, Palette, AlignLeft, AlignCenter, AlignRight
+    Heading1, Heading2, Heading3, Palette, AlignLeft, AlignCenter, AlignRight, Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -18,6 +17,9 @@ import FontFamily from '@tiptap/extension-font-family';
 import TextStyle from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import TextAlign from '@tiptap/extension-text-align';
+import { humanizeTextAction } from '@/app/admin/dashboard/create/actions';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 
 const EditorToolbar = ({ editor }: { editor: Editor | null }) => {
@@ -122,6 +124,56 @@ const EditorToolbar = ({ editor }: { editor: Editor | null }) => {
 };
 
 
+const AIHumanizerMenu = ({ editor }: { editor: Editor }) => {
+    const [isLoading, setIsLoading] = useState(false);
+    const { toast } = useToast();
+
+    const handleHumanize = async () => {
+        const { from, to } = editor.state.selection;
+        const text = editor.state.doc.textBetween(from, to, ' ');
+
+        if (!text) {
+            toast({ title: "No Text Selected", description: "Please select text to humanize.", variant: 'destructive' });
+            return;
+        }
+
+        setIsLoading(true);
+        const result = await humanizeTextAction(text);
+        setIsLoading(false);
+
+        if (result.success && result.humanizedText) {
+            editor.chain().focus().deleteRange({ from, to }).insertContent(result.humanizedText).run();
+            toast({ title: "Text Humanized!", description: "AI has improved the selected text." });
+        } else {
+            toast({ title: "Error", description: result.error || "Failed to humanize text.", variant: 'destructive' });
+        }
+    };
+
+    return (
+        <BubbleMenu
+            editor={editor}
+            tippyOptions={{ duration: 100 }}
+            className="bg-background border rounded-lg shadow-xl p-1 flex items-center gap-1"
+        >
+            <Button
+                onClick={handleHumanize}
+                variant="ghost"
+                size="sm"
+                className="flex items-center gap-1"
+                disabled={isLoading}
+            >
+                {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                    <Sparkles className="h-4 w-4" />
+                )}
+                Humanize
+            </Button>
+        </BubbleMenu>
+    );
+};
+
+
 interface RichTextEditorProps {
     value: string;
     onChange: (richText: string) => void;
@@ -134,8 +186,8 @@ export function RichTextEditor({ value, onChange, disabled, placeholder = "Start
         extensions: [
             StarterKit.configure({
                 heading: { levels: [1, 2, 3, 4, 5, 6] },
-                bulletList: { keepMarks: true, keepAttributes: true },
-                orderedList: { keepMarks: true, keepAttributes: true },
+                bulletList: { keepMarks: true, keepAttributes: false },
+                orderedList: { keepMarks: true, keepAttributes: false },
                 codeBlock: false,
                 blockquote: true,
                 horizontalRule: true,
@@ -173,6 +225,7 @@ export function RichTextEditor({ value, onChange, disabled, placeholder = "Start
     return (
         <div className="border rounded-lg overflow-hidden">
             <EditorToolbar editor={editor} />
+            <AIHumanizerMenu editor={editor} />
             <EditorContent editor={editor} />
         </div>
     );
