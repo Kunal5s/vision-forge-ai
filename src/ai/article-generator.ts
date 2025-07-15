@@ -115,8 +115,11 @@ async function generateWithSambaNova(params: ArticleGenerationParams): Promise<A
     }
 
     const client = new OpenAI({
-        apiKey: finalApiKey, // For SambaNova, this is used as a Bearer token.
+        apiKey: "WILL_BE_OVERRIDDEN_BY_HEADER", // This is not used when defaultHeaders are set with Authorization
         baseURL: "https://api.cloud.sambanova.ai/v1",
+        defaultHeaders: {
+            "Authorization": `Bearer ${finalApiKey}`
+        }
     });
 
     const JSON_PROMPT_STRUCTURE = getJsonPromptStructureForArticle(wordCount, style, mood, imageCount);
