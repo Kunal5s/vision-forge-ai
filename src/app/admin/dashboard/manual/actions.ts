@@ -37,7 +37,7 @@ function parseHtmlToContent(html: string): Article['articleContent'] {
 
 export async function addImagesToArticleAction(content: string, imageCount: number = 5): Promise<{success: boolean, content?: string, error?: string}> {
     try {
-        const dom = new JSDOM(content);
+        const dom = new JSDOM(`<body>${content}</body>`);
         const document = dom.window.document;
         // Prioritize H2 headings for image placement
         let headings = Array.from(document.querySelectorAll('h2, h3'));
@@ -56,6 +56,10 @@ export async function addImagesToArticleAction(content: string, imageCount: numb
         
         // Distribute images evenly among the best candidate headings
         const numImagesToAdd = Math.min(imageCount, validHeadings.length);
+        if (numImagesToAdd === 0) {
+            return { success: false, error: "No suitable headings found in the article to add images after. Try adding more H2 or H3 headings." };
+        }
+        
         const step = Math.floor(validHeadings.length / numImagesToAdd);
 
         for (let i = 0; i < numImagesToAdd; i++) {

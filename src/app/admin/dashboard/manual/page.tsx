@@ -162,7 +162,7 @@ export default function ManualPublishPage() {
 
     const result = await createManualArticleAction({
       ...data,
-      keyTakeaways: takeaways.length > 0 ? takeaways : undefined,
+      keyTakeaways: takeaways.length > 0 ? takeaways.map(t => ({value: t.value})) : undefined,
       image: previewImage
     });
 
@@ -243,7 +243,7 @@ export default function ManualPublishPage() {
                             <RichTextEditor 
                                 value={field.value} 
                                 onChange={field.onChange}
-                                disabled={isPublishing}
+                                disabled={isPublishing || isAddingImagesToArticle}
                             />
                         )}
                     />
