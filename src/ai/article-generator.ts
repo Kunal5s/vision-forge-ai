@@ -62,15 +62,21 @@ interface ArticleGenerationParams {
 // Separate function for OpenRouter
 async function generateWithOpenRouter(params: ArticleGenerationParams): Promise<Article | null> {
     const { topic, category, model, style, mood, wordCount, imageCount, openRouterApiKey } = params;
+    
+    // This logic ensures we use the UI key if provided, otherwise fallback to the server's environment variable.
+    // This must be done on the server-side to access process.env securely.
     const finalApiKey = openRouterApiKey || process.env.OPENROUTER_API_KEY;
+    
     if (!finalApiKey) {
-        throw new Error("OpenRouter API key is not set. Please provide one in the UI or set the OPENROUTER_API_KEY environment variable.");
+        throw new Error("OpenRouter API key is not set. Please provide one in the UI or set the OPENROUTER_API_KEY environment variable on the server.");
     }
+
     const client = new OpenAI({
         apiKey: finalApiKey,
         baseURL: "https://openrouter.ai/api/v1",
         defaultHeaders: { "X-Title": "Imagen BrainAi" },
     });
+    
     const JSON_PROMPT_STRUCTURE = getJsonPromptStructureForArticle(wordCount, style, mood, imageCount);
 
     console.log(`Attempting to generate with OpenRouter model: ${model}`);
@@ -101,14 +107,18 @@ async function generateWithOpenRouter(params: ArticleGenerationParams): Promise<
 // Separate function for SambaNova
 async function generateWithSambaNova(params: ArticleGenerationParams): Promise<Article | null> {
     const { topic, category, model, style, mood, wordCount, imageCount, sambaNovaApiKey } = params;
+    
     const finalApiKey = sambaNovaApiKey || process.env.SAMBANOVA_API_KEY;
+
     if (!finalApiKey) {
-        throw new Error("SambaNova API key is not set. Please provide one in the UI or set the SAMBANOVA_API_KEY environment variable.");
+        throw new Error("SambaNova API key is not set. Please provide one in the UI or set the SAMBANOVA_API_KEY environment variable on the server.");
     }
+
     const client = new OpenAI({
         apiKey: finalApiKey, // For SambaNova, this is used as a Bearer token.
         baseURL: "https://api.cloud.sambanova.ai/v1",
     });
+
     const JSON_PROMPT_STRUCTURE = getJsonPromptStructureForArticle(wordCount, style, mood, imageCount);
 
     console.log(`Attempting to generate with SambaNova model: ${model}`);
@@ -135,7 +145,7 @@ async function generateWithSambaNova(params: ArticleGenerationParams): Promise<A
     return { ...parsedResult.data, publishedDate: new Date().toISOString() };
 }
 
-
+// This is the main exported function that will be called by the server action.
 export async function generateArticleForTopic(params: ArticleGenerationParams): Promise<Article | null> {
     const availableModels = params.provider === 'openrouter' ? OPENROUTER_MODELS : SAMBANOVA_MODELS;
     const modelsToTry = [params.model, ...availableModels.filter(m => m !== params.model)];
@@ -147,6 +157,7 @@ export async function generateArticleForTopic(params: ArticleGenerationParams): 
             let article: Article | null = null;
             const currentParams = { ...params, model };
 
+            // The main logic to choose the correct, isolated generation function
             if (params.provider === 'openrouter') {
                 article = await generateWithOpenRouter(currentParams);
             } else if (params.provider === 'sambanova') {
@@ -173,6 +184,7 @@ export async function humanizeTextAction(text: string): Promise<{ success: boole
     return { success: false, error: "No text provided to humanize." };
   }
 
+  // This check MUST be done on the server-side to access process.env
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     return { success: false, error: "OpenRouter API key is not configured on the server." };
