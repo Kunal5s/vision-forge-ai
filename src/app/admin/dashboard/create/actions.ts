@@ -1,7 +1,7 @@
 
 'use server';
 
-import { generateArticleForTopic } from '@/ai/article-generator';
+import { generateTopics, generateArticleForTopic } from '@/ai/article-generator';
 import { getArticles, Article } from '@/lib/articles';
 import { z } from 'zod';
 import { Octokit } from 'octokit';
@@ -9,14 +9,46 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { JSDOM } from 'jsdom';
 
-const FormSchema = z.object({
+// Schema for the initial topic idea submission
+const TopicFormSchema = z.object({
   prompt: z.string().min(10, 'Prompt must be at least 10 characters long.'),
+  apiKey: z.string().optional(),
+});
+
+type GenerateTopicsResult = {
+  success: boolean;
+  topics?: string[];
+  error?: string;
+};
+
+export async function generateTopicsAction(data: unknown): Promise<GenerateTopicsResult> {
+  const validatedFields = TopicFormSchema.safeParse(data);
+  if (!validatedFields.success) {
+    return { success: false, error: 'Invalid input for topic generation.' };
+  }
+  const { prompt, apiKey } = validatedFields.data;
+  
+  try {
+    const topics = await generateTopics({ prompt, apiKey });
+    if (!topics) {
+      throw new Error("AI failed to generate topics.");
+    }
+    return { success: true, topics };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred.' };
+  }
+}
+
+// Schema for the final article generation submission
+const ArticleFormSchema = z.object({
+  topic: z.string().min(1, 'Please select a topic.'),
   category: z.string().min(1, 'Please select a category.'),
   model: z.string().min(1, 'Please select an AI model.'),
   style: z.string().min(1, 'Please select a writing style.'),
   mood: z.string().min(1, 'Please select an article mood.'),
   wordCount: z.string().min(1, 'Please select a word count.'),
-  apiKey: z.string().optional(), // API Key is optional
+  imageCount: z.string().min(1, 'Please select the number of images.'),
+  apiKey: z.string().optional(),
 });
 
 type GenerateArticleResult = {
@@ -26,23 +58,24 @@ type GenerateArticleResult = {
 };
 
 export async function generateArticleAction(data: unknown): Promise<GenerateArticleResult> {
-  const validatedFields = FormSchema.safeParse(data);
+  const validatedFields = ArticleFormSchema.safeParse(data);
 
   if (!validatedFields.success) {
     console.error("Validation Errors:", validatedFields.error.flatten());
-    return { success: false, error: 'Invalid input data.' };
+    return { success: false, error: 'Invalid input data for article generation.' };
   }
   
-  const { prompt, category, model, style, mood, wordCount, apiKey } = validatedFields.data;
+  const { topic, category, model, style, mood, wordCount, imageCount, apiKey } = validatedFields.data;
 
   try {
     const newArticle = await generateArticleForTopic({ 
-      prompt, 
+      topic, 
       category, 
       model, 
       style, 
       mood, 
-      wordCount, 
+      wordCount,
+      imageCount,
       apiKey 
     });
 
@@ -57,7 +90,6 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
     revalidatePath(`/${categorySlug}`);
     revalidatePath(`/${categorySlug}/${newArticle.slug}`);
     
-    // On success, redirect to the new article's edit page
     redirect('/admin/dashboard/edit');
 
   } catch (error) {

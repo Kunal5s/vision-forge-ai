@@ -109,8 +109,15 @@ export const WORD_COUNTS: StyleOption[] = [
     { label: 'Medium (~3000 words)', value: '3000' },
     { label: 'Long (~5000 words)', value: '5000' },
     { label: 'Extra Long (~7000 words)', value: '7000' },
+    { label: 'Very Long (~10000 words)', value: '10000' },
 ];
 
+export const IMAGE_COUNTS: StyleOption[] = [
+    { label: '3 Images', value: '3' },
+    { label: '5 Images', value: '5' },
+    { label: '7 Images', value: '7' },
+    { label: '10 Images', value: '10' },
+];
 
 // Mapping slugs to category names for easy lookup
 export const categorySlugMap: { [key: string]: string } = {
