@@ -35,6 +35,35 @@ function parseHtmlToContent(html: string): Article['articleContent'] {
   return content.filter(block => (block.content && block.content.trim() !== '') || block.type === 'img');
 }
 
+export async function addImagesToArticleAction(content: string): Promise<{success: boolean, content?: string, error?: string}> {
+    try {
+        const dom = new JSDOM(content);
+        const document = dom.window.document;
+        const headings = document.querySelectorAll('h2, h3');
+        let newContent = document.body;
+
+        for (const heading of Array.from(headings)) {
+            const topic = heading.textContent?.trim();
+            if (topic && topic.split(' ').length > 2) { // Only generate for reasonably descriptive headings
+                const seed = Math.floor(Math.random() * 1_000_000);
+                const finalPrompt = `${topic}, relevant photography, high detail`;
+                const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=800&height=450&seed=${seed}&nologo=true`;
+
+                const img = document.createElement('img');
+                img.src = pollinationsUrl;
+                img.alt = topic;
+                
+                heading.parentNode?.insertBefore(img, heading.nextSibling);
+            }
+        }
+        
+        return { success: true, content: newContent.innerHTML };
+    } catch (e: any) {
+        console.error("Failed to add images to article content on server:", e);
+        return { success: false, error: "Could not process article content to add images." };
+    }
+}
+
 
 const ManualArticleSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters long.'),

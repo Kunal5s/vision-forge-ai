@@ -20,10 +20,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ArrowLeft, Loader2, FileSignature, PlusCircle, Trash2, ImageIcon, Wand2 } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { createManualArticleAction } from './actions';
+import { createManualArticleAction, addImagesToArticleAction } from './actions';
 import Image from 'next/image';
 import { RichTextEditor } from '@/components/vision-forge/RichTextEditor';
-import { JSDOM } from 'jsdom';
+
 
 const manualArticleSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters long.'),
@@ -41,8 +41,6 @@ export default function ManualPublishPage() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isAddingImagesToArticle, setIsAddingImagesToArticle] = useState(false);
-  const autosaveTimeout = useRef<NodeJS.Timeout | null>(null);
-  const DRAFT_KEY = 'manual_article_draft';
 
   const { toast } = useToast();
   const { register, handleSubmit, control, formState: { errors }, watch, setValue, getValues, trigger } = useForm<ManualArticleFormData>({
@@ -103,43 +101,28 @@ export default function ManualPublishPage() {
     return () => clearTimeout(debounceTimer);
   }, [titleValue, fetchPreviewImage]);
 
-  const addImagesToArticle = useCallback(async () => {
+  const addImagesToArticle = async () => {
     setIsAddingImagesToArticle(true);
     toast({ title: 'AI is reading your article...', description: 'Generating and adding relevant images. This may take a moment.' });
     
     try {
         const currentContent = getValues('content');
-        const dom = new JSDOM(currentContent);
-        const document = dom.window.document;
-        const headings = document.querySelectorAll('h2, h3');
-        let newContent = document.body;
+        const result = await addImagesToArticleAction(currentContent);
 
-        for (const heading of Array.from(headings)) {
-            const topic = heading.textContent?.trim();
-            if (topic && topic.split(' ').length > 2) { // Only generate for reasonably descriptive headings
-                const seed = Math.floor(Math.random() * 1_000_000);
-                const finalPrompt = `${topic}, relevant photography, high detail`;
-                const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=800&height=450&seed=${seed}&nologo=true`;
-
-                const img = document.createElement('img');
-                img.src = pollinationsUrl;
-                img.alt = topic;
-                
-                // Insert the image after the heading
-                heading.parentNode?.insertBefore(img, heading.nextSibling);
-            }
+        if (result.success && result.content) {
+            setValue('content', result.content, { shouldDirty: true });
+            toast({ title: 'Images Added!', description: 'AI has added contextual images to your article.' });
+        } else {
+            throw new Error(result.error || "Failed to add images.");
         }
-        
-        setValue('content', newContent.innerHTML, { shouldDirty: true });
-        toast({ title: 'Images Added!', description: 'AI has added contextual images to your article.' });
 
-    } catch (e) {
+    } catch (e: any) {
         console.error("Failed to add images to article", e);
-        toast({ title: 'Error Adding Images', description: 'Could not automatically add images.', variant: 'destructive' });
+        toast({ title: 'Error Adding Images', description: e.message || 'Could not automatically add images.', variant: 'destructive' });
     } finally {
         setIsAddingImagesToArticle(false);
     }
-  }, [getValues, setValue, toast]);
+  };
   
 
   const onSubmit = async (data: ManualArticleFormData) => {
