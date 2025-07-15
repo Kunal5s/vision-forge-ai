@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, Save, Trash2, Wand2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, Trash2, Wand2, Eye } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
 import type { Article } from '@/lib/articles';
@@ -27,6 +27,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { RichTextEditor } from '@/components/vision-forge/RichTextEditor';
+import { ArticlePreview } from '@/components/vision-forge/ArticlePreview';
 
 const editSchema = z.object({
   title: z.string().min(1, "Title is required."),
@@ -62,6 +63,8 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isAddingImages, setIsAddingImages] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
   const { toast } = useToast();
 
   const { register, handleSubmit, formState: { errors }, control, getValues, setValue } = useForm<EditFormData>({
@@ -137,6 +140,14 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
 
   return (
     <>
+      <ArticlePreview 
+        isOpen={isPreviewOpen}
+        onOpenChange={setIsPreviewOpen}
+        title={getValues('title')}
+        content={getValues('content')}
+        category={categoryName}
+        image={article.image}
+      />
       <div className="mb-8">
         <Button asChild variant="outline" size="sm">
           <Link href="/admin/dashboard/edit">
@@ -185,7 +196,7 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
             </div>
 
             <div className="border-t pt-6 flex flex-wrap justify-between items-center gap-4">
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button type="submit" disabled={isSaving || isDeleting || isAddingImages}>
                   {isSaving ? (
                     <>
@@ -211,6 +222,10 @@ export default function EditArticleForm({ article, categoryName }: EditArticleFo
                         <Wand2 className="mr-2 h-4 w-4" />
                     )}
                     Generate & Add Images
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setIsPreviewOpen(true)}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    Preview Article
                 </Button>
               </div>
               

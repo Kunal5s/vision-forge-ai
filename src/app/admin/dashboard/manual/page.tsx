@@ -17,12 +17,13 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { categorySlugMap } from '@/lib/constants';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, FileSignature, PlusCircle, Trash2, ImageIcon, Wand2 } from 'lucide-react';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { ArrowLeft, Loader2, FileSignature, PlusCircle, Trash2, ImageIcon, Wand2, Eye } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { createManualArticleAction, addImagesToArticleAction } from './actions';
 import Image from 'next/image';
 import { RichTextEditor } from '@/components/vision-forge/RichTextEditor';
+import { ArticlePreview } from '@/components/vision-forge/ArticlePreview';
 
 
 const manualArticleSchema = z.object({
@@ -30,7 +31,7 @@ const manualArticleSchema = z.object({
   slug: z.string().min(5, 'Slug must be at least 5 characters long. Use dashes instead of spaces.').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and dashes.'),
   category: z.string().min(1, 'Please select a category.'),
   content: z.string().min(50, 'Content must be at least 50 characters long.'),
-  keyTakeaways: z.array(z.object({ value: z.string() })).optional(),
+  keyTakeaways: z.array(z.object({ value: z.string().min(1, 'Key takeaway cannot be empty.') })).optional(),
   conclusion: z.string().min(20, 'Conclusion must be at least 20 characters long.'),
 });
 
@@ -41,9 +42,11 @@ export default function ManualPublishPage() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isAddingImagesToArticle, setIsAddingImagesToArticle] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
 
   const { toast } = useToast();
-  const { register, handleSubmit, control, formState: { errors }, watch, setValue, getValues, trigger } = useForm<ManualArticleFormData>({
+  const { register, handleSubmit, control, formState: { errors }, watch, setValue, getValues } = useForm<ManualArticleFormData>({
     resolver: zodResolver(manualArticleSchema),
     defaultValues: {
       content: '',
@@ -57,6 +60,10 @@ export default function ManualPublishPage() {
   });
 
   const titleValue = watch('title');
+  const categoryValue = watch('category');
+  const contentValue = watch('content');
+  const conclusionValue = watch('conclusion');
+  const takeawaysValue = watch('keyTakeaways');
 
   const generateSlug = useCallback((title: string) => {
     return title
@@ -156,7 +163,6 @@ export default function ManualPublishPage() {
     });
 
     if (result.success) {
-      // The action now handles redirection, so we might not see this toast if all goes well.
       toast({
         title: 'Article Published Successfully!',
         description: `Your article "${result.title}" has been saved and is now live.`,
@@ -171,10 +177,20 @@ export default function ManualPublishPage() {
     }
     setIsPublishing(false);
   };
+
+  const fullArticleContent = `${contentValue}<h2>Key Takeaways</h2><ul>${(takeawaysValue || []).map(t => t.value ? `<li>${t.value}</li>` : '').join('')}</ul><h2>Conclusion</h2>${conclusionValue}`;
   
 
   return (
     <main className="flex-grow container mx-auto py-12 px-4 bg-muted/20 min-h-screen">
+       <ArticlePreview 
+        isOpen={isPreviewOpen}
+        onOpenChange={setIsPreviewOpen}
+        title={titleValue}
+        content={fullArticleContent}
+        category={categoryValue}
+        image={previewImage || ''}
+      />
       <div className="mb-8">
         <Button asChild variant="outline" size="sm">
           <Link href="/admin/dashboard">
@@ -343,19 +359,25 @@ export default function ManualPublishPage() {
                             )}
                         </div>
                     </div>
-                    <Button type="submit" className="w-full" disabled={isPublishing || !previewImage || isGeneratingImage}>
-                    {isPublishing ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Publishing...
-                      </>
-                    ) : (
-                      <>
-                        <FileSignature className="mr-2 h-4 w-4" />
-                        Publish Article
-                      </>
-                    )}
-                  </Button>
+                    <div className="space-y-2">
+                        <Button type="submit" className="w-full" disabled={isPublishing || !previewImage || isGeneratingImage}>
+                        {isPublishing ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Publishing...
+                          </>
+                        ) : (
+                          <>
+                            <FileSignature className="mr-2 h-4 w-4" />
+                            Publish Article
+                          </>
+                        )}
+                      </Button>
+                      <Button type="button" variant="outline" className="w-full" onClick={() => setIsPreviewOpen(true)}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          Preview Article
+                      </Button>
+                    </div>
                 </CardContent>
             </Card>
         </div>
