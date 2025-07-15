@@ -31,7 +31,7 @@ const manualArticleSchema = z.object({
   slug: z.string().min(5, 'Slug must be at least 5 characters long. Use dashes instead of spaces.').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and dashes.'),
   category: z.string().min(1, 'Please select a category.'),
   content: z.string().min(50, 'Content must be at least 50 characters long.'),
-  keyTakeaways: z.array(z.object({ value: z.string().min(1, 'Key takeaway cannot be empty.') })).optional(),
+  keyTakeaways: z.array(z.object({ value: z.string() })).optional(),
   conclusion: z.string().min(20, 'Conclusion must be at least 20 characters long.'),
 });
 
@@ -49,6 +49,8 @@ export default function ManualPublishPage() {
   const { register, handleSubmit, control, formState: { errors }, watch, setValue, getValues } = useForm<ManualArticleFormData>({
     resolver: zodResolver(manualArticleSchema),
     defaultValues: {
+      title: '',
+      slug: '',
       content: '',
       keyTakeaways: [{ value: '' }],
     }
@@ -76,7 +78,7 @@ export default function ManualPublishPage() {
   }, []);
   
   useEffect(() => {
-      if (titleValue) {
+      if (titleValue) { // Added a check to ensure titleValue is not undefined/empty
         const newSlug = generateSlug(titleValue);
         setValue('slug', newSlug, { shouldValidate: true });
       }
