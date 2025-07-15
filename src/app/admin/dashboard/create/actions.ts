@@ -1,7 +1,7 @@
 
 'use server';
 
-import { generateTopics, generateArticleForTopic } from '@/ai/article-generator';
+import { generateArticleForTopic } from '@/ai/article-generator';
 import { getArticles, Article } from '@/lib/articles';
 import { z } from 'zod';
 import { Octokit } from 'octokit';
@@ -9,46 +9,18 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { JSDOM } from 'jsdom';
 
-// Schema for the initial topic idea submission
-const TopicFormSchema = z.object({
-  prompt: z.string().min(10, 'Prompt must be at least 10 characters long.'),
-  apiKey: z.string().optional(),
-});
-
-type GenerateTopicsResult = {
-  success: boolean;
-  topics?: string[];
-  error?: string;
-};
-
-export async function generateTopicsAction(data: unknown): Promise<GenerateTopicsResult> {
-  const validatedFields = TopicFormSchema.safeParse(data);
-  if (!validatedFields.success) {
-    return { success: false, error: 'Invalid input for topic generation.' };
-  }
-  const { prompt, apiKey } = validatedFields.data;
-  
-  try {
-    const topics = await generateTopics({ prompt, apiKey });
-    if (!topics) {
-      throw new Error("AI failed to generate topics.");
-    }
-    return { success: true, topics };
-  } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred.' };
-  }
-}
-
 // Schema for the final article generation submission
 const ArticleFormSchema = z.object({
-  topic: z.string().min(1, 'Please select a topic.'),
+  topic: z.string().min(1, 'Please enter a topic.'),
   category: z.string().min(1, 'Please select a category.'),
+  provider: z.enum(['openrouter', 'sambanova']),
   model: z.string().min(1, 'Please select an AI model.'),
   style: z.string().min(1, 'Please select a writing style.'),
   mood: z.string().min(1, 'Please select an article mood.'),
   wordCount: z.string().min(1, 'Please select a word count.'),
   imageCount: z.string().min(1, 'Please select the number of images.'),
-  apiKey: z.string().optional(),
+  openRouterApiKey: z.string().optional(),
+  sambaNovaApiKey: z.string().optional(),
 });
 
 type GenerateArticleResult = {
@@ -65,12 +37,26 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
     return { success: false, error: 'Invalid input data for article generation.' };
   }
   
-  const { topic, category, model, style, mood, wordCount, imageCount, apiKey } = validatedFields.data;
+  const { 
+    topic, 
+    category, 
+    provider,
+    model, 
+    style, 
+    mood, 
+    wordCount, 
+    imageCount, 
+    openRouterApiKey,
+    sambaNovaApiKey
+  } = validatedFields.data;
+  
+  const apiKey = provider === 'sambanova' ? sambaNovaApiKey : openRouterApiKey;
 
   try {
     const newArticle = await generateArticleForTopic({ 
       topic, 
       category, 
+      provider,
       model, 
       style, 
       mood, 
@@ -265,3 +251,5 @@ export async function saveUpdatedArticles(category: string, articles: Article[],
         throw new Error("Failed to save article to GitHub. Please check your credentials (token, owner, repo name) and repository permissions.");
     }
 }
+
+    

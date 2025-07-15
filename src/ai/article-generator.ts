@@ -3,9 +3,11 @@
 
 import { z } from 'zod';
 import type { Article } from '@/lib/articles';
-import { OPENROUTER_MODELS } from '@/lib/constants';
+import { OPENROUTER_MODELS, SAMBANOVA_MODELS } from '@/lib/constants';
+import { OpenAI } from 'openai';
 
-// ---- Topic Generation Schemas ----
+
+// ---- Topic Generation (Now Unused but kept for reference) ----
 const TopicSuggestionInputSchema = z.object({
   prompt: z.string().min(10, 'Prompt must be at least 10 characters long.'),
 });
@@ -58,66 +60,10 @@ const getJsonPromptStructureForArticle = (wordCount: string, style: string, mood
 `;
 
 
-interface TopicGenerationParams {
-    prompt: string;
-    apiKey?: string;
-}
-
-export async function generateTopics(params: TopicGenerationParams): Promise<string[] | null> {
-    const { prompt, apiKey } = params;
-    const api_key_to_use = apiKey || process.env.OPENROUTER_API_KEY;
-
-    if (!api_key_to_use) {
-        throw new Error("OpenRouter API key is not set.");
-    }
-    
-    // Using a reliable model for this specific, structured task
-    const model = "google/gemma-2-9b-it";
-    const TOPIC_PROMPT = `Based on the user's idea, generate an array of 5 unique, compelling, and SEO-friendly article titles. Each title must be exactly 9 words long. Respond with a JSON object: { "topics": ["topic1", "topic2", ...] }`;
-
-    try {
-        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${api_key_to_use}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                model: model,
-                messages: [
-                    { role: "system", content: TOPIC_PROMPT },
-                    { role: "user", content: `Generate topics for this idea: "${prompt}".` }
-                ],
-                response_format: { type: "json_object" },
-            })
-        });
-
-        if (!response.ok) {
-            const errorBody = await response.text();
-            console.error(`API Error with model ${model} for topic generation: ${response.status}`, errorBody);
-            throw new Error('Failed to generate topics from AI.');
-        }
-
-        const data = await response.json();
-        const jsonContent = data.choices[0].message.content;
-        const parsedResult = TopicSuggestionOutputSchema.safeParse(JSON.parse(jsonContent));
-
-        if (!parsedResult.success) {
-            console.warn(`Zod validation failed for topic generation:`, parsedResult.error.flatten());
-            throw new Error('AI generated invalid topic format.');
-        }
-
-        return parsedResult.data.topics;
-    } catch (error) {
-        console.error(`- An unexpected error occurred during topic generation. Error:`, error);
-        throw error; // Re-throw the error to be handled by the action
-    }
-}
-
-
 interface ArticleGenerationParams {
-    topic: string; // The selected topic is now the main prompt
+    topic: string;
     category: string;
+    provider: 'openrouter' | 'sambanova';
     model: string;
     style: string;
     mood: string;
@@ -126,46 +72,60 @@ interface ArticleGenerationParams {
     apiKey?: string;
 }
 
-export async function generateArticleForTopic(params: ArticleGenerationParams): Promise<Article | null> {
-    const { topic, category, style, mood, wordCount, imageCount, apiKey } = params;
-    let preferredModel = params.model;
-
+const getOpenRouterApiClient = (apiKey?: string) => {
     const api_key_to_use = apiKey || process.env.OPENROUTER_API_KEY;
-
     if (!api_key_to_use) {
-        throw new Error("OpenRouter API key is not set. Please provide one in the form or set the OPENROUTER_API_KEY environment variable on Vercel.");
+        throw new Error("OpenRouter API key is not set. Please provide one in the form or set the OPENROUTER_API_KEY environment variable.");
     }
+    return new OpenAI({
+        apiKey: api_key_to_use,
+        baseURL: "https://openrouter.ai/api/v1",
+    });
+};
+
+const getSambaNovaApiClient = (apiKey?: string) => {
+    const api_key_to_use = apiKey || process.env.SAMBANOVA_API_KEY;
+    if (!api_key_to_use) {
+        throw new Error("SambaNova API key is not set. Please provide one in the form or set the SAMBANOVA_API_KEY environment variable.");
+    }
+    return new OpenAI({
+        apiKey: api_key_to_use,
+        baseURL: "https://api.cloud.sambanova.ai/v1",
+    });
+};
+
+
+export async function generateArticleForTopic(params: ArticleGenerationParams): Promise<Article | null> {
+    const { topic, category, provider, style, mood, wordCount, imageCount, apiKey } = params;
+    let preferredModel = params.model;
     
-    const modelsToTry = [preferredModel, ...OPENROUTER_MODELS.filter(m => m !== preferredModel)];
+    const client = provider === 'sambanova' 
+        ? getSambaNovaApiClient(apiKey)
+        : getOpenRouterApiClient(apiKey);
+
+    const availableModels = provider === 'sambanova' ? SAMBANOVA_MODELS : OPENROUTER_MODELS;
+    
+    const modelsToTry = [preferredModel, ...availableModels.filter(m => m !== preferredModel)];
     const JSON_PROMPT_STRUCTURE = getJsonPromptStructureForArticle(wordCount, style, mood, imageCount);
     
     for (const model of modelsToTry) {
-        console.log(`Attempting to generate article for topic: "${topic}" in category: "${category}" using model: ${model}`);
+        console.log(`Attempting to generate article for topic: "${topic}" in category: "${category}" using ${provider} model: ${model}`);
         try {
-            const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${api_key_to_use}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    model: model,
-                    messages: [
-                        { role: "system", content: JSON_PROMPT_STRUCTURE },
-                        { role: "user", content: `Generate an article for the category "${category}" on the topic: "${topic}".` }
-                    ],
-                    response_format: { type: "json_object" },
-                })
+            const response = await client.chat.completions.create({
+                model: model,
+                messages: [
+                    { role: "system", content: JSON_PROMPT_STRUCTURE },
+                    { role: "user", content: `Generate an article for the category "${category}" on the topic: "${topic}".` }
+                ],
+                response_format: { type: "json_object" },
             });
 
-            if (!response.ok) {
-                const errorBody = await response.text();
-                console.warn(`API Error with model ${model}: ${response.status}`, errorBody);
-                continue; 
+            const jsonContent = response.choices[0].message.content;
+            
+            if (!jsonContent) {
+                console.warn(`Model ${model} returned empty content.`);
+                continue;
             }
-
-            const data = await response.json();
-            const jsonContent = data.choices[0].message.content;
 
             const rawArticle = JSON.parse(jsonContent);
             const parsedResult = ArticleOutputSchema.safeParse(rawArticle);
@@ -190,3 +150,5 @@ export async function generateArticleForTopic(params: ArticleGenerationParams): 
 
     throw new Error('All AI models failed to generate the article. Please check your API key, the complexity of the topic, or try again later.');
 }
+
+    
