@@ -59,7 +59,7 @@ export default function CreateArticlePage() {
       style: WRITING_STYLES[0].value,
       mood: ARTICLE_MOODS[0].value,
       wordCount: WORD_COUNTS[1].value, // Default to ~3000 words
-      imageCount: IMAGE_COUNTS[1].value, // Default to 5 images
+      imageCount: IMAGE_COUNTS[4].value, // Default to 5 images
       openRouterApiKey: '',
       sambaNovaApiKey: '',
     },
