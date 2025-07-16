@@ -5,10 +5,10 @@ import Link from 'next/link';
 import { BrainCircuit, Menu } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { AdminLogin } from '../vision-forge/AdminLogin';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '../ui/button';
 
 const navLinks = [
@@ -25,24 +25,49 @@ const navLinks = [
 
 const CategoryNavBar = () => {
     const pathname = usePathname();
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+    const scroll = (direction: 'left' | 'right') => {
+        if (scrollContainerRef.current) {
+            const scrollAmount = direction === 'left' ? -200 : 200;
+            scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        }
+    };
   
     return (
-      <ScrollArea className="w-full whitespace-nowrap">
-        <div className="flex items-center gap-2 py-2 px-4">
-          {navLinks.map((link) => (
-            <Button
-              key={link.href}
-              asChild
-              variant={pathname === link.href ? 'secondary' : 'outline'}
-              size="sm"
-              className="rounded-full text-sm font-medium"
+        <div className="relative group">
+             <Button
+                variant="outline"
+                size="icon"
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-background/80 hover:bg-background opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => scroll('left')}
             >
-              <Link href={link.href}>{link.label}</Link>
+                &lt;
             </Button>
-          ))}
+            <ScrollArea className="w-full whitespace-nowrap" ref={scrollContainerRef}>
+                <div className="flex items-center gap-2 py-2 px-12">
+                {navLinks.map((link) => (
+                    <Button
+                    key={link.href}
+                    asChild
+                    variant={pathname === link.href ? 'secondary' : 'default'}
+                    size="sm"
+                    className="rounded-full text-sm font-medium"
+                    >
+                    <Link href={link.href}>{link.label}</Link>
+                    </Button>
+                ))}
+                </div>
+            </ScrollArea>
+             <Button
+                variant="outline"
+                size="icon"
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-background/80 hover:bg-background opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => scroll('right')}
+            >
+                &gt;
+            </Button>
         </div>
-        <ScrollBar orientation="horizontal" className="h-0" />
-      </ScrollArea>
     );
   };
   
@@ -133,7 +158,7 @@ export function Header() {
            <MobileNav />
          </div>
        </div>
-       <div className="hidden md:block border-t">
+       <div className="border-t">
         <CategoryNavBar />
        </div>
     </header>
