@@ -2,12 +2,12 @@
 'use client';
 
 import Link from 'next/link';
-import { BrainCircuit } from 'lucide-react';
+import { BrainCircuit, Menu } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AdminLogin } from '../vision-forge/AdminLogin';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Button } from '../ui/button';
 
 const navLinks = [
@@ -27,8 +27,8 @@ const CategoryNavBar = () => {
   
     return (
         <div className="w-full bg-background border-b">
-            <ScrollArea className="w-full whitespace-nowrap no-scrollbar">
-                <nav className="flex items-center justify-start gap-2 px-4 h-14">
+            <ScrollArea className="w-full whitespace-nowrap">
+                <div className="flex w-max space-x-2 p-4 container mx-auto">
                 {navLinks.map((link) => (
                     <Button key={link.href} asChild variant={pathname === link.href ? 'secondary' : 'default'} className={cn(pathname !== link.href && "bg-white text-black hover:bg-gray-200")}>
                         <Link href={link.href}>
@@ -36,7 +36,8 @@ const CategoryNavBar = () => {
                         </Link>
                     </Button>
                 ))}
-                </nav>
+                </div>
+                <ScrollBar orientation="horizontal" className="invisible" />
             </ScrollArea>
         </div>
     );
