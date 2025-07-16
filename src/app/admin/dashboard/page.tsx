@@ -4,7 +4,7 @@ import { getUser, logout } from '@/app/admin/actions';
 import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { LayoutDashboard, PlusCircle, Edit, LogOut, FileSignature, BookImage } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, Edit, LogOut, FileSignature, BookImage, UserCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export default async function AdminDashboardPage() {
@@ -86,7 +86,7 @@ export default async function AdminDashboardPage() {
             </Card>
           </Link>
 
-          <Link href="/admin/dashboard/edit" className="block h-full col-span-1 md:col-span-2 lg:col-span-1">
+          <Link href="/admin/dashboard/edit" className="block h-full">
             <Card className="h-full flex flex-col transition-all hover:shadow-lg hover:-translate-y-1">
               <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-2xl">
@@ -99,6 +99,24 @@ export default async function AdminDashboardPage() {
               <CardContent className="mt-auto">
                 <Button variant="secondary" className="w-full">
                     Manage Content
+                </Button>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href="/admin/dashboard/author" className="block h-full">
+            <Card className="h-full flex flex-col transition-all hover:shadow-lg hover:-translate-y-1">
+              <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-2xl">
+                      <UserCircle className="text-indigo-500" /> Manage Author
+                  </CardTitle>
+                  <CardDescription>
+                      Update the author's public photo, name, title, and bio.
+                  </CardDescription>
+              </CardHeader>
+              <CardContent className="mt-auto">
+                <Button variant="secondary" className="w-full">
+                    Update Author Info
                 </Button>
               </CardContent>
             </Card>

@@ -6,11 +6,16 @@ import type { Metadata } from 'next';
 import { categorySlugMap } from '@/lib/constants';
 import { Suspense } from 'react';
 import { ArticlesSkeleton } from '@/components/vision-forge/ArticlesSkeleton';
+import { getAuthorData } from '@/app/admin/dashboard/author/actions';
 
-export const metadata: Metadata = {
-    title: 'About the Author: Kunal Sonpitre | Imagen BrainAi',
-    description: 'Learn more about Kunal Sonpitre, the AI and technical business expert behind the content on Imagen BrainAi.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+    const author = await getAuthorData();
+    return {
+        title: `About the Author: ${author.name} | Imagen BrainAi`,
+        description: `Learn more about ${author.name}, the ${author.title.toLowerCase()} behind the content on Imagen BrainAi.`,
+    };
+}
+
 
 export const dynamic = 'force-dynamic';
 
@@ -34,16 +39,17 @@ async function AllAuthorArticles() {
     return <ArticlesSection articles={allArticles} category="All Articles" />;
 }
 
-export default function AuthorPage() {
+export default async function AuthorPage() {
+    const author = await getAuthorData();
     return (
         <main className="container mx-auto py-12 px-4">
             <header className="mb-12">
-                <AuthorBio />
+                <AuthorBio author={author} />
             </header>
             
             <section>
                 <h2 className="text-3xl font-extrabold tracking-tight text-foreground mb-8">
-                    Articles by Kunal Sonpitre
+                    Articles by {author.name}
                 </h2>
                 <Suspense fallback={<ArticlesSkeleton />}>
                     <AllAuthorArticles />

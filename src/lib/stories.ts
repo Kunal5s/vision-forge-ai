@@ -22,6 +22,8 @@ export type StoryPage = z.infer<typeof StoryPageSchema>;
 const StorySchema = z.object({
   slug: z.string().min(1),
   title: z.string().min(1),
+  seoDescription: z.string().optional().default(''),
+  author: z.string().optional().default('Imagen BrainAi'),
   cover: z.string().url(),
   dataAiHint: z.string(),
   category: z.string(),
@@ -50,7 +52,12 @@ async function loadAndValidateStories(category: string): Promise<Story[]> {
         const validatedStories = StoryFileSchema.safeParse(storyData);
 
         if (validatedStories.success) {
-            return validatedStories.data;
+            return validatedStories.data.map(story => ({
+                ...story,
+                // Provide default for backward compatibility
+                seoDescription: story.seoDescription || story.pages[0]?.content?.body?.substring(0, 160) || story.title,
+                author: story.author || 'Imagen BrainAi'
+            }));
         } else {
             console.error(`Zod validation failed for stories in category "${category}".`, validatedStories.error.flatten());
             return [];
@@ -65,19 +72,24 @@ async function loadAndValidateStories(category: string): Promise<Story[]> {
 // Gets only published stories
 export async function getStories(category: string): Promise<Story[]> {
     const allStories = await loadAndValidateStories(category);
-    return allStories.filter(story => story.status === 'published');
+    // Sort by most recent first
+    return allStories
+        .filter(story => story.status === 'published')
+        .sort((a, b) => new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime());
 }
 
 // Gets all stories, including drafts (for admin)
 export async function getAllStoriesAdmin(category: string): Promise<Story[]> {
-    return loadAndValidateStories(category);
+     const allStories = await loadAndValidateStories(category);
+     return allStories.sort((a, b) => new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime());
 }
 
 // Get a single story by its slug from any category
 export async function getStoryBySlug(slug: string): Promise<Story | undefined> {
     const allCategories = Object.keys(allStoryData);
     for (const category of allCategories) {
-        const stories = await getStories(category);
+        // Search in all stories, including drafts, to allow previewing
+        const stories = await getAllStoriesAdmin(category);
         const foundStory = stories.find(story => story.slug === slug);
         if (foundStory) {
             return foundStory;

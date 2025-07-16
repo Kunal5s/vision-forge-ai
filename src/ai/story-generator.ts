@@ -19,8 +19,9 @@ export type StoryGenerationInput = z.infer<typeof StoryGenerationInputSchema>;
 
 // Schema for the output from the AI's first step (generating scenes)
 const StoryScenesOutputSchema = z.object({
-  title: z.string().describe("A compelling, short title for the overall web story."),
+  title: z.string().describe("A compelling, short title for the overall web story (around 9 words for SEO)."),
   slug: z.string().describe("A URL-friendly slug for the story title."),
+  seoDescription: z.string().max(160).describe("A concise, SEO-friendly meta description for the story (max 160 characters)."),
   scenes: z.array(z.object({
     image_prompt: z.string().describe("A detailed, vibrant prompt for an image generation AI (Pollinations.ai) to create a vertical (9:16) image for this scene. The prompt should be descriptive and artistic."),
     caption: z.string().max(150).describe("A short, engaging caption for this scene (max 150 characters)."),
@@ -47,7 +48,14 @@ async function generateStoryScenes(input: StoryGenerationInput): Promise<z.infer
     messages: [
       {
         role: "system",
-        content: `You are a brilliant storyteller and visual director. Your task is to take a topic and break it down into exactly ${input.pageCount} sequential scenes for a web story. For each scene, you must generate a highly descriptive image prompt suitable for Pollinations.ai (for a 9:16 vertical image) and a short, catchy caption. The scenes must tell a coherent, linear story. The title must be engaging and the slug must be URL-friendly. Respond with a valid JSON object.`,
+        content: `You are a brilliant storyteller and visual director specialized in creating SEO-optimized web stories. Your task is to take a topic and break it down into exactly ${input.pageCount} sequential scenes. For each scene, generate a descriptive image prompt for Pollinations.ai (for a 9:16 vertical image) and a short, catchy caption (max 150 characters).
+
+        **CRITICAL SEO INSTRUCTIONS:**
+        - The overall story **title** must be compelling and around 9 words long.
+        - The **seoDescription** must be a concise meta description, under 160 characters, summarizing the story's hook for search engines.
+        - The slug must be URL-friendly.
+        
+        The scenes must tell a coherent, linear story. Respond with a valid JSON object.`,
       },
       { role: "user", content: `Topic: "${input.topic}"` },
     ],
@@ -87,7 +95,7 @@ export async function generateAndSaveWebStory(input: StoryGenerationInput): Prom
       url: generatePollinationsImage(scene.image_prompt),
       dataAiHint: scene.image_prompt.split(' ').slice(0, 2).join(' '),
       content: {
-        title: scenesData.title, // Can be refined later
+        title: scenesData.title, 
         body: scene.caption,
       },
     }));
@@ -95,11 +103,13 @@ export async function generateAndSaveWebStory(input: StoryGenerationInput): Prom
     const newStory: Story = {
       slug: scenesData.slug,
       title: scenesData.title,
-      cover: pages[0].url, // Use the first page as the cover
+      seoDescription: scenesData.seoDescription,
+      author: "Kunal Sonpitre", // Hardcoded for now
+      cover: pages[0].url, 
       dataAiHint: pages[0].dataAiHint,
       category: input.category,
       publishedDate: new Date().toISOString(),
-      status: 'published', // Publish stories immediately
+      status: 'published',
       pages: pages,
     };
 

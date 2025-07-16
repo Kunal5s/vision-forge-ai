@@ -15,15 +15,15 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     };
   }
 
-  const description = story.pages[0]?.content?.body || `A web story about ${story.title}.`;
-
   return {
-    title: `${story.title} | Web Story`,
-    description: description.substring(0, 160),
+    title: story.title,
+    description: story.seoDescription,
     openGraph: {
       title: story.title,
-      description: description,
+      description: story.seoDescription,
       type: 'article',
+      publishedTime: story.publishedDate,
+      authors: [story.author],
       images: [
         {
           url: story.cover,
@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     twitter: {
       card: 'summary_large_image',
       title: story.title,
-      description: description,
+      description: story.seoDescription,
       images: [story.cover],
     },
   };
@@ -44,18 +44,14 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
 // This function generates the static paths for all stories at build time.
 export async function generateStaticParams() {
-    // For now, as stories are dynamic, we can return an empty array
-    // and rely on on-demand rendering. In the future, we can fetch all stories.
-    // Example:
-    // const stories = await getStories('featured'); // Assuming one category for now
-    // return stories.map((story) => ({
-    //   slug: story.slug,
-    // }));
-    return [];
+    const stories = await getStories('featured'); // Assuming one category for now
+    return stories.map((story) => ({
+      slug: story.slug,
+    }));
 }
 
 
-export default async function StoryPage({ params }: { params: { slug: string } }) {
+export default async function StoryPage({ params }: { params: { slug:string } }) {
   const story = await getStoryBySlug(params.slug);
 
   if (!story) {
