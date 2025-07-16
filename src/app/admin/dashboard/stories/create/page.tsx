@@ -25,9 +25,8 @@ import { categorySlugMap } from '@/lib/constants';
 
 const StoryFormSchema = z.object({
   topic: z.string().min(3, "Topic must be at least 3 characters long."),
-  pageCount: z.string().refine(val => !isNaN(parseInt(val)), { message: "Page count must be a number." })
-    .transform(val => parseInt(val, 10))
-    .refine(val => val >= 5 && val <= 20, { message: "Story must have between 5 and 20 pages." }),
+  pageCount: z.string() // The value from the Select is a string, so we validate as a string
+    .refine(val => !isNaN(parseInt(val)), { message: "Page count must be a number." }),
   category: z.string().min(1, "Please select a category."),
   openRouterApiKey: z.string().optional(),
 });
@@ -42,7 +41,7 @@ export default function CreateWebStoryPage() {
         resolver: zodResolver(StoryFormSchema),
         defaultValues: {
             topic: '',
-            pageCount: 10,
+            pageCount: '10', // Default to a string value
             category: 'Featured', // Default to a valid category name
             openRouterApiKey: '',
         },
@@ -128,8 +127,8 @@ export default function CreateWebStoryPage() {
                                     <div className="space-y-1">
                                         <Label>Number of Pages</Label>
                                         <Select 
-                                            onValueChange={(value) => field.onChange(parseInt(value))} 
-                                            defaultValue={String(field.value)} 
+                                            onValueChange={field.onChange} 
+                                            defaultValue={field.value} 
                                             disabled={isLoading}
                                         >
                                             <SelectTrigger><SelectValue /></SelectTrigger>
