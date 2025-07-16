@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { BrainCircuit } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { SubscriptionManager } from '../vision-forge/SubscriptionManager';
 import React, { useEffect, useState } from 'react';
 import { AdminLogin } from '../vision-forge/AdminLogin';
 
@@ -44,7 +43,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex flex-col px-4">
-        {/* Top Row: Logo and Subscription Manager */}
+        {/* Top Row: Logo and Admin Login */}
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex flex-shrink-0 items-center gap-2">
             <BrainCircuit className="h-7 w-7 text-foreground" />
@@ -54,7 +53,6 @@ export function Header() {
           </Link>
           <div className="flex items-center gap-4">
             <AdminLogin />
-            <SubscriptionManager />
           </div>
         </div>
         

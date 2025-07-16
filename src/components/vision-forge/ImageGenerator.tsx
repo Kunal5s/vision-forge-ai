@@ -29,6 +29,7 @@ import { FuturisticPanel } from './FuturisticPanel';
 import { Wand2, Sparkles, XCircle } from 'lucide-react';
 import { useSubscription } from '@/hooks/use-subscription';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { SubscriptionManager } from './SubscriptionManager';
 
 
 const formSchema = z.object({
@@ -195,6 +196,9 @@ export function ImageGenerator() {
         <div className="lg:col-span-5 space-y-6">
           <FuturisticPanel>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <div className="flex justify-end">
+                <SubscriptionManager />
+              </div>
               <div>
                   <Label htmlFor="prompt" className="text-lg font-semibold text-foreground/90">
                     Enter your prompt
