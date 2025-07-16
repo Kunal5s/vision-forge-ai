@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import React, { useEffect, useState } from 'react';
 import { AdminLogin } from '../vision-forge/AdminLogin';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Button } from '../ui/button';
 
 const navLinks = [
@@ -37,6 +37,9 @@ const MobileNav = () => {
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-full max-w-xs p-0">
+        <SheetHeader className="p-6 pb-0">
+          <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+        </SheetHeader>
         <ScrollArea className="h-full">
             <div className="p-6">
                 <Link href="/" className="flex items-center gap-2 mb-6">
