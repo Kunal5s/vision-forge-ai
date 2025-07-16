@@ -61,20 +61,43 @@ interface ArticleGenerationParams {
     huggingFaceApiKey?: string;
 }
 
+// This function is now responsible for correctly initializing the OpenAI client
+// based on the provider's specific authentication requirements.
 async function makeApiCall(
+    provider: 'openrouter' | 'sambanova' | 'huggingface',
     baseURL: string,
     apiKey: string,
     model: string,
     promptStructure: string,
     topic: string,
-    category: string,
-    extraHeaders?: Record<string, string>
+    category: string
 ): Promise<Article | null> {
-    const client = new OpenAI({
-        baseURL,
-        apiKey,
-        defaultHeaders: extraHeaders,
-    });
+    
+    let client: OpenAI;
+
+    if (provider === 'huggingface') {
+        // Hugging Face requires a Bearer token in the Authorization header.
+        // The apiKey parameter in the OpenAI constructor is not used for auth here.
+        client = new OpenAI({
+            baseURL,
+            apiKey: 'huggingface', // This can be any non-empty string, it's ignored.
+            defaultHeaders: {
+                "Authorization": `Bearer ${apiKey}`
+            },
+        });
+    } else {
+        // OpenRouter and SambaNova use the apiKey parameter for authentication.
+        // For OpenRouter, we also add custom headers for tracking.
+        const defaultHeaders = provider === 'openrouter' 
+            ? { "HTTP-Referer": "https://imagenbrain.ai", "X-Title": "Imagen BrainAi" }
+            : undefined;
+
+        client = new OpenAI({
+            baseURL,
+            apiKey,
+            defaultHeaders,
+        });
+    }
     
     console.log(`Attempting to generate with model: ${model} via ${baseURL}`);
     const response = await client.chat.completions.create({
@@ -107,22 +130,19 @@ export async function generateArticleForTopic(params: ArticleGenerationParams): 
     let baseURL: string;
     let apiKey: string;
     let availableModels: string[];
-    let extraHeaders: Record<string, string> | undefined;
 
     const JSON_PROMPT_STRUCTURE = getJsonPromptStructureForArticle(wordCount, style, mood, imageCount);
 
     switch (provider) {
         case 'huggingface':
-            baseURL = "https://api-inference.huggingface.co/v1";
+            baseURL = "https://api-inference.huggingface.co/v1/chat";
             apiKey = params.huggingFaceApiKey || process.env.HUGGINGFACE_API_KEY!;
             availableModels = ["google/gemma-2-9b-it"];
-            extraHeaders = { "Authorization": `Bearer ${apiKey}` };
             break;
         case 'openrouter':
             baseURL = "https://openrouter.ai/api/v1";
             apiKey = params.openRouterApiKey || process.env.OPENROUTER_API_KEY!;
             availableModels = OPENROUTER_MODELS;
-            extraHeaders = { "HTTP-Referer": "https://imagenbrain.ai", "X-Title": "Imagen BrainAi" };
             break;
         case 'sambanova':
             baseURL = "https://api.cloud.sambanova.ai/v1";
@@ -140,7 +160,7 @@ export async function generateArticleForTopic(params: ArticleGenerationParams): 
     for (const currentModel of modelsToTry) {
         try {
             console.log(`Attempting to generate article for topic: "${topic}" with provider: ${provider} and model: ${currentModel}`);
-            const article = await makeApiCall(baseURL, apiKey, currentModel, JSON_PROMPT_STRUCTURE, topic, category, extraHeaders);
+            const article = await makeApiCall(provider, baseURL, apiKey, currentModel, JSON_PROMPT_STRUCTURE, topic, category);
             
             if (article) {
                 console.log(`- Successfully generated and validated article: "${article.title}" with provider: ${provider}, model: ${currentModel}`);
@@ -152,7 +172,12 @@ export async function generateArticleForTopic(params: ArticleGenerationParams): 
         } catch (error: any) {
             console.error(`- An unexpected error occurred with provider ${provider} and model ${currentModel}. Error Message:`, error.message);
             if (error.response) {
-                console.error('Error Response:', await error.response.text());
+                 try {
+                    const errorBody = await error.response.json();
+                    console.error('Error Response Body:', JSON.stringify(errorBody, null, 2));
+                 } catch (e) {
+                    console.error('Error Response (not JSON):', await error.response.text());
+                 }
             }
         }
     }
