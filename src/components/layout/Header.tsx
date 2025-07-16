@@ -59,7 +59,6 @@ const MobileNav = () => {
                               : "text-muted-foreground hover:bg-muted hover:text-foreground"
                           )}
                       >
-                           {link.icon && <link.icon className="h-4 w-4" />}
                           {link.label}
                       </Link>
                      </SheetClose>
@@ -81,10 +80,12 @@ export function Header({ isAdminPage }: { isAdminPage: boolean }) {
     setIsClient(true);
   }, []);
 
+  const headerHeightClass = isHomePage ? 'h-24' : 'h-14';
+
   if (!isClient) {
     return (
-       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto h-24" />
+       <header className={cn("sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60", headerHeightClass)}>
+        <div className="container mx-auto h-full" />
       </header>
     );
   }
@@ -125,7 +126,6 @@ export function Header({ isAdminPage }: { isAdminPage: boolean }) {
                           : "text-foreground/70 hover:bg-muted hover:text-foreground"
                       )}
                       >
-                      {link.icon && <link.icon className="h-4 w-4" />}
                       {link.label}
                       </Link>
                   ))}
@@ -138,7 +138,7 @@ export function Header({ isAdminPage }: { isAdminPage: boolean }) {
   );
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className={cn("sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60", headerHeightClass)}>
       {mainHeaderContent}
     </header>
   );
