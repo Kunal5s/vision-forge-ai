@@ -2,13 +2,12 @@
 'use client';
 
 import Link from 'next/link';
-import { BrainCircuit, Menu } from 'lucide-react';
+import { BrainCircuit } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import React, { useEffect, useState } from 'react';
 import { AdminLogin } from '../vision-forge/AdminLogin';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Button } from '../ui/button';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 const navLinks = [
   { href: '/prompts', label: 'Prompts' },
@@ -28,21 +27,24 @@ const CategoryNavBar = () => {
     return (
         <div className="w-full bg-background border-b">
             <ScrollArea className="w-full whitespace-nowrap">
-                <nav className="container mx-auto flex items-center gap-2 p-2 h-14">
-                {navLinks.map((link) => (
-                    <Link
-                        key={link.href}
-                        href={link.href}
-                        className={cn(
-                            'inline-block rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-                            'border border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground',
-                            pathname === link.href ? 'bg-secondary font-semibold' : ''
-                        )}
-                        >
-                        {link.label}
-                    </Link>
-                ))}
+                <nav className="h-14 flex items-center p-2 container mx-auto px-4">
+                    <div className="flex items-center gap-2">
+                        {navLinks.map((link) => (
+                            <Link
+                                key={link.href}
+                                href={link.href}
+                                className={cn(
+                                    'inline-block rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                                    'border border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground',
+                                    pathname === link.href ? 'bg-secondary font-semibold' : ''
+                                )}
+                                >
+                                {link.label}
+                            </Link>
+                        ))}
+                    </div>
                 </nav>
+                <ScrollBar orientation="horizontal" className="h-2 opacity-0" />
             </ScrollArea>
         </div>
     );
