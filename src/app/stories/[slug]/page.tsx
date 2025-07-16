@@ -1,5 +1,5 @@
 
-import { getStoryBySlug, getStories } from '@/lib/stories';
+import { getStoryBySlug } from '@/lib/stories';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { StoryPlayer } from '@/components/vision-forge/StoryPlayer';
@@ -41,15 +41,6 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     },
   };
 }
-
-// This function generates the static paths for all stories at build time.
-export async function generateStaticParams() {
-    const stories = await getStories('featured'); // Assuming one category for now
-    return stories.map((story) => ({
-      slug: story.slug,
-    }));
-}
-
 
 export default async function StoryPage({ params }: { params: { slug:string } }) {
   const story = await getStoryBySlug(params.slug);
