@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import React, { useEffect, useState } from 'react';
 import { AdminLogin } from '../vision-forge/AdminLogin';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '../ui/button';
 import { SubscriptionManager } from '../vision-forge/SubscriptionManager';
 
@@ -66,6 +66,9 @@ export function Header() {
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-[280px] p-4">
+                    <SheetHeader>
+                        <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                    </SheetHeader>
                     <nav className="flex flex-col space-y-2 mt-8">
                         {navLinks.map((link) => (
                            <SheetClose asChild key={link.href}>
