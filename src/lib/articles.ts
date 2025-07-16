@@ -4,7 +4,8 @@
 import { z } from 'zod';
 import { categorySlugMap } from './constants';
 
-// Direct imports to ensure files are bundled.
+// Direct imports to ensure files are bundled during the build process.
+// This is the most reliable way to access local JSON data in Next.js across all environments.
 import featuredArticles from '@/articles/featured.json';
 import inspirationArticles from '@/articles/inspiration.json';
 import nftArticles from '@/articles/nft.json';
@@ -30,6 +31,8 @@ const ArticleSchema = z.object({
   category: z.string(),
   title: z.string().min(1),
   slug: z.string().min(1),
+  // Defaulting the status to 'published' ensures that even if the field
+  // is missing from the JSON, the article will be treated as published.
   status: z.enum(['published', 'draft']).default('published'),
   publishedDate: z.string().datetime(),
   summary: z.string().optional(),
@@ -41,7 +44,7 @@ export type Article = z.infer<typeof ArticleSchema>;
 
 const ArticleFileSchema = z.array(ArticleSchema);
 
-// A map to hold all imported article data.
+// A map to hold all imported article data, connecting slug to the imported JSON.
 const allCategoryData: { [key: string]: any } = {
     'featured': featuredArticles,
     'inspiration': inspirationArticles,
@@ -55,8 +58,8 @@ const allCategoryData: { [key: string]: any } = {
     'usecases': usecasesArticles
 };
 
-
 async function loadAndValidateArticles(category: string): Promise<Article[]> {
+    // Find the corresponding slug for the given category name.
     const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category);
     
     if (!categorySlug) {
@@ -64,6 +67,7 @@ async function loadAndValidateArticles(category: string): Promise<Article[]> {
         return [];
     }
 
+    // Retrieve the imported JSON data from our map.
     const articlesData = allCategoryData[categorySlug];
 
     if (!articlesData) {
@@ -72,6 +76,7 @@ async function loadAndValidateArticles(category: string): Promise<Article[]> {
     }
     
     try {
+        // Validate the data against our Zod schema.
         const validatedArticles = ArticleFileSchema.safeParse(articlesData);
 
         if (validatedArticles.success) {
@@ -88,12 +93,13 @@ async function loadAndValidateArticles(category: string): Promise<Article[]> {
 }
 
 // For public-facing pages: gets ONLY published articles.
+// This now correctly defaults status to 'published' if it's missing.
 export async function getArticles(category: string): Promise<Article[]> {
     const allArticles = await loadAndValidateArticles(category);
     return allArticles.filter(article => article.status === 'published');
 }
 
-// For admin pages: gets ALL articles, including drafts
+// For admin pages: gets ALL articles, including drafts.
 export async function getAllArticlesAdmin(category: string): Promise<Article[]> {
     const allArticles = await loadAndValidateArticles(category);
     return allArticles;
