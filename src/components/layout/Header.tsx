@@ -7,7 +7,6 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import React, { useEffect, useState } from 'react';
 import { AdminLogin } from '../vision-forge/AdminLogin';
-import { SubscriptionManager } from '../vision-forge/SubscriptionManager';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 const navLinks = [
@@ -51,7 +50,6 @@ export function Header() {
         
         {/* Desktop Buttons */}
         <div className="flex items-center gap-2">
-            <SubscriptionManager />
             <AdminLogin />
         </div>
       </div>
