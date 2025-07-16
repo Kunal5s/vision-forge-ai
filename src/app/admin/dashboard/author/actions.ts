@@ -12,22 +12,47 @@ import { getPrimaryBranch, getShaForFile } from '../create/actions'; // Reuse he
 const authorFilePath = path.join(process.cwd(), 'src/lib/author.json');
 const authorRepoPath = 'src/lib/author.json'; // Path in the repository
 
-// Action to get the current author data
+// Action to get the current author data by fetching it directly from GitHub
 export async function getAuthorData(): Promise<AuthorData> {
+    const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = process.env;
+    const defaultData: AuthorData = {
+        name: 'Kunal Sonpitre',
+        title: 'AI & Business Technical Expert',
+        photoUrl: 'https://placehold.co/100x100.png',
+        bio: 'Kunal is an expert in leveraging artificial intelligence to solve complex business challenges. His work focuses on making advanced technology accessible and practical for creators and businesses alike.',
+    };
+
+    if (!GITHUB_TOKEN || !GITHUB_REPO_OWNER || !GITHUB_REPO_NAME) {
+        console.warn("GitHub credentials are not configured on the server. Returning default author data.");
+        return defaultData;
+    }
+
     try {
-        // For reading, local file is fine as it's part of the build
-        const fileContents = await fs.readFile(authorFilePath, 'utf-8');
-        const data = JSON.parse(fileContents);
-        return AuthorSchema.parse(data);
-    } catch (error) {
-        // If the file doesn't exist or is invalid, return default data
-        console.warn("Could not read author.json, returning default data.", error);
-        return {
-            name: 'Kunal Sonpitre',
-            title: 'AI & Business Technical Expert',
-            photoUrl: 'https://placehold.co/100x100.png',
-            bio: 'Kunal is an expert in leveraging artificial intelligence to solve complex business challenges. His work focuses on making advanced technology accessible and practical for creators and businesses alike.',
-        };
+        const octokit = new Octokit({ auth: GITHUB_TOKEN });
+        const branch = await getPrimaryBranch(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME);
+        
+        const { data } = await octokit.rest.repos.getContent({
+            owner: GITHUB_REPO_OWNER,
+            repo: GITHUB_REPO_NAME,
+            path: authorRepoPath,
+            ref: branch,
+        });
+
+        if ('content' in data) {
+            const fileContent = Buffer.from(data.content, 'base64').toString('utf-8');
+            const jsonData = JSON.parse(fileContent);
+            return AuthorSchema.parse(jsonData);
+        } else {
+             throw new Error('author.json is not a file.');
+        }
+
+    } catch (error: any) {
+        if (error.status === 404) {
+             console.warn("author.json not found in the repository. Returning default data.");
+        } else {
+            console.error('Failed to fetch author data from GitHub:', error);
+        }
+        return defaultData;
     }
 }
 
@@ -68,6 +93,8 @@ export async function saveAuthorData(data: unknown): Promise<{ success: boolean;
         // Revalidate paths that use author data
         revalidatePath('/author/kunal-sonpitre');
         revalidatePath('/[category]/[slug]');
+        revalidatePath('/admin/dashboard/author');
+
 
         return { success: true };
 
