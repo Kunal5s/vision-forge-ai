@@ -34,11 +34,11 @@ const ArticleSchema = z.object({
   // Defaulting the status to 'published' ensures that even if the field
   // is missing from the JSON, the article will be treated as published.
   status: z.enum(['published', 'draft']).default('published'),
-  publishedDate: z.string().datetime(),
+  publishedDate: z.string().datetime().optional(), // Make optional to handle older articles
   summary: z.string().optional(),
   articleContent: z.array(ArticleContentBlockSchema),
-  keyTakeaways: z.array(z.string()),
-  conclusion: z.string().min(1),
+  keyTakeaways: z.array(z.string()).optional(),
+  conclusion: z.string().min(1).optional(),
 });
 export type Article = z.infer<typeof ArticleSchema>;
 
@@ -63,15 +63,15 @@ async function loadAndValidateArticles(category: string): Promise<Article[]> {
     const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category);
     
     if (!categorySlug) {
-        console.log(`No slug found for category "${category}"`);
+        console.error(`No slug found for category "${category}"`);
         return [];
     }
 
-    // Retrieve the imported JSON data from our map.
+    // Retrieve the imported JSON data from our map using the correct slug.
     const articlesData = allCategoryData[categorySlug];
 
     if (!articlesData) {
-        console.log(`No article data found for category slug "${categorySlug}"`);
+        console.error(`No article data found for category slug "${categorySlug}"`);
         return [];
     }
     
@@ -80,7 +80,11 @@ async function loadAndValidateArticles(category: string): Promise<Article[]> {
         const validatedArticles = ArticleFileSchema.safeParse(articlesData);
 
         if (validatedArticles.success) {
-            return validatedArticles.data;
+            // Add a default publishedDate if it's missing
+            return validatedArticles.data.map(article => ({
+                ...article,
+                publishedDate: article.publishedDate || new Date().toISOString()
+            }));
         } else {
             console.error(`Zod validation failed for category "${category}".`, validatedArticles.error.flatten());
             return [];
