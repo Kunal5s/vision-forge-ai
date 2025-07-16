@@ -133,7 +133,7 @@ export default function ImageEditorPage() {
     <main className="container mx-auto py-8 px-4">
       <header className="text-center mb-10">
         <h1 className="text-5xl font-extrabold tracking-tight text-primary">
-          Image <span className="text-accent">Editor</span>
+          Image <span className="text-foreground">Editor</span>
         </h1>
         <p className="mt-2 text-lg text-foreground/80">Refine your visuals. (Basic filters enabled, more features coming soon!)</p>
       </header>
