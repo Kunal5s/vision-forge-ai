@@ -1,54 +1,16 @@
+// src/app/sitemap.xml/route.ts
 
-// This file generates the sitemap.xml for the website.
-// It includes static routes and dynamic category routes.
-// For production, ensure the `URL` constant is updated to your website's domain.
-import { categorySlugMap } from '@/lib/constants';
+// This file is now intentionally left blank.
+// The sitemap generation logic has been moved to `next.config.ts`
+// to generate a static sitemap.xml during the build process.
+// This resolves the Vercel multi-region deployment error on the free plan.
+// The presence of a route.ts file in this directory was causing Vercel
+// to attempt deployment on the Edge runtime.
 
-const URL = 'https://your-production-domain.com';
+// By keeping this file but making it empty, we ensure no dynamic route is created.
+// The actual sitemap will be generated and placed in the /public directory.
 
-export async function GET() {
-    const staticRoutes = [
-        '',
-        '/about',
-        '/contact',
-        '/pricing',
-        '/edit',
-        '/terms',
-        '/privacy',
-        '/disclaimer',
-        '/blog',
-    ].map((route) => ({
-        url: `${URL}${route}`,
-        lastModified: new Date().toISOString(),
-    }));
-
-    // Dynamically get categories from the constant map
-    const categoryRoutes = Object.keys(categorySlugMap).map((slug) => ({
-        url: `${URL}/${slug}`,
-        lastModified: new Date().toISOString(),
-    }));
-
-    const routes = [...staticRoutes, ...categoryRoutes];
-
-    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  ${routes
-    .map(
-      ({ url, lastModified }) => `
-  <url>
-    <loc>${url}</loc>
-    <lastmod>${lastModified}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-`
-    )
-    .join('')}
-</urlset>`;
-    
-    return new Response(sitemap, {
-        headers: {
-            'Content-Type': 'application/xml',
-        },
-    });
-}
+// Note: An alternative would be to delete this file and its folder, but
+// leaving this explanatory note can prevent future confusion.
+// For the purpose of this fix, the key is that this file does not export
+// a GET handler or set a runtime.
