@@ -279,8 +279,12 @@ export async function humanizeTextAction(text: string): Promise<{ success: boole
   }
 
   const client = new OpenAI({
-    apiKey: apiKey,
     baseURL: "https://openrouter.ai/api/v1",
+    apiKey: apiKey,
+    defaultHeaders: {
+        "HTTP-Referer": "https://imagenbrain.ai",
+        "X-Title": "Imagen BrainAi",
+    },
   });
 
   try {
@@ -295,10 +299,6 @@ export async function humanizeTextAction(text: string): Promise<{ success: boole
       ],
       temperature: 0.7,
       top_p: 1,
-      extra_headers: {
-        "HTTP-Referer": "https://imagenbrain.ai",
-        "X-Title": "Imagen BrainAi",
-      },
     });
 
     const humanizedText = response.choices[0].message.content;
