@@ -4,10 +4,8 @@
 import { z } from 'zod';
 import OpenAI from 'openai';
 import type { Story, StoryPage } from '@/lib/stories';
-import { categorySlugMap } from '@/lib/constants';
 import { saveNewStory } from '@/app/admin/dashboard/stories/create/actions';
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 
 // Schema for the input when generating a story
 const StoryGenerationInputSchema = z.object({
@@ -104,7 +102,9 @@ export async function generateAndSaveWebStory(input: StoryGenerationInput): Prom
     await saveNewStory(newStory);
 
     // Revalidate relevant paths
-    revalidatePath('/admin/dashboard/stories/edit');
+    revalidatePath('/admin/dashboard/stories/edit'); // A page that doesn't exist yet, but good for future
+    revalidatePath('/stories'); // Future index page
+    revalidatePath(`/stories/${newStory.slug}`); // Future story page
 
     return { success: true, slug: newStory.slug };
 

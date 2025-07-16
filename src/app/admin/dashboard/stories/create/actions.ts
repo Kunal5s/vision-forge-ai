@@ -2,10 +2,51 @@
 'use server';
 
 import type { Story } from '@/lib/stories';
-import { getAllStoriesAdmin } from '@/lib/stories'; // Assuming this exists
+import { getAllStoriesAdmin } from '@/lib/stories';
 import { Octokit } from 'octokit';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { generateAndSaveWebStory, StoryGenerationInput } from '@/ai/story-generator';
+import { z } from 'zod';
+
+// This is the Zod schema for the form on the frontend
+const StoryFormSchema = z.object({
+  topic: z.string().min(3, "Topic must be at least 3 characters long."),
+  pageCount: z.string().refine(val => !isNaN(parseInt(val)), { message: "Page count must be a number." })
+    .transform(val => parseInt(val, 10))
+    .refine(val => val >= 5 && val <= 20, { message: "Story must have between 5 and 20 pages." }),
+  category: z.string().min(1, "Please select a category."),
+});
+
+
+export async function generateStoryAction(data: unknown): Promise<{ success: boolean; error?: string; slug?: string }> {
+    const validatedFields = StoryFormSchema.safeParse(data);
+
+    if (!validatedFields.success) {
+      console.error("Validation Errors:", validatedFields.error.flatten());
+      const firstError = validatedFields.error.flatten().fieldErrors;
+      const errorMsg = Object.values(firstError)[0]?.[0] || 'Invalid input data.';
+      return { success: false, error: errorMsg };
+    }
+
+    try {
+        const result = await generateAndSaveWebStory(validatedFields.data);
+
+        if (!result.success) {
+            throw new Error(result.error || 'AI failed to generate the web story.');
+        }
+
+        // On success, redirect to the story management page or a success page.
+        // For now, let's redirect to the main stories dashboard.
+        revalidatePath('/admin/dashboard');
+        redirect(`/admin/dashboard/`); // Redirect to a future edit page would be ideal
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred during story generation.';
+        return { success: false, error: errorMessage };
+    }
+}
+
 
 async function getShaForFile(octokit: Octokit, owner: string, repo: string, path: string, branch: string): Promise<string | undefined> {
     try {
@@ -56,8 +97,6 @@ export async function saveNewStory(newStory: Story) {
         throw new Error("GitHub credentials not configured. Please check Vercel environment variables.");
     }
     
-    // For now, let's assume all stories go into a single category file.
-    // This can be expanded later.
     const category = newStory.category.toLowerCase();
     const repoPath = `src/stories/${category}.json`;
 
@@ -65,8 +104,14 @@ export async function saveNewStory(newStory: Story) {
         const octokit = new Octokit({ auth: GITHUB_TOKEN });
         const branch = await getPrimaryBranch(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME);
         
-        // Get existing stories to append the new one
-        const existingStories = await getAllStoriesAdmin(category);
+        let existingStories: Story[] = [];
+        try {
+            existingStories = await getAllStoriesAdmin(category);
+        } catch(e) {
+            // File might not exist, which is fine.
+            console.log(`No existing stories found for category ${category}, creating new file.`);
+        }
+
         const updatedStories = [newStory, ...existingStories];
         const fileContent = JSON.stringify(updatedStories, null, 2);
 
