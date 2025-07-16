@@ -115,7 +115,8 @@ export async function generateArticleForTopic(params: ArticleGenerationParams): 
         case 'huggingface':
             baseURL = "https://api-inference.huggingface.co/v1";
             apiKey = params.huggingFaceApiKey || process.env.HUGGINGFACE_API_KEY!;
-            availableModels = ["google/gemma-2-9b-it"]; // Use a reliable model
+            availableModels = ["google/gemma-2-9b-it"];
+            extraHeaders = { "Authorization": `Bearer ${apiKey}` };
             break;
         case 'openrouter':
             baseURL = "https://openrouter.ai/api/v1";
