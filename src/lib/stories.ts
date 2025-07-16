@@ -42,7 +42,7 @@ async function loadAndValidateStories(category: string): Promise<Story[]> {
     const storyData = allStoryData[category.toLowerCase()];
 
     if (!storyData) {
-        console.error(`No story data found for category "${category}"`);
+        console.warn(`No story data found for category "${category}"`);
         return [];
     }
     
