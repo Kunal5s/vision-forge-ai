@@ -1,3 +1,4 @@
+
 // src/components/layout/Header.tsx
 "use client";
 
@@ -10,7 +11,6 @@ import { AdminLogin } from '../vision-forge/AdminLogin';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '../ui/button';
-import { SubscriptionManager } from '../vision-forge/SubscriptionManager';
 
 const navLinks = [
   { href: '/prompts', label: 'Prompts' },
@@ -24,7 +24,7 @@ const navLinks = [
   { href: '/nft', label: 'NFT' },
 ];
 
-export function Header() {
+export function Header({ isAdminPage }: { isAdminPage: boolean }) {
   const pathname = usePathname();
   const [isClient, setIsClient] = useState(false);
   
@@ -94,27 +94,29 @@ export function Header() {
         </div>
 
       </div>
-      <div className="container mx-auto hidden h-10 items-center px-4 md:flex">
-         <ScrollArea className="w-full whitespace-nowrap">
-            <nav className="flex items-center space-x-1">
-                {navLinks.map((link) => (
-                    <Link
-                    key={link.href}
-                    href={link.href}
-                    className={cn(
-                        "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-                        pathname === link.href 
-                        ? "bg-foreground text-background" 
-                        : "text-foreground/70 hover:bg-muted hover:text-foreground"
-                    )}
-                    >
-                    {link.label}
-                    </Link>
-                ))}
-            </nav>
-            <ScrollBar orientation="horizontal" className="h-0" />
-        </ScrollArea>
-      </div>
+      {!isAdminPage && (
+        <div className="container mx-auto hidden h-10 items-center px-4 md:flex">
+          <ScrollArea className="w-full whitespace-nowrap">
+              <nav className="flex items-center space-x-1">
+                  {navLinks.map((link) => (
+                      <Link
+                      key={link.href}
+                      href={link.href}
+                      className={cn(
+                          "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                          pathname === link.href 
+                          ? "bg-foreground text-background" 
+                          : "text-foreground/70 hover:bg-muted hover:text-foreground"
+                      )}
+                      >
+                      {link.label}
+                      </Link>
+                  ))}
+              </nav>
+              <ScrollBar orientation="horizontal" className="h-0" />
+          </ScrollArea>
+        </div>
+      )}
     </>
   );
 
