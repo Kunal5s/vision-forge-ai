@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import React, { useEffect, useState } from 'react';
 import { AdminLogin } from '../vision-forge/AdminLogin';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '../ui/button';
 
 const navLinks = [
@@ -28,20 +28,26 @@ const CategoryNavBar = () => {
     return (
         <div className="w-full bg-background border-b">
             <ScrollArea className="w-full whitespace-nowrap">
-                <div className="flex w-max space-x-2 p-4 container mx-auto">
+                <nav className="container mx-auto flex items-center gap-2 p-2 h-14">
                 {navLinks.map((link) => (
-                    <Button key={link.href} asChild variant={pathname === link.href ? 'secondary' : 'default'} className={cn(pathname !== link.href && "bg-white text-black hover:bg-gray-200")}>
-                        <Link href={link.href}>
-                            {link.label}
-                        </Link>
-                    </Button>
+                    <Link
+                        key={link.href}
+                        href={link.href}
+                        className={cn(
+                            'inline-block rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                            'border border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground',
+                            pathname === link.href ? 'bg-secondary font-semibold' : ''
+                        )}
+                        >
+                        {link.label}
+                    </Link>
                 ))}
-                </div>
-                <ScrollBar orientation="horizontal" className="invisible" />
+                </nav>
             </ScrollArea>
         </div>
     );
 };
+
 
 export function Header() {
   const [isClient, setIsClient] = useState(false);
