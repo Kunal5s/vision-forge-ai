@@ -3,7 +3,7 @@
 "use client";
 
 import Link from 'next/link';
-import { BrainCircuit, Menu, X } from 'lucide-react';
+import { BrainCircuit, Menu, X, BookImage } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import React, { useEffect, useState } from 'react';
@@ -13,6 +13,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/s
 import { Button } from '../ui/button';
 
 const navLinks = [
+  { href: '/stories', label: 'Web Stories', icon: BookImage },
   { href: '/prompts', label: 'Prompts' },
   { href: '/styles',label: 'Styles' },
   { href: '/tutorials', label: 'Tutorials' },
@@ -50,12 +51,13 @@ const MobileNav = ({ isAdminPage }: { isAdminPage: boolean }) => {
                       <Link
                           href={link.href}
                           className={cn(
-                          "block rounded-md px-3 py-2 text-base font-medium transition-colors",
+                          "flex items-center gap-2 rounded-md px-3 py-2 text-base font-medium transition-colors",
                           usePathname() === link.href
                               ? "bg-primary text-primary-foreground"
                               : "text-muted-foreground hover:bg-muted hover:text-foreground"
                           )}
                       >
+                           {link.icon && <link.icon className="h-4 w-4" />}
                           {link.label}
                       </Link>
                      </SheetClose>
@@ -114,12 +116,14 @@ export function Header({ isAdminPage }: { isAdminPage: boolean }) {
                       key={link.href}
                       href={link.href}
                       className={cn(
-                          "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                          "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
                           pathname === link.href 
                           ? "bg-foreground text-background" 
-                          : "text-foreground/70 hover:bg-muted hover:text-foreground"
+                          : "text-foreground/70 hover:bg-muted hover:text-foreground",
+                          link.icon && "text-orange-500 hover:text-orange-600"
                       )}
                       >
+                      {link.icon && <link.icon className="h-4 w-4" />}
                       {link.label}
                       </Link>
                   ))}

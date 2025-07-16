@@ -21,6 +21,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
 import { generateStoryAction } from './actions';
+import { categorySlugMap } from '@/lib/constants';
 
 const StoryFormSchema = z.object({
   topic: z.string().min(3, "Topic must be at least 3 characters long."),
@@ -42,7 +43,7 @@ export default function CreateWebStoryPage() {
         defaultValues: {
             topic: '',
             pageCount: 10,
-            category: 'featured',
+            category: 'Featured', // Default to a valid category name
             openRouterApiKey: '',
         },
     });
@@ -68,7 +69,6 @@ export default function CreateWebStoryPage() {
 
         const result = await generateStoryAction(data);
 
-        // Redirect on success is handled by the server action
         if (result && !result.success) {
             toast({
                 title: 'Error Generating Story',
@@ -76,8 +76,15 @@ export default function CreateWebStoryPage() {
                 variant: 'destructive',
                 duration: 9000,
             });
+            setIsLoading(false);
+        } else if (result.slug) {
+            toast({
+                title: 'Story Generated!',
+                description: 'Your new Web Story has been created and saved.',
+            });
+            // Redirect on success
+            window.location.href = `/stories/${result.slug}`;
         }
-        setIsLoading(false);
     };
 
     return (
@@ -145,8 +152,9 @@ export default function CreateWebStoryPage() {
                                         <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
                                             <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="featured">Featured</SelectItem>
-                                                {/* Add other story categories here in the future */}
+                                                {Object.entries(categorySlugMap).map(([slug, name]) => (
+                                                    <SelectItem key={slug} value={name}>{name}</SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                         {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>}

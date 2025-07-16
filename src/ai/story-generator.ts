@@ -99,7 +99,7 @@ export async function generateAndSaveWebStory(input: StoryGenerationInput): Prom
       dataAiHint: pages[0].dataAiHint,
       category: input.category,
       publishedDate: new Date().toISOString(),
-      status: 'draft', // Always save as draft first
+      status: 'published', // Publish stories immediately
       pages: pages,
     };
 
@@ -107,9 +107,9 @@ export async function generateAndSaveWebStory(input: StoryGenerationInput): Prom
     await saveNewStory(newStory);
 
     // Revalidate relevant paths
-    revalidatePath('/admin/dashboard/stories/edit'); // A page that doesn't exist yet, but good for future
-    revalidatePath('/stories'); // Future index page
-    revalidatePath(`/stories/${newStory.slug}`); // Future story page
+    revalidatePath('/admin/dashboard/stories');
+    revalidatePath('/stories');
+    revalidatePath(`/stories/${newStory.slug}`);
 
     return { success: true, slug: newStory.slug };
 

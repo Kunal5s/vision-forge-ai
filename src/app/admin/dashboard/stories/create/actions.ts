@@ -37,10 +37,7 @@ export async function generateStoryAction(data: unknown): Promise<{ success: boo
             throw new Error(result.error || 'AI failed to generate the web story.');
         }
 
-        // On success, redirect to the story management page or a success page.
-        // For now, let's redirect to the main stories dashboard.
-        revalidatePath('/admin/dashboard');
-        redirect(`/admin/dashboard/`); // Redirect to a future edit page would be ideal
+        return result;
 
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred during story generation.';
@@ -98,8 +95,10 @@ export async function saveNewStory(newStory: Story) {
         throw new Error("GitHub credentials not configured. Please check Vercel environment variables.");
     }
     
-    const category = newStory.category.toLowerCase();
-    const repoPath = `src/stories/${category}.json`;
+    // Use a fixed category slug 'featured' for all stories for now.
+    // This can be changed later to support multiple story categories.
+    const categorySlug = 'featured';
+    const repoPath = `src/stories/${categorySlug}.json`;
 
     try {
         const octokit = new Octokit({ auth: GITHUB_TOKEN });
@@ -107,10 +106,10 @@ export async function saveNewStory(newStory: Story) {
         
         let existingStories: Story[] = [];
         try {
-            existingStories = await getAllStoriesAdmin(category);
+            existingStories = await getAllStoriesAdmin(categorySlug);
         } catch(e) {
             // File might not exist, which is fine.
-            console.log(`No existing stories found for category ${category}, creating new file.`);
+            console.log(`No existing stories found for category ${categorySlug}, creating new file.`);
         }
 
         const updatedStories = [newStory, ...existingStories];
@@ -127,7 +126,7 @@ export async function saveNewStory(newStory: Story) {
             sha: fileSha,
             branch: branch,
         });
-        console.log(`Successfully committed new story for "${category}" to GitHub on branch "${branch}".`);
+        console.log(`Successfully committed new story for "${newStory.category}" to GitHub on branch "${branch}".`);
     } catch (error) {
         console.error("Failed to commit new story to GitHub.", error);
         throw new Error("Failed to save story to GitHub. Please check credentials and repository permissions.");
