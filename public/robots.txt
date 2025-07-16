@@ -1,3 +1,6 @@
-# Block the admin panel from search engines
+# https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow: /admin/
+Allow: /
+Disallow: /admin
+
+Sitemap: https://www.imagenbrainai.in/sitemap.xml
