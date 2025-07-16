@@ -4,7 +4,9 @@ import { z } from 'zod';
 export const AuthorSchema = z.object({
     name: z.string().min(1, 'Name is required.'),
     title: z.string().min(1, 'Title is required.'),
-    photoUrl: z.string().url('A valid photo URL is required.'),
+    photoUrl: z.string().refine(val => val.startsWith('data:image/') || z.string().url().safeParse(val).success, {
+        message: 'A valid photo URL or Data URI is required.',
+    }),
     bio: z.string().min(10, 'Bio must be at least 10 characters long.'),
 });
 

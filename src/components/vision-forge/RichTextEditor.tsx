@@ -10,7 +10,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import { useCallback, useRef, useState } from 'react';
 import { 
     Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon, Image as ImageIcon,
-    Heading1, Heading2, Heading3, Palette, AlignLeft, AlignCenter, AlignRight, Sparkles
+    Heading1, Heading2, Heading3, Palette, AlignLeft, AlignCenter, AlignRight, Sparkles, Pilcrow
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -22,6 +22,7 @@ import { humanizeTextAction } from '@/app/admin/dashboard/create/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import Dropcursor from '@tiptap/extension-dropcursor';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 
 const EditorToolbar = ({ editor }: { editor: Editor | null }) => {
@@ -63,6 +64,8 @@ const EditorToolbar = ({ editor }: { editor: Editor | null }) => {
         return null;
     }
 
+    const currentFont = editor.getAttributes('textStyle').fontFamily || 'Inter';
+
     return (
         <div
             className="border-b bg-muted/50 p-2 flex items-center gap-1 flex-wrap"
@@ -90,6 +93,9 @@ const EditorToolbar = ({ editor }: { editor: Editor | null }) => {
                 className="hidden"
             />
             <div className="h-6 border-l mx-1" />
+            <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().setParagraph().run()} className={cn({'bg-background': editor.isActive('paragraph')})}>
+                <Pilcrow className="h-4 w-4" />
+            </Button>
             <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} className={cn({'bg-background': editor.isActive('heading', { level: 1 })})}>
                 <Heading1 className="h-4 w-4" />
             </Button>
@@ -100,6 +106,16 @@ const EditorToolbar = ({ editor }: { editor: Editor | null }) => {
                 <Heading3 className="h-4 w-4" />
             </Button>
             <div className="h-6 border-l mx-1" />
+            <Select value={currentFont} onValueChange={value => editor.chain().focus().setFontFamily(value).run()}>
+                <SelectTrigger className="w-[120px] h-8 text-xs">
+                    <SelectValue placeholder="Font" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="Inter">Inter</SelectItem>
+                    <SelectItem value="serif">Serif</SelectItem>
+                    <SelectItem value="monospace">Monospace</SelectItem>
+                </SelectContent>
+            </Select>
              <Button variant="ghost" size="sm" asChild>
                 <label className="flex items-center gap-1 cursor-pointer">
                     <Palette className="h-4 w-4"/>
@@ -204,7 +220,9 @@ export function RichTextEditor({ value, onChange, disabled, placeholder = "Start
                 },
             }),
             Placeholder.configure({ placeholder }),
-            FontFamily,
+            FontFamily.configure({
+                types: ['textStyle'],
+            }),
             TextStyle,
             Color,
             TextAlign.configure({
@@ -242,5 +260,3 @@ export function RichTextEditor({ value, onChange, disabled, placeholder = "Start
         </div>
     );
 }
-
-    

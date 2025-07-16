@@ -148,7 +148,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="prose prose-sm dark:prose-invert max-w-none">
+                            <div className="prose dark:prose-invert max-w-none">
                                 {parse(article.summary)}
                             </div>
                         </CardContent>
@@ -204,7 +204,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
                 {article.conclusion && (
                      <div className="prose dark:prose-invert max-w-none space-y-6 mt-12">
                         <h2>Conclusion</h2>
-                        <div>{parse(article.conclusion)}</div>
+                        <div className="prose dark:prose-invert max-w-none">{parse(article.conclusion)}</div>
                     </div>
                 )}
 
@@ -215,3 +215,4 @@ export default async function ArticlePage({ params }: { params: { category: stri
         </main>
     );
 }
+

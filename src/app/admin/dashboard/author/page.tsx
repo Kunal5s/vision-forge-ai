@@ -7,24 +7,35 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, Save } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, Upload } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getAuthorData, saveAuthorData } from './actions';
 import { AuthorSchema, type AuthorData } from '@/lib/author';
 import Image from 'next/image';
+import { RichTextEditor } from '@/components/vision-forge/RichTextEditor';
 
-type AuthorFormData = z.infer<typeof AuthorSchema>;
+// Updated schema to handle file upload (via string) and rich text bio
+const AuthorFormSchema = z.object({
+    name: z.string().min(1, 'Name is required.'),
+    title: z.string().min(1, 'Title is required.'),
+    photoUrl: z.string().refine(val => val.startsWith('data:image/') || z.string().url().safeParse(val).success, {
+        message: 'Please upload a valid image or provide a valid URL.',
+    }),
+    bio: z.string().min(50, 'Bio must be at least 50 characters long.'),
+});
+
+type AuthorFormData = z.infer<typeof AuthorFormSchema>;
 
 export default function ManageAuthorPage() {
     const [isSaving, setIsSaving] = useState(false);
     const { toast } = useToast();
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const { register, handleSubmit, control, formState: { errors }, setValue, watch } = useForm<AuthorFormData>({
-        resolver: zodResolver(AuthorSchema),
+        resolver: zodResolver(AuthorFormSchema),
         defaultValues: {
             name: '',
             title: '',
@@ -36,7 +47,6 @@ export default function ManageAuthorPage() {
     const photoUrl = watch('photoUrl');
 
     useEffect(() => {
-        // Load initial data
         getAuthorData().then(data => {
             setValue('name', data.name);
             setValue('title', data.title);
@@ -44,6 +54,21 @@ export default function ManageAuthorPage() {
             setValue('bio', data.bio);
         });
     }, [setValue]);
+    
+    const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            if (!file.type.startsWith('image/')) {
+                toast({ title: "Invalid File Type", description: "Please upload a valid image file (PNG, JPG).", variant: "destructive" });
+                return;
+            }
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setValue('photoUrl', reader.result as string, { shouldDirty: true, shouldValidate: true });
+            };
+            reader.readAsDataURL(file);
+        }
+    }, [setValue, toast]);
 
     const onSubmit = async (data: AuthorFormData) => {
         setIsSaving(true);
@@ -91,25 +116,41 @@ export default function ManageAuthorPage() {
                         </div>
 
                         <div>
-                            <Label htmlFor="photoUrl">Photo URL</Label>
-                            <Input id="photoUrl" {...register('photoUrl')} disabled={isSaving} placeholder="https://example.com/photo.png"/>
-                            {errors.photoUrl && <p className="text-sm text-destructive mt-1">{errors.photoUrl.message}</p>}
-                            {photoUrl && (
-                                <div className="mt-4">
-                                    <p className="text-sm text-muted-foreground mb-2">Image Preview:</p>
-                                    <Image src={photoUrl} alt="Author preview" width={100} height={100} className="rounded-full border" />
-                                </div>
-                            )}
+                            <Label>Author Photo</Label>
+                             <div className="mt-2 flex items-center gap-4">
+                                {photoUrl && (
+                                     <Image src={photoUrl} alt="Author preview" width={100} height={100} className="rounded-full border object-cover aspect-square" />
+                                )}
+                                <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isSaving}>
+                                    <Upload className="mr-2 h-4 w-4" />
+                                    Upload Photo
+                                </Button>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleFileChange}
+                                    accept="image/png, image/jpeg"
+                                    className="hidden"
+                                />
+                             </div>
+                             <p className="text-xs text-muted-foreground mt-2">Recommended size: 100x100 pixels. A PNG or JPG file is required.</p>
+                             {errors.photoUrl && <p className="text-sm text-destructive mt-1">{errors.photoUrl.message}</p>}
                         </div>
+
 
                         <div>
                             <Label htmlFor="bio">Author Bio</Label>
-                            <Textarea
-                                id="bio"
-                                {...register('bio')}
-                                disabled={isSaving}
-                                rows={10}
-                                placeholder="Write a detailed bio about the author (at least 500 words recommended)..."
+                            <Controller
+                                name="bio"
+                                control={control}
+                                render={({ field }) => (
+                                    <RichTextEditor
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        disabled={isSaving}
+                                        placeholder="Write a detailed bio about the author..."
+                                    />
+                                )}
                             />
                             {errors.bio && <p className="text-sm text-destructive mt-1">{errors.bio.message}</p>}
                         </div>
