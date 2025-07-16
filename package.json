@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build && npm run postbuild",
+    "build": "next build",
     "postbuild": "node ./scripts/generate-sitemap.mjs",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"
