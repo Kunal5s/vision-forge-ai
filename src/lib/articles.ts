@@ -1,10 +1,21 @@
 
 'use server';
 
-import fs from 'fs/promises';
-import path from 'path';
 import { z } from 'zod';
 import { categorySlugMap } from './constants';
+
+// Direct imports to ensure files are bundled.
+import featuredArticles from '@/articles/featured.json';
+import inspirationArticles from '@/articles/inspiration.json';
+import nftArticles from '@/articles/nft.json';
+import promptsArticles from '@/articles/prompts.json';
+import storybookArticles from '@/articles/storybook.json';
+import stylesArticles from '@/articles/styles.json';
+import technologyArticles from '@/articles/technology.json';
+import trendsArticles from '@/articles/trends.json';
+import tutorialsArticles from '@/articles/tutorials.json';
+import usecasesArticles from '@/articles/usecases.json';
+
 
 const ArticleContentBlockSchema = z.object({
   type: z.enum(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'img']),
@@ -30,30 +41,48 @@ export type Article = z.infer<typeof ArticleSchema>;
 
 const ArticleFileSchema = z.array(ArticleSchema);
 
-async function loadAndValidateArticles(category: string): Promise<Article[]> {
-    const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category) || category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    const filePath = path.join(process.cwd(), 'src', 'articles', `${categorySlug}.json`);
+// A map to hold all imported article data.
+const allCategoryData: { [key: string]: any } = {
+    'featured': featuredArticles,
+    'inspiration': inspirationArticles,
+    'nft': nftArticles,
+    'prompts': promptsArticles,
+    'storybook': storybookArticles,
+    'styles': stylesArticles,
+    'technology': technologyArticles,
+    'trends': trendsArticles,
+    'tutorials': tutorialsArticles,
+    'usecases': usecasesArticles
+};
 
+
+async function loadAndValidateArticles(category: string): Promise<Article[]> {
+    const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category);
+    
+    if (!categorySlug) {
+        console.log(`No slug found for category "${category}"`);
+        return [];
+    }
+
+    const articlesData = allCategoryData[categorySlug];
+
+    if (!articlesData) {
+        console.log(`No article data found for category slug "${categorySlug}"`);
+        return [];
+    }
+    
     try {
-        const fileContent = await fs.readFile(filePath, 'utf-8');
-        const articlesData = JSON.parse(fileContent);
         const validatedArticles = ArticleFileSchema.safeParse(articlesData);
 
         if (validatedArticles.success) {
             return validatedArticles.data;
         } else {
-            console.error(`Zod validation failed for ${categorySlug}.json.`, validatedArticles.error.flatten());
+            console.error(`Zod validation failed for category "${category}".`, validatedArticles.error.flatten());
             return [];
         }
 
     } catch (error: any) {
-        // If file not found, it's not a critical error, just means no articles for that category.
-        if (error.code === 'ENOENT') {
-            console.log(`No article file found for category "${category}" at ${filePath}`);
-        } else {
-            // For other errors (like JSON parsing), log them.
-            console.error(`Error loading articles for category "${category}":`, error.message);
-        }
+        console.error(`Error validating articles for category "${category}":`, error.message);
         return [];
     }
 }
