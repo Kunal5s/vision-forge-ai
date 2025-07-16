@@ -60,7 +60,7 @@ export function SubscriptionManager() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className={cn("text-xs h-9 w-full md:w-auto", isLoggedIn && 'border-yellow-500/50 hover:border-yellow-500/80')}>
+        <Button variant="default" className="text-xs h-9 w-full md:w-auto bg-foreground text-background hover:bg-foreground/90">
             <Sparkles className="mr-2 h-4 w-4 text-yellow-500" />
             {isLoggedIn ? 'Manage Plan' : 'Activate Plan'}
         </Button>
