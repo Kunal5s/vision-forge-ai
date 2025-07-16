@@ -36,10 +36,11 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="text-md font-bold text-foreground mb-4">Legal</h3>
+            <h3 className="text-md font-bold text-foreground mb-4">Legal & Company</h3>
             <ul className="space-y-1 text-sm">
               <li><Link href="/about" className={cn("block rounded-md -ml-2 px-2 py-1 text-foreground/80 hover:text-foreground", pathname === '/about' && 'text-foreground font-semibold')}>About Us</Link></li>
               <li><Link href="/contact" className={cn("block rounded-md -ml-2 px-2 py-1 text-foreground/80 hover:text-foreground", pathname === '/contact' && 'text-foreground font-semibold')}>Contact Us</Link></li>
+               <li><Link href="/models" className={cn("block rounded-md -ml-2 px-2 py-1 text-foreground/80 hover:text-foreground", pathname === '/models' && 'text-foreground font-semibold')}>Our Models</Link></li>
               <li><Link href="/privacy" className={cn("block rounded-md -ml-2 px-2 py-1 text-foreground/80 hover:text-foreground", pathname === '/privacy' && 'text-foreground font-semibold')}>Privacy Policy</Link></li>
               <li><Link href="/terms" className={cn("block rounded-md -ml-2 px-2 py-1 text-foreground/80 hover:text-foreground", pathname === '/terms' && 'text-foreground font-semibold')}>Terms of Service</Link></li>
               <li><Link href="/disclaimer" className={cn("block rounded-md -ml-2 px-2 py-1 text-foreground/80 hover:text-foreground", pathname === '/disclaimer' && 'text-foreground font-semibold')}>Disclaimer</Link></li>

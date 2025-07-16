@@ -87,8 +87,8 @@ async function generateWithOpenRouter(params: ArticleGenerationParams): Promise<
         response_format: { type: "json_object" },
         max_tokens: 4096,
         extra_headers: {
-            "HTTP-Referer": "https://visionforgeai.com",
-            "X-Title": "VisionForge AI",
+            "HTTP-Referer": "https://imagenbrain.ai",
+            "X-Title": "Imagen BrainAi",
         }
     });
 
@@ -212,8 +212,8 @@ export async function humanizeTextAction(text: string): Promise<{ success: boole
       temperature: 0.7,
       top_p: 1,
       extra_headers: {
-        "HTTP-Referer": "https://visionforgeai.com",
-        "X-Title": "VisionForge AI",
+        "HTTP-Referer": "https://imagenbrain.ai",
+        "X-Title": "Imagen BrainAi",
       }
     });
 
@@ -230,5 +230,3 @@ export async function humanizeTextAction(text: string): Promise<{ success: boole
     return { success: false, error: errorMessage };
   }
 }
-
-    

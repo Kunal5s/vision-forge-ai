@@ -14,7 +14,7 @@ export default function RootLayoutClient({ children }: { children: React.ReactNo
 
   return (
     <>
-      {!isAdminPage && <Header />}
+      <Header />
       <div className="flex-grow">
         {children}
       </div>

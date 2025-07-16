@@ -267,7 +267,6 @@ export async function humanizeTextAction(text: string): Promise<{ success: boole
     return { success: false, error: "No text provided to humanize." };
   }
 
-  // Use the OpenRouter key by default, assuming it's the most common one configured.
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     return { success: false, error: "OpenRouter API key is not configured on the server." };
@@ -276,9 +275,6 @@ export async function humanizeTextAction(text: string): Promise<{ success: boole
   const client = new OpenAI({
     apiKey: apiKey,
     baseURL: "https://openrouter.ai/api/v1",
-    defaultHeaders: {
-        "X-Title": "Imagen BrainAi",
-    },
   });
 
   try {
@@ -293,6 +289,10 @@ export async function humanizeTextAction(text: string): Promise<{ success: boole
       ],
       temperature: 0.7,
       top_p: 1,
+      extra_headers: {
+        "HTTP-Referer": "https://imagenbrain.ai",
+        "X-Title": "Imagen BrainAi",
+      },
     });
 
     const humanizedText = response.choices[0].message.content;
