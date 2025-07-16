@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import React, { useEffect, useState } from 'react';
 import { AdminLogin } from '../vision-forge/AdminLogin';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '../ui/button';
 
 const navLinks = [
@@ -52,50 +52,12 @@ export function Header({ isAdminPage }: { isAdminPage: boolean }) {
         </Link>
         
         {/* Desktop Buttons */}
-        <div className="hidden md:flex items-center gap-2">
+        <div className="flex items-center gap-2">
             <AdminLogin />
         </div>
-
-        {/* Mobile Menu Trigger */}
-        <div className="md:hidden">
-            <Sheet>
-                <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                        <Menu className="h-6 w-6" />
-                        <span className="sr-only">Open Menu</span>
-                    </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-[280px] p-4">
-                    <SheetHeader>
-                        <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-                    </SheetHeader>
-                    <nav className="flex flex-col space-y-2 mt-8">
-                        {navLinks.map((link) => (
-                           <SheetClose asChild key={link.href}>
-                             <Link
-                                href={link.href}
-                                className={cn(
-                                    "rounded-md px-3 py-2 text-base font-medium transition-colors",
-                                    pathname === link.href 
-                                    ? "bg-foreground text-background" 
-                                    : "text-foreground/70 hover:bg-muted hover:text-foreground"
-                                )}
-                                >
-                                {link.label}
-                            </Link>
-                           </SheetClose>
-                        ))}
-                    </nav>
-                    <div className="mt-auto pt-8 space-y-2">
-                        <AdminLogin />
-                    </div>
-                </SheetContent>
-            </Sheet>
-        </div>
-
       </div>
       {!isAdminPage && (
-        <div className="container mx-auto hidden h-10 items-center px-4 md:flex">
+        <div className="container mx-auto flex h-10 items-center px-4">
           <ScrollArea className="w-full whitespace-nowrap">
               <nav className="flex items-center space-x-1">
                   {navLinks.map((link) => (

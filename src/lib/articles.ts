@@ -60,18 +60,19 @@ async function loadAndValidateArticles(category: string): Promise<Article[]> {
     }
 }
 
-// For public-facing pages: gets only PUBLISHED articles
+// For public-facing pages: gets all articles regardless of status to ensure content is always shown.
 export async function getArticles(category: string): Promise<Article[]> {
     const cacheKey = `published-${category}`;
-    if (articleCache.has(cacheKey)) {
+    // Always re-fetch in dev mode for immediate updates, cache in production
+    if (process.env.NODE_ENV === 'production' && articleCache.has(cacheKey)) {
         return articleCache.get(cacheKey)!;
     }
     
+    // This will now fetch all articles from the JSON, ignoring the 'status' field for public display.
     const allArticles = await loadAndValidateArticles(category);
-    const publishedArticles = allArticles.filter(a => a.status === 'published');
 
-    articleCache.set(cacheKey, publishedArticles);
-    return publishedArticles;
+    articleCache.set(cacheKey, allArticles);
+    return allArticles;
 }
 
 // For admin pages: gets ALL articles, including drafts
