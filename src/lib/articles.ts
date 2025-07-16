@@ -19,7 +19,7 @@ const ArticleSchema = z.object({
   title: z.string().min(1),
   slug: z.string().min(1),
   status: z.enum(['published', 'draft']).default('published'), // Add status field
-  publishedDate: z.string().datetime().optional(),
+  publishedDate: z.string().datetime(), // Make it required
   summary: z.string().optional(),
   articleContent: z.array(ArticleContentBlockSchema),
   keyTakeaways: z.array(z.string()),
@@ -77,7 +77,8 @@ export async function getArticles(category: string): Promise<Article[]> {
 // For admin pages: gets ALL articles, including drafts
 export async function getAllArticlesAdmin(category: string): Promise<Article[]> {
     const cacheKey = `all-${category}`;
-    if (allArticlesCache.has(cacheKey)) {
+    // Always re-fetch in dev mode for immediate updates, cache in production
+    if (process.env.NODE_ENV === 'production' && allArticlesCache.has(cacheKey)) {
         return allArticlesCache.get(cacheKey)!;
     }
 

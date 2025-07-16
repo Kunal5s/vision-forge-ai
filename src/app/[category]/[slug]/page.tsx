@@ -4,18 +4,26 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, BookOpen, List } from 'lucide-react';
+import { CalendarDays, BookOpen, List } from 'lucide-react';
 import type { Metadata } from 'next';
 import { categorySlugMap } from '@/lib/constants';
 import type { Article } from '@/lib/articles';
 import { cn } from '@/lib/utils';
 import parse from 'html-react-parser';
-
+import { format } from 'date-fns';
+import { AuthorBio } from '@/components/vision-forge/AuthorBio';
 
 // Function to find the article
 async function getArticleData(categorySlug: string, articleSlug: string): Promise<Article | undefined> {
-    const categoryName = Object.entries(categorySlugMap).find(([, slug]) => slug.toLowerCase().replace(/[^a-z0-9]+/g, '-') === categorySlug)?.[1];
-    if (!categoryName) return undefined;
+    const categoryName = Object.entries(categorySlugMap).find(([slug]) => slug === categorySlug)?.[1];
+    if (!categoryName) {
+        // Fallback for slugs that don't match the map key but might match the name
+        const fallbackCategory = Object.values(categorySlugMap).find(name => name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === categorySlug);
+        if (!fallbackCategory) return undefined;
+        
+        const articles = await getArticles(fallbackCategory);
+        return articles.find(article => article.slug === articleSlug);
+    }
     
     // Use the public getArticles which only fetches 'published' articles
     const articles = await getArticles(categoryName);
@@ -111,6 +119,12 @@ export default async function ArticlePage({ params }: { params: { category: stri
                 <header className="mb-8">
                     <Badge variant="secondary" className="mb-4">{article.category}</Badge>
                     <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">{parse(article.title)}</h1>
+                    <div className="flex items-center text-sm text-muted-foreground gap-2">
+                        <CalendarDays className="h-4 w-4" />
+                        <time dateTime={article.publishedDate}>
+                          Published on {format(new Date(article.publishedDate), 'MMMM d, yyyy')}
+                        </time>
+                    </div>
                     <div className="relative aspect-video w-full rounded-lg overflow-hidden mt-6 shadow-lg">
                         <Image
                             src={article.image}
@@ -191,6 +205,10 @@ export default async function ArticlePage({ params }: { params: { category: stri
                         <div>{parse(article.conclusion)}</div>
                     </div>
                 )}
+
+                <div className="mt-16 pt-8 border-t">
+                    <AuthorBio />
+                </div>
             </div>
         </main>
     );

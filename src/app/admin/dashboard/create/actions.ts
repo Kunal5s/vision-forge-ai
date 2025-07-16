@@ -9,6 +9,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { JSDOM } from 'jsdom';
 import OpenAI from 'openai';
+import { categorySlugMap } from '@/lib/constants';
 
 // Schema for the final article generation submission
 const ArticleFormSchema = z.object({
@@ -74,7 +75,7 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
     await saveUpdatedArticles(category, [newArticle, ...articles], `feat: ✨ Add new AI article "${newArticle.title}"`);
 
     revalidatePath('/');
-    const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category) || category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     revalidatePath(`/${categorySlug}`);
     revalidatePath(`/${categorySlug}/${newArticle.slug}`);
     
@@ -159,8 +160,11 @@ export async function editArticleAction(data: unknown) {
     
     const newArticleContent = parseHtmlToContent(content);
 
-    const updatedArticle = {
-      ...articles[articleIndex],
+    // Get the existing article to preserve its properties like image
+    const existingArticle = articles[articleIndex];
+
+    const updatedArticle: Article = {
+      ...existingArticle,
       title,
       slug,
       summary,
@@ -168,7 +172,7 @@ export async function editArticleAction(data: unknown) {
       articleContent: newArticleContent,
       keyTakeaways: keyTakeaways || [],
       conclusion: conclusion,
-      publishedDate: new Date().toISOString(), 
+      publishedDate: new Date().toISOString(), // Update the date on every edit
     };
 
     articles[articleIndex] = updatedArticle;
@@ -176,9 +180,10 @@ export async function editArticleAction(data: unknown) {
     await saveUpdatedArticles(category, articles, `feat: ✏️ Edit article "${title}"`);
     
     revalidatePath(`/`);
-    const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category) || category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     revalidatePath(`/${categorySlug}`);
     revalidatePath(`/${categorySlug}/${slug}`);
+    revalidatePath('/author/kunal-sonpitre'); // Revalidate author page
 
   } catch (e: any) {
     return { success: false, error: e.message };
@@ -199,8 +204,9 @@ export async function deleteArticleAction(category: string, slug: string) {
         await saveUpdatedArticles(category, updatedArticles, `feat: 🗑️ Delete article with slug "${slug}"`);
 
         revalidatePath(`/`);
-        const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category) || category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
         revalidatePath(`/${categorySlug}`);
+        revalidatePath('/author/kunal-sonpitre'); // Revalidate author page
 
     } catch (e: any) {
         return { success: false, error: e.message };
@@ -231,7 +237,7 @@ async function getPrimaryBranch(octokit: Octokit, owner: string, repo: string): 
 }
 
 export async function saveUpdatedArticles(category: string, articles: Article[], commitMessage: string) {
-    const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category) || category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const repoPath = `src/articles/${categorySlug}.json`;
     const fileContent = JSON.stringify(articles, null, 2);
 
@@ -308,5 +314,3 @@ export async function humanizeTextAction(text: string): Promise<{ success: boole
     return { success: false, error: errorMessage };
   }
 }
-
-    
