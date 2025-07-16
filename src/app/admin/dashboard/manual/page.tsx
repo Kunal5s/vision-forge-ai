@@ -30,7 +30,7 @@ const manualArticleSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters long.'),
   slug: z.string().min(5, 'Slug must be at least 5 characters long. Use dashes instead of spaces.').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and dashes.'),
   category: z.string().min(1, 'Please select a category.'),
-  summary: z.string().min(10, 'Summary must be at least 10 characters long.').optional(),
+  summary: z.string().optional(),
   content: z.string().min(50, 'Content must be at least 50 characters long.'),
   keyTakeaways: z.array(z.object({ value: z.string().min(1, 'Takeaway cannot be empty.') })).optional(),
   conclusion: z.string().min(20, 'Conclusion must be at least 20 characters long.'),

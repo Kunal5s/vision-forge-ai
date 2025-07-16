@@ -12,6 +12,7 @@ import { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import parse from 'html-react-parser';
 
 interface EditArticlesClientPageProps {
     allArticlesByCategory: { category: string, articles: Article[] }[];
@@ -21,7 +22,9 @@ export default function EditArticlesClientPage({ allArticlesByCategory }: EditAr
     const [searchTerm, setSearchTerm] = useState('');
 
     const getSnippet = (content: Article['articleContent']) => {
-        return (content.find(c => c.type === 'p')?.content || '').substring(0, 150);
+        const pBlock = content.find(c => c.type === 'p')?.content || '';
+        const strippedContent = pBlock.replace(/<[^>]*>?/gm, ''); // Strip HTML tags
+        return strippedContent.substring(0, 150);
     };
 
     const filteredArticles = useMemo(() => {
@@ -34,7 +37,7 @@ export default function EditArticlesClientPage({ allArticlesByCategory }: EditAr
         return allArticlesByCategory
             .map(categoryData => {
                 const filtered = categoryData.articles.filter(article =>
-                    article.title.toLowerCase().includes(lowercasedFilter) ||
+                    article.title.toLowerCase().replace(/<[^>]*>?/gm, '').includes(lowercasedFilter) ||
                     (article.status && article.status.toLowerCase().includes(lowercasedFilter)) ||
                     getSnippet(article.articleContent).toLowerCase().includes(lowercasedFilter)
                 );
@@ -78,14 +81,14 @@ export default function EditArticlesClientPage({ allArticlesByCategory }: EditAr
                                         <div key={article.slug} className="flex items-start gap-4 p-4 border rounded-lg bg-background hover:bg-muted/50 transition-colors">
                                             <Image
                                               src={article.image}
-                                              alt={article.title}
+                                              alt={article.title.replace(/<[^>]*>?/gm, '')}
                                               width={80}
                                               height={80}
                                               className="rounded-md object-cover aspect-square"
                                               data-ai-hint={article.dataAiHint}
                                             />
                                             <div className="flex-grow">
-                                                <h3 className="font-semibold text-lg text-foreground">{article.title}</h3>
+                                                <h3 className="font-semibold text-lg text-foreground">{parse(article.title)}</h3>
                                                 <div className="flex items-center gap-2 mt-1 mb-2">
                                                     <Badge variant={article.status === 'published' ? 'default' : 'secondary'} className={cn(article.status === 'published' ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-500 hover:bg-yellow-600', 'text-white')}>
                                                         {article.status === 'published' ? <CheckCircle className="mr-1.5 h-3.5 w-3.5" /> : <Edit3 className="mr-1.5 h-3.5 w-3.5" />}
