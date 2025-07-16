@@ -30,64 +30,65 @@ export type Article = z.infer<typeof ArticleSchema>;
 
 const ArticleFileSchema = z.array(ArticleSchema);
 
-const articleCache = new Map<string, Article[]>();
-const allArticlesCache = new Map<string, Article[]>();
-
 // This function now correctly uses the Zod schema's default 'published' status.
 async function loadAndValidateArticles(category: string): Promise<Article[]> {
     const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category) || category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    const filePath = path.join(process.cwd(), 'src', 'articles', `${categorySlug}.json`);
+    const repoPath = `src/articles/${categorySlug}.json`;
+    const GITHUB_REPO_URL = `https://raw.githubusercontent.com/${process.env.GITHUB_REPO_OWNER}/${process.env.GITHUB_REPO_NAME}/main/${repoPath}`;
+    
+    // Add a cache-busting parameter to the URL
+    const urlWithCacheBust = `${GITHUB_REPO_URL}?${new Date().getTime()}`;
 
     try {
-        await fs.access(filePath);
-        const fileContent = await fs.readFile(filePath, 'utf-8');
-        const articlesData = JSON.parse(fileContent);
+        const { GITHUB_TOKEN } = process.env;
+        if (!GITHUB_TOKEN) {
+            throw new Error("GitHub token is not configured on the server.");
+        }
+        
+        const response = await fetch(urlWithCacheBust, {
+            headers: {
+                Authorization: `token ${GITHUB_TOKEN}`,
+                Accept: 'application/vnd.github.v3.raw',
+            },
+            // Force re-fetch, disable caching
+            cache: 'no-store',
+        });
 
+        if (!response.ok) {
+            if (response.status === 404) {
+                 console.warn(`Article file not found for category "${category}" on GitHub.`);
+                 return [];
+            }
+            throw new Error(`Failed to fetch from GitHub: ${response.statusText}`);
+        }
+
+        const articlesData = await response.json();
         const validatedArticles = ArticleFileSchema.safeParse(articlesData);
 
         if (validatedArticles.success) {
-            // The status field is now defaulted to 'published' by the schema if it's missing.
             return validatedArticles.data;
         } else {
-             console.warn(`Zod validation failed for ${categorySlug}.json.`, validatedArticles.error.flatten());
-             return [];
+            console.error(`Zod validation failed for ${categorySlug}.json from GitHub.`, validatedArticles.error.flatten());
+            return [];
         }
 
     } catch (error: any) {
-        if (error.code === 'ENOENT') {
-            console.warn(`Article file not found for category "${category}" at path: ${filePath}`);
-        } else {
-            console.error(`Error reading or parsing articles for category "${category}":`, error);
-        }
+        console.error(`Error loading articles for category "${category}" from GitHub:`, error.message);
         return [];
     }
 }
 
 // For public-facing pages: gets ONLY published articles.
 export async function getArticles(category: string): Promise<Article[]> {
-    const cacheKey = `published-${category}`;
-    // Always re-fetch in dev mode for immediate updates, cache in production
-    if (process.env.NODE_ENV === 'production' && articleCache.has(cacheKey)) {
-        return articleCache.get(cacheKey)!;
-    }
-    
     const allArticles = await loadAndValidateArticles(category);
-    // This filter now correctly works with the defaulted status from the Zod schema.
+    // Filter for published articles AFTER loading them
     const publishedArticles = allArticles.filter(article => article.status === 'published');
-
-    articleCache.set(cacheKey, publishedArticles);
     return publishedArticles;
 }
 
 // For admin pages: gets ALL articles, including drafts
 export async function getAllArticlesAdmin(category: string): Promise<Article[]> {
-    const cacheKey = `all-${category}`;
-    // Always re-fetch in dev mode for immediate updates, cache in production
-    if (process.env.NODE_ENV === 'production' && allArticlesCache.has(cacheKey)) {
-        return allArticlesCache.get(cacheKey)!;
-    }
-
+    // This function will return all articles, regardless of status.
     const allArticles = await loadAndValidateArticles(category);
-    allArticlesCache.set(cacheKey, allArticles);
     return allArticles;
 }
