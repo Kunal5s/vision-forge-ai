@@ -78,16 +78,16 @@ export default function EditArticlesClientPage({ allArticlesByCategory }: EditAr
                                 </h2>
                                 <div className="space-y-4">
                                     {articles.map(article => (
-                                        <div key={article.slug} className="flex flex-col sm:flex-row items-start gap-4 p-4 border rounded-lg bg-background hover:bg-muted/50 transition-colors">
+                                        <div key={article.slug} className="md:flex md:items-start md:gap-4 p-4 border rounded-lg bg-background hover:bg-muted/50 transition-colors">
                                             <Image
                                               src={article.image}
                                               alt={article.title.replace(/<[^>]*>?/gm, '')}
                                               width={80}
                                               height={80}
-                                              className="rounded-md object-cover aspect-square shrink-0"
+                                              className="rounded-md object-cover aspect-square shrink-0 mb-4 md:mb-0"
                                               data-ai-hint={article.dataAiHint}
                                             />
-                                            <div className="flex-grow">
+                                            <div className="flex-grow min-w-0">
                                                 <h3 className="font-semibold text-lg text-foreground">{parse(article.title)}</h3>
                                                 <div className="flex items-center gap-2 mt-1 mb-2">
                                                     <Badge variant={article.status === 'published' ? 'default' : 'secondary'} className={cn(article.status === 'published' ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-500 hover:bg-yellow-600', 'text-white')}>
@@ -102,7 +102,7 @@ export default function EditArticlesClientPage({ allArticlesByCategory }: EditAr
                                                     {getSnippet(article.articleContent)}...
                                                 </p>
                                             </div>
-                                            <Button asChild variant="secondary" size="sm" className="shrink-0 w-full mt-2 sm:w-auto sm:mt-0">
+                                            <Button asChild variant="secondary" size="sm" className="shrink-0 w-full mt-4 md:w-auto md:mt-0">
                                                 <Link href={`/admin/dashboard/edit/${categorySlug}/${article.slug}`}>
                                                     <Edit className="mr-2 h-4 w-4" />
                                                     Edit
