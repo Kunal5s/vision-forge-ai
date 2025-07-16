@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, BookOpen, List } from 'lucide-react';
+import { CalendarDays, BookOpen, List, CheckCircle } from 'lucide-react';
 import type { Metadata } from 'next';
 import { categorySlugMap } from '@/lib/constants';
 import type { Article } from '@/lib/articles';
