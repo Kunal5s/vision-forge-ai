@@ -1,8 +1,6 @@
 
 import { NextResponse } from 'next/server';
 
-export const runtime = 'edge'; // Set runtime to edge for Cloudflare and Vercel Edge
-
 const getAspectRatioDimensions = (aspect: string): { width: number, height: number } => {
     const baseSize = 1024;
     const [w, h] = aspect.split(':').map(Number);
