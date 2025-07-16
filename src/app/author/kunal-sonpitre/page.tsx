@@ -7,9 +7,10 @@ import { categorySlugMap } from '@/lib/constants';
 import { Suspense } from 'react';
 import { ArticlesSkeleton } from '@/components/vision-forge/ArticlesSkeleton';
 import { getAuthorData } from '@/app/admin/dashboard/author/actions';
+import { type AuthorData } from '@/lib/author';
 
 export async function generateMetadata(): Promise<Metadata> {
-    const author = await getAuthorData();
+    const author: AuthorData = await getAuthorData();
     return {
         title: `About the Author: ${author.name} | Imagen BrainAi`,
         description: `Learn more about ${author.name}, the ${author.title.toLowerCase()} behind the content on Imagen BrainAi.`,

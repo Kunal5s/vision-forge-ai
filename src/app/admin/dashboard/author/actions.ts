@@ -5,16 +5,7 @@ import { z } from 'zod';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { revalidatePath } from 'next/cache';
-
-// Define the schema for the author data
-export const AuthorSchema = z.object({
-    name: z.string().min(1, 'Name is required.'),
-    title: z.string().min(1, 'Title is required.'),
-    photoUrl: z.string().url('A valid photo URL is required.'),
-    bio: z.string().min(10, 'Bio must be at least 10 characters long.'),
-});
-
-export type AuthorData = z.infer<typeof AuthorSchema>;
+import { AuthorSchema, type AuthorData } from '@/lib/author';
 
 const authorFilePath = path.join(process.cwd(), 'src/lib/author.json');
 

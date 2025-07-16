@@ -3,8 +3,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import type { AuthorData } from '@/app/admin/dashboard/author/actions';
-import { useEffect, useState } from 'react';
+import type { AuthorData } from '@/lib/author';
 
 interface AuthorBioProps {
     author: AuthorData;

@@ -13,7 +13,8 @@ import { ArrowLeft, Loader2, Save } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { getAuthorData, saveAuthorData, AuthorSchema, type AuthorData } from './actions';
+import { getAuthorData, saveAuthorData } from './actions';
+import { AuthorSchema, type AuthorData } from '@/lib/author';
 import Image from 'next/image';
 
 type AuthorFormData = z.infer<typeof AuthorSchema>;
