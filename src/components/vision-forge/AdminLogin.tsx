@@ -17,7 +17,6 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { authenticate, getUser, logout } from '@/app/admin/actions';
 import { LogIn, UserCheck, UserX } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 export function AdminLogin() {
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
@@ -64,7 +63,7 @@ export function AdminLogin() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" className="text-xs h-9 w-full md:w-auto justify-start md:justify-center">
+        <Button variant="outline" className="text-sm h-9 w-full justify-start md:justify-center">
           {isLoggedIn ? (
             <>
               <UserCheck className="mr-2 h-4 w-4 text-green-500" />

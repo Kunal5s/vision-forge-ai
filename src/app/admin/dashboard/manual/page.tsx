@@ -304,15 +304,15 @@ export default function ManualPublishPage() {
                             <RichTextEditor 
                                 value={field.value} 
                                 onChange={field.onChange}
-                                disabled={isPublishing || isAddingImagesToArticle || isSavingDraft}
+                                disabled={isAddingImagesToArticle || isSavingDraft}
                             />
                         )}
                     />
                     {errors.content && <p className="text-sm text-destructive mt-1">{errors.content.message}</p>}
                   </div>
                   
-                  <div className="border-t pt-4">
-                    <Label className="text-lg font-semibold">Key Takeaways &amp; AI Tools</Label>
+                  <div className="space-y-2 border-t pt-4">
+                    <Label className="text-lg font-semibold">Key Takeaways</Label>
                     <div className="space-y-2 mt-2">
                       {fields.map((field, index) => (
                         <div key={field.id} className="flex items-center gap-2">
@@ -328,8 +328,7 @@ export default function ManualPublishPage() {
                       ))}
                     </div>
                      {errors.keyTakeaways && <p className="text-sm text-destructive mt-1">{errors.keyTakeaways.root?.message || (errors.keyTakeaways as any)[0]?.value?.message}</p>}
-                    <div className="flex flex-wrap items-center gap-4 mt-2">
-                      <Button
+                    <Button
                         type="button"
                         variant="outline"
                         size="sm"
@@ -338,36 +337,7 @@ export default function ManualPublishPage() {
                       >
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add Takeaway
-                      </Button>
-                      <div className="flex items-center gap-2">
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            onClick={addImagesToArticle}
-                            disabled={isAddingImagesToArticle || isPublishing || isSavingDraft}
-                        >
-                            {isAddingImagesToArticle ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                                <Wand2 className="mr-2 h-4 w-4" />
-                            )}
-                            Generate & Add Images
-                        </Button>
-                        <Select onValueChange={setImageCount} defaultValue={imageCount} disabled={isAddingImagesToArticle || isPublishing || isSavingDraft}>
-                            <SelectTrigger className="w-[180px] h-9 text-sm">
-                                <SelectValue placeholder="Number of Images" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {IMAGE_COUNTS.map(opt => (
-                                    <SelectItem key={opt.value} value={opt.value}>
-                                        {opt.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
+                    </Button>
                   </div>
 
                   <div>
@@ -444,7 +414,41 @@ export default function ManualPublishPage() {
                             )}
                         </div>
                     </div>
-                    <div className="space-y-2">
+                    
+                    <div className="space-y-2 border-t pt-4">
+                        <Label>AI Tools</Label>
+                         <div className="flex flex-col sm:flex-row lg:flex-col gap-2">
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={addImagesToArticle}
+                                disabled={isAddingImagesToArticle || isPublishing || isSavingDraft}
+                                className="w-full justify-center"
+                            >
+                                {isAddingImagesToArticle ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Wand2 className="mr-2 h-4 w-4" />
+                                )}
+                                Add Images
+                            </Button>
+                            <Select onValueChange={setImageCount} defaultValue={imageCount} disabled={isAddingImagesToArticle || isPublishing || isSavingDraft}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Number of Images" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {IMAGE_COUNTS.map(opt => (
+                                        <SelectItem key={opt.value} value={opt.value}>
+                                            {opt.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2 border-t pt-4">
+                      <Label>Actions</Label>
                       <Button onClick={handleSubmit((data) => onSubmit(data, 'published'))} className="w-full" disabled={isPublishing || isSavingDraft || !previewImage || isGeneratingImage}>
                         {isPublishing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Publishing...</> : <><FileSignature className="mr-2 h-4 w-4" /> Publish Article</>}
                       </Button>

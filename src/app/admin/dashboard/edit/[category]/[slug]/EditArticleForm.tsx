@@ -249,177 +249,195 @@ export default function EditArticleForm({ article, categoryName, categorySlug }:
         </Button>
       </div>
 
-      <Card className="max-w-4xl mx-auto">
-        <CardHeader>
-          <CardTitle className="text-2xl">Edit Article</CardTitle>
-          <CardDescription>
-            Make changes to your article below. Your work is auto-saved as a draft every few seconds.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="title">Title</Label>
-                  <Input id="title" {...register('title')} disabled={isSaving || isDeleting} />
-                  {errors.title && <p className="text-sm text-destructive mt-1">{errors.title.message}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="slug">Slug</Label>
-                  <Input id="slug" {...register('slug')} disabled={isSaving || isDeleting} />
-                  {errors.slug && <p className="text-sm text-destructive mt-1">{errors.slug.message}</p>}
-                </div>
-            </div>
-             <div>
-                <Label htmlFor="status">Status</Label>
-                <Controller
-                    name="status"
-                    control={control}
-                    render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value} disabled={isSaving || isDeleting}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select status..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="published">
-                                    <div className="flex items-center gap-2"><Globe className="h-4 w-4 text-green-500" /> Published</div>
-                                </SelectItem>
-                                <SelectItem value="draft">
-                                    <div className="flex items-center gap-2"><FileText className="h-4 w-4 text-yellow-500" /> Draft</div>
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-                    )}
-                />
-            </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            <div className="lg:col-span-2 space-y-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-2xl">Edit Article Content</CardTitle>
+                        <CardDescription>
+                            Make changes to your article below. Your work is auto-saved as a draft every few seconds.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <Label htmlFor="title">Title</Label>
+                                <Input id="title" {...register('title')} disabled={isSaving || isDeleting} />
+                                {errors.title && <p className="text-sm text-destructive mt-1">{errors.title.message}</p>}
+                            </div>
+                            <div>
+                                <Label htmlFor="slug">Slug</Label>
+                                <Input id="slug" {...register('slug')} disabled={isSaving || isDeleting} />
+                                {errors.slug && <p className="text-sm text-destructive mt-1">{errors.slug.message}</p>}
+                            </div>
+                        </div>
 
-            <div>
-              <Label htmlFor="summary">Summary</Label>
-                <Controller
-                    name="summary"
-                    control={control}
-                    render={({ field }) => (
-                        <RichTextEditor
-                            value={field.value || ''}
-                            onChange={field.onChange}
-                            disabled={isSaving || isDeleting}
-                            placeholder="A short, engaging summary for the top of the article."
+                        <div>
+                        <Label htmlFor="summary">Summary</Label>
+                            <Controller
+                                name="summary"
+                                control={control}
+                                render={({ field }) => (
+                                    <RichTextEditor
+                                        value={field.value || ''}
+                                        onChange={field.onChange}
+                                        disabled={isSaving || isDeleting}
+                                        placeholder="A short, engaging summary for the top of the article."
+                                    />
+                                )}
+                            />
+                        {errors.summary && <p className="text-sm text-destructive mt-1">{errors.summary.message}</p>}
+                        </div>
+
+                        <div>
+                        <Label htmlFor="content">Main Content</Label>
+                        <Controller
+                            name="content"
+                            control={control}
+                            render={({ field }) => (
+                                <RichTextEditor 
+                                    value={field.value} 
+                                    onChange={field.onChange}
+                                    disabled={isSaving || isDeleting || isAddingImages}
+                                />
+                            )}
                         />
-                    )}
-                />
-              {errors.summary && <p className="text-sm text-destructive mt-1">{errors.summary.message}</p>}
+                        {errors.content && <p className="text-sm text-destructive mt-1">{errors.content.message}</p>}
+                        </div>
+
+                        <div className="space-y-2 border-t pt-4">
+                        <Label className="text-lg font-semibold">Key Takeaways</Label>
+                            {fields.map((field, index) => (
+                            <div key={field.id} className="flex items-center gap-2">
+                                <Input
+                                {...register(`keyTakeaways.${index}.value`)}
+                                placeholder={`Takeaway #${index + 1}`}
+                                disabled={isSaving || isDeleting}
+                                />
+                                <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={isSaving || isDeleting || fields.length <= 1}>
+                                <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </div>
+                            ))}
+                        {errors.keyTakeaways && <p className="text-sm text-destructive mt-1">{errors.keyTakeaways.root?.message || (errors.keyTakeaways as any)[0]?.value?.message}</p>}
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => append({ value: "" })}
+                            disabled={isSaving || isDeleting || fields.length >= 6}
+                        >
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add Takeaway
+                        </Button>
+                        </div>
+
+                        <div>
+                        <Label htmlFor="conclusion">Conclusion</Label>
+                        <Controller
+                            name="conclusion"
+                            control={control}
+                            render={({ field }) => (
+                                <RichTextEditor 
+                                    value={field.value} 
+                                    onChange={field.onChange}
+                                    disabled={isSaving || isDeleting}
+                                    placeholder="Write your powerful conclusion here..."
+                                />
+                            )}
+                        />
+                        {errors.conclusion && <p className="text-sm text-destructive mt-1">{errors.conclusion.message}</p>}
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
 
-            <div>
-              <Label htmlFor="content">Main Content</Label>
-              <Controller
-                  name="content"
-                  control={control}
-                  render={({ field }) => (
-                      <RichTextEditor 
-                          value={field.value} 
-                          onChange={field.onChange}
-                          disabled={isSaving || isDeleting || isAddingImages}
-                      />
-                  )}
-              />
-              {errors.content && <p className="text-sm text-destructive mt-1">{errors.content.message}</p>}
-            </div>
+            <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Publishing Tools</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div>
+                            <Label htmlFor="status">Status</Label>
+                            <Controller
+                                name="status"
+                                control={control}
+                                render={({ field }) => (
+                                    <Select onValueChange={field.onChange} value={field.value} disabled={isSaving || isDeleting}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select status..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="published">
+                                                <div className="flex items-center gap-2"><Globe className="h-4 w-4 text-green-500" /> Published</div>
+                                            </SelectItem>
+                                            <SelectItem value="draft">
+                                                <div className="flex items-center gap-2"><FileText className="h-4 w-4 text-yellow-500" /> Draft</div>
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            />
+                        </div>
+                        
+                        <div className="space-y-2 border-t pt-4">
+                            <Label>AI Tools</Label>
+                            <div className="flex flex-col sm:flex-row lg:flex-col gap-2">
+                                <Button type="button" variant="secondary" onClick={handleAddImages} disabled={isAddingImages || isSaving || isDeleting} className="w-full justify-center">
+                                    {isAddingImages ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                                    Add Images
+                                </Button>
+                                <Select onValueChange={setImageCount} defaultValue={imageCount} disabled={isAddingImages || isSaving || isDeleting}>
+                                    <SelectTrigger><SelectValue placeholder="Number of Images" /></SelectTrigger>
+                                    <SelectContent>
+                                        {IMAGE_COUNTS.map(opt => (<SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
 
-             <div className="space-y-2 border-t pt-4">
-              <Label className="text-lg font-semibold">Key Takeaways</Label>
-                {fields.map((field, index) => (
-                  <div key={field.id} className="flex items-center gap-2">
-                    <Input
-                      {...register(`keyTakeaways.${index}.value`)}
-                      placeholder={`Takeaway #${index + 1}`}
-                      disabled={isSaving || isDeleting}
-                    />
-                    <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={isSaving || isDeleting || fields.length <= 1}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              {errors.keyTakeaways && <p className="text-sm text-destructive mt-1">{errors.keyTakeaways.root?.message || (errors.keyTakeaways as any)[0]?.value?.message}</p>}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => append({ value: "" })}
-                disabled={isSaving || isDeleting || fields.length >= 6}
-              >
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add Takeaway
-              </Button>
+                         <div className="space-y-2 border-t pt-4">
+                            <Label>Actions</Label>
+                            <div className="flex flex-col gap-2">
+                                <Button type="submit" disabled={isSaving || isDeleting || isAddingImages} className="w-full">
+                                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                    Save Changes
+                                </Button>
+                                <Button type="button" variant="outline" onClick={() => setIsPreviewOpen(true)} className="w-full">
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    Preview Article
+                                </Button>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                    <Button type="button" variant="destructive" disabled={isSaving || isDeleting || isAddingImages} className="w-full">
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Delete Article
+                                    </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This action cannot be undone. This will permanently delete the article from your GitHub repository.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90" disabled={isDeleting}>
+                                            {isDeleting ? 'Deleting...' : 'Yes, delete it'}
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
+                         </div>
+                    </CardContent>
+                </Card>
             </div>
-
-            <div>
-              <Label htmlFor="conclusion">Conclusion</Label>
-               <Controller
-                  name="conclusion"
-                  control={control}
-                  render={({ field }) => (
-                       <RichTextEditor 
-                          value={field.value} 
-                          onChange={field.onChange}
-                          disabled={isSaving || isDeleting}
-                          placeholder="Write your powerful conclusion here..."
-                      />
-                  )}
-              />
-              {errors.conclusion && <p className="text-sm text-destructive mt-1">{errors.conclusion.message}</p>}
-            </div>
-
-            <div className="border-t pt-6 flex flex-wrap justify-between items-center gap-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <Button type="submit" disabled={isSaving || isDeleting || isAddingImages}>
-                  {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                  Save Changes
-                </Button>
-                <div className="flex items-center gap-2">
-                    <Button type="button" variant="secondary" onClick={handleAddImages} disabled={isAddingImages || isSaving || isDeleting}>
-                        {isAddingImages ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                        Generate & Add Images
-                    </Button>
-                    <Select onValueChange={setImageCount} defaultValue={imageCount} disabled={isAddingImages || isSaving || isDeleting}>
-                        <SelectTrigger className="w-[180px]"><SelectValue placeholder="Number of Images" /></SelectTrigger>
-                        <SelectContent>
-                            {IMAGE_COUNTS.map(opt => (<SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <Button type="button" variant="outline" onClick={() => setIsPreviewOpen(true)}>
-                    <Eye className="mr-2 h-4 w-4" />
-                    Preview Article
-                </Button>
-              </div>
-              
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                   <Button type="button" variant="destructive" disabled={isSaving || isDeleting || isAddingImages}>
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete Article
-                   </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the article from your GitHub repository.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90" disabled={isDeleting}>
-                           {isDeleting ? 'Deleting...' : 'Yes, delete it'}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+        </div>
+      </form>
     </>
   );
 }

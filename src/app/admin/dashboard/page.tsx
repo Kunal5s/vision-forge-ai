@@ -13,13 +13,6 @@ export default async function AdminDashboardPage() {
     redirect('/admin');
   }
 
-  const handleComingSoon = async () => {
-    'use server';
-    // This action is a placeholder for features that are not yet implemented.
-    // In a real app, this might show a toast or log analytics.
-    console.log("Feature coming soon!");
-  };
-
   return (
     <main className="flex-grow container mx-auto py-12 px-4 bg-muted/20 min-h-screen">
       <header className="flex justify-between items-center mb-10">
@@ -38,8 +31,8 @@ export default async function AdminDashboardPage() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <Link href="/admin/dashboard/create" className="block h-full transition-all hover:shadow-lg hover:-translate-y-1">
-            <Card className="h-full flex flex-col">
+          <Link href="/admin/dashboard/create" className="block h-full">
+            <Card className="h-full flex flex-col transition-all hover:shadow-lg hover:-translate-y-1">
               <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-2xl">
                       <PlusCircle className="text-primary" /> Create with AI
@@ -56,8 +49,8 @@ export default async function AdminDashboardPage() {
             </Card>
           </Link>
 
-          <Link href="/admin/dashboard/manual" className="block h-full transition-all hover:shadow-lg hover:-translate-y-1">
-            <Card className="h-full flex flex-col">
+          <Link href="/admin/dashboard/manual" className="block h-full">
+            <Card className="h-full flex flex-col transition-all hover:shadow-lg hover:-translate-y-1">
               <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-2xl">
                       <FileSignature className="text-green-600" /> Manual Publish
@@ -74,8 +67,8 @@ export default async function AdminDashboardPage() {
             </Card>
           </Link>
 
-          <Link href="/admin/dashboard/edit" className="block h-full transition-all hover:shadow-lg hover:-translate-y-1">
-            <Card className="h-full flex flex-col">
+          <Link href="/admin/dashboard/edit" className="block h-full">
+            <Card className="h-full flex flex-col transition-all hover:shadow-lg hover:-translate-y-1">
               <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-2xl">
                       <Edit className="text-accent" /> Manage Articles
