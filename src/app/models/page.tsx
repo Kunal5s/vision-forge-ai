@@ -13,7 +13,7 @@ export default function ModelsPage() {
     <main className="container mx-auto py-16 px-4">
       <header className="text-center mb-12">
         <h1 className="text-5xl font-extrabold tracking-tight text-primary mb-4">
-          Our AI <span className="text-accent">Model</span>
+          Our AI Model
         </h1>
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
           We leverage a powerful, community-driven AI model to provide a versatile and high-quality image generation experience, optimized for speed and creativity.
