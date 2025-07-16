@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import React, { useEffect, useState, useRef } from 'react';
 import { AdminLogin } from '../vision-forge/AdminLogin';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetClose } from '@/components/ui/sheet';
 import { Button } from '../ui/button';
 
 const navLinks = [
@@ -29,7 +29,7 @@ const CategoryNavBar = () => {
   
     return (
         <div className="w-full bg-background border-b">
-            <ScrollArea className="w-full whitespace-nowrap" ref={scrollContainerRef}>
+            <ScrollArea className="w-full whitespace-nowrap no-scrollbar" ref={scrollContainerRef}>
                 <nav className="container mx-auto flex items-center gap-6 px-4 h-12">
                 {navLinks.map((link) => (
                     <Link
