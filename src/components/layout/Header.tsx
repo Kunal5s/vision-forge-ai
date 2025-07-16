@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import React, { useEffect, useState, useRef } from 'react';
 import { AdminLogin } from '../vision-forge/AdminLogin';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '../ui/button';
 
 const navLinks = [
@@ -26,50 +26,28 @@ const navLinks = [
 const CategoryNavBar = () => {
     const pathname = usePathname();
     const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-    const scroll = (direction: 'left' | 'right') => {
-        if (scrollContainerRef.current) {
-            const scrollAmount = direction === 'left' ? -200 : 200;
-            scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-        }
-    };
   
     return (
-        <div className="relative group">
-             <Button
-                variant="outline"
-                size="icon"
-                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-background/80 hover:bg-background opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => scroll('left')}
-            >
-                &lt;
-            </Button>
+        <div className="w-full bg-background border-b">
             <ScrollArea className="w-full whitespace-nowrap" ref={scrollContainerRef}>
-                <div className="flex items-center gap-2 py-2 px-12">
+                <nav className="container mx-auto flex items-center gap-6 px-4 h-12">
                 {navLinks.map((link) => (
-                    <Button
-                    key={link.href}
-                    asChild
-                    variant={pathname === link.href ? 'secondary' : 'default'}
-                    size="sm"
-                    className="rounded-full text-sm font-medium"
+                    <Link
+                        key={link.href}
+                        href={link.href}
+                        className={cn(
+                            "text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
+                            pathname === link.href && "text-foreground font-semibold"
+                        )}
                     >
-                    <Link href={link.href}>{link.label}</Link>
-                    </Button>
+                        {link.label}
+                    </Link>
                 ))}
-                </div>
+                </nav>
             </ScrollArea>
-             <Button
-                variant="outline"
-                size="icon"
-                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-background/80 hover:bg-background opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => scroll('right')}
-            >
-                &gt;
-            </Button>
         </div>
     );
-  };
+};
   
 
 const MobileNav = () => {
@@ -141,8 +119,8 @@ export function Header() {
   }
 
   return (
-    <header className="fixed top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-       <div className="container mx-auto flex h-14 items-center justify-between px-4">
+    <header className="fixed top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+       <div className="container mx-auto flex h-16 items-center justify-between px-4 border-b">
          <Link href="/" className="flex flex-shrink-0 items-center gap-2">
            <BrainCircuit className="h-7 w-7 text-foreground" />
            <span className="hidden sm:inline-block text-xl font-bold text-foreground">
@@ -158,7 +136,7 @@ export function Header() {
            <MobileNav />
          </div>
        </div>
-       <div className="border-t">
+       <div className="hidden md:block">
         <CategoryNavBar />
        </div>
     </header>
