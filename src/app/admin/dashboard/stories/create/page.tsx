@@ -16,8 +16,8 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, Wand2 } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowLeft, Loader2, Wand2, KeyRound } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
 import { generateStoryAction } from './actions';
@@ -28,6 +28,7 @@ const StoryFormSchema = z.object({
     .transform(val => parseInt(val, 10))
     .refine(val => val >= 5 && val <= 20, { message: "Story must have between 5 and 20 pages." }),
   category: z.string().min(1, "Please select a category."),
+  openRouterApiKey: z.string().optional(),
 });
 
 type StoryFormData = z.infer<typeof StoryFormSchema>;
@@ -36,14 +37,27 @@ export default function CreateWebStoryPage() {
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
 
-    const { register, handleSubmit, control, formState: { errors } } = useForm<StoryFormData>({
+    const { register, handleSubmit, control, formState: { errors }, setValue } = useForm<StoryFormData>({
         resolver: zodResolver(StoryFormSchema),
         defaultValues: {
             topic: '',
             pageCount: 10,
             category: 'featured',
+            openRouterApiKey: '',
         },
     });
+
+    // Load API key from localStorage on initial render
+    useEffect(() => {
+        try {
+            const savedOpenRouterKey = localStorage.getItem('openRouterApiKey');
+            if (savedOpenRouterKey) {
+                setValue('openRouterApiKey', savedOpenRouterKey);
+            }
+        } catch (error) {
+            console.error("Could not access localStorage. API key will not be persisted.", error);
+        }
+    }, [setValue]);
 
     const handleGeneration = async (data: StoryFormData) => {
         setIsLoading(true);
@@ -141,6 +155,22 @@ export default function CreateWebStoryPage() {
                             />
                         </div>
                         
+                         <div className="space-y-2 border-t pt-4">
+                            <Label htmlFor="openRouterApiKey">OpenRouter API Key (Optional)</Label>
+                            <div className="relative flex items-center">
+                                <KeyRound className="absolute left-3 h-5 w-5 text-muted-foreground" />
+                                <Input
+                                    id="openRouterApiKey"
+                                    type="password"
+                                    placeholder="sk-or-v1-... (leave blank to use server key)"
+                                    {...register('openRouterApiKey')}
+                                    className="pl-10"
+                                    disabled={isLoading}
+                                />
+                            </div>
+                            <p className="text-xs text-muted-foreground">If you provide a key here, it will be used instead of the one on the server.</p>
+                        </div>
+
                         <div className="border-t pt-6">
                             <Button type="submit" className="w-full" disabled={isLoading}>
                                 {isLoading ? (

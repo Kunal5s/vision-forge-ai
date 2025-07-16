@@ -16,6 +16,7 @@ const StoryFormSchema = z.object({
     .transform(val => parseInt(val, 10))
     .refine(val => val >= 5 && val <= 20, { message: "Story must have between 5 and 20 pages." }),
   category: z.string().min(1, "Please select a category."),
+  openRouterApiKey: z.string().optional(),
 });
 
 

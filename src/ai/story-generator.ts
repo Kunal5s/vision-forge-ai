@@ -12,6 +12,7 @@ const StoryGenerationInputSchema = z.object({
   topic: z.string().min(3, "Topic must be at least 3 characters long."),
   pageCount: z.number().min(5, "Story must have at least 5 pages.").max(20, "Story cannot have more than 20 pages."),
   category: z.string().min(1, "Please select a category."),
+  openRouterApiKey: z.string().optional(),
 });
 
 export type StoryGenerationInput = z.infer<typeof StoryGenerationInputSchema>;
@@ -26,15 +27,19 @@ const StoryScenesOutputSchema = z.object({
   })).describe("An array of scenes that tell a coherent story based on the topic.")
 });
 
-async function generateStoryScenes(topic: string, pageCount: number): Promise<z.infer<typeof StoryScenesOutputSchema>> {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
-    throw new Error("OpenRouter API key is not configured on the server.");
+async function generateStoryScenes(input: StoryGenerationInput): Promise<z.infer<typeof StoryScenesOutputSchema>> {
+  const finalApiKey = input.openRouterApiKey || process.env.OPENROUTER_API_KEY;
+  if (!finalApiKey) {
+    throw new Error("OpenRouter API key is not configured. Please provide one in the UI or set the OPENROUTER_API_KEY environment variable on the server.");
   }
 
   const client = new OpenAI({
-    apiKey: apiKey,
+    apiKey: finalApiKey,
     baseURL: "https://openrouter.ai/api/v1",
+    defaultHeaders: {
+        "HTTP-Referer": "https://imagenbrain.ai",
+        "X-Title": "Imagen BrainAi",
+    }
   });
 
   const response = await client.chat.completions.create({
@@ -42,9 +47,9 @@ async function generateStoryScenes(topic: string, pageCount: number): Promise<z.
     messages: [
       {
         role: "system",
-        content: `You are a brilliant storyteller and visual director. Your task is to take a topic and break it down into exactly ${pageCount} sequential scenes for a web story. For each scene, you must generate a highly descriptive image prompt suitable for Pollinations.ai (for a 9:16 vertical image) and a short, catchy caption. The scenes must tell a coherent, linear story. The title must be engaging and the slug must be URL-friendly. Respond with a valid JSON object.`,
+        content: `You are a brilliant storyteller and visual director. Your task is to take a topic and break it down into exactly ${input.pageCount} sequential scenes for a web story. For each scene, you must generate a highly descriptive image prompt suitable for Pollinations.ai (for a 9:16 vertical image) and a short, catchy caption. The scenes must tell a coherent, linear story. The title must be engaging and the slug must be URL-friendly. Respond with a valid JSON object.`,
       },
-      { role: "user", content: `Topic: "${topic}"` },
+      { role: "user", content: `Topic: "${input.topic}"` },
     ],
     response_format: { type: "json_object" },
   });
@@ -74,7 +79,7 @@ function generatePollinationsImage(prompt: string): string {
 export async function generateAndSaveWebStory(input: StoryGenerationInput): Promise<{ success: boolean; error?: string; slug?: string }> {
   try {
     console.log(`Generating ${input.pageCount} scenes for topic: ${input.topic}`);
-    const scenesData = await generateStoryScenes(input.topic, input.pageCount);
+    const scenesData = await generateStoryScenes(input);
 
     console.log("Generating images for each scene...");
     const pages: StoryPage[] = scenesData.scenes.map(scene => ({
