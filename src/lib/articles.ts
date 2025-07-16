@@ -19,8 +19,8 @@ const ArticleSchema = z.object({
   category: z.string(),
   title: z.string().min(1),
   slug: z.string().min(1),
-  status: z.enum(['published', 'draft']).default('published'), // Add status field with default
-  publishedDate: z.string().datetime(), // Make it required
+  status: z.enum(['published', 'draft']).default('published'),
+  publishedDate: z.string().datetime(),
   summary: z.string().optional(),
   articleContent: z.array(ArticleContentBlockSchema),
   keyTakeaways: z.array(z.string()),
@@ -30,50 +30,30 @@ export type Article = z.infer<typeof ArticleSchema>;
 
 const ArticleFileSchema = z.array(ArticleSchema);
 
-// This function now correctly uses the Zod schema's default 'published' status.
 async function loadAndValidateArticles(category: string): Promise<Article[]> {
     const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category) || category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    const repoPath = `src/articles/${categorySlug}.json`;
-    const GITHUB_REPO_URL = `https://raw.githubusercontent.com/${process.env.GITHUB_REPO_OWNER}/${process.env.GITHUB_REPO_NAME}/main/${repoPath}`;
-    
-    // Add a cache-busting parameter to the URL
-    const urlWithCacheBust = `${GITHUB_REPO_URL}?${new Date().getTime()}`;
+    const filePath = path.join(process.cwd(), 'src', 'articles', `${categorySlug}.json`);
 
     try {
-        const { GITHUB_TOKEN } = process.env;
-        if (!GITHUB_TOKEN) {
-            throw new Error("GitHub token is not configured on the server.");
-        }
-        
-        const response = await fetch(urlWithCacheBust, {
-            headers: {
-                Authorization: `token ${GITHUB_TOKEN}`,
-                Accept: 'application/vnd.github.v3.raw',
-            },
-            // Force re-fetch, disable caching
-            cache: 'no-store',
-        });
-
-        if (!response.ok) {
-            if (response.status === 404) {
-                 console.warn(`Article file not found for category "${category}" on GitHub.`);
-                 return [];
-            }
-            throw new Error(`Failed to fetch from GitHub: ${response.statusText}`);
-        }
-
-        const articlesData = await response.json();
+        const fileContent = await fs.readFile(filePath, 'utf-8');
+        const articlesData = JSON.parse(fileContent);
         const validatedArticles = ArticleFileSchema.safeParse(articlesData);
 
         if (validatedArticles.success) {
             return validatedArticles.data;
         } else {
-            console.error(`Zod validation failed for ${categorySlug}.json from GitHub.`, validatedArticles.error.flatten());
+            console.error(`Zod validation failed for ${categorySlug}.json.`, validatedArticles.error.flatten());
             return [];
         }
 
     } catch (error: any) {
-        console.error(`Error loading articles for category "${category}" from GitHub:`, error.message);
+        // If file not found, it's not a critical error, just means no articles for that category.
+        if (error.code === 'ENOENT') {
+            console.log(`No article file found for category "${category}" at ${filePath}`);
+        } else {
+            // For other errors (like JSON parsing), log them.
+            console.error(`Error loading articles for category "${category}":`, error.message);
+        }
         return [];
     }
 }
@@ -81,14 +61,11 @@ async function loadAndValidateArticles(category: string): Promise<Article[]> {
 // For public-facing pages: gets ONLY published articles.
 export async function getArticles(category: string): Promise<Article[]> {
     const allArticles = await loadAndValidateArticles(category);
-    // Filter for published articles AFTER loading them
-    const publishedArticles = allArticles.filter(article => article.status === 'published');
-    return publishedArticles;
+    return allArticles.filter(article => article.status === 'published');
 }
 
 // For admin pages: gets ALL articles, including drafts
 export async function getAllArticlesAdmin(category: string): Promise<Article[]> {
-    // This function will return all articles, regardless of status.
     const allArticles = await loadAndValidateArticles(category);
     return allArticles;
 }
