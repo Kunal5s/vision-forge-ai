@@ -87,7 +87,7 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
   }
 }
 
-async function getShaForFile(octokit: Octokit, owner: string, repo: string, path: string, branch: string): Promise<string | undefined> {
+export async function getShaForFile(octokit: Octokit, owner: string, repo: string, path: string, branch: string): Promise<string | undefined> {
     try {
         const { data } = await octokit.rest.repos.getContent({
             owner,
@@ -215,7 +215,7 @@ export async function deleteArticleAction(category: string, slug: string) {
     redirect('/admin/dashboard/edit');
 }
 
-async function getPrimaryBranch(octokit: Octokit, owner: string, repo: string): Promise<string> {
+export async function getPrimaryBranch(octokit: Octokit, owner: string, repo: string): Promise<string> {
     if (process.env.GITHUB_BRANCH) {
         return process.env.GITHUB_BRANCH;
     }
