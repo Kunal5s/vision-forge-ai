@@ -28,7 +28,7 @@ const CategoryNavBar = () => {
     return (
         <div className="w-full bg-background border-b">
             <ScrollArea className="w-full whitespace-nowrap no-scrollbar">
-                <nav className="container mx-auto flex items-center justify-start gap-2 px-4 h-14">
+                <nav className="flex items-center justify-start gap-2 px-4 h-14">
                 {navLinks.map((link) => (
                     <Button key={link.href} asChild variant={pathname === link.href ? 'secondary' : 'default'} className={cn(pathname !== link.href && "bg-white text-black hover:bg-gray-200")}>
                         <Link href={link.href}>
