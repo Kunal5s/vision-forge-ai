@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import React, { useEffect, useState, useRef } from 'react';
 import { AdminLogin } from '../vision-forge/AdminLogin';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Button } from '../ui/button';
 
@@ -21,7 +21,6 @@ const navLinks = [
   { href: '/trends', label: 'Trends' },
   { href: '/technology', label: 'Technology' },
   { href: '/nft', label: 'NFT' },
-  { href: '/stories', label: 'Web Stories' },
 ];
 
 const CategoryNavBar = () => {
@@ -59,15 +58,14 @@ const CategoryNavBar = () => {
                              className={cn(
                                 "text-sm font-medium transition-colors h-8 px-4",
                                 pathname === link.href 
-                                ? "bg-primary text-primary-foreground" 
-                                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                                ? "bg-secondary text-secondary-foreground" 
+                                : "bg-primary text-primary-foreground hover:bg-primary/90"
                             )}
                         >
                             <Link href={link.href}>{link.label}</Link>
                         </Button>
                     ))}
                 </nav>
-              <ScrollBar orientation="horizontal" className="h-0" />
             </ScrollArea>
              <Button
                 variant="ghost"
@@ -95,14 +93,13 @@ const MobileNav = () => {
       </SheetTrigger>
       <SheetContent side="left" className="w-full max-w-xs p-0">
          <SheetHeader className="p-6 pb-4 border-b">
-          <SheetTitle>
-             <Link href="/" className="flex items-center gap-2">
-                <BrainCircuit className="h-7 w-7 text-foreground" />
-                <span className="text-xl font-bold text-foreground">
-                    Imagen BrainAi
-                </span>
+            <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+            <Link href="/" className="flex items-center gap-2">
+              <BrainCircuit className="h-7 w-7 text-foreground" />
+              <span className="text-xl font-bold text-foreground">
+                  Imagen BrainAi
+              </span>
             </Link>
-          </SheetTitle>
         </SheetHeader>
         <ScrollArea className="h-[calc(100%-80px)]">
             <div className="p-4 space-y-4">
