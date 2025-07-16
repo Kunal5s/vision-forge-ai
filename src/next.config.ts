@@ -1,9 +1,5 @@
 
 import type {NextConfig} from 'next';
-import { categorySlugMap } from './src/lib/constants';
-import { writeFile } from 'fs/promises';
-import { SitemapStream, streamToPromise } from 'sitemap';
-import { Readable } from 'stream';
 
 const nextConfig: NextConfig = {
   typescript: {
