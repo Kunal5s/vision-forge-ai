@@ -7,6 +7,7 @@ import type { AuthorData } from '@/lib/author';
 import { getAuthorData } from '@/app/admin/dashboard/author/actions';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import parse from 'html-react-parser';
 
 interface AuthorBioProps {
     author?: AuthorData;
@@ -64,9 +65,9 @@ export function AuthorBio({ author: initialAuthor }: AuthorBioProps) {
           <Link href="/author/kunal-sonpitre">{author.name}</Link>
         </h3>
         <p className="text-sm font-semibold text-primary mb-2">{author.title}</p>
-        <p className="text-sm text-muted-foreground">
-          {author.bio}
-        </p>
+        <div className="text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none">
+          {parse(author.bio)}
+        </div>
       </div>
     </div>
   );

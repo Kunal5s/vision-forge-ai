@@ -209,10 +209,10 @@ export default async function ArticlePage({ params }: { params: { category: stri
                 )}
 
                 <div className="mt-16 pt-8 border-t">
+                    <h2 className="text-2xl font-bold tracking-tight text-foreground mb-4">About the Author</h2>
                     <AuthorBio author={author} />
                 </div>
             </div>
         </main>
     );
 }
-
