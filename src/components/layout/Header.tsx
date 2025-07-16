@@ -1,12 +1,17 @@
+
 // src/components/layout/Header.tsx
 "use client";
 
 import Link from 'next/link';
-import { BrainCircuit } from 'lucide-react';
+import { BrainCircuit, Menu } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import React, { useEffect, useState } from 'react';
 import { AdminLogin } from '../vision-forge/AdminLogin';
+import { SubscriptionManager } from '../vision-forge/SubscriptionManager';
+import { Button } from '../ui/button';
+import { Sheet, SheetContent, SheetTrigger, SheetHeader } from '../ui/sheet';
+import { Separator } from '../ui/separator';
 
 const navLinks = [
   { href: '/prompts', label: 'Prompts' },
@@ -20,18 +25,19 @@ const navLinks = [
   { href: '/nft', label: 'NFT' },
 ];
 
-
 export function Header() {
   const pathname = usePathname();
   const [isClient, setIsClient] = useState(false);
+  const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  // This hook is used to prevent hydration mismatch by ensuring
-  // that the component only renders on the client side where `pathname` is available.
   useEffect(() => {
     setIsClient(true);
   }, []);
+  
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
-  // Render a placeholder or nothing on the server until the client-side check is complete
   if (!isClient) {
     return (
        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -42,39 +48,84 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex flex-col px-4">
-        {/* Top Row: Logo and Admin Login */}
-        <div className="flex h-16 items-center justify-between">
-          <Link href="/" className="flex flex-shrink-0 items-center gap-2">
-            <BrainCircuit className="h-7 w-7 text-foreground" />
-            <span className="text-xl font-bold text-foreground">
-              Imagen BrainAi
-            </span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <AdminLogin />
-          </div>
-        </div>
+      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+        {/* Logo */}
+        <Link href="/" className="flex flex-shrink-0 items-center gap-2">
+          <BrainCircuit className="h-7 w-7 text-foreground" />
+          <span className="text-xl font-bold text-foreground">
+            Imagen BrainAi
+          </span>
+        </Link>
         
-        {/* Bottom Row: Navigation Links */}
-        <nav className="flex w-full items-center overflow-x-auto no-scrollbar pb-2">
-            <div className="flex gap-2">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                    "whitespace-nowrap rounded-md px-4 py-1.5 text-sm font-medium transition-colors border",
-                    pathname === link.href 
-                      ? "bg-foreground text-background border-transparent" 
-                      : "bg-background text-foreground border-input hover:bg-muted"
-                  )}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-          </nav>
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex flex-grow items-center justify-center">
+            <nav className="flex items-center space-x-1">
+                {navLinks.map((link) => (
+                    <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
+                        "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                        pathname === link.href 
+                        ? "bg-foreground text-background" 
+                        : "text-foreground/70 hover:bg-muted hover:text-foreground"
+                    )}
+                    >
+                    {link.label}
+                    </Link>
+                ))}
+            </nav>
+        </div>
+
+        {/* Desktop Buttons */}
+        <div className="hidden md:flex items-center gap-2">
+            <SubscriptionManager />
+            <AdminLogin />
+        </div>
+
+        {/* Mobile Menu */}
+        <div className="md:hidden">
+            <Sheet open={isMobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                        <Menu className="h-6 w-6" />
+                        <span className="sr-only">Open Menu</span>
+                    </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[280px] p-4">
+                    <SheetHeader>
+                        <Link href="/" className="flex flex-shrink-0 items-center gap-2 mb-4">
+                            <BrainCircuit className="h-7 w-7 text-foreground" />
+                            <span className="text-xl font-bold text-foreground">
+                                Imagen BrainAi
+                            </span>
+                        </Link>
+                    </SheetHeader>
+                    <Separator className="my-4" />
+                    <div className="flex flex-col space-y-2 mb-4">
+                        <SubscriptionManager />
+                        <AdminLogin />
+                    </div>
+                    <Separator className="my-4" />
+                    <nav className="flex flex-col space-y-2">
+                        {navLinks.map((link) => (
+                            <Link
+                                key={link.href}
+                                href={link.href}
+                                className={cn(
+                                    "block rounded-md px-3 py-2 text-base font-medium",
+                                    pathname === link.href
+                                    ? "bg-muted text-foreground"
+                                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                                )}
+                            >
+                                {link.label}
+                            </Link>
+                        ))}
+                    </nav>
+                </SheetContent>
+            </Sheet>
+        </div>
       </div>
     </header>
   );

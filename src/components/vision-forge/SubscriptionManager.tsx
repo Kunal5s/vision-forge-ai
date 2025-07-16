@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useSubscription } from '@/hooks/use-subscription';
 import { Sparkles } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export function SubscriptionManager() {
   const { subscription, activateSubscription, deactivateSubscription, isLoading } = useSubscription();
@@ -53,13 +54,13 @@ export function SubscriptionManager() {
   const isLoggedIn = subscription && subscription.plan !== 'free';
 
   if (isLoading) {
-    return <Button variant="outline" className="text-xs h-8" disabled>Loading Plan...</Button>;
+    return <Button variant="outline" className="text-xs h-8 md:h-9" disabled>Loading Plan...</Button>;
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="text-xs h-8">
+        <Button variant="outline" className={cn("text-xs h-9 w-full md:w-auto", isLoggedIn && 'border-yellow-500/50 hover:border-yellow-500/80')}>
             <Sparkles className="mr-2 h-4 w-4 text-yellow-500" />
             {isLoggedIn ? 'Manage Plan' : 'Activate Plan'}
         </Button>
