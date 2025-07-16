@@ -1,4 +1,3 @@
-
 // src/app/admin/dashboard/page.tsx
 import { getUser, logout } from '@/app/admin/actions';
 import { redirect } from 'next/navigation';
