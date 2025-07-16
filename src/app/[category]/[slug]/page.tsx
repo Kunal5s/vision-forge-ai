@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import parse from 'html-react-parser';
 import { format } from 'date-fns';
 import { AuthorBio } from '@/components/vision-forge/AuthorBio';
+import { getAuthorData } from '@/app/admin/dashboard/author/actions';
 
 // Function to find the article
 async function getArticleData(categorySlug: string, articleSlug: string): Promise<Article | undefined> {
@@ -74,6 +75,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
     };
     
     const toc = getTableOfContents(article.articleContent);
+    const author = await getAuthorData();
 
     const renderContentBlock = (block: Article['articleContent'][0], index: number) => {
         const slug = block.type === 'h2' 
@@ -207,7 +209,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
                 )}
 
                 <div className="mt-16 pt-8 border-t">
-                    <AuthorBio />
+                    <AuthorBio author={author} />
                 </div>
             </div>
         </main>

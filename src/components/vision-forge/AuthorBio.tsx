@@ -4,12 +4,48 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { AuthorData } from '@/lib/author';
+import { getAuthorData } from '@/app/admin/dashboard/author/actions';
+import { useEffect, useState } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface AuthorBioProps {
-    author: AuthorData;
+    author?: AuthorData;
 }
 
-export function AuthorBio({ author }: AuthorBioProps) {
+const AuthorBioSkeleton = () => (
+    <div className="flex flex-col sm:flex-row items-center gap-6 rounded-lg border bg-muted/50 p-6">
+        <Skeleton className="h-[100px] w-[100px] rounded-full shrink-0" />
+        <div className="space-y-2">
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+        </div>
+    </div>
+);
+
+
+export function AuthorBio({ author: initialAuthor }: AuthorBioProps) {
+  const [author, setAuthor] = useState<AuthorData | null>(initialAuthor || null);
+  const [isLoading, setIsLoading] = useState(!initialAuthor);
+
+  useEffect(() => {
+    if (!initialAuthor) {
+      setIsLoading(true);
+      getAuthorData()
+        .then(setAuthor)
+        .catch(console.error)
+        .finally(() => setIsLoading(false));
+    }
+  }, [initialAuthor]);
+
+  if (isLoading) {
+    return <AuthorBioSkeleton />;
+  }
+
+  if (!author) {
+    return null; // Or some fallback UI if author data can't be fetched
+  }
 
   return (
     <div className="flex flex-col sm:flex-row items-center gap-6 rounded-lg border bg-muted/50 p-6">
