@@ -1,9 +1,8 @@
-
 // src/components/layout/Header.tsx
 "use client";
 
 import Link from 'next/link';
-import { BrainCircuit, Menu, X, BookImage } from 'lucide-react';
+import { BrainCircuit, Menu, BookImage } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import React, { useEffect, useState } from 'react';
@@ -13,7 +12,6 @@ import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/s
 import { Button } from '../ui/button';
 
 const navLinks = [
-  { href: '/stories', label: 'Web Stories', icon: BookImage },
   { href: '/prompts', label: 'Prompts' },
   { href: '/styles',label: 'Styles' },
   { href: '/tutorials', label: 'Tutorials' },
@@ -25,7 +23,11 @@ const navLinks = [
   { href: '/nft', label: 'NFT' },
 ];
 
-const MobileNav = ({ isAdminPage }: { isAdminPage: boolean }) => {
+const MobileNav = () => {
+  const pathname = usePathname();
+  const isAdminPage = pathname.startsWith('/admin');
+  const isHomePage = pathname === '/';
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -52,7 +54,7 @@ const MobileNav = ({ isAdminPage }: { isAdminPage: boolean }) => {
                           href={link.href}
                           className={cn(
                           "flex items-center gap-2 rounded-md px-3 py-2 text-base font-medium transition-colors",
-                          usePathname() === link.href
+                          pathname === link.href
                               ? "bg-primary text-primary-foreground"
                               : "text-muted-foreground hover:bg-muted hover:text-foreground"
                           )}
@@ -73,6 +75,7 @@ const MobileNav = ({ isAdminPage }: { isAdminPage: boolean }) => {
 export function Header({ isAdminPage }: { isAdminPage: boolean }) {
   const pathname = usePathname();
   const [isClient, setIsClient] = useState(false);
+  const isHomePage = pathname === '/';
   
   useEffect(() => {
     setIsClient(true);
@@ -104,10 +107,10 @@ export function Header({ isAdminPage }: { isAdminPage: boolean }) {
         
         {/* Mobile Nav Trigger */}
         <div className="md:hidden">
-          <MobileNav isAdminPage={isAdminPage} />
+          <MobileNav />
         </div>
       </div>
-      {!isAdminPage && (
+      {isHomePage && (
         <div className="container mx-auto hidden h-10 items-center px-4 md:flex">
           <ScrollArea className="w-full whitespace-nowrap">
               <nav className="flex items-center space-x-1">
@@ -119,8 +122,7 @@ export function Header({ isAdminPage }: { isAdminPage: boolean }) {
                           "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
                           pathname === link.href 
                           ? "bg-foreground text-background" 
-                          : "text-foreground/70 hover:bg-muted hover:text-foreground",
-                          link.icon && "text-orange-500 hover:text-orange-600"
+                          : "text-foreground/70 hover:bg-muted hover:text-foreground"
                       )}
                       >
                       {link.icon && <link.icon className="h-4 w-4" />}
