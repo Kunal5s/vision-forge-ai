@@ -21,6 +21,12 @@ interface EditArticlesClientPageProps {
 export default function EditArticlesClientPage({ allArticlesByCategory }: EditArticlesClientPageProps) {
     const [searchTerm, setSearchTerm] = useState('');
 
+    const getSnippet = (content: Article['articleContent']) => {
+        const pBlock = content.find(c => c.type === 'p')?.content || '';
+        const strippedContent = pBlock.replace(/<[^>]*>?/gm, ''); // Strip HTML tags
+        return strippedContent.substring(0, 150);
+    };
+
     const filteredArticles = useMemo(() => {
         if (!searchTerm) {
             return allArticlesByCategory;
@@ -30,13 +36,6 @@ export default function EditArticlesClientPage({ allArticlesByCategory }: EditAr
 
         return allArticlesByCategory
             .map(categoryData => {
-                // Snippet generation for search
-                const getSnippet = (content: Article['articleContent']) => {
-                    const pBlock = content.find(c => c.type === 'p')?.content || '';
-                    const strippedContent = pBlock.replace(/<[^>]*>?/gm, '');
-                    return strippedContent.substring(0, 150);
-                };
-
                 const filtered = categoryData.articles.filter(article =>
                     article.title.toLowerCase().replace(/<[^>]*>?/gm, '').includes(lowercasedFilter) ||
                     (article.status && article.status.toLowerCase().includes(lowercasedFilter)) ||
@@ -79,22 +78,25 @@ export default function EditArticlesClientPage({ allArticlesByCategory }: EditAr
                                 </h2>
                                 <div className="space-y-4">
                                     {articles.map(article => (
-                                        <div key={article.slug} className="p-4 border rounded-lg bg-background hover:bg-muted/50 transition-colors flex items-center gap-4">
+                                        <div key={article.slug} className="flex items-center gap-4 p-4 border rounded-lg bg-background hover:bg-muted/50 transition-colors">
                                             <Image
                                               src={article.image}
                                               alt={article.title.replace(/<[^>]*>?/gm, '')}
-                                              width={64}
-                                              height={64}
+                                              width={80}
+                                              height={80}
                                               className="rounded-md object-cover aspect-square shrink-0"
                                               data-ai-hint={article.dataAiHint}
                                             />
                                             <div className="flex-grow min-w-0">
                                                 <h3 className="font-semibold text-lg text-foreground truncate">{parse(article.title)}</h3>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                     <Badge variant={article.status === 'published' ? 'default' : 'secondary'} className={cn(article.status === 'published' ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-500 hover:bg-yellow-600', 'text-white')}>
-                                                        {article.status === 'published' ? <CheckCircle className="mr-1 h-3.5 w-3.5" /> : <Edit3 className="mr-1 h-3.5 w-3.5" />}
+                                                <div className="flex items-center gap-2 mt-1 mb-2">
+                                                    <Badge variant={article.status === 'published' ? 'default' : 'secondary'} className={cn(article.status === 'published' ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-500 hover:bg-yellow-600', 'text-white')}>
+                                                        {article.status === 'published' ? <CheckCircle className="mr-1.5 h-3.5 w-3.5" /> : <Edit3 className="mr-1.5 h-3.5 w-3.5" />}
                                                         {article.status}
                                                     </Badge>
+                                                    <p className="text-xs text-muted-foreground truncate">
+                                                        /{categorySlug}/{article.slug}
+                                                    </p>
                                                 </div>
                                             </div>
                                             <Button asChild variant="secondary" size="sm" className="shrink-0 ml-auto">

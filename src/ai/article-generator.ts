@@ -70,11 +70,13 @@ async function generateWithOpenRouter(params: ArticleGenerationParams): Promise<
         throw new Error("OpenRouter API key is not set. Please provide one in the UI or set the OPENROUTER_API_KEY environment variable on the server.");
     }
 
-    // With `openai` v4, when using custom headers, the API key MUST be in the headers as well.
-    // The apiKey in the constructor is ignored in this case.
     const client = new OpenAI({
         baseURL: "https://openrouter.ai/api/v1",
-        apiKey: "DUMMY_VALUE", // This is ignored when apiKey is in headers.
+        apiKey: finalApiKey,
+        defaultHeaders: {
+            "HTTP-Referer": "https://imagenbrain.ai",
+            "X-Title": "Imagen BrainAi",
+        },
     });
     
     const JSON_PROMPT_STRUCTURE = getJsonPromptStructureForArticle(wordCount, style, mood, imageCount);
@@ -88,11 +90,6 @@ async function generateWithOpenRouter(params: ArticleGenerationParams): Promise<
         ],
         response_format: { type: "json_object" },
         max_tokens: 4096,
-        extra_headers: {
-            "Authorization": `Bearer ${finalApiKey}`, // CRITICAL FIX: Send API Key here.
-            "HTTP-Referer": "https://imagenbrain.ai",
-            "X-Title": "Imagen BrainAi",
-        }
     });
 
     const jsonContent = response.choices[0].message.content;
@@ -119,10 +116,9 @@ async function generateWithSambaNova(params: ArticleGenerationParams): Promise<A
         throw new Error("SambaNova API key is not set. Please provide one in the UI or set the SAMBANOVA_API_KEY environment variable on the server.");
     }
 
-    // With `openai` v4, when using custom headers, the API key MUST be in the headers as well.
     const client = new OpenAI({
         baseURL: "https://api.cloud.sambanova.ai/v1",
-        apiKey: "DUMMY_VALUE", // This is ignored when apiKey is in headers.
+        apiKey: finalApiKey,
     });
 
     const JSON_PROMPT_STRUCTURE = getJsonPromptStructureForArticle(wordCount, style, mood, imageCount);
@@ -136,9 +132,6 @@ async function generateWithSambaNova(params: ArticleGenerationParams): Promise<A
         ],
         response_format: { type: "json_object" },
         max_tokens: 4096,
-        extra_headers: {
-            "Authorization": `Bearer ${finalApiKey}`
-        }
     });
 
     const jsonContent = response.choices[0].message.content;
@@ -163,7 +156,6 @@ export async function generateArticleForTopic(params: ArticleGenerationParams): 
         try {
             console.log(`Attempting to generate article for topic: "${params.topic}" with provider: ${params.provider} and model: ${model}`);
             
-            // This is the corrected params object for the current iteration
             const currentParams = { ...params, model };
             let article: Article | null = null;
 
@@ -182,7 +174,6 @@ export async function generateArticleForTopic(params: ArticleGenerationParams): 
 
         } catch (error: any) {
             console.error(`- An unexpected error occurred with provider ${params.provider} and model ${model}. Error Message:`, error.message);
-            // Optionally log the full error for more details if available
             if (error.response) {
                 console.error('Error Response:', await error.response.text());
             }
@@ -191,5 +182,3 @@ export async function generateArticleForTopic(params: ArticleGenerationParams): 
 
     throw new Error(`All AI models for provider ${params.provider} failed to generate the article. Please check your API key, the complexity of the topic, or try again later.`);
 }
-
-    

@@ -35,8 +35,8 @@ async function generateStoryScenes(input: StoryGenerationInput): Promise<z.infer
   }
 
   const client = new OpenAI({
-    apiKey: finalApiKey,
     baseURL: "https://openrouter.ai/api/v1",
+    apiKey: finalApiKey,
     defaultHeaders: {
         "HTTP-Referer": "https://imagenbrain.ai",
         "X-Title": "Imagen BrainAi",
