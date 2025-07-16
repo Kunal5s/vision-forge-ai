@@ -17,7 +17,7 @@ export default function ContactPage() {
     <main className="container mx-auto py-16 px-4">
       <header className="text-center mb-12">
         <h1 className="text-5xl font-extrabold tracking-tight text-foreground mb-4">
-          Contact <span className="text-accent">Us</span>
+          Contact <span className="text-primary">Us</span>
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
           Have questions, feedback, or need support? We'd love to hear from you. Reach out through the form below or via email.
@@ -63,18 +63,18 @@ export default function ContactPage() {
             </CardHeader>
             <CardContent>
               <p className="text-foreground mb-1">For general questions, partnership opportunities, or media inquiries, please email us at:</p>
-              <a href="mailto:info@imagenbrain.ai" className="text-foreground hover:underline font-medium">info@imagenbrain.ai</a>
+              <a href="mailto:info@imagenbrain.ai" className="text-primary hover:underline font-medium">info@imagenbrain.ai</a>
               <p className="text-sm text-muted-foreground mt-2">We typically respond within 1-2 business days.</p>
             </CardContent>
           </Card>
           
           <Card className="transition-shadow hover:shadow-lg">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl"><HelpCircle className="text-accent" /> Support & Feedback</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-xl"><HelpCircle className="text-primary" /> Support & Feedback</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-foreground mb-1">Encountering an issue or have a suggestion to make Imagen BrainAi better? Contact our support team:</p>
-              <a href="mailto:support@imagenbrain.ai" className="text-accent hover:underline font-medium">support@imagenbrain.ai</a>
+              <a href="mailto:support@imagenbrain.ai" className="text-primary hover:underline font-medium">support@imagenbrain.ai</a>
               <p className="text-sm text-muted-foreground mt-2">Your feedback is invaluable to us!</p>
             </CardContent>
           </Card>
