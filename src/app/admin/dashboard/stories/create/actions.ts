@@ -17,6 +17,7 @@ const StoryFormSchema = z.object({
     .refine(val => val >= 5 && val <= 20, { message: "Story must have between 5 and 20 pages." }),
   category: z.string().min(1, "Please select a category."),
   openRouterApiKey: z.string().optional(),
+  huggingFaceApiKey: z.string().optional(),
 });
 
 
@@ -46,7 +47,7 @@ export async function generateStoryAction(data: unknown): Promise<{ success: boo
 }
 
 
-async function getShaForFile(octokit: Octokit, owner: string, repo: string, path: string, branch: string): Promise<string | undefined> {
+export async function getShaForFile(octokit: Octokit, owner: string, repo: string, path: string, branch: string): Promise<string | undefined> {
     try {
         const { data } = await octokit.rest.repos.getContent({
             owner,
@@ -66,7 +67,7 @@ async function getShaForFile(octokit: Octokit, owner: string, repo: string, path
     }
 }
 
-async function getPrimaryBranch(octokit: Octokit, owner: string, repo: string): Promise<string> {
+export async function getPrimaryBranch(octokit: Octokit, owner: string, repo: string): Promise<string> {
     if (process.env.GITHUB_BRANCH) {
         return process.env.GITHUB_BRANCH;
     }

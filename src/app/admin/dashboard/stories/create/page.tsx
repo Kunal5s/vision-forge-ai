@@ -22,6 +22,8 @@ import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
 import { generateStoryAction } from './actions';
 import { categorySlugMap } from '@/lib/constants';
+import { Badge } from '@/components/ui/badge';
+
 
 const StoryFormSchema = z.object({
   topic: z.string().min(3, "Topic must be at least 3 characters long."),
@@ -29,6 +31,7 @@ const StoryFormSchema = z.object({
     .refine(val => !isNaN(parseInt(val)), { message: "Page count must be a number." }),
   category: z.string().min(1, "Please select a category."),
   openRouterApiKey: z.string().optional(),
+  huggingFaceApiKey: z.string().optional(),
 });
 
 type StoryFormData = z.infer<typeof StoryFormSchema>;
@@ -37,27 +40,41 @@ export default function CreateWebStoryPage() {
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
 
-    const { register, handleSubmit, control, formState: { errors }, setValue } = useForm<StoryFormData>({
+    const { register, handleSubmit, control, formState: { errors }, setValue, watch } = useForm<StoryFormData>({
         resolver: zodResolver(StoryFormSchema),
         defaultValues: {
             topic: '',
             pageCount: '10', // Default to a string value
             category: 'Featured', // Default to a valid category name
             openRouterApiKey: '',
+            huggingFaceApiKey: '',
         },
     });
 
-    // Load API key from localStorage on initial render
+    const openRouterApiKey = watch('openRouterApiKey');
+    const huggingFaceApiKey = watch('huggingFaceApiKey');
+
+    // Load API keys from localStorage on initial render
     useEffect(() => {
         try {
             const savedOpenRouterKey = localStorage.getItem('openRouterApiKey');
-            if (savedOpenRouterKey) {
-                setValue('openRouterApiKey', savedOpenRouterKey);
-            }
+            const savedHuggingFaceKey = localStorage.getItem('huggingFaceApiKey');
+            if (savedOpenRouterKey) setValue('openRouterApiKey', savedOpenRouterKey);
+            if (savedHuggingFaceKey) setValue('huggingFaceApiKey', savedHuggingFaceKey);
         } catch (error) {
-            console.error("Could not access localStorage. API key will not be persisted.", error);
+            console.error("Could not access localStorage. API keys will not be persisted.", error);
         }
     }, [setValue]);
+    
+     // Save API keys to localStorage whenever they change
+    useEffect(() => {
+      try {
+        if (openRouterApiKey) localStorage.setItem('openRouterApiKey', openRouterApiKey); else localStorage.removeItem('openRouterApiKey');
+        if (huggingFaceApiKey) localStorage.setItem('huggingFaceApiKey', huggingFaceApiKey); else localStorage.removeItem('huggingFaceApiKey');
+      } catch (error) {
+        // Silently fail if localStorage is not available
+      }
+    }, [openRouterApiKey, huggingFaceApiKey]);
 
     const handleGeneration = async (data: StoryFormData) => {
         setIsLoading(true);
@@ -162,21 +179,27 @@ export default function CreateWebStoryPage() {
                             />
                         </div>
                         
-                         <div className="space-y-2 border-t pt-4">
-                            <Label htmlFor="openRouterApiKey">OpenRouter API Key (Optional)</Label>
-                            <div className="relative flex items-center">
-                                <KeyRound className="absolute left-3 h-5 w-5 text-muted-foreground" />
-                                <Input
-                                    id="openRouterApiKey"
-                                    type="password"
-                                    placeholder="sk-or-v1-... (leave blank to use server key)"
-                                    {...register('openRouterApiKey')}
-                                    className="pl-10"
-                                    disabled={isLoading}
-                                />
+                         <div className="space-y-4 border-t pt-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="huggingFaceApiKey">Hugging Face API Key (Optional)</Label>
+                                <div className="relative flex items-center">
+                                    <KeyRound className="absolute left-3 h-5 w-5 text-muted-foreground" />
+                                    <Input id="huggingFaceApiKey" type="password" placeholder="hf_... (leave blank to use server key)" {...register('huggingFaceApiKey')} className="pl-10" disabled={isLoading} />
+                                    {huggingFaceApiKey && <Badge className="absolute right-2 bg-green-600 text-white">Active</Badge>}
+                                </div>
+                                <p className="text-xs text-muted-foreground">This key will be prioritized for generation.</p>
                             </div>
-                            <p className="text-xs text-muted-foreground">If you provide a key here, it will be used instead of the one on the server.</p>
+                            <div className="space-y-2">
+                                <Label htmlFor="openRouterApiKey">OpenRouter API Key (Optional)</Label>
+                                <div className="relative flex items-center">
+                                    <KeyRound className="absolute left-3 h-5 w-5 text-muted-foreground" />
+                                    <Input id="openRouterApiKey" type="password" placeholder="sk-or-v1-... (leave blank to use server key)" {...register('openRouterApiKey')} className="pl-10" disabled={isLoading} />
+                                    {openRouterApiKey && !huggingFaceApiKey && <Badge className="absolute right-2 bg-green-600 text-white">Active</Badge>}
+                                </div>
+                                <p className="text-xs text-muted-foreground">Used if Hugging Face key is not provided.</p>
+                            </div>
                         </div>
+
 
                         <div className="border-t pt-6">
                             <Button type="submit" className="w-full" disabled={isLoading}>

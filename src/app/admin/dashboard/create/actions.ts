@@ -15,7 +15,7 @@ import { categorySlugMap } from '@/lib/constants';
 const ArticleFormSchema = z.object({
   topic: z.string().min(1, 'Please enter a topic for the article.'),
   category: z.string().min(1, 'Please select a category.'),
-  provider: z.enum(['openrouter', 'sambanova']),
+  provider: z.enum(['openrouter', 'sambanova', 'huggingface']),
   model: z.string().min(1, 'Please select an AI model.'),
   style: z.string().min(1, 'Please select a writing style.'),
   mood: z.string().min(1, 'Please select an article mood.'),
@@ -23,6 +23,7 @@ const ArticleFormSchema = z.object({
   imageCount: z.string().min(1, 'Please select the number of images.'),
   openRouterApiKey: z.string().optional(),
   sambaNovaApiKey: z.string().optional(),
+  huggingFaceApiKey: z.string().optional(),
 });
 
 
@@ -51,6 +52,7 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
     imageCount, 
     openRouterApiKey,
     sambaNovaApiKey,
+    huggingFaceApiKey,
   } = validatedFields.data;
 
   try {
@@ -64,7 +66,8 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
       wordCount,
       imageCount,
       openRouterApiKey,
-      sambaNovaApiKey
+      sambaNovaApiKey,
+      huggingFaceApiKey,
     });
 
     if (!newArticle) {

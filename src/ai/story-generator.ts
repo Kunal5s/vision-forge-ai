@@ -13,6 +13,7 @@ const StoryGenerationInputSchema = z.object({
   pageCount: z.number().min(5, "Story must have at least 5 pages.").max(20, "Story cannot have more than 20 pages."),
   category: z.string().min(1, "Please select a category."),
   openRouterApiKey: z.string().optional(),
+  huggingFaceApiKey: z.string().optional(),
 });
 
 export type StoryGenerationInput = z.infer<typeof StoryGenerationInputSchema>;
@@ -29,22 +30,32 @@ const StoryScenesOutputSchema = z.object({
 });
 
 async function generateStoryScenes(input: StoryGenerationInput): Promise<z.infer<typeof StoryScenesOutputSchema>> {
-  const finalApiKey = input.openRouterApiKey || process.env.OPENROUTER_API_KEY;
-  if (!finalApiKey) {
-    throw new Error("OpenRouter API key is not configured. Please provide one in the UI or set the OPENROUTER_API_KEY environment variable on the server.");
+  let baseURL: string;
+  let apiKey: string;
+  let extraHeaders: Record<string, string> | undefined;
+
+  // Prioritize Hugging Face if key is provided, otherwise fallback to OpenRouter
+  if (input.huggingFaceApiKey) {
+    baseURL = "https://api-inference.huggingface.co/v1";
+    apiKey = input.huggingFaceApiKey;
+  } else {
+    baseURL = "https://openrouter.ai/api/v1";
+    apiKey = input.openRouterApiKey || process.env.OPENROUTER_API_KEY!;
+    extraHeaders = { "HTTP-Referer": "https://imagenbrain.ai", "X-Title": "Imagen BrainAi" };
+  }
+  
+  if (!apiKey) {
+    throw new Error("No API key is configured. Please provide a Hugging Face or OpenRouter key in the UI or set OPENROUTER_API_KEY on the server.");
   }
 
   const client = new OpenAI({
-    baseURL: "https://openrouter.ai/api/v1",
-    apiKey: finalApiKey,
-    defaultHeaders: {
-        "HTTP-Referer": "https://imagenbrain.ai",
-        "X-Title": "Imagen BrainAi",
-    }
+    baseURL,
+    apiKey,
+    defaultHeaders: extraHeaders,
   });
 
   const response = await client.chat.completions.create({
-    model: "google/gemma-2-9b-it",
+    model: "google/gemma-2-9b-it", // A good model available on both services
     messages: [
       {
         role: "system",
@@ -81,7 +92,7 @@ async function generateStoryScenes(input: StoryGenerationInput): Promise<z.infer
 function generatePollinationsImage(prompt: string): string {
     const seed = Math.floor(Math.random() * 1_000_000);
     const finalPrompt = `${prompt}, 9:16 aspect ratio, cinematic, high detail`;
-    return `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=1080&height=1920&seed=${seed}&nologo=true`;
+    return `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=1080&height=1920&nologo=true`;
 }
 
 export async function generateAndSaveWebStory(input: StoryGenerationInput): Promise<{ success: boolean; error?: string; slug?: string }> {
