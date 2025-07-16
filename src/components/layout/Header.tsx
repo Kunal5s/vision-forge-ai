@@ -7,13 +7,13 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import React, { useEffect, useState } from 'react';
 import { AdminLogin } from '../vision-forge/AdminLogin';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Button } from '../ui/button';
 
 const navLinks = [
   { href: '/prompts', label: 'Prompts' },
-  { href: '/styles',label: 'Styles' },
+  { href: '/styles', label: 'Styles' },
   { href: '/tutorials', label: 'Tutorials' },
   { href: '/storybook', label: 'Storybook' },
   { href: '/usecases', label: 'Usecases' },
@@ -21,9 +21,31 @@ const navLinks = [
   { href: '/trends', label: 'Trends' },
   { href: '/technology', label: 'Technology' },
   { href: '/nft', label: 'NFT' },
-  { href: '/stories', label: 'Web Stories' },
 ];
 
+const CategoryNavBar = () => {
+    const pathname = usePathname();
+  
+    return (
+      <ScrollArea className="w-full whitespace-nowrap">
+        <div className="flex items-center gap-2 py-2 px-4">
+          {navLinks.map((link) => (
+            <Button
+              key={link.href}
+              asChild
+              variant={pathname === link.href ? 'secondary' : 'outline'}
+              size="sm"
+              className="rounded-full text-sm font-medium"
+            >
+              <Link href={link.href}>{link.label}</Link>
+            </Button>
+          ))}
+        </div>
+        <ScrollBar orientation="horizontal" className="h-0" />
+      </ScrollArea>
+    );
+  };
+  
 
 const MobileNav = () => {
   const pathname = usePathname();
@@ -78,28 +100,6 @@ const MobileNav = () => {
   );
 };
 
-const DesktopNav = () => {
-    const pathname = usePathname();
-    return (
-        <nav className="hidden md:flex items-center gap-2">
-            {navLinks.map((link) => (
-                <Link
-                    key={link.href}
-                    href={link.href}
-                    className={cn(
-                        "rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                        pathname === link.href
-                        ? "bg-muted text-foreground"
-                        : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                    )}
-                    >
-                    {link.label}
-                </Link>
-            ))}
-        </nav>
-    );
-};
-
 
 export function Header() {
   const [isClient, setIsClient] = useState(false);
@@ -111,7 +111,7 @@ export function Header() {
 
   if (!isClient) {
     return (
-       <header className="fixed top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b h-14" />
+       <header className="fixed top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b h-28" />
     );
   }
 
@@ -125,8 +125,6 @@ export function Header() {
            </span>
          </Link>
          
-        <DesktopNav />
-         
          <div className="hidden md:flex items-center gap-2">
             <AdminLogin />
          </div>
@@ -134,6 +132,9 @@ export function Header() {
          <div className="md:hidden">
            <MobileNav />
          </div>
+       </div>
+       <div className="hidden md:block border-t">
+        <CategoryNavBar />
        </div>
     </header>
   );
