@@ -1,9 +1,10 @@
+
 // src/app/admin/dashboard/page.tsx
 import { getUser, logout } from '@/app/admin/actions';
 import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { LayoutDashboard, PlusCircle, Edit, LogOut, FileSignature } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, Edit, LogOut, FileSignature, BookImage } from 'lucide-react';
 import Link from 'next/link';
 
 export default async function AdminDashboardPage() {
@@ -67,7 +68,25 @@ export default async function AdminDashboardPage() {
             </Card>
           </Link>
 
-          <Link href="/admin/dashboard/edit" className="block h-full">
+           <Link href="/admin/dashboard/stories/create" className="block h-full">
+            <Card className="h-full flex flex-col transition-all hover:shadow-lg hover:-translate-y-1">
+              <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-2xl">
+                      <BookImage className="text-orange-500" /> Create Web Story
+                  </CardTitle>
+                  <CardDescription>
+                      Build and publish engaging, tappable Web Stories for Google.
+                  </CardDescription>
+              </CardHeader>
+              <CardContent className="mt-auto">
+                <Button className="w-full" variant="secondary">
+                    Build Story
+                </Button>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href="/admin/dashboard/edit" className="block h-full col-span-1 md:col-span-2 lg:col-span-1">
             <Card className="h-full flex flex-col transition-all hover:shadow-lg hover:-translate-y-1">
               <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-2xl">
