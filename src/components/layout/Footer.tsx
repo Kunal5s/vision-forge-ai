@@ -1,8 +1,7 @@
-
 "use client";
 
 import Link from 'next/link';
-import { BrainCircuit, Twitter, Instagram, Facebook, Linkedin, Youtube } from 'lucide-react';
+import { BrainCircuit } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
@@ -46,27 +45,6 @@ export function Footer() {
               <li><Link href="/disclaimer" className={cn("block rounded-md -ml-2 px-2 py-1 text-foreground/80 hover:text-foreground", pathname === '/disclaimer' && 'text-foreground font-semibold')}>Disclaimer</Link></li>
             </ul>
           </div>
-        </div>
-
-        <div className="text-center mb-8">
-            <h3 className="text-md font-bold text-foreground mb-4">Follow Us</h3>
-            <div className="flex items-center justify-center gap-4">
-              <a href="https://twitter.com/ImagenBrainAi" target="_blank" rel="noopener noreferrer" aria-label="Twitter" className="text-foreground/80 hover:text-foreground">
-                <Twitter className="h-6 w-6" />
-              </a>
-              <a href="https://instagram.com/ImagenBrainAi" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-foreground/80 hover:text-foreground">
-                <Instagram className="h-6 w-6" />
-              </a>
-              <a href="https://facebook.com/ImagenBrainAi" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="text-foreground/80 hover:text-foreground">
-                <Facebook className="h-6 w-6" />
-              </a>
-              <a href="https://linkedin.com/company/ImagenBrainAi" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="text-foreground/80 hover:text-foreground">
-                <Linkedin className="h-6 w-6" />
-              </a>
-              <a href="https://youtube.com/c/ImagenBrainAi" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="text-foreground/80 hover:text-foreground">
-                <Youtube className="h-6 w-6" />
-              </a>
-            </div>
         </div>
         
         <div className="text-center text-xs text-muted-foreground border-t pt-8">
