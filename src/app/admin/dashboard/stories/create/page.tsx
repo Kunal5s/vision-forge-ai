@@ -11,19 +11,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, PlusCircle, Trash2, FileSignature } from 'lucide-react';
+import { ArrowLeft, Loader2, PlusCircle, Trash2, FileSignature, Upload } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { createManualStoryAction } from './actions';
 import { categorySlugMap } from '@/lib/constants';
 
-// Zod schema for a single story page
+// The imageUrl will now be a Base64 encoded data URI string.
 const StoryPageFormSchema = z.object({
-  imageUrl: z.string().url("A valid image URL is required."),
+  imageUrl: z.string().min(1, "An image is required for each page."),
   caption: z.string().min(1, "Caption cannot be empty.").max(150, "Caption cannot be more than 150 characters."),
 });
 
-// Zod schema for the entire story form
 const StoryFormSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters long."),
   slug: z.string().min(3, "Slug is required.").regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and dashes.'),
@@ -55,6 +55,7 @@ export default function CreateManualStoryPage() {
     });
 
     const titleValue = watch('title');
+    const pagesValue = watch('pages');
 
     const generateSlug = useCallback((title: string) => {
         return title
@@ -72,6 +73,26 @@ export default function CreateManualStoryPage() {
         }
     }, [titleValue, setValue, generateSlug]);
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (!file.type.startsWith('image/')) {
+                toast({ title: "Invalid File Type", description: "Please upload a valid image file (PNG, JPG, WebP).", variant: "destructive" });
+                return;
+            }
+            if (file.size > 4 * 1024 * 1024) { // 4MB limit
+                toast({ title: "File Too Large", description: "Image size cannot exceed 4MB.", variant: "destructive" });
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const base64String = event.target?.result as string;
+                setValue(`pages.${index}.imageUrl`, base64String, { shouldValidate: true, shouldDirty: true });
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const handleFormSubmit = async (data: StoryFormData) => {
         setIsLoading(true);
         toast({
@@ -81,7 +102,7 @@ export default function CreateManualStoryPage() {
 
         const result = await createManualStoryAction(data);
 
-        if (!result.success) {
+        if (result && !result.success) {
             toast({
                 title: 'Error Publishing Story',
                 description: result.error,
@@ -155,8 +176,29 @@ export default function CreateManualStoryPage() {
                                 <div key={field.id} className="p-4 border rounded-md space-y-4 relative bg-background">
                                      <Label className="font-semibold">Page {index + 1}</Label>
                                     <div>
-                                        <Label htmlFor={`pages.${index}.imageUrl`}>Image URL</Label>
-                                        <Input id={`pages.${index}.imageUrl`} {...register(`pages.${index}.imageUrl`)} placeholder="https://placehold.co/1080x1920.png" disabled={isLoading} />
+                                        <Label htmlFor={`pages.${index}.imageUrl`}>Image (JPG, PNG, WebP)</Label>
+                                        <div className="flex items-center gap-4 mt-1">
+                                            {pagesValue[index]?.imageUrl && (
+                                                <Image 
+                                                    src={pagesValue[index].imageUrl} 
+                                                    alt={`Preview for page ${index + 1}`} 
+                                                    width={80}
+                                                    height={142} // 9:16 aspect ratio
+                                                    className="object-cover rounded-md border"
+                                                />
+                                            )}
+                                            <Button type="button" variant="outline" onClick={() => (document.getElementById(`file-input-${index}`) as HTMLInputElement)?.click()} disabled={isLoading}>
+                                                <Upload className="mr-2 h-4 w-4" />
+                                                {pagesValue[index]?.imageUrl ? 'Change Image' : 'Upload Image'}
+                                            </Button>
+                                            <input
+                                                id={`file-input-${index}`}
+                                                type="file"
+                                                accept="image/jpeg,image/png,image/webp"
+                                                className="hidden"
+                                                onChange={(e) => handleFileChange(e, index)}
+                                            />
+                                        </div>
                                         {errors.pages?.[index]?.imageUrl && <p className="text-sm text-destructive mt-1">{errors.pages[index]?.imageUrl?.message}</p>}
                                     </div>
                                     <div>
@@ -178,7 +220,6 @@ export default function CreateManualStoryPage() {
                                 </Button>
                             </div>
                         </div>
-
 
                         <div className="border-t pt-6">
                             <Button type="submit" className="w-full" disabled={isLoading}>

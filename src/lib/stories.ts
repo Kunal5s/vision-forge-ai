@@ -2,6 +2,11 @@
 'use server';
 
 import { z } from 'zod';
+import { promises as fs } from 'fs';
+import path from 'path';
+import { Octokit } from 'octokit';
+import { getPrimaryBranch, getShaForFile } from '@/app/admin/dashboard/create/actions'; // Reuse GitHub helpers
+
 
 // Direct imports for reliability
 import featuredStories from '@/stories/featured.json';
@@ -13,7 +18,7 @@ const StoryPageContentSchema = z.object({
 
 const StoryPageSchema = z.object({
   type: z.enum(['image', 'video']),
-  url: z.string().url(),
+  url: z.string().min(1), // Can be a standard URL or a Data URI
   dataAiHint: z.string(),
   content: StoryPageContentSchema.optional(),
 });
@@ -24,7 +29,7 @@ const StorySchema = z.object({
   title: z.string().min(1),
   seoDescription: z.string().optional().default(''),
   author: z.string().optional().default('Imagen BrainAi'),
-  cover: z.string().url(),
+  cover: z.string().min(1), // Can be a standard URL or a Data URI
   dataAiHint: z.string(),
   category: z.string(),
   publishedDate: z.string().datetime(),
@@ -96,4 +101,36 @@ export async function getStoryBySlug(slug: string): Promise<Story | undefined> {
         }
     }
     return undefined;
+}
+
+// Universal function to save stories to GitHub
+export async function saveUpdatedStories(categorySlug: string, stories: Story[], commitMessage: string) {
+    const repoPath = `src/stories/${categorySlug}.json`;
+    const fileContent = JSON.stringify(stories, null, 2);
+
+    const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = process.env;
+    if (!GITHUB_TOKEN || !GITHUB_REPO_OWNER || !GITHUB_REPO_NAME) {
+        console.error("GitHub credentials are not configured on the server. Cannot save story.");
+        throw new Error("GitHub credentials not configured. Please check server environment variables.");
+    }
+
+    try {
+        const octokit = new Octokit({ auth: GITHUB_TOKEN });
+        const branch = await getPrimaryBranch(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME);
+        const fileSha = await getShaForFile(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME, repoPath, branch);
+        
+        await octokit.rest.repos.createOrUpdateFileContents({
+            owner: GITHUB_REPO_OWNER,
+            repo: GITHUB_REPO_NAME,
+            path: repoPath,
+            message: commitMessage,
+            content: Buffer.from(fileContent).toString('base64'),
+            sha: fileSha,
+            branch: branch,
+        });
+        console.log(`Successfully committed changes for stories in "${categorySlug}" to GitHub on branch "${branch}".`);
+    } catch (error) {
+        console.error("Failed to commit changes to GitHub.", error);
+        throw new Error("Failed to save story to GitHub. Please check your credentials and repository permissions.");
+    }
 }

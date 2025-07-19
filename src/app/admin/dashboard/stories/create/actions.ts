@@ -2,15 +2,15 @@
 'use server';
 
 import { z } from 'zod';
-import { type Story, type StoryPage, getAllStoriesAdmin } from '@/lib/stories';
-import { getPrimaryBranch, getShaForFile } from '@/app/admin/dashboard/create/actions'; // Reuse GitHub helpers
-import { Octokit } from 'octokit';
+import { type Story, type StoryPage, getAllStoriesAdmin, saveUpdatedStories } from '@/lib/stories';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { categorySlugMap } from '@/lib/constants';
 
 // Zod schema for a single story page
+// The imageUrl will now be a Base64 encoded string
 const StoryPageFormSchema = z.object({
-  imageUrl: z.string().url("A valid image URL is required."),
+  imageUrl: z.string().min(1, "An image is required for each page."),
   caption: z.string().min(1, "Caption cannot be empty.").max(150, "Caption is too long."),
 });
 
@@ -25,31 +25,28 @@ const StoryFormSchema = z.object({
 
 type StoryFormData = z.infer<typeof StoryFormSchema>;
 
+// This server action now handles Base64 encoded images
 export async function createManualStoryAction(data: StoryFormData): Promise<{ success: boolean; error?: string; slug?: string }> {
   const validatedFields = StoryFormSchema.safeParse(data);
 
   if (!validatedFields.success) {
     const errorDetails = validatedFields.error.flatten().fieldErrors;
+    console.error("Validation Errors:", errorDetails);
     const formattedError = Object.entries(errorDetails)
         .map(([field, errors]) => `${field}: ${errors?.join(', ')}`)
         .join('; ');
     return { success: false, error: formattedError || 'Invalid input data.' };
   }
+
+  const { title, slug, seoDescription, category, pages } = validatedFields.data;
   
-  const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = process.env;
-  if (!GITHUB_TOKEN || !GITHUB_REPO_OWNER || !GITHUB_REPO_NAME) {
-    return { success: false, error: "GitHub credentials are not configured on the server." };
-  }
-
   try {
-    const { title, slug, seoDescription, category, pages } = validatedFields.data;
-
     const storyPages: StoryPage[] = pages.map(page => ({
       type: 'image',
-      url: page.imageUrl,
-      dataAiHint: 'manual story upload', // Default hint for manually uploaded images
+      url: page.imageUrl, // This is now the Base64 data URI
+      dataAiHint: 'manual story upload',
       content: {
-        title: title, // Use the main story title for each page's title for consistency
+        title: title, 
         body: page.caption,
       },
     }));
@@ -58,8 +55,8 @@ export async function createManualStoryAction(data: StoryFormData): Promise<{ su
       slug,
       title,
       seoDescription,
-      author: "Kunal Sonpitre", // Can be fetched from author.json in the future
-      cover: storyPages[0].url, // Use the first page's image as the cover
+      author: "Kunal Sonpitre",
+      cover: storyPages[0].url,
       dataAiHint: storyPages[0].dataAiHint,
       category,
       publishedDate: new Date().toISOString(),
@@ -69,35 +66,18 @@ export async function createManualStoryAction(data: StoryFormData): Promise<{ su
     
     // For now, all stories go to the 'featured' category JSON.
     const categorySlug = 'featured'; 
-    const repoPath = `src/stories/${categorySlug}.json`;
     
-    const octokit = new Octokit({ auth: GITHUB_TOKEN });
-    const branch = await getPrimaryBranch(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME);
-    
-    let existingStories: Story[] = [];
-    try {
-        existingStories = await getAllStoriesAdmin(categorySlug);
-    } catch (e) {
-        console.log(`No existing stories found for category ${categorySlug}, creating new file.`);
-    }
-
-    const updatedStories = [newStory, ...existingStories];
-    const fileContent = JSON.stringify(updatedStories, null, 2);
-    const fileSha = await getShaForFile(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME, repoPath, branch);
-
-    await octokit.rest.repos.createOrUpdateFileContents({
-      owner: GITHUB_REPO_OWNER,
-      repo: GITHUB_REPO_NAME,
-      path: repoPath,
-      message: `feat: ✨ Add new web story "${title}"`,
-      content: Buffer.from(fileContent).toString('base64'),
-      sha: fileSha,
-      branch: branch,
+    const existingStories = await getAllStoriesAdmin(categorySlug).catch(() => {
+        console.log(`No existing stories file for category ${categorySlug}, creating new file.`);
+        return [];
     });
+    
+    const updatedStories = [newStory, ...existingStories];
+
+    await saveUpdatedStories(categorySlug, updatedStories, `feat: ✨ Add new web story "${title}"`);
     
     console.log(`Successfully committed new story "${title}" to GitHub.`);
 
-    // Revalidate paths
     revalidatePath('/admin/dashboard/stories');
     revalidatePath('/stories');
     revalidatePath(`/stories/${slug}`);
