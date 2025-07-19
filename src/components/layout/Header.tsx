@@ -2,12 +2,14 @@
 'use client';
 
 import Link from 'next/link';
-import { BrainCircuit } from 'lucide-react';
+import { BrainCircuit, LayoutDashboard, LogOut } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import React, { useEffect, useState } from 'react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Button } from '../ui/button';
+import { logoutAction } from '@/app/admin/login/actions';
+import { useRouter } from 'next/navigation';
 
 const navLinks = [
   { href: '/prompts', label: 'Prompts' },
@@ -53,10 +55,18 @@ const CategoryNavBar = () => {
 
 export function Header() {
   const [isClient, setIsClient] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
+  const isAdminRoute = pathname.startsWith('/admin');
   
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  const handleLogout = async () => {
+    await logoutAction();
+    router.push('/admin/login');
+  }
 
   if (!isClient) {
     return (
@@ -75,11 +85,22 @@ export function Header() {
          </Link>
          
          <div className="flex items-center gap-4">
-            <Link href="/admin/dashboard"><Button variant="outline">Dashboard</Button></Link>
+            {isAdminRoute ? (
+              <Button variant="outline" onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+              </Button>
+            ) : (
+              <Link href="/admin">
+                <Button variant="outline">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    Dashboard
+                </Button>
+              </Link>
+            )}
          </div>
-
        </div>
-       <CategoryNavBar />
+       {!isAdminRoute && <CategoryNavBar />}
     </header>
   );
 }

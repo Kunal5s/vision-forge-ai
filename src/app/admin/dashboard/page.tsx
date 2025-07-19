@@ -1,7 +1,7 @@
-// src/app/admin/dashboard/page.tsx
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { LayoutDashboard, PlusCircle, Edit, LogOut, FileSignature, BookImage, UserCircle } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, Edit, FileSignature, BookImage, UserCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export default async function AdminDashboardPage() {
@@ -15,12 +15,6 @@ export default async function AdminDashboardPage() {
               </h1>
               <p className="text-muted-foreground mt-1">Welcome back, Admin!</p>
           </div>
-          <Link href="/">
-            <Button variant="outline">
-                <LogOut className="mr-2 h-4 w-4" />
-                Logout
-            </Button>
-          </Link>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

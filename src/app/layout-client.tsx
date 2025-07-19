@@ -10,16 +10,17 @@ import { CookieConsent } from '@/components/layout/CookieConsent';
 
 export default function RootLayoutClient({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isAdminPage = pathname.startsWith('/admin');
+  const isAdminLoginPage = pathname === '/admin/login';
+  const isAdminDashboard = pathname.startsWith('/admin') && !isAdminLoginPage;
 
   return (
     <>
-      <Header />
-      <div className="flex-grow pt-28">
+      {!isAdminLoginPage && <Header />}
+      <div className={isAdminDashboard ? "" : "flex-grow pt-28"}>
         {children}
       </div>
-      {!isAdminPage && <PreFooterCallToAction />}
-      {!isAdminPage && <Footer />}
+      {!isAdminDashboard && !isAdminLoginPage && <PreFooterCallToAction />}
+      {!isAdminDashboard && !isAdminLoginPage && <Footer />}
       <Toaster />
       <CookieConsent />
     </>
