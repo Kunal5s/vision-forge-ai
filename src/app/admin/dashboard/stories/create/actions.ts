@@ -6,8 +6,7 @@ import { z } from 'zod';
 import { type Story, type StoryPage, getAllStoriesAdmin, saveUpdatedStories } from '@/lib/stories';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { categorySlugMap } from '@/lib/constants';
-import OpenAI from 'openai';
+import { generateStoryScenes } from '@/ai/story-generator';
 
 
 // Zod schema for the AI generation part
@@ -42,7 +41,7 @@ const StoryFormSchema = z.object({
 type StoryFormData = z.infer<typeof StoryFormSchema>;
 
 
-// Server action to generate story scenes (image prompts and captions) using OpenRouter
+// Server action to generate story scenes (image prompts and captions) using Genkit and Gemini
 export async function generateStoryScenesAction(data: unknown): Promise<{ success: boolean; scenes?: Scene[]; error?: string }> {
   const validatedFields = StoryGenerationSchema.safeParse(data);
   if (!validatedFields.success) {
@@ -51,46 +50,26 @@ export async function generateStoryScenesAction(data: unknown): Promise<{ succes
   
   const { topic, description, imageCount } = validatedFields.data;
   
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
-    return { success: false, error: "OpenRouter API key is not configured on the server." };
-  }
-
-  const client = new OpenAI({
-    baseURL: "https://openrouter.ai/api/v1",
-    apiKey: apiKey,
-    defaultHeaders: {
-        "HTTP-Referer": "https://imagenbrain.ai",
-        "X-Title": "Imagen BrainAi",
-    },
-  });
-
   try {
-    const response = await client.chat.completions.create({
-      model: "google/gemma-2-9b-it", // Using a reliable and free model on OpenRouter
-      messages: [
-        {
-          role: "system",
-          content: `You are a creative visual storyteller. Based on the user's topic and description, generate a JSON object containing a key "scenes" which is an array of exactly ${imageCount} objects. Each object must have two keys: "image_prompt" (a detailed, vivid, and unique prompt for an AI image generator to create a 9:16 vertical image) and "caption" (a short, engaging caption for that image, maximum 150 characters). The prompts should tell a cohesive visual story.`,
-        },
-        { role: "user", content: `Topic: ${topic}. Description: ${description}.` },
-      ],
-      response_format: { type: "json_object" },
+    const scenes = await generateStoryScenes({
+      topic,
+      description,
+      image_count: imageCount
     });
 
-    const content = response.choices[0].message.content;
-    if (!content) throw new Error("AI returned an empty response.");
-
-    const parsed = JSON.parse(content);
-    
-    if (!parsed.scenes || !Array.isArray(parsed.scenes)) {
-        throw new Error("AI response did not match the expected format.");
+    if (!scenes || !Array.isArray(scenes.scenes) || scenes.scenes.length === 0) {
+      throw new Error("AI response did not match the expected format or was empty.");
     }
-    return { success: true, scenes: parsed.scenes };
+    return { success: true, scenes: scenes.scenes };
 
   } catch (error) {
-    console.error("Error generating story scenes with OpenRouter:", error);
-    return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred." };
+    console.error("Error generating story scenes with Genkit/Gemini:", error);
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during scene generation.";
+    // Provide a more user-friendly error for quota issues
+    if (errorMessage.includes('429') || errorMessage.toLowerCase().includes('quota')) {
+        return { success: false, error: "API quota exceeded. Please wait a moment and try again." };
+    }
+    return { success: false, error: errorMessage };
   }
 }
 
@@ -158,3 +137,4 @@ export async function createManualStoryAction(data: StoryFormData): Promise<{ su
   }
   
   redirect(`/stories/${validatedFields.data.slug}`);
+}
