@@ -37,7 +37,7 @@ const CategoryNavBar = () => {
     return (
         <div className="w-full bg-background border-b">
             <nav className="h-14 flex items-center justify-center container mx-auto px-4 overflow-x-auto no-scrollbar">
-                <div className="flex items-center gap-6">
+                <div className="flex items-center justify-center md:gap-6 gap-4">
                     {Object.entries(categorySlugMap).map(([slug, name]) => {
                          const isActive = isFilterablePage ? currentCategorySlug === slug : pathname === `/${slug}`;
                          return (
