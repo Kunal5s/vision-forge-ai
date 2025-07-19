@@ -58,6 +58,7 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const { toast } = useToast();
 
@@ -202,7 +203,7 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
 
     const handleDelete = async () => {
         if (!story) return;
-        setIsSaving(true);
+        setIsDeleting(true);
         const result = await deleteStoryAction({ slug: story.slug, category: story.category });
         if(result.success) {
              toast({ title: 'Story Deleted', description: 'The story has been removed.' });
@@ -211,6 +212,7 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
             toast({ title: 'Error', description: result.error, variant: 'destructive' });
             setIsSaving(false);
         }
+        setIsDeleting(false);
     }
 
      const constructPreviewStory = (): Story => {
@@ -241,7 +243,7 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
         return (
             <main className="flex-grow container mx-auto py-12 px-4 bg-muted/20 min-h-screen">
                 <Skeleton className="h-8 w-48 mb-8" />
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                     <Card><CardHeader><Skeleton className="h-6 w-1/2" /><Skeleton className="h-4 w-3/4" /></CardHeader><CardContent><Skeleton className="h-40 w-full" /></CardContent></Card>
                     <Card><CardHeader><Skeleton className="h-6 w-1/2" /><Skeleton className="h-4 w-3/4" /></CardHeader><CardContent><Skeleton className="h-64 w-full" /></CardContent></Card>
                 </div>
@@ -267,7 +269,7 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
                 </Button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                  <Card>
                     <CardHeader>
                         <CardTitle className="text-xl flex items-center gap-2"><Wand2 /> Regenerate Images</CardTitle>
@@ -392,8 +394,8 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                                                Yes, delete it
+                                            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90" disabled={isDeleting}>
+                                                {isDeleting ? <><Loader2 className="h-4 w-4 animate-spin" /> Deleting...</> : 'Yes, delete it'}
                                             </AlertDialogAction>
                                         </AlertDialogFooter>
                                     </AlertDialogContent>
