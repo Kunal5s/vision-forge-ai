@@ -17,7 +17,7 @@ const CATEGORY_NAME = 'Tutorials';
 
 async function ArticleList() {
     const articles = await getArticles(CATEGORY_NAME);
-    return <ArticlesSection articles={articles} category={CATEGORY_NAME} />;
+    return <ArticlesSection articles={articles} />;
 }
 
 export default function TutorialsPage() {

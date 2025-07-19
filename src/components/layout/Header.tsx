@@ -3,13 +3,14 @@
 
 import Link from 'next/link';
 import { BrainCircuit, LayoutDashboard, LogOut } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import React, { useEffect, useState } from 'react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Button } from '../ui/button';
 import { logoutAction } from '@/app/admin/login/actions';
 import { useRouter } from 'next/navigation';
+import { categorySlugMap } from '@/lib/constants';
 
 const navLinks = [
   { href: '/prompts', label: 'Prompts' },
@@ -25,25 +26,48 @@ const navLinks = [
 
 const CategoryNavBar = () => {
     const pathname = usePathname();
-  
+    const searchParams = useSearchParams();
+    const router = useRouter();
+
+    const currentCategorySlug = searchParams.get('category');
+
+    const isStoriesPage = pathname === '/stories';
+
+    const handleCategoryClick = (slug: string) => {
+        if (isStoriesPage) {
+            // On stories page, update the query parameter to filter
+            const params = new URLSearchParams(searchParams.toString());
+            params.set('category', slug);
+            router.push(`${pathname}?${params.toString()}`);
+        } else {
+            // On other pages, navigate to the category page
+            router.push(`/${slug}`);
+        }
+    };
+
     return (
         <div className="w-full bg-background border-b">
             <ScrollArea className="w-full whitespace-nowrap">
                 <nav className="h-14 flex items-center p-2 container mx-auto px-4">
                     <div className="flex items-center gap-2">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.href}
-                                href={link.href}
-                                className={cn(
-                                    'inline-block rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-                                    'border border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground',
-                                    pathname === link.href ? 'bg-secondary font-semibold' : ''
-                                )}
+                        {Object.entries(categorySlugMap).map(([slug, name]) => {
+                             const isActive = isStoriesPage ? currentCategorySlug === slug : pathname === `/${slug}`;
+                             return (
+                                <Button
+                                    key={slug}
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleCategoryClick(slug)}
+                                    className={cn(
+                                        'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                                        'border border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground',
+                                        isActive ? 'bg-secondary font-semibold' : ''
+                                    )}
                                 >
-                                {link.label}
-                            </Link>
-                        ))}
+                                    {name}
+                                </Button>
+                            )
+                        })}
                     </div>
                 </nav>
                 <ScrollBar orientation="horizontal" className="h-2 opacity-0" />

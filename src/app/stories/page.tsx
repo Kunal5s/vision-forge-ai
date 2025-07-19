@@ -1,27 +1,64 @@
 
+'use client';
+
 import { getStories } from '@/lib/stories';
-import type { Metadata } from 'next';
-import { Suspense } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import type { Story } from '@/lib/stories';
+import { Suspense, useEffect, useState, useMemo } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { categorySlugMap } from '@/lib/constants';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export const metadata: Metadata = {
-    title: 'Web Stories | Imagen BrainAi',
-    description: 'Explore engaging, visual web stories created with AI. A new way to discover content on Imagen BrainAi.',
-};
+function AllStoriesList() {
+    const [allStories, setAllStories] = useState<Story[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    
+    // Use search params to get the current category filter
+    const searchParams = useSearchParams();
+    const categoryFilter = searchParams.get('category');
 
-export const dynamic = 'force-dynamic';
+    useEffect(() => {
+        setIsLoading(true);
+        const fetchStories = async () => {
+            const allCategories = Object.keys(categorySlugMap);
+            const storyPromises = allCategories.map(slug => getStories(categorySlugMap[slug]));
+            const storiesByCategory = await Promise.all(storyPromises);
+            const flattenedStories = storiesByCategory.flat();
+            
+            flattenedStories.sort((a, b) => new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime());
+            setAllStories(flattenedStories);
+            setIsLoading(false);
+        };
+        fetchStories();
+    }, []);
 
-async function AllStoriesList() {
-    // We now fetch stories from all categories. Since there's only 'featured', this will work perfectly.
-    // If more categories are added in the future, this logic might need adjustment to iterate through all of them.
-    const stories = await getStories('featured');
+    const filteredStories = useMemo(() => {
+        if (!categoryFilter) {
+            return allStories;
+        }
+        const categoryName = categorySlugMap[categoryFilter];
+        return allStories.filter(story => story.category === categoryName);
+    }, [categoryFilter, allStories]);
 
-    if (!stories || stories.length === 0) {
+
+    if (isLoading) {
         return (
-            <div className="text-center py-10 text-muted-foreground">
-                <p>No stories are available at the moment.</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                {Array.from({ length: 8 }).map((_, i) => (
+                    <Card key={i} className="overflow-hidden h-full aspect-[9/16] relative">
+                         <Skeleton className="w-full h-full" />
+                    </Card>
+                ))}
+            </div>
+        )
+    }
+
+    if (!filteredStories || filteredStories.length === 0) {
+        return (
+            <div className="text-center py-10 text-muted-foreground col-span-full">
+                <p>No stories are available for this category at the moment.</p>
                 <p className="text-sm mt-2">New stories are generated automatically. Please check back later.</p>
             </div>
         )
@@ -29,24 +66,20 @@ async function AllStoriesList() {
 
     return (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {stories.map((story) => (
+            {filteredStories.map((story) => (
                 <Link key={story.slug} href={`/stories/${story.slug}`} className="block group">
-                    <Card className="overflow-hidden h-full transition-all group-hover:shadow-xl group-hover:-translate-y-1">
-                        <CardHeader className="p-0">
-                            <div className="aspect-[9/16] relative">
-                                <Image
-                                    src={story.cover}
-                                    alt={story.title}
-                                    layout="fill"
-                                    objectFit="cover"
-                                    className="transition-transform duration-300 group-hover:scale-105"
-                                    data-ai-hint={story.dataAiHint}
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                            </div>
-                        </CardHeader>
-                        <CardContent className="p-3">
-                            <h3 className="text-sm font-semibold text-foreground leading-tight line-clamp-2">
+                    <Card className="overflow-hidden h-full transition-all group-hover:shadow-xl group-hover:-translate-y-1 aspect-[9/16] relative">
+                        <Image
+                            src={story.cover}
+                            alt={story.title}
+                            layout="fill"
+                            objectFit="cover"
+                            className="transition-transform duration-300 group-hover:scale-105"
+                            data-ai-hint={story.dataAiHint}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                        <CardContent className="absolute bottom-0 p-3 w-full">
+                            <h3 className="text-sm font-bold text-white leading-tight line-clamp-3 drop-shadow-md">
                                 {story.title}
                             </h3>
                         </CardContent>

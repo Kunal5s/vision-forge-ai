@@ -12,10 +12,10 @@ import parse from 'html-react-parser';
 
 interface ArticlesSectionProps {
     articles: Article[];
-    category: string;
+    // Category is no longer needed as a prop for the section header
 }
 
-export function ArticlesSection({ articles, category }: ArticlesSectionProps) {
+export function ArticlesSection({ articles }: ArticlesSectionProps) {
 
     const createSnippet = (content: Article['articleContent'], length = 150) => {
         if (!content || !Array.isArray(content)) return '';
@@ -30,20 +30,18 @@ export function ArticlesSection({ articles, category }: ArticlesSectionProps) {
     if (!articles || articles.length === 0) {
         return (
             <div className="text-center py-10 text-muted-foreground">
-                <p>No articles are available for the "{category}" category at the moment.</p>
+                <p>No articles are available for this category at the moment.</p>
                 <p className="text-sm mt-2">Content is generated automatically. Please check back later.</p>
             </div>
         )
     }
 
-    const gridClasses = category === 'Featured' 
-        ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" // 6 articles in a 3x2 grid
-        : "grid-cols-1 md:grid-cols-2 lg:grid-cols-4"; // All other categories
+    const gridClasses = "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
 
     return (
         <div className={cn("grid gap-8", gridClasses)}>
             {articles.map((article, index) => {
-                const categorySlug = article.category.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+                const categorySlug = Object.entries(categorySlugMap).find(([, name]) => name === article.category)?.[0] || article.category.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
                 const articleUrl = `/${categorySlug}/${article.slug}`;
 
                 const isNew = article.publishedDate && (new Date().getTime() - new Date(article.publishedDate).getTime()) < 7 * 24 * 60 * 60 * 1000;

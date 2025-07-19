@@ -35,7 +35,7 @@ async function AllArticlesList() {
     });
 
     // The ArticlesSection component will display all articles passed to it.
-    return <ArticlesSection articles={allArticles} category="All Articles" />;
+    return <ArticlesSection articles={allArticles} />;
 }
 
 export default function BlogPage() {
