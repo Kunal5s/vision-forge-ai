@@ -31,13 +31,15 @@ const CategoryNavBar = () => {
             const queryString = params.toString();
             return `${pathname}${queryString ? `?${queryString}` : ''}`;
         }
-        return `/${slug}`;
+        // Construct the correct path based on the slug to name mapping
+        const categoryPath = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === categorySlugMap[slug]) || slug;
+        return `/${categoryPath}`;
     };
 
     return (
         <div className="w-full bg-background border-b">
             <nav className="h-14 flex items-center justify-center container mx-auto px-4 overflow-x-auto no-scrollbar md:overflow-x-visible">
-                <div className="flex items-center justify-center md:gap-2 gap-4">
+                <div className="flex items-center justify-center gap-2">
                     {Object.entries(categorySlugMap).map(([slug, name]) => {
                          const isActive = isFilterablePage ? currentCategorySlug === slug : pathname === `/${slug}`;
                          return (
@@ -46,8 +48,8 @@ const CategoryNavBar = () => {
                                 href={getLinkHref(slug)}
                                 scroll={false}
                                 className={cn(
-                                    'text-sm font-medium transition-colors whitespace-nowrap px-3 py-1.5 rounded-md',
-                                    isActive ? 'bg-muted text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                                    'inline-flex items-center rounded-md border border-input bg-transparent px-3 py-1.5 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 whitespace-nowrap',
+                                    isActive ? 'bg-secondary text-secondary-foreground font-semibold' : 'text-muted-foreground hover:text-foreground'
                                 )}
                             >
                                 {name}
