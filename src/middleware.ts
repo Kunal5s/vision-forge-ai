@@ -1,32 +1,43 @@
-// src/middleware.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { decrypt } from '@/app/admin/actions';
+
+import { authMiddleware } from "@clerk/nextjs/server";
+
+export default authMiddleware({
+  // Routes that can be accessed while signed out
+  publicRoutes: [
+    '/',
+    '/about',
+    '/contact',
+    '/disclaimer',
+    '/edit',
+    '/inspiration',
+    '/models',
+    '/nft',
+    '/pricing',
+    '/privacy',
+    '/prompts',
+    '/storybook',
+    '/styles',
+    '/technology',
+    '/terms',
+    '/trends',
+    '/tutorials',
+    '/usecases',
+    '/blog',
+    '/stories',
+    '/stories/(.*)',
+    '/author/(.*)',
+    '/api/generate',
+    '/api/generate-article',
+    '/(.*)/(.*)',
+    ],
+  // Routes that can always be accessed, and have
+  // no authentication information
+  ignoredRoutes: ['/no-auth-in-this-route'],
+});
 
 export const config = {
-  matcher: ['/admin/dashboard/:path*'],
+  // Protects all routes, including api/trpc.
+  // See https://clerk.com/docs/references/nextjs/auth-middleware
+  // for more information about configuring your Middleware
+  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
 };
-
-export async function middleware(request: NextRequest) {
-  const sessionCookie = request.cookies.get('session')?.value;
-
-  if (!sessionCookie) {
-    return NextResponse.redirect(new URL('/admin', request.url));
-  }
-
-  const payload = await decrypt(sessionCookie);
-
-  if (!payload) {
-    return NextResponse.redirect(new URL('/admin', request.url));
-  }
-  
-  // Refresh the cookie on activity
-  const res = NextResponse.next();
-  res.cookies.set({
-      name: 'session',
-      value: sessionCookie,
-      httpOnly: true,
-      expires: new Date(Date.now() + 2 * 60 * 60 * 1000), // Extend by 2 hours
-  });
-
-  return res;
-}
