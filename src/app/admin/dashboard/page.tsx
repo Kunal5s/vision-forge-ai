@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { LayoutDashboard, PlusCircle, Edit, FileSignature, BookImage, UserCircle } from 'lucide-react';
+import { PlusCircle, Edit, FileSignature, BookImage, UserCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export default async function AdminDashboardPage() {
@@ -62,7 +62,7 @@ export default async function AdminDashboardPage() {
                       <BookImage className="text-orange-500" /> Create Web Story
                   </CardTitle>
                   <CardDescription>
-                      Manually build and publish engaging, tappable Web Stories.
+                      Build and publish engaging web stories with AI assistance.
                   </CardDescription>
               </CardHeader>
               <CardContent className="mt-auto">

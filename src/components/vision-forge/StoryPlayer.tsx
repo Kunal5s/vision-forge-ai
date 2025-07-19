@@ -1,11 +1,12 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Story } from '@/lib/stories';
 import { Progress } from '@/components/ui/progress';
-import { ChevronLeft, ChevronRight, Pause, Play, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Pause, Play, X, Link as LinkIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '../ui/button';
 
@@ -99,10 +100,19 @@ export function StoryPlayer({ story }: { story: Story }) {
         />
 
         {/* Content */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 z-20 text-white text-center flex flex-col items-center">
-            {page.content?.title && <h2 className="text-2xl font-bold mb-2 drop-shadow-lg">{page.content.title}</h2>}
-            {page.content?.body && <p className="text-base drop-shadow-md">{page.content.body}</p>}
+        <div className="absolute bottom-0 left-0 right-0 p-6 z-20 flex flex-col items-center text-center">
+            {page.content?.title && <p className="text-white text-base drop-shadow-md bg-black/30 p-2 rounded-md mb-4">{page.content.title}</p>}
+            
+            {story.websiteUrl && (
+                <a href={story.websiteUrl} target="_blank" rel="noopener noreferrer" className="mt-4">
+                    <Button variant="secondary" className="bg-white/90 text-black hover:bg-white rounded-full">
+                        <LinkIcon className="mr-2 h-4 w-4" />
+                        Visit Website
+                    </Button>
+                </a>
+            )}
         </div>
+
 
         {/* Chevron Navigation Buttons */}
         <Button

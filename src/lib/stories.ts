@@ -29,6 +29,7 @@ const StorySchema = z.object({
   slug: z.string().min(1),
   title: z.string().min(1),
   seoDescription: z.string().optional().default(''),
+  websiteUrl: z.string().url().optional(),
   author: z.string().optional().default('Imagen BrainAi'),
   cover: z.string().min(1), // Can be a standard URL or a Data URI
   dataAiHint: z.string(),
