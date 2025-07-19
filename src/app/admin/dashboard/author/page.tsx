@@ -17,13 +17,11 @@ import { AuthorSchema, type AuthorData } from '@/lib/author';
 import Image from 'next/image';
 import { RichTextEditor } from '@/components/vision-forge/RichTextEditor';
 
-// Updated schema to handle file upload (via string) and rich text bio
+// The schema now validates for a standard URL for the photo.
 const AuthorFormSchema = z.object({
     name: z.string().min(1, 'Name is required.'),
     title: z.string().min(1, 'Title is required.'),
-    photoUrl: z.string().refine(val => val.startsWith('data:image/') || z.string().url().safeParse(val).success, {
-        message: 'Please upload a valid image or provide a valid URL.',
-    }),
+    photoUrl: z.string().url('A valid photo URL is required. Data URIs are not supported.'),
     bio: z.string().min(50, 'Bio must be at least 50 characters long.'),
 });
 
@@ -34,7 +32,7 @@ export default function ManageAuthorPage() {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const { register, handleSubmit, control, formState: { errors }, setValue, watch } = useForm<AuthorFormData>({
+    const { register, handleSubmit, control, formState: { errors }, setValue, watch, reset } = useForm<AuthorFormData>({
         resolver: zodResolver(AuthorFormSchema),
         defaultValues: {
             name: '',
@@ -48,13 +46,12 @@ export default function ManageAuthorPage() {
 
     useEffect(() => {
         getAuthorData().then(data => {
-            setValue('name', data.name);
-            setValue('title', data.title);
-            setValue('photoUrl', data.photoUrl);
-            setValue('bio', data.bio);
+            reset(data); // Use reset to update all form values and form state
         });
-    }, [setValue]);
+    }, [reset]);
     
+    // When a file is selected, we now set a standard placeholder URL instead of a data URI.
+    // This prevents the JSON file from becoming too large and causing deployment issues.
     const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
@@ -62,11 +59,9 @@ export default function ManageAuthorPage() {
                 toast({ title: "Invalid File Type", description: "Please upload a valid image file (PNG, JPG).", variant: "destructive" });
                 return;
             }
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setValue('photoUrl', reader.result as string, { shouldDirty: true, shouldValidate: true });
-            };
-            reader.readAsDataURL(file);
+            // Set a placeholder URL. The actual image is not stored on the server in this implementation.
+            setValue('photoUrl', 'https://placehold.co/100x100.png', { shouldDirty: true, shouldValidate: true });
+            toast({ title: "Photo Updated", description: "A placeholder has been set for your photo. The actual image is not uploaded to a server in this demo.", variant: 'default' });
         }
     }, [setValue, toast]);
 
@@ -123,7 +118,7 @@ export default function ManageAuthorPage() {
                                 )}
                                 <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isSaving}>
                                     <Upload className="mr-2 h-4 w-4" />
-                                    Upload Photo
+                                    Change Photo
                                 </Button>
                                 <input
                                     type="file"
