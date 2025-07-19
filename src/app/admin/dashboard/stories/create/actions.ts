@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { type Story, type StoryPage, getAllStoriesAdmin, saveUpdatedStories } from '@/lib/stories';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import OpenAI from 'openai';
 
 // Zod schema for the image generation part (simplified)
 const ImageGenerationSchema = z.object({
@@ -26,6 +27,7 @@ const StoryFormSchema = z.object({
   slug: z.string().min(3, "Slug is required.").regex(/^[a-z0-9-]+$/, 'Slug must be lowercase with dashes.'),
   seoDescription: z.string().min(10, "SEO Description is required.").max(160, "Description is too long."),
   category: z.string().min(1, "Please select a category."),
+  logo: z.string().optional(),
   websiteUrl: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
   pages: z.array(StoryPageClientSchema).min(5, "A story must have at least 5 pages."),
 });
@@ -91,7 +93,7 @@ export async function createManualStoryAction(data: StoryFormData): Promise<{ su
     return { success: false, error: formattedError || 'Invalid input data.' };
   }
 
-  const { title, slug, seoDescription, category, pages, websiteUrl } = validatedFields.data;
+  const { title, slug, seoDescription, category, pages, logo, websiteUrl } = validatedFields.data;
   
   try {
     const storyPages: StoryPage[] = pages.map(page => ({
@@ -112,6 +114,7 @@ export async function createManualStoryAction(data: StoryFormData): Promise<{ su
       cover: storyPages[0].url,
       dataAiHint: storyPages[0].dataAiHint,
       category,
+      logo: logo || undefined,
       publishedDate: new Date().toISOString(),
       status: 'published',
       pages: storyPages,

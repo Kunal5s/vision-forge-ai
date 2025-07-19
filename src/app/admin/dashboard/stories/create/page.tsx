@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
@@ -12,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, PlusCircle, Trash2, FileSignature, Upload, Wand2, RefreshCw, Eye, Sparkles } from 'lucide-react';
+import { ArrowLeft, Loader2, PlusCircle, Trash2, FileSignature, Upload, Wand2, RefreshCw, Eye, Sparkles, Image as ImageIcon } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -33,16 +32,12 @@ const StoryFormSchema = z.object({
   slug: z.string().min(3, "Slug is required.").regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and dashes.'),
   seoDescription: z.string().min(10, "SEO Description is required.").max(160, "Description cannot be more than 160 characters."),
   category: z.string().min(1, "Please select a category."),
+  logo: z.string().optional(),
   websiteUrl: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
   pages: z.array(StoryPageClientSchema).min(5, "A story must have at least 5 pages.").max(50, "A story cannot have more than 50 pages."),
 });
 
 type StoryFormData = z.infer<typeof StoryFormSchema>;
-
-interface GeneratedImage {
-  imageUrl: string;
-  imagePrompt: string;
-}
 
 export default function CreateManualStoryPage() {
     const [isPublishing, setIsPublishing] = useState(false);
@@ -51,7 +46,7 @@ export default function CreateManualStoryPage() {
 
     // State for the AI generator form
     const [aiPrompt, setAiPrompt] = useState('');
-    const [aiImageCount, setAiImageCount] = useState(20);
+    const [aiImageCount, setAiImageCount] = useState(10); // Default to 10
 
     const { register, handleSubmit, control, formState: { errors }, watch, setValue } = useForm<StoryFormData>({
         resolver: zodResolver(StoryFormSchema),
@@ -60,6 +55,7 @@ export default function CreateManualStoryPage() {
             slug: '',
             seoDescription: '',
             category: 'Featured',
+            logo: '',
             websiteUrl: '',
             pages: [],
         },
@@ -72,6 +68,7 @@ export default function CreateManualStoryPage() {
 
     const titleValue = watch('title');
     const pagesValue = watch('pages');
+    const logoValue = watch('logo');
 
     const generateSlug = useCallback((title: string) => {
         return title.toLowerCase().replace(/<[^>]*>?/gm, '').replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-').replace(/^-+|-+$/g, '');
@@ -103,13 +100,33 @@ export default function CreateManualStoryPage() {
         }
     };
 
+    const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (!file.type.startsWith('image/')) {
+                toast({ title: "Invalid File Type", description: "Please upload an image file.", variant: "destructive" });
+                return;
+            }
+             if (file.size > 2 * 1024 * 1024) { // 2MB limit for logo
+                toast({ title: "File Too Large", description: "Logo size cannot exceed 2MB.", variant: "destructive" });
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                setValue('logo', event.target?.result as string, { shouldValidate: true, shouldDirty: true });
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+
     const handleGenerateImages = async () => {
         if (!aiPrompt) {
             toast({ title: "Prompt Required", description: "Please enter a prompt to generate images.", variant: "destructive" });
             return;
         }
         setIsGenerating(true);
-        toast({ title: "AI Image Generation Started...", description: `Generating ${aiImageCount} images from Pollinations.ai. This may take a few moments.` });
+        toast({ title: "AI Image Generation Started...", description: `Generating ${aiImageCount} images. This may take a few moments.` });
 
         const result = await generateStoryImagesAction({ prompt: aiPrompt, imageCount: aiImageCount });
         setIsGenerating(false);
@@ -191,6 +208,26 @@ export default function CreateManualStoryPage() {
                                 <Input id="slug" {...register('slug')} placeholder="a-journey-through-the-himalayas" disabled={isPublishing} />
                                 {errors.slug && <p className="text-sm text-destructive mt-1">{errors.slug.message}</p>}
                             </div>
+
+                            <div>
+                                <Label>Brand Logo (Optional)</Label>
+                                <div className="mt-1 flex items-center gap-4">
+                                    <div className="w-16 h-16 bg-muted rounded-md flex items-center justify-center border">
+                                        {logoValue ? <Image src={logoValue} alt="Logo Preview" width={64} height={64} objectFit="contain" /> : <ImageIcon className="h-8 w-8 text-muted-foreground"/>}
+                                    </div>
+                                    <Button type="button" variant="outline" onClick={() => (document.getElementById('logo-input') as HTMLInputElement)?.click()} disabled={isPublishing}>
+                                        <Upload className="mr-2 h-4 w-4" /> Upload Logo
+                                    </Button>
+                                    <input
+                                        id="logo-input"
+                                        type="file"
+                                        accept="image/png, image/jpeg, image/webp"
+                                        className="hidden"
+                                        onChange={handleLogoUpload}
+                                    />
+                                </div>
+                            </div>
+
                             <div>
                                 <Label htmlFor="websiteUrl">Website Link (Optional)</Label>
                                 <Input id="websiteUrl" {...register('websiteUrl')} placeholder="https://example.com" disabled={isPublishing} />
@@ -246,8 +283,9 @@ export default function CreateManualStoryPage() {
                                             <Image 
                                                 src={pagesValue[index].imageUrl} 
                                                 alt={`Preview for page ${index + 1}`} 
-                                                layout="fill"
-                                                objectFit="cover"
+                                                width={220}
+                                                height={391}
+                                                className="object-cover w-full h-full"
                                             />
                                         ) : (
                                             <div className="flex items-center justify-center h-full text-muted-foreground text-xs p-2">Upload an image</div>
