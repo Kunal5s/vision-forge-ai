@@ -16,7 +16,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getStoryBySlug, updateStoryAction, deleteStoryAction } from './actions';
-import { generateStoryImagesAction } from '../../../create/actions'; // Reuse image generator
+import { generateStoryImagesAction } from '../../../stories/create/actions'; // Corrected Path
 import { categorySlugMap, FONT_STYLES } from '@/lib/constants';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { StoryPlayer } from '@/components/vision-forge/StoryPlayer';
@@ -495,3 +495,5 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
         </main>
     );
 }
+
+  

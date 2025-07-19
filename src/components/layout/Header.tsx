@@ -31,15 +31,13 @@ const CategoryNavBar = () => {
             const queryString = params.toString();
             return `${pathname}${queryString ? `?${queryString}` : ''}`;
         }
-        // Construct the correct path based on the slug to name mapping
-        const categoryPath = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === categorySlugMap[slug]) || slug;
-        return `/${categoryPath}`;
+        return `/${slug}`;
     };
 
     return (
         <div className="w-full bg-background border-b">
             <nav className="h-14 flex items-center justify-center container mx-auto px-4 overflow-x-auto no-scrollbar md:overflow-x-visible">
-                <div className="flex items-center justify-center gap-2">
+                <div className="flex items-center justify-center gap-2 md:gap-4 lg:gap-6">
                     {Object.entries(categorySlugMap).map(([slug, name]) => {
                          const isActive = isFilterablePage ? currentCategorySlug === slug : pathname === `/${slug}`;
                          return (
@@ -114,3 +112,5 @@ export function Header() {
     </header>
   );
 }
+
+  
