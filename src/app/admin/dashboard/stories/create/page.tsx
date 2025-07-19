@@ -1,202 +1,181 @@
 
 'use client';
 
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, Wand2, KeyRound } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { ArrowLeft, Loader2, PlusCircle, Trash2, FileSignature } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Textarea } from '@/components/ui/textarea';
-import { generateStoryAction } from './actions';
+import { createManualStoryAction } from './actions';
 import { categorySlugMap } from '@/lib/constants';
-import { Badge } from '@/components/ui/badge';
 
+// Zod schema for a single story page
+const StoryPageFormSchema = z.object({
+  imageUrl: z.string().url("A valid image URL is required."),
+  caption: z.string().min(1, "Caption cannot be empty.").max(150, "Caption cannot be more than 150 characters."),
+});
 
+// Zod schema for the entire story form
 const StoryFormSchema = z.object({
-  topic: z.string().min(3, "Topic must be at least 3 characters long."),
-  pageCount: z.string() // The value from the Select is a string, so we validate as a string
-    .refine(val => !isNaN(parseInt(val)), { message: "Page count must be a number." }),
+  title: z.string().min(3, "Title must be at least 3 characters long."),
+  slug: z.string().min(3, "Slug is required.").regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and dashes.'),
+  seoDescription: z.string().min(10, "SEO Description is required.").max(160, "Description cannot be more than 160 characters."),
   category: z.string().min(1, "Please select a category."),
-  openRouterApiKey: z.string().optional(),
-  huggingFaceApiKey: z.string().optional(),
+  pages: z.array(StoryPageFormSchema).min(5, "A story must have at least 5 pages."),
 });
 
 type StoryFormData = z.infer<typeof StoryFormSchema>;
 
-export default function CreateWebStoryPage() {
+export default function CreateManualStoryPage() {
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
 
-    const { register, handleSubmit, control, formState: { errors }, setValue, watch } = useForm<StoryFormData>({
+    const { register, handleSubmit, control, formState: { errors }, watch, setValue } = useForm<StoryFormData>({
         resolver: zodResolver(StoryFormSchema),
         defaultValues: {
-            topic: '',
-            pageCount: '10', // Default to a string value
-            category: 'Featured', // Default to a valid category name
-            openRouterApiKey: '',
-            huggingFaceApiKey: '',
+            title: '',
+            slug: '',
+            seoDescription: '',
+            category: 'Featured',
+            pages: Array.from({ length: 5 }, () => ({ imageUrl: '', caption: '' })),
         },
     });
 
-    const openRouterApiKey = watch('openRouterApiKey');
-    const huggingFaceApiKey = watch('huggingFaceApiKey');
+    const { fields, append, remove } = useFieldArray({
+        control,
+        name: "pages",
+    });
 
-    // Load API keys from localStorage on initial render
+    const titleValue = watch('title');
+
+    const generateSlug = useCallback((title: string) => {
+        return title
+            .toLowerCase()
+            .replace(/<[^>]*>?/gm, '')
+            .replace(/[^a-z0-9\s-]/g, '')
+            .trim()
+            .replace(/\s+/g, '-')
+            .replace(/^-+|-+$/g, '');
+    }, []);
+
     useEffect(() => {
-        try {
-            const savedOpenRouterKey = localStorage.getItem('openRouterApiKey');
-            const savedHuggingFaceKey = localStorage.getItem('huggingFaceApiKey');
-            if (savedOpenRouterKey) setValue('openRouterApiKey', savedOpenRouterKey);
-            if (savedHuggingFaceKey) setValue('huggingFaceApiKey', savedHuggingFaceKey);
-        } catch (error) {
-            console.error("Could not access localStorage. API keys will not be persisted.", error);
+        if (titleValue) {
+            setValue('slug', generateSlug(titleValue), { shouldValidate: true });
         }
-    }, [setValue]);
-    
-     // Save API keys to localStorage whenever they change
-    useEffect(() => {
-      try {
-        if (openRouterApiKey) localStorage.setItem('openRouterApiKey', openRouterApiKey); else localStorage.removeItem('openRouterApiKey');
-        if (huggingFaceApiKey) localStorage.setItem('huggingFaceApiKey', huggingFaceApiKey); else localStorage.removeItem('huggingFaceApiKey');
-      } catch (error) {
-        // Silently fail if localStorage is not available
-      }
-    }, [openRouterApiKey, huggingFaceApiKey]);
+    }, [titleValue, setValue, generateSlug]);
 
-    const handleGeneration = async (data: StoryFormData) => {
+    const handleFormSubmit = async (data: StoryFormData) => {
         setIsLoading(true);
         toast({
-            title: 'Generating Web Story...',
-            description: `AI is crafting a ${data.pageCount}-page story on "${data.topic}". This might take a few moments.`,
+            title: 'Publishing Web Story...',
+            description: 'Please wait while we save your story to GitHub.',
         });
 
-        const result = await generateStoryAction(data);
+        const result = await createManualStoryAction(data);
 
-        if (result && !result.success) {
+        if (!result.success) {
             toast({
-                title: 'Error Generating Story',
+                title: 'Error Publishing Story',
                 description: result.error,
                 variant: 'destructive',
                 duration: 9000,
             });
-            setIsLoading(false);
-        } else if (result.slug) {
-            toast({
-                title: 'Story Generated!',
-                description: 'Your new Web Story has been created and saved.',
-            });
-            // Redirect on success
-            window.location.href = `/stories/${result.slug}`;
         }
+        // On success, the action redirects, so we don't need a success toast here.
+        setIsLoading(false);
     };
 
     return (
         <main className="flex-grow container mx-auto py-12 px-4 bg-muted/20 min-h-screen">
             <div className="mb-8">
                 <Button asChild variant="outline" size="sm">
-                <Link href="/admin/dashboard">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Dashboard
-                </Link>
+                    <Link href="/admin/dashboard">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Dashboard
+                    </Link>
                 </Button>
             </div>
 
-            <Card className="max-w-2xl mx-auto">
+            <Card className="max-w-4xl mx-auto">
                 <CardHeader>
-                    <CardTitle className="text-2xl">Create a New Web Story with AI</CardTitle>
+                    <CardTitle className="text-2xl">Create a New Web Story</CardTitle>
                     <CardDescription>
-                        Provide a topic and the AI will automatically generate a multi-page visual story with images and captions.
+                        Manually build a multi-page visual story. Add at least 5 pages to publish.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                   <form onSubmit={handleSubmit(handleGeneration)} className="space-y-6">
-                        <div>
-                            <Label htmlFor="topic">Story Topic</Label>
-                            <Textarea
-                                id="topic"
-                                placeholder="e.g., The journey of a lonely robot finding a friend"
-                                {...register('topic')}
-                                rows={3}
-                                disabled={isLoading}
-                                className="mt-1"
-                            />
-                            {errors.topic && <p className="text-sm text-destructive mt-1">{errors.topic.message}</p>}
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <Controller
-                                name="pageCount"
-                                control={control}
-                                render={({ field }) => (
-                                    <div className="space-y-1">
-                                        <Label>Number of Pages</Label>
-                                        <Select 
-                                            onValueChange={field.onChange} 
-                                            defaultValue={field.value} 
-                                            disabled={isLoading}
-                                        >
-                                            <SelectTrigger><SelectValue /></SelectTrigger>
-                                            <SelectContent>
-                                                {Array.from({ length: 16 }, (_, i) => i + 5).map(num => (
-                                                    <SelectItem key={num} value={String(num)}>{num} Pages</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        {errors.pageCount && <p className="text-sm text-destructive mt-1">{errors.pageCount.message}</p>}
-                                    </div>
-                                )}
-                            />
-                            <Controller
-                                name="category"
-                                control={control}
-                                render={({ field }) => (
-                                    <div className="space-y-1">
-                                        <Label>Category</Label>
+                   <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
+                        <div className="space-y-4">
+                            <div>
+                                <Label htmlFor="title">Story Title</Label>
+                                <Input id="title" {...register('title')} placeholder="e.g., A Journey Through the Himalayas" disabled={isLoading} />
+                                {errors.title && <p className="text-sm text-destructive mt-1">{errors.title.message}</p>}
+                            </div>
+                            <div>
+                                <Label htmlFor="slug">Story Slug (URL)</Label>
+                                <Input id="slug" {...register('slug')} placeholder="a-journey-through-the-himalayas" disabled={isLoading} />
+                                {errors.slug && <p className="text-sm text-destructive mt-1">{errors.slug.message}</p>}
+                            </div>
+                             <div>
+                                <Label htmlFor="seoDescription">SEO Description (Max 160 characters)</Label>
+                                <Textarea id="seoDescription" {...register('seoDescription')} placeholder="A short, catchy description for search engines." disabled={isLoading} rows={2} />
+                                {errors.seoDescription && <p className="text-sm text-destructive mt-1">{errors.seoDescription.message}</p>}
+                            </div>
+                            <div>
+                                <Label>Category</Label>
+                                 <Controller
+                                    name="category"
+                                    control={control}
+                                    render={({ field }) => (
                                         <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
-                                            <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger>
+                                            <SelectTrigger><SelectValue /></SelectTrigger>
                                             <SelectContent>
                                                 {Object.entries(categorySlugMap).map(([slug, name]) => (
                                                     <SelectItem key={slug} value={name}>{name}</SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
-                                        {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>}
-                                    </div>
-                                )}
-                            />
+                                    )}
+                                />
+                                {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>}
+                            </div>
                         </div>
                         
-                         <div className="space-y-4 border-t pt-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="huggingFaceApiKey">Hugging Face API Key (Optional)</Label>
-                                <div className="relative flex items-center">
-                                    <KeyRound className="absolute left-3 h-5 w-5 text-muted-foreground" />
-                                    <Input id="huggingFaceApiKey" type="password" placeholder="hf_... (leave blank to use server key)" {...register('huggingFaceApiKey')} className="pl-10" disabled={isLoading} />
-                                    {huggingFaceApiKey && <Badge className="absolute right-2 bg-green-600 text-white">Active</Badge>}
+                        <div className="space-y-6 border-t pt-6">
+                            <h3 className="text-lg font-semibold">Story Pages</h3>
+                            {fields.map((field, index) => (
+                                <div key={field.id} className="p-4 border rounded-md space-y-4 relative bg-background">
+                                     <Label className="font-semibold">Page {index + 1}</Label>
+                                    <div>
+                                        <Label htmlFor={`pages.${index}.imageUrl`}>Image URL</Label>
+                                        <Input id={`pages.${index}.imageUrl`} {...register(`pages.${index}.imageUrl`)} placeholder="https://placehold.co/1080x1920.png" disabled={isLoading} />
+                                        {errors.pages?.[index]?.imageUrl && <p className="text-sm text-destructive mt-1">{errors.pages[index]?.imageUrl?.message}</p>}
+                                    </div>
+                                    <div>
+                                        <Label htmlFor={`pages.${index}.caption`}>Caption (Max 150 characters)</Label>
+                                        <Textarea id={`pages.${index}.caption`} {...register(`pages.${index}.caption`)} placeholder="A short, engaging caption for this page." disabled={isLoading} rows={2} />
+                                        {errors.pages?.[index]?.caption && <p className="text-sm text-destructive mt-1">{errors.pages[index]?.caption?.message}</p>}
+                                    </div>
+                                    {fields.length > 5 && (
+                                         <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => remove(index)} disabled={isLoading}>
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    )}
                                 </div>
-                                <p className="text-xs text-muted-foreground">This key will be prioritized for generation.</p>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="openRouterApiKey">OpenRouter API Key (Optional)</Label>
-                                <div className="relative flex items-center">
-                                    <KeyRound className="absolute left-3 h-5 w-5 text-muted-foreground" />
-                                    <Input id="openRouterApiKey" type="password" placeholder="sk-or-v1-... (leave blank to use server key)" {...register('openRouterApiKey')} className="pl-10" disabled={isLoading} />
-                                    {openRouterApiKey && !huggingFaceApiKey && <Badge className="absolute right-2 bg-green-600 text-white">Active</Badge>}
-                                </div>
-                                <p className="text-xs text-muted-foreground">Used if Hugging Face key is not provided.</p>
+                            ))}
+                             {errors.pages && <p className="text-sm text-destructive mt-2">{errors.pages.root?.message || errors.pages.message}</p>}
+                            <div className="flex justify-start">
+                                <Button type="button" variant="outline" onClick={() => append({ imageUrl: '', caption: '' })} disabled={isLoading || fields.length >= 20}>
+                                    <PlusCircle className="mr-2 h-4 w-4" /> Add Page
+                                </Button>
                             </div>
                         </div>
 
@@ -204,9 +183,9 @@ export default function CreateWebStoryPage() {
                         <div className="border-t pt-6">
                             <Button type="submit" className="w-full" disabled={isLoading}>
                                 {isLoading ? (
-                                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating Story...</>
+                                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Publishing...</>
                                 ) : (
-                                    <><Wand2 className="mr-2 h-4 w-4" /> Generate Story with AI</>
+                                    <><FileSignature className="mr-2 h-4 w-4" /> Publish Story</>
                                 )}
                             </Button>
                         </div>

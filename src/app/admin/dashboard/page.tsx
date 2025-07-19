@@ -61,7 +61,7 @@ export default async function AdminDashboardPage() {
                       <BookImage className="text-orange-500" /> Create Web Story
                   </CardTitle>
                   <CardDescription>
-                      Build and publish engaging, tappable Web Stories for Google.
+                      Manually build and publish engaging, tappable Web Stories.
                   </CardDescription>
               </CardHeader>
               <CardContent className="mt-auto">

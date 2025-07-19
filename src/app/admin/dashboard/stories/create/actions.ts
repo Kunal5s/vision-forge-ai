@@ -1,135 +1,111 @@
 
 'use server';
 
-import type { Story } from '@/lib/stories';
-import { getAllStoriesAdmin } from '@/lib/stories';
+import { z } from 'zod';
+import { type Story, type StoryPage, getAllStoriesAdmin } from '@/lib/stories';
+import { getPrimaryBranch, getShaForFile } from '@/app/admin/dashboard/create/actions'; // Reuse GitHub helpers
 import { Octokit } from 'octokit';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { generateAndSaveWebStory, StoryGenerationInput } from '@/ai/story-generator';
-import { z } from 'zod';
 
-// This is the Zod schema for the form on the frontend
-const StoryFormSchema = z.object({
-  topic: z.string().min(3, "Topic must be at least 3 characters long."),
-  pageCount: z.string().refine(val => !isNaN(parseInt(val)), { message: "Page count must be a number." })
-    .transform(val => parseInt(val, 10))
-    .refine(val => val >= 5 && val <= 20, { message: "Story must have between 5 and 20 pages." }),
-  category: z.string().min(1, "Please select a category."),
-  openRouterApiKey: z.string().optional(),
-  huggingFaceApiKey: z.string().optional(),
+// Zod schema for a single story page
+const StoryPageFormSchema = z.object({
+  imageUrl: z.string().url("A valid image URL is required."),
+  caption: z.string().min(1, "Caption cannot be empty.").max(150, "Caption is too long."),
 });
 
+// Zod schema for the entire story form
+const StoryFormSchema = z.object({
+  title: z.string().min(3, "Title must be at least 3 characters long."),
+  slug: z.string().min(3, "Slug is required.").regex(/^[a-z0-9-]+$/, 'Slug must be lowercase with dashes.'),
+  seoDescription: z.string().min(10, "SEO Description is required.").max(160, "Description is too long."),
+  category: z.string().min(1, "Please select a category."),
+  pages: z.array(StoryPageFormSchema).min(5, "A story must have at least 5 pages."),
+});
 
-export async function generateStoryAction(data: unknown): Promise<{ success: boolean; error?: string; slug?: string }> {
-    const validatedFields = StoryFormSchema.safeParse(data);
+type StoryFormData = z.infer<typeof StoryFormSchema>;
 
-    if (!validatedFields.success) {
-      console.error("Validation Errors:", validatedFields.error.flatten());
-      const firstError = validatedFields.error.flatten().fieldErrors;
-      const errorMsg = Object.values(firstError)[0]?.[0] || 'Invalid input data.';
-      return { success: false, error: errorMsg };
-    }
+export async function createManualStoryAction(data: StoryFormData): Promise<{ success: boolean; error?: string; slug?: string }> {
+  const validatedFields = StoryFormSchema.safeParse(data);
 
-    try {
-        const result = await generateAndSaveWebStory(validatedFields.data);
+  if (!validatedFields.success) {
+    const errorDetails = validatedFields.error.flatten().fieldErrors;
+    const formattedError = Object.entries(errorDetails)
+        .map(([field, errors]) => `${field}: ${errors?.join(', ')}`)
+        .join('; ');
+    return { success: false, error: formattedError || 'Invalid input data.' };
+  }
+  
+  const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = process.env;
+  if (!GITHUB_TOKEN || !GITHUB_REPO_OWNER || !GITHUB_REPO_NAME) {
+    return { success: false, error: "GitHub credentials are not configured on the server." };
+  }
 
-        if (!result.success) {
-            throw new Error(result.error || 'AI failed to generate the web story.');
-        }
+  try {
+    const { title, slug, seoDescription, category, pages } = validatedFields.data;
 
-        return result;
+    const storyPages: StoryPage[] = pages.map(page => ({
+      type: 'image',
+      url: page.imageUrl,
+      dataAiHint: 'manual story upload', // Default hint for manually uploaded images
+      content: {
+        title: title, // Use the main story title for each page's title for consistency
+        body: page.caption,
+      },
+    }));
 
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred during story generation.';
-        return { success: false, error: errorMessage };
-    }
-}
-
-
-export async function getShaForFile(octokit: Octokit, owner: string, repo: string, path: string, branch: string): Promise<string | undefined> {
-    try {
-        const { data } = await octokit.rest.repos.getContent({
-            owner,
-            repo,
-            path,
-            ref: branch,
-        });
-        if (Array.isArray(data) || !('sha' in data)) {
-            return undefined;
-        }
-        return data.sha;
-    } catch (error: any) {
-        if (error.status === 404) {
-            return undefined;
-        }
-        throw error;
-    }
-}
-
-export async function getPrimaryBranch(octokit: Octokit, owner: string, repo: string): Promise<string> {
-    if (process.env.GITHUB_BRANCH) {
-        return process.env.GITHUB_BRANCH;
-    }
-    try {
-        await octokit.rest.repos.getBranch({ owner, repo, branch: 'main' });
-        return 'main';
-    } catch (error: any) {
-        if (error.status === 404) {
-            try {
-                await octokit.rest.repos.getBranch({ owner, repo, branch: 'master' });
-                return 'master';
-            } catch (masterError) {
-                 console.error("Could not find 'main' or 'master' branch.", masterError);
-                 throw new Error("Could not determine primary branch. Neither 'main' nor 'master' found.");
-            }
-        }
-        throw error;
-    }
-}
-
-
-export async function saveNewStory(newStory: Story) {
-    const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = process.env;
-    if (!GITHUB_TOKEN || !GITHUB_REPO_OWNER || !GITHUB_REPO_NAME) {
-        console.error("GitHub credentials are not configured on the server. Cannot save story.");
-        throw new Error("GitHub credentials not configured. Please check Vercel environment variables.");
-    }
+    const newStory: Story = {
+      slug,
+      title,
+      seoDescription,
+      author: "Kunal Sonpitre", // Can be fetched from author.json in the future
+      cover: storyPages[0].url, // Use the first page's image as the cover
+      dataAiHint: storyPages[0].dataAiHint,
+      category,
+      publishedDate: new Date().toISOString(),
+      status: 'published',
+      pages: storyPages,
+    };
     
-    // Use a fixed category slug 'featured' for all stories for now.
-    // This can be changed later to support multiple story categories.
-    const categorySlug = 'featured';
+    // For now, all stories go to the 'featured' category JSON.
+    const categorySlug = 'featured'; 
     const repoPath = `src/stories/${categorySlug}.json`;
-
+    
+    const octokit = new Octokit({ auth: GITHUB_TOKEN });
+    const branch = await getPrimaryBranch(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME);
+    
+    let existingStories: Story[] = [];
     try {
-        const octokit = new Octokit({ auth: GITHUB_TOKEN });
-        const branch = await getPrimaryBranch(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME);
-        
-        let existingStories: Story[] = [];
-        try {
-            existingStories = await getAllStoriesAdmin(categorySlug);
-        } catch(e) {
-            // File might not exist, which is fine.
-            console.log(`No existing stories found for category ${categorySlug}, creating new file.`);
-        }
-
-        const updatedStories = [newStory, ...existingStories];
-        const fileContent = JSON.stringify(updatedStories, null, 2);
-
-        const fileSha = await getShaForFile(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME, repoPath, branch);
-        
-        await octokit.rest.repos.createOrUpdateFileContents({
-            owner: GITHUB_REPO_OWNER,
-            repo: GITHUB_REPO_NAME,
-            path: repoPath,
-            message: `feat: ✨ Add new web story "${newStory.title}"`,
-            content: Buffer.from(fileContent).toString('base64'),
-            sha: fileSha,
-            branch: branch,
-        });
-        console.log(`Successfully committed new story for "${newStory.category}" to GitHub on branch "${branch}".`);
-    } catch (error) {
-        console.error("Failed to commit new story to GitHub.", error);
-        throw new Error("Failed to save story to GitHub. Please check credentials and repository permissions.");
+        existingStories = await getAllStoriesAdmin(categorySlug);
+    } catch (e) {
+        console.log(`No existing stories found for category ${categorySlug}, creating new file.`);
     }
+
+    const updatedStories = [newStory, ...existingStories];
+    const fileContent = JSON.stringify(updatedStories, null, 2);
+    const fileSha = await getShaForFile(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME, repoPath, branch);
+
+    await octokit.rest.repos.createOrUpdateFileContents({
+      owner: GITHUB_REPO_OWNER,
+      repo: GITHUB_REPO_NAME,
+      path: repoPath,
+      message: `feat: ✨ Add new web story "${title}"`,
+      content: Buffer.from(fileContent).toString('base64'),
+      sha: fileSha,
+      branch: branch,
+    });
+    
+    console.log(`Successfully committed new story "${title}" to GitHub.`);
+
+    // Revalidate paths
+    revalidatePath('/admin/dashboard/stories');
+    revalidatePath('/stories');
+    revalidatePath(`/stories/${slug}`);
+
+  } catch (error) {
+    console.error("Error in createManualStoryAction:", error);
+    return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred." };
+  }
+  
+  redirect(`/stories/${validatedFields.data.slug}`);
 }
