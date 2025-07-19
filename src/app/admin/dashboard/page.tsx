@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { PlusCircle, Edit, FileSignature, BookImage, UserCircle } from 'lucide-react';
+import { PlusCircle, Edit, FileSignature, BookImage, UserCircle, History } from 'lucide-react';
 import Link from 'next/link';
 
 export default async function AdminDashboardPage() {
@@ -86,6 +86,24 @@ export default async function AdminDashboardPage() {
               <CardContent className="mt-auto">
                 <Button variant="secondary" className="w-full">
                     Manage Content
+                </Button>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href="/admin/dashboard/stories" className="block h-full">
+            <Card className="h-full flex flex-col transition-all hover:shadow-lg hover:-translate-y-1">
+              <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-2xl">
+                      <History className="text-cyan-500" /> Manage Web Stories
+                  </CardTitle>
+                  <CardDescription>
+                      Edit, update, and manage all your existing web stories.
+                  </CardDescription>
+              </CardHeader>
+              <CardContent className="mt-auto">
+                <Button variant="secondary" className="w-full">
+                    Manage Stories
                 </Button>
               </CardContent>
             </Card>

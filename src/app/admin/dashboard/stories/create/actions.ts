@@ -45,8 +45,8 @@ export async function generateStoryImagesAction(data: unknown): Promise<{ succes
   try {
     const imagePromises = Array.from({ length: imageCount }).map(async (_, index): Promise<{ imageUrl: string, imagePrompt: string } | null> => {
         try {
-            // We use the same prompt for all images but a different seed for variation.
-            const finalPrompt = `${prompt}, 9:16 aspect ratio, vertical, cinematic, watermark-free, no text`;
+            // Add specific instructions to avoid text and get the right aspect ratio.
+            const finalPrompt = `${prompt}, 9:16 aspect ratio, vertical, cinematic, watermark-free, no text, no signatures`;
             const seed = Math.floor(Math.random() * 1_000_000_000);
             const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=1080&height=1920&seed=${seed}&nologo=true`;
 
@@ -143,5 +143,6 @@ export async function createManualStoryAction(data: StoryFormData): Promise<{ su
     return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred." };
   }
   
-  redirect(`/stories/${validatedFields.data.slug}`);
+  // Redirect to the management page instead of the public story page
+  redirect(`/admin/dashboard/stories`);
 }
