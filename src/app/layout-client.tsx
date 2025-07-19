@@ -12,15 +12,19 @@ export default function RootLayoutClient({ children }: { children: React.ReactNo
   const pathname = usePathname();
   const isAdminLoginPage = pathname === '/admin/login';
   const isAdminDashboard = pathname.startsWith('/admin') && !isAdminLoginPage;
+  // A story page will have a path like /stories/[slug], so it will have more than 2 segments.
+  const isStoryPage = pathname.startsWith('/stories/') && pathname.split('/').length > 2;
+
+  const showHeaderAndFooter = !isAdminLoginPage && !isAdminDashboard && !isStoryPage;
 
   return (
     <>
-      {!isAdminLoginPage && <Header />}
-      <div className={isAdminDashboard ? "" : "flex-grow pt-28"}>
+      {showHeaderAndFooter && <Header />}
+      <div className={isAdminDashboard ? "" : (showHeaderAndFooter ? "flex-grow pt-28" : "flex-grow")}>
         {children}
       </div>
-      {!isAdminDashboard && !isAdminLoginPage && <PreFooterCallToAction />}
-      {!isAdminDashboard && !isAdminLoginPage && <Footer />}
+      {showHeaderAndFooter && <PreFooterCallToAction />}
+      {showHeaderAndFooter && <Footer />}
       <Toaster />
       <CookieConsent />
     </>

@@ -61,7 +61,7 @@ export function StoryPlayer({ story, isPreview = false, onClose }: StoryPlayerPr
     const shareData = {
         title: story.title,
         text: story.seoDescription,
-        url: window.location.href
+        url: isPreview ? 'https://imagenbrain.ai/stories/' + story.slug : window.location.href
     };
     if (navigator.share && navigator.canShare(shareData)) {
         try {
@@ -70,7 +70,7 @@ export function StoryPlayer({ story, isPreview = false, onClose }: StoryPlayerPr
             console.error('Share failed:', err);
         }
     } else {
-        navigator.clipboard.writeText(window.location.href);
+        navigator.clipboard.writeText(shareData.url);
         toast({
             title: "Link Copied!",
             description: "The story link has been copied to your clipboard.",
@@ -78,39 +78,39 @@ export function StoryPlayer({ story, isPreview = false, onClose }: StoryPlayerPr
     }
   };
 
-  const handleClose = isPreview ? onClose : () => window.location.href = '/';
+  const handleClose = isPreview ? onClose : () => {
+    // If not a preview, try to go back in history, otherwise go to homepage.
+    if(window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.href = '/';
+    }
+  }
+
+
+  const WrapperComponent = isPreview ? 'div' : 'main';
 
   if (!page) {
     return (
-        <div className="fixed inset-0 bg-black flex items-center justify-center font-sans">
-            <div className="relative w-full h-full max-w-[420px] max-h-[85vh] aspect-[9/16] bg-stone-900 rounded-lg overflow-hidden shadow-2xl p-4 text-white text-center flex flex-col justify-center">
+        <WrapperComponent className={cn("flex items-center justify-center font-sans", !isPreview && "fixed inset-0 bg-black")}>
+            <div className="relative w-full h-full max-w-[420px] max-h-[85vh] md:max-h-screen md:h-screen aspect-[9/16] bg-stone-900 rounded-lg overflow-hidden shadow-2xl p-4 text-white text-center flex flex-col justify-center">
                 <p>No pages to display in this story.</p>
-                 <Button variant="ghost" size="icon" className="text-white h-8 w-8 absolute top-4 right-4" onClick={handleClose}>
+                 <Button variant="ghost" size="icon" className="text-white h-8 w-8 absolute top-4 right-4 z-50" onClick={handleClose}>
                     <X size={24} />
                 </Button>
             </div>
-        </div>
+        </WrapperComponent>
     );
   }
 
   return (
-    <div className={cn("flex items-center justify-center font-sans", isPreview ? 'w-full h-full' : 'fixed inset-0 bg-black')}>
-      <div className="relative w-full h-full max-w-[420px] max-h-[85vh] aspect-[9/16] bg-stone-900 rounded-lg overflow-hidden shadow-2xl group">
+     <WrapperComponent className={cn("flex items-center justify-center font-sans w-full h-full", !isPreview && "fixed inset-0 bg-black")}>
+      <div className={cn("relative w-full h-full bg-stone-900 overflow-hidden shadow-2xl group", isPreview ? 'max-w-full rounded-lg' : 'max-w-[420px] max-h-screen md:rounded-lg')}>
         
-        {/* Progress Bars */}
-        <div className="absolute top-2 left-2 right-2 z-30">
-          <div className="flex items-center gap-1">
-            {story.pages.map((_, index) => (
-              <div key={index} className="w-full h-1 bg-white/30 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-white transition-all duration-50 ease-linear"
-                  style={{ width: `${index < currentPage ? 100 : index === currentPage ? progress : 0}%` }}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-
+        {/* Navigation Overlays */}
+        <div className="absolute top-0 left-0 h-full w-1/3 z-40" onClick={prevPage} />
+        <div className="absolute top-0 right-0 h-full w-1/3 z-40" onClick={nextPage} />
+        
         {/* Images with Fade Transition */}
         {story.pages.map((p, index) => (
             <Image
@@ -120,7 +120,7 @@ export function StoryPlayer({ story, isPreview = false, onClose }: StoryPlayerPr
                 layout="fill"
                 objectFit="cover"
                 className={cn(
-                    "z-0 transition-opacity duration-300",
+                    "z-10 transition-opacity duration-300",
                     index === currentPage ? 'opacity-100' : 'opacity-0'
                 )}
                 priority={index === 0}
@@ -128,10 +128,12 @@ export function StoryPlayer({ story, isPreview = false, onClose }: StoryPlayerPr
             />
         ))}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40 z-10" />
+        {/* Gradient Overlays for readability */}
+        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/60 to-transparent z-20" />
+        <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black/70 to-transparent z-20" />
 
         {/* Header */}
-        <div className="absolute top-0 left-0 right-0 p-4 z-20 flex justify-between items-center pt-5">
+        <div className="absolute top-0 left-0 right-0 p-4 z-50 flex justify-between items-center pt-5">
             <div className="flex items-center gap-2">
                 {story.logo && <Image src={story.logo} alt={story.title} width={40} height={40} className="rounded-lg object-contain bg-white/80 p-1" data-ai-hint={'logo'}/>}
             </div>
@@ -147,13 +149,23 @@ export function StoryPlayer({ story, isPreview = false, onClose }: StoryPlayerPr
                 </Button>
              </div>
         </div>
-        
-        {/* Navigation Overlays */}
-        <div className="absolute top-0 left-0 h-full w-1/3 z-30" onClick={prevPage} />
-        <div className="absolute top-0 right-0 h-full w-1/3 z-30" onClick={nextPage} />
 
+        {/* Progress Bars */}
+        <div className="absolute top-2 left-2 right-2 z-50">
+          <div className="flex items-center gap-1">
+            {story.pages.map((_, index) => (
+              <div key={index} className="w-full h-1 bg-white/30 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-white transition-all duration-50 ease-linear"
+                  style={{ width: `${index < currentPage ? 100 : index === currentPage ? progress : 0}%` }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+        
         {/* Content */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 z-20 flex flex-col items-start text-left">
+        <div className="absolute bottom-0 left-0 right-0 p-6 z-50 flex flex-col items-start text-left">
             {story.publishedDate && (
                  <div className="bg-black/40 backdrop-blur-sm p-2 rounded-md mb-2">
                     <p className="text-white font-medium text-xs">
@@ -180,6 +192,6 @@ export function StoryPlayer({ story, isPreview = false, onClose }: StoryPlayerPr
             )}
         </div>
       </div>
-    </div>
+    </WrapperComponent>
   );
 }
