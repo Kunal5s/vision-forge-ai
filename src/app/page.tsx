@@ -5,17 +5,16 @@ import { TestimonialsSection } from '@/components/vision-forge/TestimonialsSecti
 import { PricingSection } from '@/components/vision-forge/PricingSection';
 import { FaqSection } from '@/components/vision-forge/FaqSection';
 import type { Metadata } from 'next';
-import { ArticlesSection } from '@/components/vision-forge/ArticlesSection';
 import { getArticles } from '@/lib/articles';
 import { getStories } from '@/lib/stories';
-import { Suspense, useEffect, useState, useMemo } from 'react';
+import { Suspense } from 'react';
 import { ArticlesSkeleton } from '@/components/vision-forge/ArticlesSkeleton';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, BookImage } from 'lucide-react';
 import { FeaturesHighlightSection } from '@/components/vision-forge/FeaturesHighlightSection';
 import { StoryHighlights } from '@/components/vision-forge/StoryHighlights';
-import { BlogPageClient } from './blog/BlogPageClient';
+import { HomePageClient } from './HomePageClient';
 
 export const metadata: Metadata = {
   title: 'Imagen BrainAi: Your Free AI Image Generator',
@@ -29,7 +28,7 @@ const CATEGORY_NAME = 'Featured';
 
 async function FeaturedArticleList() {
     const articles = await getArticles(CATEGORY_NAME);
-    return <BlogPageClient allArticles={articles} />;
+    return <HomePageClient allArticles={articles} />;
 }
 
 async function WebStoriesHighlightList() {
