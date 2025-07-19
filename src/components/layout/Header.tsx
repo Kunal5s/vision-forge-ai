@@ -47,7 +47,7 @@ const CategoryNavBar = () => {
                                 scroll={false}
                                 className={cn(
                                     'text-sm font-medium transition-colors whitespace-nowrap px-3 py-1.5 rounded-md',
-                                    isActive ? 'text-foreground font-semibold bg-muted' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                                    isActive ? 'bg-muted text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                                 )}
                             >
                                 {name}
