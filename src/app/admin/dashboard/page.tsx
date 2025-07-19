@@ -9,9 +9,9 @@ export default async function AdminDashboardPage() {
 
   return (
     <main className="flex-grow container mx-auto py-12 px-4 bg-muted/20 min-h-screen">
-      <header className="flex justify-between items-center mb-10">
+      <header className="flex flex-col sm:flex-row justify-between sm:items-center mb-10 gap-4">
           <div>
-              <h1 className="text-4xl font-extrabold tracking-tight text-foreground">
+              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
                   Admin Dashboard
               </h1>
               <p className="text-muted-foreground mt-1">Welcome back, Admin!</p>

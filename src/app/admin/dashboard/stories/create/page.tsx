@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, PlusCircle, Trash2, FileSignature, Upload, Wand2, RefreshCw, Eye, Sparkles, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Loader2, PlusCircle, Trash2, FileSignature, Upload, Wand2, Eye, Sparkles, Image as ImageIcon } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -200,7 +200,7 @@ export default function CreateManualStoryPage() {
             </Dialog>
 
             <div className="mb-8">
-                <Button asChild variant="outline" size="sm">
+                <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
                     <Link href="/admin/dashboard">
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Back to Dashboard
@@ -268,7 +268,7 @@ export default function CreateManualStoryPage() {
                                 <Label>Brand Logo (Optional)</Label>
                                 <div className="mt-1 flex items-center gap-4">
                                     <div className="w-16 h-16 bg-muted rounded-md flex items-center justify-center border">
-                                        {logoValue ? <Image src={logoValue} alt="Logo Preview" width={64} height={64} objectFit="contain" /> : <ImageIcon className="h-8 w-8 text-muted-foreground"/>}
+                                        {logoValue ? <Image src={logoValue} alt="Logo Preview" width={64} height={64} className="object-contain" /> : <ImageIcon className="h-8 w-8 text-muted-foreground"/>}
                                     </div>
                                     <Button type="button" variant="outline" onClick={() => (document.getElementById('logo-input') as HTMLInputElement)?.click()} disabled={isPublishing}>
                                         <Upload className="mr-2 h-4 w-4" /> Upload Logo

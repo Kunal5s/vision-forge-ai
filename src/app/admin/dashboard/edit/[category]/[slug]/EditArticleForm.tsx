@@ -241,7 +241,7 @@ export default function EditArticleForm({ article, categoryName, categorySlug }:
         image={article.image}
       />
       <div className="mb-8">
-        <Button asChild variant="outline" size="sm">
+        <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
           <Link href="/admin/dashboard/edit">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to All Articles

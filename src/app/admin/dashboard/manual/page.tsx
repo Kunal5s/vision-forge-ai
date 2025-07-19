@@ -246,7 +246,7 @@ export default function ManualPublishPage() {
         image={previewImage || ''}
       />
       <div className="mb-8">
-        <Button asChild variant="outline" size="sm">
+        <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
           <Link href="/admin/dashboard">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Dashboard
