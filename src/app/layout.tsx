@@ -4,7 +4,6 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { SubscriptionProvider } from '@/hooks/use-subscription';
 import RootLayoutClient from './layout-client';
-import { ClerkProvider } from '@clerk/nextjs'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -39,16 +38,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
-        <html lang="en" className="h-full">
-        <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-full bg-background`}>
-            <SubscriptionProvider>
-            <RootLayoutClient>
-                {children}
-            </RootLayoutClient>
-            </SubscriptionProvider>
-        </body>
-        </html>
-    </ClerkProvider>
+    <html lang="en" className="h-full">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-full bg-background`}>
+        <SubscriptionProvider>
+          <RootLayoutClient>
+            {children}
+          </RootLayoutClient>
+        </SubscriptionProvider>
+      </body>
+    </html>
   );
 }

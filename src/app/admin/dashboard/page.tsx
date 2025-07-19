@@ -1,19 +1,10 @@
 // src/app/admin/dashboard/page.tsx
-import { currentUser } from '@clerk/nextjs/server';
-import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LayoutDashboard, PlusCircle, Edit, LogOut, FileSignature, BookImage, UserCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export default async function AdminDashboardPage() {
-  const user = await currentUser();
-
-  if (!user) {
-    redirect('/sign-in');
-  }
-
-  const userEmail = user.emailAddresses[0]?.emailAddress || 'Admin';
 
   return (
     <main className="flex-grow container mx-auto py-12 px-4 bg-muted/20 min-h-screen">
@@ -22,9 +13,9 @@ export default async function AdminDashboardPage() {
               <h1 className="text-4xl font-extrabold tracking-tight text-foreground">
                   Admin Dashboard
               </h1>
-              <p className="text-muted-foreground mt-1">Welcome back, {userEmail}!</p>
+              <p className="text-muted-foreground mt-1">Welcome back, Admin!</p>
           </div>
-          <Link href="/sign-in">
+          <Link href="/">
             <Button variant="outline">
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout

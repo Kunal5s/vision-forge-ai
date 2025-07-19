@@ -7,7 +7,6 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import React, { useEffect, useState } from 'react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { SignInButton, UserButton, SignedIn, SignedOut } from '@clerk/nextjs';
 import { Button } from '../ui/button';
 
 const navLinks = [
@@ -76,15 +75,7 @@ export function Header() {
          </Link>
          
          <div className="flex items-center gap-4">
-            <SignedIn>
-              <Link href="/admin/dashboard"><Button variant="secondary">Dashboard</Button></Link>
-              <UserButton afterSignOutUrl="/" />
-            </SignedIn>
-            <SignedOut>
-              <SignInButton mode="modal">
-                <Button variant="outline">Admin Login</Button>
-              </SignInButton>
-            </SignedOut>
+            <Link href="/admin/dashboard"><Button variant="outline">Dashboard</Button></Link>
          </div>
 
        </div>
