@@ -129,7 +129,7 @@ export function StoryPlayer({ story, isPreview = false, onClose }: StoryPlayerPr
         ))}
 
         {/* Gradient Overlays for readability */}
-        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/60 to-transparent z-20" />
+        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/50 to-transparent z-20" />
         <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black/70 to-transparent z-20" />
 
         {/* Header */}
@@ -175,7 +175,7 @@ export function StoryPlayer({ story, isPreview = false, onClose }: StoryPlayerPr
             )}
             
             {page.content?.title && 
-                <h1 className="text-white font-bold text-2xl leading-tight drop-shadow-lg">
+                <h1 className="text-white font-bold text-2xl leading-tight [text-shadow:0_2px_4px_rgba(0,0,0,0.5)]">
                     {page.content.title}
                 </h1>
             }
