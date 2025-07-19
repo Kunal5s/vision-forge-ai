@@ -59,6 +59,10 @@ export async function generateStoryScenesAction(data: unknown): Promise<{ succes
   const client = new OpenAI({
     baseURL: "https://openrouter.ai/api/v1",
     apiKey: apiKey,
+    defaultHeaders: {
+        "HTTP-Referer": "https://imagenbrain.ai",
+        "X-Title": "Imagen BrainAi",
+    },
   });
 
   try {
