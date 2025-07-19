@@ -28,6 +28,7 @@ export default authMiddleware({
     '/author/(.*)',
     '/api/generate',
     '/api/generate-article',
+    '/(.*)', // Catch-all for single-level paths like /blog
     '/(.*)/(.*)',
     ],
   // Routes that can always be accessed, and have
