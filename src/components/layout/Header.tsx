@@ -36,8 +36,8 @@ const CategoryNavBar = () => {
 
     return (
         <div className="w-full bg-background border-b">
-            <nav className="h-14 flex items-center justify-center container mx-auto px-4 overflow-x-auto no-scrollbar">
-                <div className="flex items-center justify-center md:gap-6 gap-4">
+            <nav className="h-14 flex items-center justify-center container mx-auto px-4 overflow-x-auto no-scrollbar md:overflow-x-visible">
+                <div className="flex items-center justify-center md:gap-2 gap-4">
                     {Object.entries(categorySlugMap).map(([slug, name]) => {
                          const isActive = isFilterablePage ? currentCategorySlug === slug : pathname === `/${slug}`;
                          return (
@@ -46,8 +46,8 @@ const CategoryNavBar = () => {
                                 href={getLinkHref(slug)}
                                 scroll={false}
                                 className={cn(
-                                    'text-sm font-medium transition-colors whitespace-nowrap',
-                                    isActive ? 'text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground'
+                                    'text-sm font-medium transition-colors whitespace-nowrap px-3 py-1.5 rounded-md',
+                                    isActive ? 'text-foreground font-semibold bg-muted' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                                 )}
                             >
                                 {name}
