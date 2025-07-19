@@ -6,26 +6,18 @@ import { z } from 'zod';
 import { type Story, type StoryPage, getAllStoriesAdmin, saveUpdatedStories } from '@/lib/stories';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { generateStoryScenes } from '@/ai/story-generator';
 
-
-// Zod schema for the AI generation part
-const StoryGenerationSchema = z.object({
-  topic: z.string().min(3, "Topic must be at least 3 characters long."),
-  description: z.string().min(10, "Description must be at least 10 characters long."),
-  imageCount: z.number().min(20).max(50),
+// Zod schema for the image generation part (simplified)
+const ImageGenerationSchema = z.object({
+  prompt: z.string().min(3, "Prompt must be at least 3 characters long."),
+  imageCount: z.number().min(5).max(50),
 });
-
-interface Scene {
-  image_prompt: string;
-  caption: string;
-}
 
 // Zod schema for a single story page from the client
 const StoryPageClientSchema = z.object({
   imageUrl: z.string().min(1, "An image is required for each page."),
   caption: z.string().min(1, "Caption cannot be empty.").max(250, "Caption is too long."),
-  imagePrompt: z.string().optional(),
+  imagePrompt: z.string().optional(), // The original prompt used for generation
 });
 
 // Zod schema for the final story form submission
@@ -40,32 +32,45 @@ const StoryFormSchema = z.object({
 
 type StoryFormData = z.infer<typeof StoryFormSchema>;
 
-
-// Server action to generate story scenes (image prompts and captions) using Genkit and Gemini
-export async function generateStoryScenesAction(data: unknown): Promise<{ success: boolean; scenes?: Scene[]; error?: string }> {
-  const validatedFields = StoryGenerationSchema.safeParse(data);
+// Server action to generate only the images using Pollinations.ai
+export async function generateStoryImagesAction(data: unknown): Promise<{ success: boolean; images?: { imageUrl: string, imagePrompt: string }[]; error?: string }> {
+  const validatedFields = ImageGenerationSchema.safeParse(data);
   if (!validatedFields.success) {
-    return { success: false, error: "Invalid input for scene generation." };
+    return { success: false, error: "Invalid input for image generation." };
   }
   
-  const { topic, description, imageCount } = validatedFields.data;
+  const { prompt, imageCount } = validatedFields.data;
   
   try {
-    const scenes = await generateStoryScenes({
-      topic,
-      description,
-      image_count: imageCount
+    const imagePromises = Array.from({ length: imageCount }).map(async (_, index): Promise<{ imageUrl: string, imagePrompt: string } | null> => {
+        try {
+            // We use the same prompt for all images but a different seed for variation.
+            const finalPrompt = `${prompt}, 9:16 aspect ratio, vertical, cinematic, watermark-free, no text`;
+            const seed = Math.floor(Math.random() * 1_000_000_000);
+            const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=1080&height=1920&seed=${seed}&nologo=true`;
+
+            // Directly return the URL and the original user prompt
+            return {
+                imageUrl: pollinationsUrl,
+                imagePrompt: prompt, // Save the original user prompt for context
+            };
+        } catch (e) {
+            console.error(`Error generating image ${index + 1}:`, e);
+            return null; // Return null for failed images
+        }
     });
 
-    if (!scenes || !Array.isArray(scenes.scenes) || scenes.scenes.length === 0) {
-      throw new Error("AI response did not match the expected format or was empty.");
+    const generatedImages = (await Promise.all(imagePromises)).filter(img => img !== null) as { imageUrl: string, imagePrompt: string }[];
+
+    if (generatedImages.length === 0) {
+        throw new Error("The image generation service failed to create any images. Please try again.");
     }
-    return { success: true, scenes: scenes.scenes };
+
+    return { success: true, images: generatedImages };
 
   } catch (error) {
-    console.error("Error generating story scenes with Genkit/Gemini:", error);
-    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during scene generation.";
-    // Provide a more user-friendly error for quota issues
+    console.error("Error generating story images with Pollinations.ai:", error);
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during image generation.";
     if (errorMessage.includes('429') || errorMessage.toLowerCase().includes('quota')) {
         return { success: false, error: "API quota exceeded. Please wait a moment and try again." };
     }

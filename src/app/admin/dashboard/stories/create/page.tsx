@@ -12,11 +12,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, PlusCircle, Trash2, FileSignature, Upload, Wand2, RefreshCw, Eye } from 'lucide-react';
+import { ArrowLeft, Loader2, PlusCircle, Trash2, FileSignature, Upload, Wand2, RefreshCw, Eye, Sparkles } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { createManualStoryAction, generateStoryScenesAction } from './actions';
+import { createManualStoryAction, generateStoryImagesAction } from './actions';
 import { categorySlugMap } from '@/lib/constants';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
@@ -39,9 +39,9 @@ const StoryFormSchema = z.object({
 
 type StoryFormData = z.infer<typeof StoryFormSchema>;
 
-interface Scene {
-  image_prompt: string;
-  caption: string;
+interface GeneratedImage {
+  imageUrl: string;
+  imagePrompt: string;
 }
 
 export default function CreateManualStoryPage() {
@@ -50,8 +50,7 @@ export default function CreateManualStoryPage() {
     const { toast } = useToast();
 
     // State for the AI generator form
-    const [aiTopic, setAiTopic] = useState('');
-    const [aiDescription, setAiDescription] = useState('');
+    const [aiPrompt, setAiPrompt] = useState('');
     const [aiImageCount, setAiImageCount] = useState(20);
 
     const { register, handleSubmit, control, formState: { errors }, watch, setValue } = useForm<StoryFormData>({
@@ -105,51 +104,27 @@ export default function CreateManualStoryPage() {
     };
 
     const handleGenerateImages = async () => {
-        if (!aiTopic || !aiDescription) {
-            toast({ title: "Topic and Description Required", description: "Please fill out both topic and description to generate images.", variant: "destructive" });
+        if (!aiPrompt) {
+            toast({ title: "Prompt Required", description: "Please enter a prompt to generate images.", variant: "destructive" });
             return;
         }
         setIsGenerating(true);
-        toast({ title: "AI Story Generation Started...", description: `Generating ${aiImageCount} scenes. This may take a few minutes.` });
+        toast({ title: "AI Image Generation Started...", description: `Generating ${aiImageCount} images from Pollinations.ai. This may take a few moments.` });
 
-        const scenesResult = await generateStoryScenesAction({ topic: aiTopic, description: aiDescription, imageCount: aiImageCount });
-
-        if (!scenesResult.success || !scenesResult.scenes) {
-            setIsGenerating(false);
-            toast({ title: "Scene Generation Failed", description: scenesResult.error || "The AI failed to generate story ideas.", variant: "destructive" });
-            return;
-        }
-
-        toast({ title: "Scenes Generated!", description: "Now generating images for each scene. Please be patient." });
-        
-        const imagePromises = scenesResult.scenes.map(async (scene): Promise<z.infer<typeof StoryPageClientSchema> | null> => {
-            try {
-                const finalPrompt = `${scene.image_prompt}, 9:16 aspect ratio, vertical, cinematic`;
-                const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=1080&height=1920&seed=${Math.floor(Math.random() * 100000)}&nologo=true`;
-
-                // We are using the direct URL from Pollinations.ai for simplicity here.
-                // A more robust implementation might fetch and convert to Base64, but that's much slower.
-                return {
-                    imageUrl: pollinationsUrl,
-                    caption: scene.caption,
-                    imagePrompt: scene.image_prompt,
-                };
-            } catch (e) {
-                console.error("Error generating single image:", e);
-                return null;
-            }
-        });
-
-        const newPages = (await Promise.all(imagePromises)).filter(p => p !== null) as z.infer<typeof StoryPageClientSchema>[];
-
-        if (newPages.length < 5) {
-             toast({ title: "Image Generation Incomplete", description: `Only ${newPages.length} images were created. Please try again.`, variant: "destructive" });
-        } else {
-            replace(newPages);
-            toast({ title: "Images Generated!", description: `Successfully created ${newPages.length} story pages.` });
-        }
-
+        const result = await generateStoryImagesAction({ prompt: aiPrompt, imageCount: aiImageCount });
         setIsGenerating(false);
+
+        if (result.success && result.images) {
+            const newPages = result.images.map(img => ({
+                imageUrl: img.imageUrl,
+                caption: '', // Leave caption empty for manual input
+                imagePrompt: img.imagePrompt,
+            }));
+            replace(newPages);
+            toast({ title: "Images Generated!", description: `Successfully created ${newPages.length} story pages. Now, add your captions.` });
+        } else {
+            toast({ title: "Image Generation Failed", description: result.error || "The AI failed to generate images.", variant: "destructive" });
+        }
     };
 
     const handleFormSubmit = async (data: StoryFormData) => {
@@ -177,26 +152,22 @@ export default function CreateManualStoryPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                  <Card>
                     <CardHeader>
-                        <CardTitle className="text-xl flex items-center gap-2"><Wand2 /> AI Story Generator</CardTitle>
+                        <CardTitle className="text-xl flex items-center gap-2"><Wand2 /> AI Image Generator</CardTitle>
                         <CardDescription>
-                            Provide a topic and description, and let AI generate a full web story for you. You can edit it afterwards.
+                            Provide a prompt and let Pollinations.ai generate a set of images for your story. You can add captions and edit afterwards.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div>
-                            <Label htmlFor="aiTopic">Topic</Label>
-                            <Input id="aiTopic" value={aiTopic} onChange={e => setAiTopic(e.target.value)} placeholder="e.g., The Secret Life of Urban Foxes" disabled={isGenerating} />
-                        </div>
-                         <div>
-                            <Label htmlFor="aiDescription">Short Description</Label>
-                            <Textarea id="aiDescription" value={aiDescription} onChange={e => setAiDescription(e.target.value)} placeholder="e.g., A visual story exploring the nightly adventures of foxes in a neon-lit city." disabled={isGenerating} rows={3} />
+                            <Label htmlFor="aiPrompt">Image Prompt</Label>
+                            <Textarea id="aiPrompt" value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} placeholder="e.g., A majestic dragon soaring over a mystical forest at dawn" disabled={isGenerating} rows={3} />
                         </div>
                         <div>
-                            <Label htmlFor="aiImageCount">Number of Images (20-50)</Label>
-                            <Input id="aiImageCount" type="number" value={aiImageCount} onChange={e => setAiImageCount(Math.max(20, Math.min(50, parseInt(e.target.value, 10) || 20)))} min="20" max="50" disabled={isGenerating} />
+                            <Label htmlFor="aiImageCount">Number of Images (5-50)</Label>
+                            <Input id="aiImageCount" type="number" value={aiImageCount} onChange={e => setAiImageCount(Math.max(5, Math.min(50, parseInt(e.target.value, 10) || 5)))} min="5" max="50" disabled={isGenerating} />
                         </div>
-                        <Button onClick={handleGenerateImages} disabled={isGenerating} className="w-full">
-                            {isGenerating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...</> : 'Generate Story with AI'}
+                        <Button onClick={handleGenerateImages} disabled={isGenerating || !aiPrompt} className="w-full">
+                            {isGenerating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...</> : <><Sparkles className="mr-2 h-4 w-4" /> Generate Images</>}
                         </Button>
                     </CardContent>
                 </Card>
@@ -205,7 +176,7 @@ export default function CreateManualStoryPage() {
                      <CardHeader>
                         <CardTitle className="text-xl">Final Story Details</CardTitle>
                         <CardDescription>
-                            Review the generated content and provide the final details before publishing.
+                            Review the content and provide the final details before publishing.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -261,7 +232,7 @@ export default function CreateManualStoryPage() {
             <Card className="mt-8 col-span-1 lg:col-span-2">
                 <CardHeader>
                     <CardTitle>Edit Story Pages ({fields.length})</CardTitle>
-                    <CardDescription>Review, edit, remove, or add pages to your story. You need at least 5 pages to publish.</CardDescription>
+                    <CardDescription>Add captions, remove pages, or upload your own. You need at least 5 pages to publish.</CardDescription>
                      {errors.pages && <p className="text-sm text-destructive mt-2">{errors.pages.root?.message || errors.pages.message}</p>}
                 </CardHeader>
                 <CardContent>
@@ -271,13 +242,15 @@ export default function CreateManualStoryPage() {
                                 <div key={field.id} className="p-4 border rounded-md space-y-2 relative bg-background w-[220px] shrink-0">
                                      <Label className="font-semibold">Page {index + 1}</Label>
                                     <div className="aspect-[9/16] relative bg-muted rounded-md overflow-hidden">
-                                        {pagesValue[index]?.imageUrl && (
+                                        {pagesValue[index]?.imageUrl ? (
                                             <Image 
                                                 src={pagesValue[index].imageUrl} 
                                                 alt={`Preview for page ${index + 1}`} 
                                                 layout="fill"
                                                 objectFit="cover"
                                             />
+                                        ) : (
+                                            <div className="flex items-center justify-center h-full text-muted-foreground text-xs p-2">Upload an image</div>
                                         )}
                                     </div>
                                     <Button type="button" variant="outline" size="sm" className="w-full" onClick={() => (document.getElementById(`file-input-${index}`) as HTMLInputElement)?.click()} disabled={isPublishing}>
@@ -292,7 +265,7 @@ export default function CreateManualStoryPage() {
                                         onChange={(e) => handleFileChange(e, index)}
                                     />
                                     {errors.pages?.[index]?.imageUrl && <p className="text-sm text-destructive mt-1">{errors.pages[index]?.imageUrl?.message}</p>}
-                                    <Textarea {...register(`pages.${index}.caption`)} placeholder="A short, engaging caption." disabled={isPublishing} rows={3} />
+                                    <Textarea {...register(`pages.${index}.caption`)} placeholder="Enter a caption..." disabled={isPublishing} rows={3} />
                                     {errors.pages?.[index]?.caption && <p className="text-sm text-destructive mt-1">{errors.pages[index]?.caption?.message}</p>}
                                     <Button type="button" variant="destructive" size="sm" className="w-full" onClick={() => remove(index)} disabled={isPublishing}>
                                         <Trash2 className="mr-2 h-4 w-4" /> Remove
