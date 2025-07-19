@@ -122,8 +122,34 @@ const EditSchema = z.object({
     status: z.enum(['published', 'draft']),
 });
 
-function parseHtmlToContent(html: string): Article['articleContent'] {
-  const dom = new JSDOM(html);
+// Function to convert markdown-like text to basic HTML for the editor
+function markdownToHtml(text: string): string {
+  // First, clean up stray HTML tags that might interfere
+  let cleanText = text.replace(/<\/?(p|h[1-6])>/g, '');
+
+  let html = cleanText
+    .split('\n')
+    .map(line => {
+      line = line.trim();
+      if (line.startsWith('###### ')) return `<h6>${line.substring(7)}</h6>`;
+      if (line.startsWith('##### ')) return `<h5>${line.substring(6)}</h5>`;
+      if (line.startsWith('#### ')) return `<h4>${line.substring(5)}</h4>`;
+      if (line.startsWith('### ')) return `<h3>${line.substring(4)}</h3>`;
+      if (line.startsWith('## ')) return `<h2>${line.substring(3)}</h2>`;
+      if (line.startsWith('# ')) return `<h1>${line.substring(2)}</h1>`;
+      // Wrap non-heading lines in <p> tags only if they contain text
+      if (line.length > 0) return `<p>${line}</p>`;
+      return '';
+    })
+    .join('');
+
+  return html;
+}
+
+
+function parseAndFormatContent(html: string): Article['articleContent'] {
+  const formattedHtml = markdownToHtml(html);
+  const dom = new JSDOM(formattedHtml);
   const document = dom.window.document;
   const content: Article['articleContent'] = [];
   
@@ -161,7 +187,8 @@ export async function editArticleAction(data: unknown) {
       throw new Error("Article not found.");
     }
     
-    const newArticleContent = parseHtmlToContent(content);
+    // Automatically format content on save
+    const newArticleContent = parseAndFormatContent(content);
 
     // Get the existing article to preserve its properties like image
     const existingArticle = articles[articleIndex];
@@ -269,77 +296,4 @@ export async function saveUpdatedArticles(category: string, articles: Article[],
         console.error("Failed to commit changes to GitHub.", error);
         throw new Error("Failed to save article to GitHub. Please check your credentials (token, owner, repo name) and repository permissions.");
     }
-}
-
-// Function to convert markdown-like text to basic HTML for the editor
-function markdownToHtml(text: string): string {
-  let html = text
-    .split('\n')
-    .map(line => {
-      line = line.trim();
-      if (line.startsWith('###### ')) return `<h6>${line.substring(7)}</h6>`;
-      if (line.startsWith('##### ')) return `<h5>${line.substring(6)}</h5>`;
-      if (line.startsWith('#### ')) return `<h4>${line.substring(5)}</h4>`;
-      if (line.startsWith('### ')) return `<h3>${line.substring(4)}</h3>`;
-      if (line.startsWith('## ')) return `<h2>${line.substring(3)}</h2>`;
-      if (line.startsWith('# ')) return `<h1>${line.substring(2)}</h1>`;
-      if (line.length > 0) return `<p>${line}</p>`;
-      return '';
-    })
-    .join('');
-
-  return html;
-}
-
-export async function humanizeTextAction(text: string): Promise<{ success: boolean; humanizedText?: string; error?: string }> {
-  if (!text || text.trim().length === 0) {
-    return { success: false, error: "No text provided to humanize." };
-  }
-
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
-    return { success: false, error: "OpenRouter API key is not configured on the server." };
-  }
-
-  // First, convert markdown to HTML locally.
-  const initialHtml = markdownToHtml(text);
-
-  const client = new OpenAI({
-    baseURL: "https://openrouter.ai/api/v1",
-    apiKey: apiKey,
-    defaultHeaders: {
-        "HTTP-Referer": "https://imagenbrain.ai",
-        "X-Title": "Imagen BrainAi",
-    },
-  });
-
-  try {
-    const response = await client.chat.completions.create({
-      model: "google/gemma-2-9b-it",
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert editor. You will receive text that has been roughly converted from markdown to HTML. Your task is to clean it up, make it more human-like, engaging, and conversational. Correct any grammar or spelling mistakes. Preserve the HTML structure (h1, h2, p tags). Only return the final HTML content, with no extra commentary or markdown. For example, if you receive "<h2> Summary </h2><p>This is a test.</p>", you should return a cleaned up version like "<h2>Summary</h2><p>This is a test.</p>".`,
-        },
-        { role: "user", content: initialHtml },
-      ],
-      temperature: 0.7,
-      top_p: 1,
-    });
-
-    const humanizedText = response.choices[0].message.content;
-    if (!humanizedText) {
-      throw new Error("AI returned an empty response.");
-    }
-    
-    // The AI might return the HTML inside a markdown code block, so we strip that.
-    const cleanedHtml = humanizedText.replace(/```html/g, '').replace(/```/g, '').trim();
-
-    return { success: true, humanizedText: cleanedHtml };
-
-  } catch (error) {
-    console.error("Error in humanizeTextAction:", error);
-    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred while humanizing the text.";
-    return { success: false, error: errorMessage };
-  }
 }

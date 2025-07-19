@@ -7,10 +7,10 @@ import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef } from 'react';
 import { 
     Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon, Image as ImageIcon,
-    Heading1, Heading2, Heading3, Palette, AlignLeft, AlignCenter, AlignRight, Sparkles, Pilcrow
+    Heading1, Heading2, Heading3, Palette, AlignLeft, AlignCenter, AlignRight, Pilcrow
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -18,23 +18,11 @@ import FontFamily from '@tiptap/extension-font-family';
 import TextStyle from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import TextAlign from '@tiptap/extension-text-align';
-import { humanizeTextAction } from '@/app/admin/dashboard/create/actions';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
 import Dropcursor from '@tiptap/extension-dropcursor';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
-
 
 const EditorToolbar = ({ editor }: { editor: Editor | null }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [isHumanizing, setIsHumanizing] = useState(false);
-    const { toast } = useToast();
 
     const setLink = useCallback(() => {
         if (!editor) return;
@@ -67,37 +55,6 @@ const EditorToolbar = ({ editor }: { editor: Editor | null }) => {
     const handleImageClick = () => {
         fileInputRef.current?.click();
     };
-
-    const handleHumanizeContent = async () => {
-        if (!editor) return;
-
-        const html = editor.getHTML();
-        // A simple check to see if there is any meaningful content besides empty tags
-        if (editor.getText().trim().length === 0) {
-            toast({ title: "Content is empty", description: "There's nothing to humanize.", variant: 'destructive'});
-            return;
-        }
-
-        setIsHumanizing(true);
-        toast({ title: "Humanizing Content...", description: "AI is improving and formatting your article."});
-
-        try {
-            const textToHumanize = editor.getText();
-            const result = await humanizeTextAction(textToHumanize);
-            if (result.success && result.humanizedText) {
-                // Replace the entire content with the humanized HTML
-                editor.commands.setContent(result.humanizedText);
-                toast({ title: "Content Humanized!", description: "Your article has been improved by AI." });
-            } else {
-                throw new Error(result.error || "Unknown error during humanization.");
-            }
-        } catch (e: any) {
-             toast({ title: "Error", description: e.message || "Failed to humanize content.", variant: 'destructive'});
-        } finally {
-            setIsHumanizing(false);
-        }
-    };
-
 
     if (!editor) {
         return null;
@@ -176,73 +133,9 @@ const EditorToolbar = ({ editor }: { editor: Editor | null }) => {
             <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().setTextAlign('right').run()} className={cn({'bg-background': editor.isActive({ textAlign: 'right' })})}>
                 <AlignRight className="h-4 w-4" />
             </Button>
-             <div className="h-6 border-l mx-1" />
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button variant="ghost" size="sm" onClick={handleHumanizeContent} disabled={isHumanizing}>
-                            {isHumanizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Humanize with AI (Auto-formats and improves text)</p>
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
         </div>
     );
 };
-
-
-const AIHumanizerMenu = ({ editor }: { editor: Editor }) => {
-    const [isLoading, setIsLoading] = useState(false);
-    const { toast } = useToast();
-
-    const handleHumanize = async () => {
-        const { from, to } = editor.state.selection;
-        const text = editor.state.doc.textBetween(from, to, ' ');
-
-        if (!text) {
-            toast({ title: "No Text Selected", description: "Please select text to humanize.", variant: 'destructive' });
-            return;
-        }
-
-        setIsLoading(true);
-        const result = await humanizeTextAction(text);
-        setIsLoading(false);
-
-        if (result.success && result.humanizedText) {
-            editor.chain().focus().deleteRange({ from, to }).insertContent(result.humanizedText).run();
-            toast({ title: "Text Humanized!", description: "AI has improved the selected text." });
-        } else {
-            toast({ title: "Error", description: result.error || "Failed to humanize text.", variant: 'destructive' });
-        }
-    };
-
-    return (
-        <BubbleMenu
-            editor={editor}
-            tippyOptions={{ duration: 100 }}
-            className="bg-background border rounded-lg shadow-xl p-1 flex items-center gap-1"
-        >
-            <Button
-                onClick={handleHumanize}
-                variant="ghost"
-                size="sm"
-                className="flex items-center gap-1"
-                disabled={isLoading}
-            >
-                {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                    <Sparkles className="h-4 w-4" />
-                )}
-                Humanize
-            </Button>
-        </BubbleMenu>
-    );
-};
-
 
 interface RichTextEditorProps {
     value: string;
@@ -307,7 +200,6 @@ export function RichTextEditor({ value, onChange, disabled, placeholder = "Start
     return (
         <div className="border rounded-lg overflow-hidden">
             <EditorToolbar editor={editor} />
-            <AIHumanizerMenu editor={editor} />
             <EditorContent editor={editor} />
         </div>
     );

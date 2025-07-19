@@ -9,9 +9,34 @@ import { saveUpdatedArticles } from '../create/actions'; // Import the universal
 import { redirect } from 'next/navigation';
 import { JSDOM } from 'jsdom';
 
-// Helper function to parse HTML into article content blocks
-function parseHtmlToContent(html: string): Article['articleContent'] {
-  const dom = new JSDOM(html);
+// Function to convert markdown-like text to basic HTML
+function markdownToHtml(text: string): string {
+  // First, clean up stray HTML tags that might interfere
+  let cleanText = text.replace(/<\/?(p|h[1-6])>/g, '');
+
+  let html = cleanText
+    .split('\n')
+    .map(line => {
+      line = line.trim();
+      if (line.startsWith('###### ')) return `<h6>${line.substring(7)}</h6>`;
+      if (line.startsWith('##### ')) return `<h5>${line.substring(6)}</h5>`;
+      if (line.startsWith('#### ')) return `<h4>${line.substring(5)}</h4>`;
+      if (line.startsWith('### ')) return `<h3>${line.substring(4)}</h3>`;
+      if (line.startsWith('## ')) return `<h2>${line.substring(3)}</h2>`;
+      if (line.startsWith('# ')) return `<h1>${line.substring(2)}</h1>`;
+      // Wrap non-heading lines in <p> tags only if they contain text
+      if (line.length > 0) return `<p>${line}</p>`;
+      return '';
+    })
+    .join('');
+
+  return html;
+}
+
+// Helper function to parse HTML into article content blocks, now with formatting
+function parseAndFormatContent(html: string): Article['articleContent'] {
+  const formattedHtml = markdownToHtml(html);
+  const dom = new JSDOM(formattedHtml);
   const document = dom.window.document;
   const content: Article['articleContent'] = [];
   
@@ -118,7 +143,7 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
   const { title, slug, category, status, summary, content, keyTakeaways, conclusion, image } = validatedFields.data;
 
   try {
-    const articleContent = parseHtmlToContent(content);
+    const articleContent = parseAndFormatContent(content);
     
     // Create a new article object
     const newArticle: Article = {
