@@ -9,7 +9,6 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
@@ -30,10 +29,6 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
-    // Allow data URIs for generated images
-    dangerouslyAllowSVG: true, // Not directly for data URIs but good to be aware of content types
-    contentDispositionType: 'attachment',
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;", // Example, adjust as needed
   },
 };
 

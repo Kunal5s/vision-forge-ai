@@ -31,9 +31,8 @@ const nextConfig: NextConfig = {
       },
     ],
     // Allow data URIs for generated images
-    dangerouslyAllowSVG: true, // Not directly for data URIs but good to be aware of content types
+    dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;", // Example, adjust as needed
   },
 };
 
