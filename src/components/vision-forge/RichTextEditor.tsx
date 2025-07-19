@@ -20,6 +20,10 @@ import { Color } from '@tiptap/extension-color';
 import TextAlign from '@tiptap/extension-text-align';
 import Dropcursor from '@tiptap/extension-dropcursor';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import Table from '@tiptap/extension-table';
+import TableCell from '@tiptap/extension-table-cell';
+import TableHeader from '@tiptap/extension-table-header';
+import TableRow from '@tiptap/extension-table-row';
 
 const EditorToolbar = ({ editor }: { editor: Editor | null }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -176,7 +180,13 @@ export function RichTextEditor({ value, onChange, disabled, placeholder = "Start
             Dropcursor.configure({
                 color: '#4094F7',
                 width: 2,
-            })
+            }),
+            Table.configure({
+                resizable: true,
+            }),
+            TableRow,
+            TableHeader,
+            TableCell,
         ],
         content: value,
         onUpdate: ({ editor }) => {

@@ -1,4 +1,5 @@
 
+
 import { ImageGenerator } from '@/components/vision-forge/ImageGenerator';
 import { TestimonialsSection } from '@/components/vision-forge/TestimonialsSection';
 import { PricingSection } from '@/components/vision-forge/PricingSection';
@@ -7,14 +8,14 @@ import type { Metadata } from 'next';
 import { ArticlesSection } from '@/components/vision-forge/ArticlesSection';
 import { getArticles } from '@/lib/articles';
 import { getStories } from '@/lib/stories';
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState, useMemo } from 'react';
 import { ArticlesSkeleton } from '@/components/vision-forge/ArticlesSkeleton';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, BookImage } from 'lucide-react';
 import { FeaturesHighlightSection } from '@/components/vision-forge/FeaturesHighlightSection';
 import { StoryHighlights } from '@/components/vision-forge/StoryHighlights';
-
+import { BlogPageClient } from './blog/BlogPageClient';
 
 export const metadata: Metadata = {
   title: 'Imagen BrainAi: Your Free AI Image Generator',
@@ -28,9 +29,7 @@ const CATEGORY_NAME = 'Featured';
 
 async function FeaturedArticleList() {
     const articles = await getArticles(CATEGORY_NAME);
-    // Always show the latest 6 articles on the homepage
-    const articlesToShow = articles.slice(0, 6);
-    return <ArticlesSection articles={articlesToShow} category={CATEGORY_NAME} />;
+    return <BlogPageClient allArticles={articles} />;
 }
 
 async function WebStoriesHighlightList() {

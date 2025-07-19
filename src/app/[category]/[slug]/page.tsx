@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { CalendarDays, BookOpen, List, CheckCircle } from 'lucide-react';
 import type { Metadata } from 'next';
 import { categorySlugMap } from '@/lib/constants';
-import type { Article } from '@/lib/articles';
+import type { Article, ArticleContentBlock } from '@/lib/articles';
 import { cn } from '@/lib/utils';
 import parse from 'html-react-parser';
 import { format } from 'date-fns';
@@ -64,11 +64,12 @@ export default async function ArticlePage({ params }: { params: { category: stri
     
     const getTableOfContents = (content: Article['articleContent']) => {
         return content
-            .filter(block => block.type === 'h2')
+            .filter(block => ['h2', 'h3', 'h4', 'h5', 'h6'].includes(block.type))
             .map(block => {
                 const title = block.content.replace(/<[^>]*>?/gm, '');
                 return {
                   title,
+                  level: parseInt(block.type.replace('h', ''), 10),
                   slug: title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
                 }
             });
@@ -77,26 +78,35 @@ export default async function ArticlePage({ params }: { params: { category: stri
     const toc = getTableOfContents(article.articleContent);
     const author = await getAuthorData();
 
-    const renderContentBlock = (block: Article['articleContent'][0], index: number) => {
-        const slug = block.type === 'h2' 
+    const renderContentBlock = (block: ArticleContentBlock, index: number) => {
+        const slug = ['h2', 'h3', 'h4', 'h5', 'h6'].includes(block.type)
             ? block.content.replace(/<[^>]*>?/gm, '').toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '')
             : undefined;
-        
-        const processedContent = parse(block.content);
+
+        // Custom parser options to handle tables
+        const parsedContent = parse(block.content, {
+            replace: (domNode: any) => {
+                if (domNode.name === 'table') {
+                    return <div className="overflow-x-auto my-6"><table className="min-w-full divide-y divide-border">{domNode.children.map((child: any, i: number) => parse(child.data, { replace: (childNode: any) => {
+                        if (childNode.name === 'tr') return <tr className="divide-x divide-border">{childNode.children.map((cell: any, j: number) => parse(cell.data))}</tr>
+                    } }))}</table></div>;
+                }
+            }
+        });
 
         switch (block.type) {
             case 'h2':
-                return <h2 key={index} id={slug} className="scroll-mt-24">{processedContent}</h2>;
+                return <h2 key={index} id={slug} className="scroll-mt-24">{parsedContent}</h2>;
             case 'h3':
-                return <h3 key={index}>{processedContent}</h3>;
+                return <h3 key={index} id={slug}>{parsedContent}</h3>;
             case 'h4':
-                return <h4 key={index}>{processedContent}</h4>;
+                return <h4 key={index} id={slug}>{parsedContent}</h4>;
             case 'h5':
-                return <h5 key={index}>{processedContent}</h5>;
+                return <h5 key={index} id={slug}>{parsedContent}</h5>;
             case 'h6':
-                return <h6 key={index}>{processedContent}</h6>;
+                return <h6 key={index} id={slug}>{parsedContent}</h6>;
             case 'p':
-                 return <p key={index}>{processedContent}</p>;
+                 return <p key={index}>{parsedContent}</p>;
             case 'img':
                  return (
                     <div key={index} className="my-8">
@@ -111,7 +121,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
                     </div>
                   );
             default:
-                return <div key={index}>{processedContent}</div>;
+                return <div key={index}>{parsedContent}</div>;
         }
     };
     
@@ -155,27 +165,25 @@ export default async function ArticlePage({ params }: { params: { category: stri
                     </Card>
                 )}
 
-                {toc.length > 0 && (
-                     <Card className="my-8 bg-muted/50 border-border">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-2xl font-semibold">
-                                <List className="h-6 w-6 text-primary" />
-                                Table of Contents
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ul className="space-y-2">
-                                {toc.map((item, index) => (
-                                    <li key={index}>
-                                        <a href={`#${item.slug}`} className="text-foreground/80 hover:text-primary transition-colors">
-                                            {item.title}
-                                        </a>
-                                    </li>
-                                ))}
-                            </ul>
-                        </CardContent>
-                    </Card>
-                )}
+                <Card className="my-8 bg-muted/50 border-border">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-2xl font-semibold">
+                            <List className="h-6 w-6 text-primary" />
+                            Table of Contents
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ul className="space-y-2">
+                            {toc.map((item, index) => (
+                                <li key={index} style={{ marginLeft: `${(item.level - 2) * 1.5}rem` }}>
+                                    <a href={`#${item.slug}`} className="text-foreground/80 hover:text-primary transition-colors">
+                                        {item.title}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    </CardContent>
+                </Card>
                 
                 <article className="prose lg:prose-xl dark:prose-invert max-w-none space-y-6">
                     {article.articleContent.map(renderContentBlock)}

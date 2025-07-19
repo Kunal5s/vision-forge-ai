@@ -125,7 +125,7 @@ const EditSchema = z.object({
 // Function to convert markdown-like text to basic HTML for the editor
 function markdownToHtml(text: string): string {
   // First, clean up stray HTML tags that might interfere
-  let cleanText = text.replace(/<\/?(p|h[1-6])>/g, '');
+  let cleanText = text.replace(/<\/?(p|h[1-6]|table|tr|td|th|tbody|thead)>/g, '');
 
   let html = cleanText
     .split('\n')
@@ -165,6 +165,10 @@ function parseAndFormatContent(html: string): Article['articleContent'] {
         }
       } else if (tagName === 'img' && element.hasAttribute('src')) {
         content.push({ type: 'img', content: element.getAttribute('src')!, alt: element.getAttribute('alt') || '' });
+      } else if (tagName === 'table') {
+        // To keep tables as a single block, we just push the outerHTML.
+        // The frontend will be responsible for styling it.
+        content.push({ type: 'p', content: element.outerHTML });
       }
     }
   });
