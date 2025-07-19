@@ -9,6 +9,7 @@ import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Article } from '@/lib/articles';
 import parse from 'html-react-parser';
+import { categorySlugMap } from '@/lib/constants'; // Added import
 
 interface ArticlesSectionProps {
     articles: Article[];
