@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { BrainCircuit, LayoutDashboard, LogOut } from 'lucide-react';
+import { BrainCircuit, LogIn, LogOut } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import React, { useEffect, useState } from 'react';
@@ -115,10 +115,10 @@ export function Header() {
                   Logout
               </Button>
             ) : (
-              <Link href="/admin">
+              <Link href="/admin/login">
                 <Button variant="outline">
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    Dashboard
+                    <LogIn className="mr-2 h-4 w-4" />
+                    Login
                 </Button>
               </Link>
             )}
