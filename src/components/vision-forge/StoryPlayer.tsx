@@ -116,13 +116,27 @@ export function StoryPlayer({ story, isPreview = false, onClose }: StoryPlayerPr
 
         {/* Navigation Overlays */}
         <div
-          className="absolute left-0 top-0 h-full w-1/2 z-30"
+          className="absolute left-0 top-0 h-full w-1/2 z-30 flex items-center justify-center text-white"
           onClick={prevPage}
-        />
+        >
+          <div className="flex flex-col items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div className="w-12 h-12 bg-black/30 rounded-full flex items-center justify-center mb-1">
+                <ChevronLeft size={24} />
+            </div>
+            <span className="text-xs font-semibold">Tap Back</span>
+          </div>
+        </div>
         <div
-          className="absolute right-0 top-0 h-full w-1/2 z-30"
+          className="absolute right-0 top-0 h-full w-1/2 z-30 flex items-center justify-center text-white"
           onClick={nextPage}
-        />
+        >
+            <div className="flex flex-col items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="w-12 h-12 bg-black/30 rounded-full flex items-center justify-center mb-1">
+                    <ChevronRight size={24} />
+                </div>
+                <span className="text-xs font-semibold">Tap Next</span>
+            </div>
+        </div>
 
         {/* Content */}
         <div className="absolute bottom-0 left-0 right-0 p-6 z-20 flex flex-col items-center text-center">
@@ -141,27 +155,6 @@ export function StoryPlayer({ story, isPreview = false, onClose }: StoryPlayerPr
                 </a>
             )}
         </div>
-
-
-        {/* Chevron Navigation Buttons */}
-        <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => { e.stopPropagation(); prevPage(); }}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-40 text-white bg-black/30 hover:bg-black/50"
-            disabled={currentPage === 0}
-        >
-            <ChevronLeft />
-        </Button>
-        <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => { e.stopPropagation(); nextPage(); }}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-40 text-white bg-black/30 hover:bg-black/50"
-            disabled={currentPage === story.pages.length - 1}
-        >
-            <ChevronRight />
-        </Button>
       </div>
     </div>
   );
