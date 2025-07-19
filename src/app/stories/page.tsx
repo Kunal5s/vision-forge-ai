@@ -14,7 +14,8 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 async function AllStoriesList() {
-    // For now, we only have one category of stories: 'featured'
+    // We now fetch stories from all categories. Since there's only 'featured', this will work perfectly.
+    // If more categories are added in the future, this logic might need adjustment to iterate through all of them.
     const stories = await getStories('featured');
 
     if (!stories || stories.length === 0) {
@@ -27,7 +28,7 @@ async function AllStoriesList() {
     }
 
     return (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {stories.map((story) => (
                 <Link key={story.slug} href={`/stories/${story.slug}`} className="block group">
                     <Card className="overflow-hidden h-full transition-all group-hover:shadow-xl group-hover:-translate-y-1">
@@ -44,8 +45,8 @@ async function AllStoriesList() {
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                             </div>
                         </CardHeader>
-                        <CardContent className="absolute bottom-0 p-4">
-                            <h3 className="text-sm font-bold text-white leading-tight drop-shadow-md">
+                        <CardContent className="p-3">
+                            <h3 className="text-sm font-semibold text-foreground leading-tight line-clamp-2">
                                 {story.title}
                             </h3>
                         </CardContent>
