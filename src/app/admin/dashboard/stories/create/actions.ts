@@ -6,7 +6,6 @@ import { z } from 'zod';
 import { type Story, type StoryPage, getAllStoriesAdmin, saveUpdatedStories } from '@/lib/stories';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import OpenAI from 'openai';
 
 // Zod schema for the image generation part (simplified)
 const ImageGenerationSchema = z.object({

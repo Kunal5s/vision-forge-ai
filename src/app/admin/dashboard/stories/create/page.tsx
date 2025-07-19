@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
@@ -39,6 +40,8 @@ const StoryFormSchema = z.object({
 
 type StoryFormData = z.infer<typeof StoryFormSchema>;
 
+const imageCountOptions = Array.from({ length: 16 }, (_, i) => 5 + i); // Generates numbers 5 to 20
+
 export default function CreateManualStoryPage() {
     const [isPublishing, setIsPublishing] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
@@ -46,7 +49,7 @@ export default function CreateManualStoryPage() {
 
     // State for the AI generator form
     const [aiPrompt, setAiPrompt] = useState('');
-    const [aiImageCount, setAiImageCount] = useState(10); // Default to 10
+    const [aiImageCount, setAiImageCount] = useState(10);
 
     const { register, handleSubmit, control, formState: { errors }, watch, setValue } = useForm<StoryFormData>({
         resolver: zodResolver(StoryFormSchema),
@@ -129,8 +132,7 @@ export default function CreateManualStoryPage() {
         toast({ title: "AI Image Generation Started...", description: `Generating ${aiImageCount} images. This may take a few moments.` });
 
         const result = await generateStoryImagesAction({ prompt: aiPrompt, imageCount: aiImageCount });
-        setIsGenerating(false);
-
+        
         if (result.success && result.images) {
             const newPages = result.images.map(img => ({
                 imageUrl: img.imageUrl,
@@ -142,6 +144,7 @@ export default function CreateManualStoryPage() {
         } else {
             toast({ title: "Image Generation Failed", description: result.error || "The AI failed to generate images.", variant: "destructive" });
         }
+        setIsGenerating(false);
     };
 
     const handleFormSubmit = async (data: StoryFormData) => {
@@ -171,7 +174,7 @@ export default function CreateManualStoryPage() {
                     <CardHeader>
                         <CardTitle className="text-xl flex items-center gap-2"><Wand2 /> AI Image Generator</CardTitle>
                         <CardDescription>
-                            Provide a prompt and let Pollinations.ai generate a set of images for your story. You can add captions and edit afterwards.
+                            Provide a prompt and let Pollinations.ai generate a set of images for your story. Captions will be left blank for you to fill.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -180,8 +183,21 @@ export default function CreateManualStoryPage() {
                             <Textarea id="aiPrompt" value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} placeholder="e.g., A majestic dragon soaring over a mystical forest at dawn" disabled={isGenerating} rows={3} />
                         </div>
                         <div>
-                            <Label htmlFor="aiImageCount">Number of Images (5-50)</Label>
-                            <Input id="aiImageCount" type="number" value={aiImageCount} onChange={e => setAiImageCount(Math.max(5, Math.min(50, parseInt(e.target.value, 10) || 5)))} min="5" max="50" disabled={isGenerating} />
+                            <Label htmlFor="aiImageCount">Number of Images</Label>
+                             <Select
+                                onValueChange={(value) => setAiImageCount(parseInt(value, 10))}
+                                defaultValue={String(aiImageCount)}
+                                disabled={isGenerating}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select number of images" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {imageCountOptions.map(count => (
+                                        <SelectItem key={count} value={String(count)}>{count} Images</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <Button onClick={handleGenerateImages} disabled={isGenerating || !aiPrompt} className="w-full">
                             {isGenerating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...</> : <><Sparkles className="mr-2 h-4 w-4" /> Generate Images</>}
@@ -257,7 +273,7 @@ export default function CreateManualStoryPage() {
                                 {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>}
                             </div>
                             <div className="border-t pt-4">
-                                <Button type="submit" className="w-full" disabled={isPublishing || fields.length < 5}>
+                                <Button type="submit" className="w-full" disabled={isPublishing || isGenerating || fields.length < 5}>
                                     {isPublishing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Publishing...</> : <><FileSignature className="mr-2 h-4 w-4" /> Publish Story</>}
                                 </Button>
                             </div>
@@ -273,51 +289,59 @@ export default function CreateManualStoryPage() {
                      {errors.pages && <p className="text-sm text-destructive mt-2">{errors.pages.root?.message || errors.pages.message}</p>}
                 </CardHeader>
                 <CardContent>
-                    <ScrollArea className="w-full">
-                        <div className="flex space-x-4 pb-4">
-                            {fields.map((field, index) => (
-                                <div key={field.id} className="p-4 border rounded-md space-y-2 relative bg-background w-[220px] shrink-0">
-                                     <Label className="font-semibold">Page {index + 1}</Label>
-                                    <div className="aspect-[9/16] relative bg-muted rounded-md overflow-hidden">
-                                        {pagesValue[index]?.imageUrl ? (
-                                            <Image 
-                                                src={pagesValue[index].imageUrl} 
-                                                alt={`Preview for page ${index + 1}`} 
-                                                width={220}
-                                                height={391}
-                                                className="object-cover w-full h-full"
-                                            />
-                                        ) : (
-                                            <div className="flex items-center justify-center h-full text-muted-foreground text-xs p-2">Upload an image</div>
-                                        )}
+                     {isGenerating && (
+                        <div className="flex items-center justify-center h-64 text-muted-foreground">
+                            <Loader2 className="mr-4 h-8 w-8 animate-spin" />
+                            <p>Generating images, please wait...</p>
+                        </div>
+                    )}
+                    {!isGenerating && fields.length > 0 && (
+                        <ScrollArea className="w-full">
+                            <div className="flex space-x-4 pb-4">
+                                {fields.map((field, index) => (
+                                    <div key={field.id} className="p-4 border rounded-md space-y-2 relative bg-background w-[220px] shrink-0">
+                                        <Label className="font-semibold">Page {index + 1}</Label>
+                                        <div className="aspect-[9/16] relative bg-muted rounded-md overflow-hidden">
+                                            {pagesValue[index]?.imageUrl ? (
+                                                <Image 
+                                                    src={pagesValue[index].imageUrl} 
+                                                    alt={`Preview for page ${index + 1}`} 
+                                                    width={220}
+                                                    height={391}
+                                                    className="object-cover w-full h-full"
+                                                />
+                                            ) : (
+                                                <div className="flex items-center justify-center h-full text-muted-foreground text-xs p-2">Upload an image</div>
+                                            )}
+                                        </div>
+                                        <Button type="button" variant="outline" size="sm" className="w-full" onClick={() => (document.getElementById(`file-input-${index}`) as HTMLInputElement)?.click()} disabled={isPublishing}>
+                                            <Upload className="mr-2 h-4 w-4" />
+                                            Upload Image
+                                        </Button>
+                                        <input
+                                            id={`file-input-${index}`}
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/webp"
+                                            className="hidden"
+                                            onChange={(e) => handleFileChange(e, index)}
+                                        />
+                                        {errors.pages?.[index]?.imageUrl && <p className="text-sm text-destructive mt-1">{errors.pages[index]?.imageUrl?.message}</p>}
+                                        <Textarea {...register(`pages.${index}.caption`)} placeholder="Enter a caption..." disabled={isPublishing} rows={3} />
+                                        {errors.pages?.[index]?.caption && <p className="text-sm text-destructive mt-1">{errors.pages[index]?.caption?.message}</p>}
+                                        <Button type="button" variant="destructive" size="sm" className="w-full" onClick={() => remove(index)} disabled={isPublishing}>
+                                            <Trash2 className="mr-2 h-4 w-4" /> Remove
+                                        </Button>
                                     </div>
-                                    <Button type="button" variant="outline" size="sm" className="w-full" onClick={() => (document.getElementById(`file-input-${index}`) as HTMLInputElement)?.click()} disabled={isPublishing}>
-                                        <Upload className="mr-2 h-4 w-4" />
-                                        Upload Image
-                                    </Button>
-                                    <input
-                                        id={`file-input-${index}`}
-                                        type="file"
-                                        accept="image/jpeg,image/png,image/webp"
-                                        className="hidden"
-                                        onChange={(e) => handleFileChange(e, index)}
-                                    />
-                                    {errors.pages?.[index]?.imageUrl && <p className="text-sm text-destructive mt-1">{errors.pages[index]?.imageUrl?.message}</p>}
-                                    <Textarea {...register(`pages.${index}.caption`)} placeholder="Enter a caption..." disabled={isPublishing} rows={3} />
-                                    {errors.pages?.[index]?.caption && <p className="text-sm text-destructive mt-1">{errors.pages[index]?.caption?.message}</p>}
-                                    <Button type="button" variant="destructive" size="sm" className="w-full" onClick={() => remove(index)} disabled={isPublishing}>
-                                        <Trash2 className="mr-2 h-4 w-4" /> Remove
+                                ))}
+                                <div className="flex items-center justify-center w-[220px] shrink-0">
+                                    <Button type="button" variant="outline" onClick={() => append({ imageUrl: '', caption: '', imagePrompt: 'manual upload' })} disabled={isPublishing || fields.length >= 50}>
+                                        <PlusCircle className="mr-2 h-4 w-4" /> Add Page
                                     </Button>
                                 </div>
-                            ))}
-                            <div className="flex items-center justify-center w-[220px] shrink-0">
-                                <Button type="button" variant="outline" onClick={() => append({ imageUrl: '', caption: '', imagePrompt: 'manual upload' })} disabled={isPublishing || fields.length >= 50}>
-                                    <PlusCircle className="mr-2 h-4 w-4" /> Add Page
-                                </Button>
                             </div>
-                        </div>
-                        <ScrollBar orientation="horizontal" />
-                    </ScrollArea>
+                            <ScrollBar orientation="horizontal" />
+                        </ScrollArea>
+                    )}
                 </CardContent>
             </Card>
         </main>
