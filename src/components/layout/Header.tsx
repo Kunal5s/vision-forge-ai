@@ -12,33 +12,28 @@ import { logoutAction } from '@/app/admin/login/actions';
 import { useRouter } from 'next/navigation';
 import { categorySlugMap } from '@/lib/constants';
 
-const navLinks = [
-  { href: '/prompts', label: 'Prompts' },
-  { href: '/styles', label: 'Styles' },
-  { href: '/tutorials', label: 'Tutorials' },
-  { href: '/storybook', label: 'Storybook' },
-  { href: '/usecases', label: 'Usecases' },
-  { href: '/inspiration', label: 'Inspiration' },
-  { href: '/trends', label: 'Trends' },
-  { href: '/technology', label: 'Technology' },
-  { href: '/nft', label: 'NFT' },
-];
-
 const CategoryNavBar = () => {
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const router = useRouter();
 
+    // These pages will use client-side filtering instead of navigation
+    const filterablePages = ['/blog', '/stories'];
+    const isFilterablePage = filterablePages.includes(pathname);
     const currentCategorySlug = searchParams.get('category');
 
-    const isStoriesPage = pathname === '/stories';
-
     const handleCategoryClick = (slug: string) => {
-        if (isStoriesPage) {
-            // On stories page, update the query parameter to filter
+        if (isFilterablePage) {
+            // On filterable pages, update the query parameter to filter
             const params = new URLSearchParams(searchParams.toString());
-            params.set('category', slug);
-            router.push(`${pathname}?${params.toString()}`);
+            if (currentCategorySlug === slug) {
+                 // If the same category is clicked again, remove the filter to show all
+                params.delete('category');
+            } else {
+                params.set('category', slug);
+            }
+            const queryString = params.toString();
+            router.push(`${pathname}${queryString ? `?${queryString}` : ''}`);
         } else {
             // On other pages, navigate to the category page
             router.push(`/${slug}`);
@@ -51,7 +46,7 @@ const CategoryNavBar = () => {
                 <nav className="h-14 flex items-center p-2 container mx-auto px-4">
                     <div className="flex items-center gap-2">
                         {Object.entries(categorySlugMap).map(([slug, name]) => {
-                             const isActive = isStoriesPage ? currentCategorySlug === slug : pathname === `/${slug}`;
+                             const isActive = isFilterablePage ? currentCategorySlug === slug : pathname === `/${slug}`;
                              return (
                                 <Button
                                     key={slug}

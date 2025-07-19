@@ -9,11 +9,10 @@ import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Article } from '@/lib/articles';
 import parse from 'html-react-parser';
-import { categorySlugMap } from '@/lib/constants'; // Added import
+import { categorySlugMap } from '@/lib/constants';
 
 interface ArticlesSectionProps {
     articles: Article[];
-    // Category is no longer needed as a prop for the section header
 }
 
 export function ArticlesSection({ articles }: ArticlesSectionProps) {
@@ -22,7 +21,6 @@ export function ArticlesSection({ articles }: ArticlesSectionProps) {
         if (!content || !Array.isArray(content)) return '';
         const firstParagraph = content.find(item => item.type === 'p');
         let textToSnippet = firstParagraph ? firstParagraph.content : '';
-        // Strip HTML tags for snippet
         textToSnippet = textToSnippet.replace(/<[^>]*>?/gm, ''); 
         if (textToSnippet.length <= length) return textToSnippet;
         return textToSnippet.substring(0, length) + '...';
@@ -68,7 +66,7 @@ export function ArticlesSection({ articles }: ArticlesSectionProps) {
                             </Link>
                         </CardHeader>
                         <CardContent className="p-6 flex-grow">
-                            <Badge variant="secondary" className="mb-2">{article.category}</Badge>
+                             <Badge variant="secondary" className="mb-2">{article.category}</Badge>
                             <CardTitle className="text-lg font-semibold leading-snug mb-2">
                                 <Link href={articleUrl} className={'hover:text-primary'}>
                                     {parse(article.title)}

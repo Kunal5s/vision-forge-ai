@@ -7,7 +7,7 @@ import { Suspense, useEffect, useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { categorySlugMap } from '@/lib/constants';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -15,15 +15,14 @@ function AllStoriesList() {
     const [allStories, setAllStories] = useState<Story[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     
-    // Use search params to get the current category filter
     const searchParams = useSearchParams();
     const categoryFilter = searchParams.get('category');
 
     useEffect(() => {
         setIsLoading(true);
         const fetchStories = async () => {
-            const allCategories = Object.keys(categorySlugMap);
-            const storyPromises = allCategories.map(slug => getStories(categorySlugMap[slug]));
+            const allCategoryNames = Object.values(categorySlugMap);
+            const storyPromises = allCategoryNames.map(category => getStories(category));
             const storiesByCategory = await Promise.all(storyPromises);
             const flattenedStories = storiesByCategory.flat();
             
@@ -38,7 +37,8 @@ function AllStoriesList() {
         if (!categoryFilter) {
             return allStories;
         }
-        const categoryName = categorySlugMap[categoryFilter];
+        const categoryName = Object.entries(categorySlugMap).find(([slug]) => slug === categoryFilter)?.[1];
+        if (!categoryName) return allStories; // Show all if filter is invalid
         return allStories.filter(story => story.category === categoryName);
     }, [categoryFilter, allStories]);
 

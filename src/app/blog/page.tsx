@@ -1,42 +1,67 @@
 
+'use client';
+
 import { getArticles } from '@/lib/articles';
-import type { Metadata } from 'next';
-import { Suspense } from 'react';
+import type { Article } from '@/lib/articles';
+import { Suspense, useEffect, useState, useMemo } from 'react';
 import { ArticlesSkeleton } from '@/components/vision-forge/ArticlesSkeleton';
 import { ArticlesSection } from '@/components/vision-forge/ArticlesSection';
 import { categorySlugMap } from '@/lib/constants';
+import { useSearchParams } from 'next/navigation';
 
-export const metadata: Metadata = {
-    title: 'Blog | All Articles from Imagen BrainAi',
-    description: 'Explore all articles from every category on Imagen BrainAi. Find inspiration, tutorials, and insights on AI image generation, creative prompts, and artistic styles.',
-};
-
-// This ensures the page is dynamically rendered, always fetching the latest articles.
 export const dynamic = 'force-dynamic';
 
-// All categories are fetched to build the complete archive
-const ALL_CATEGORIES = Object.values(categorySlugMap);
+function AllArticlesList() {
+    const [allArticles, setAllArticles] = useState<Article[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const searchParams = useSearchParams();
+    const categoryFilter = searchParams.get('category');
 
-async function AllArticlesList() {
-    // We fetch all articles from all categories. 
-    // getArticles is cached, so it won't re-fetch if data is already loaded for the same request.
-    const allArticlesPromises = ALL_CATEGORIES.map(category => getArticles(category));
-    const articlesByCategory = await Promise.all(allArticlesPromises);
-    
-    // Flatten the array of arrays into a single array of all articles
-    const allArticles = articlesByCategory.flat();
+    useEffect(() => {
+        setIsLoading(true);
+        const fetchArticles = async () => {
+            const allCategories = Object.values(categorySlugMap);
+            const articlePromises = allCategories.map(category => getArticles(category));
+            const articlesByCategory = await Promise.all(articlePromises);
+            const flattenedArticles = articlesByCategory.flat();
+            
+            flattenedArticles.sort((a, b) => {
+                if (a.publishedDate && b.publishedDate) {
+                    return new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime();
+                }
+                return a.title.localeCompare(b.title);
+            });
+            setAllArticles(flattenedArticles);
+            setIsLoading(false);
+        };
+        fetchArticles();
+    }, []);
 
-    // Sort all articles by published date if available, otherwise by title.
-    allArticles.sort((a, b) => {
-        if (a.publishedDate && b.publishedDate) {
-            return new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime();
+    const filteredArticles = useMemo(() => {
+        if (!categoryFilter) {
+            return allArticles;
         }
-        return a.title.localeCompare(b.title);
-    });
+        const categoryName = Object.entries(categorySlugMap).find(([slug]) => slug === categoryFilter)?.[1];
+        if (!categoryName) return allArticles;
+        return allArticles.filter(article => article.category === categoryName);
+    }, [categoryFilter, allArticles]);
 
-    // The ArticlesSection component will display all articles passed to it.
-    return <ArticlesSection articles={allArticles} />;
+    if (isLoading) {
+        return <ArticlesSkeleton />;
+    }
+
+    if (!filteredArticles || filteredArticles.length === 0) {
+        return (
+            <div className="text-center py-10 text-muted-foreground col-span-full">
+                <p>No articles are available for this category at the moment.</p>
+                <p className="text-sm mt-2">New articles are generated automatically. Please check back later.</p>
+            </div>
+        )
+    }
+
+    return <ArticlesSection articles={filteredArticles} />;
 }
+
 
 export default function BlogPage() {
     return (
