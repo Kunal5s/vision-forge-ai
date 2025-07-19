@@ -23,10 +23,18 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import Dropcursor from '@tiptap/extension-dropcursor';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 
 const EditorToolbar = ({ editor }: { editor: Editor | null }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isHumanizing, setIsHumanizing] = useState(false);
+    const { toast } = useToast();
 
     const setLink = useCallback(() => {
         if (!editor) return;
@@ -59,6 +67,37 @@ const EditorToolbar = ({ editor }: { editor: Editor | null }) => {
     const handleImageClick = () => {
         fileInputRef.current?.click();
     };
+
+    const handleHumanizeContent = async () => {
+        if (!editor) return;
+
+        const html = editor.getHTML();
+        // A simple check to see if there is any meaningful content besides empty tags
+        if (editor.getText().trim().length === 0) {
+            toast({ title: "Content is empty", description: "There's nothing to humanize.", variant: 'destructive'});
+            return;
+        }
+
+        setIsHumanizing(true);
+        toast({ title: "Humanizing Content...", description: "AI is improving and formatting your article."});
+
+        try {
+            const textToHumanize = editor.getText();
+            const result = await humanizeTextAction(textToHumanize);
+            if (result.success && result.humanizedText) {
+                // Replace the entire content with the humanized HTML
+                editor.commands.setContent(result.humanizedText);
+                toast({ title: "Content Humanized!", description: "Your article has been improved by AI." });
+            } else {
+                throw new Error(result.error || "Unknown error during humanization.");
+            }
+        } catch (e: any) {
+             toast({ title: "Error", description: e.message || "Failed to humanize content.", variant: 'destructive'});
+        } finally {
+            setIsHumanizing(false);
+        }
+    };
+
 
     if (!editor) {
         return null;
@@ -137,6 +176,19 @@ const EditorToolbar = ({ editor }: { editor: Editor | null }) => {
             <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().setTextAlign('right').run()} className={cn({'bg-background': editor.isActive({ textAlign: 'right' })})}>
                 <AlignRight className="h-4 w-4" />
             </Button>
+             <div className="h-6 border-l mx-1" />
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button variant="ghost" size="sm" onClick={handleHumanizeContent} disabled={isHumanizing}>
+                            {isHumanizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Humanize with AI (Auto-formats and improves text)</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
         </div>
     );
 };
