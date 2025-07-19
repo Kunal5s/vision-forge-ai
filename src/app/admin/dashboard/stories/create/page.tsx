@@ -19,6 +19,10 @@ import Image from 'next/image';
 import { createManualStoryAction, generateStoryImagesAction } from './actions';
 import { categorySlugMap } from '@/lib/constants';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { StoryPlayer } from '@/components/vision-forge/StoryPlayer';
+import type { Story } from '@/lib/stories';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+
 
 // Schema for a single page on the client
 const StoryPageClientSchema = z.object({
@@ -46,6 +50,7 @@ export default function CreateManualStoryPage() {
     const [isPublishing, setIsPublishing] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
     const { toast } = useToast();
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     // State for the AI generator form
     const [aiPrompt, setAiPrompt] = useState('');
@@ -72,6 +77,10 @@ export default function CreateManualStoryPage() {
     const titleValue = watch('title');
     const pagesValue = watch('pages');
     const logoValue = watch('logo');
+    const websiteUrlValue = watch('websiteUrl');
+    const seoDescriptionValue = watch('seoDescription');
+    const categoryValue = watch('category');
+
 
     const generateSlug = useCallback((title: string) => {
         return title.toLowerCase().replace(/<[^>]*>?/gm, '').replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-').replace(/^-+|-+$/g, '');
@@ -157,9 +166,39 @@ export default function CreateManualStoryPage() {
         }
         setIsPublishing(false);
     };
+
+     const constructPreviewStory = (): Story => {
+        return {
+            slug: 'preview-story',
+            title: titleValue || 'Preview Title',
+            seoDescription: seoDescriptionValue || 'A preview of the web story.',
+            author: 'Preview Author',
+            category: categoryValue || 'Featured',
+            publishedDate: new Date().toISOString(),
+            status: 'published',
+            logo: logoValue,
+            websiteUrl: websiteUrlValue,
+            cover: pagesValue[0]?.imageUrl || 'https://placehold.co/1080x1920.png',
+            dataAiHint: pagesValue[0]?.imagePrompt || 'preview',
+            pages: pagesValue.map(p => ({
+                type: 'image',
+                url: p.imageUrl,
+                dataAiHint: p.imagePrompt || 'preview',
+                content: {
+                    title: p.caption,
+                }
+            })),
+        };
+    };
     
     return (
         <main className="flex-grow container mx-auto py-12 px-4 bg-muted/20 min-h-screen">
+            <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+                <DialogContent className="p-0 border-0 bg-transparent max-w-[420px] h-full shadow-none">
+                    <StoryPlayer story={constructPreviewStory()} isPreview={true} onClose={() => setIsPreviewOpen(false)} />
+                </DialogContent>
+            </Dialog>
+
             <div className="mb-8">
                 <Button asChild variant="outline" size="sm">
                     <Link href="/admin/dashboard">
@@ -272,7 +311,10 @@ export default function CreateManualStoryPage() {
                                 />
                                 {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>}
                             </div>
-                            <div className="border-t pt-4">
+                            <div className="border-t pt-4 flex flex-col gap-2">
+                                <Button type="button" variant="outline" onClick={() => setIsPreviewOpen(true)} disabled={isPublishing || isGenerating}>
+                                    <Eye className="mr-2 h-4 w-4" /> Preview Story
+                                </Button>
                                 <Button type="submit" className="w-full" disabled={isPublishing || isGenerating || fields.length < 5}>
                                     {isPublishing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Publishing...</> : <><FileSignature className="mr-2 h-4 w-4" /> Publish Story</>}
                                 </Button>

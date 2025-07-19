@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -9,15 +8,27 @@ import { Progress } from '@/components/ui/progress';
 import { ChevronLeft, ChevronRight, Pause, Play, X, Link as LinkIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '../ui/button';
+import { cn } from '@/lib/utils';
 
-export function StoryPlayer({ story }: { story: Story }) {
+interface StoryPlayerProps {
+  story: Story;
+  isPreview?: boolean;
+  onClose?: () => void;
+}
+
+
+export function StoryPlayer({ story, isPreview = false, onClose }: StoryPlayerProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
   const nextPage = useCallback(() => {
-    setCurrentPage((prev) => (prev < story.pages.length - 1 ? prev + 1 : prev));
-  }, [story.pages.length]);
+    if (currentPage < story.pages.length - 1) {
+      setCurrentPage((prev) => prev + 1);
+    } else if (!isPreview) {
+        window.location.href = '/stories'; // Redirect to stories list when the last slide finishes
+    }
+  }, [currentPage, story.pages.length, isPreview]);
 
   const prevPage = () => {
     setCurrentPage((prev) => (prev > 0 ? prev - 1 : prev));
@@ -46,9 +57,25 @@ export function StoryPlayer({ story }: { story: Story }) {
 
   const page = story.pages[currentPage];
 
+  const handleClose = isPreview ? onClose : () => window.location.href = '/';
+
+  if (!page) {
+    // Handle case where pages are empty or currentPage is out of bounds
+    return (
+        <div className="fixed inset-0 bg-black flex items-center justify-center font-sans">
+            <div className="relative w-full h-full max-w-[420px] max-h-[85vh] aspect-[9/16] bg-stone-900 rounded-lg overflow-hidden shadow-2xl p-4 text-white text-center flex flex-col justify-center">
+                <p>No pages to display in this story.</p>
+                 <Button variant="ghost" size="icon" className="text-white h-8 w-8 absolute top-4 right-4" onClick={handleClose}>
+                    <X size={24} />
+                </Button>
+            </div>
+        </div>
+    );
+  }
+
   return (
-    <div className="fixed inset-0 bg-black flex items-center justify-center font-sans">
-      <div className="relative w-full h-full max-w-[400px] max-h-[85vh] aspect-[9/16] bg-stone-900 rounded-lg overflow-hidden shadow-2xl">
+    <div className={cn("flex items-center justify-center font-sans", isPreview ? 'w-full h-full' : 'fixed inset-0 bg-black')}>
+      <div className="relative w-full h-full max-w-[420px] max-h-[85vh] aspect-[9/16] bg-stone-900 rounded-lg overflow-hidden shadow-2xl">
         {/* Background Image */}
         <Image
           src={page.url}
@@ -73,18 +100,16 @@ export function StoryPlayer({ story }: { story: Story }) {
           </div>
           <div className="flex items-center justify-between mt-2">
             <div className="flex items-center gap-2">
-                <Image src={story.cover} alt={story.title} width={32} height={32} className="rounded-full" data-ai-hint={story.dataAiHint}/>
+                {story.logo && <Image src={story.logo} alt={story.title} width={32} height={32} className="rounded-full object-contain" data-ai-hint={'logo'}/>}
                 <span className="text-white text-sm font-bold">{story.title}</span>
             </div>
              <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="text-white h-8 w-8" onClick={() => setIsPaused(!isPaused)}>
                     {isPaused ? <Play size={20} /> : <Pause size={20} />}
                 </Button>
-                <Link href="/">
-                    <Button variant="ghost" size="icon" className="text-white h-8 w-8">
-                        <X size={24} />
-                    </Button>
-                </Link>
+                <Button variant="ghost" size="icon" className="text-white h-8 w-8" onClick={handleClose}>
+                    <X size={24} />
+                </Button>
              </div>
           </div>
         </div>
@@ -101,7 +126,11 @@ export function StoryPlayer({ story }: { story: Story }) {
 
         {/* Content */}
         <div className="absolute bottom-0 left-0 right-0 p-6 z-20 flex flex-col items-center text-center">
-            {page.content?.title && <p className="text-white text-base drop-shadow-md bg-black/30 p-2 rounded-md mb-4">{page.content.title}</p>}
+            {page.content?.title && 
+                <p className="text-white font-semibold text-lg drop-shadow-lg bg-black/40 backdrop-blur-sm p-3 rounded-lg mb-4">
+                    {page.content.title}
+                </p>
+            }
             
             {story.websiteUrl && (
                 <a href={story.websiteUrl} target="_blank" rel="noopener noreferrer" className="mt-4">
@@ -118,7 +147,7 @@ export function StoryPlayer({ story }: { story: Story }) {
         <Button
             variant="ghost"
             size="icon"
-            onClick={prevPage}
+            onClick={(e) => { e.stopPropagation(); prevPage(); }}
             className="absolute left-2 top-1/2 -translate-y-1/2 z-40 text-white bg-black/30 hover:bg-black/50"
             disabled={currentPage === 0}
         >
@@ -127,7 +156,7 @@ export function StoryPlayer({ story }: { story: Story }) {
         <Button
             variant="ghost"
             size="icon"
-            onClick={nextPage}
+            onClick={(e) => { e.stopPropagation(); nextPage(); }}
             className="absolute right-2 top-1/2 -translate-y-1/2 z-40 text-white bg-black/30 hover:bg-black/50"
             disabled={currentPage === story.pages.length - 1}
         >
