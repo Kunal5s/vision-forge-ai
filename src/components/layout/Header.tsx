@@ -48,8 +48,8 @@ const CategoryNavBar = () => {
                                 href={getLinkHref(slug)}
                                 scroll={false}
                                 className={cn(
-                                    'inline-flex items-center rounded-md border border-input bg-transparent px-3 py-1.5 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 whitespace-nowrap',
-                                    isActive ? 'bg-secondary text-secondary-foreground font-semibold' : 'text-muted-foreground hover:text-foreground'
+                                    'inline-flex items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-black shadow-sm transition-all hover:bg-neutral-200/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 whitespace-nowrap',
+                                    isActive && 'bg-neutral-200/90 font-semibold border-neutral-400'
                                 )}
                             >
                                 {name}
