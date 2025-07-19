@@ -12,24 +12,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Loader2, PlusCircle, Trash2, FileSignature, Upload, Wand2, Eye, Sparkles, Image as ImageIcon, History } from 'lucide-react';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getStoryBySlug, updateStoryAction, deleteStoryAction } from './actions';
 import { generateStoryImagesAction } from '../../../create/actions'; // Reuse image generator
-import { categorySlugMap } from '@/lib/constants';
+import { categorySlugMap, FONT_STYLES } from '@/lib/constants';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { StoryPlayer } from '@/components/vision-forge/StoryPlayer';
-import type { Story, StoryPage } from '@/lib/stories';
+import type { Story } from '@/lib/stories';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 // Schema for a single page on the client
 const StoryPageClientSchema = z.object({
   imageUrl: z.string().min(1, "An image is required for each page."),
   caption: z.string().min(1, "Caption cannot be empty.").max(250, "Caption cannot be more than 250 characters."),
   imagePrompt: z.string().optional(),
+  fontStyle: z.string().optional().default('font-roboto'),
 });
 
 // Schema for the full story form
@@ -80,6 +82,7 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
                     imageUrl: p.url,
                     caption: p.content?.title || '',
                     imagePrompt: p.dataAiHint,
+                    fontStyle: p.fontStyle || 'font-roboto',
                 }));
 
                 reset({
@@ -179,6 +182,7 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
                 imageUrl: img.imageUrl,
                 caption: '', // Leave caption empty for manual input
                 imagePrompt: img.imagePrompt,
+                fontStyle: 'font-roboto',
             }));
             replace(newPages); // Replace all pages with newly generated ones
             toast({ title: "Images Generated!", description: `Successfully replaced story with ${newPages.length} new pages.` });
@@ -232,6 +236,7 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
                 type: 'image',
                 url: p.imageUrl,
                 dataAiHint: p.imagePrompt || 'preview',
+                fontStyle: p.fontStyle,
                 content: {
                     title: p.caption,
                 }
@@ -452,13 +457,32 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
                                         {errors.pages?.[index]?.imageUrl && <p className="text-sm text-destructive mt-1">{errors.pages[index]?.imageUrl?.message}</p>}
                                         <Textarea {...register(`pages.${index}.caption`)} placeholder="Enter a caption..." disabled={isSaving} rows={3} />
                                         {errors.pages?.[index]?.caption && <p className="text-sm text-destructive mt-1">{errors.pages[index]?.caption?.message}</p>}
+                                         <div>
+                                            <Label className="text-xs">Font Style</Label>
+                                             <Controller
+                                                name={`pages.${index}.fontStyle`}
+                                                control={control}
+                                                render={({ field }) => (
+                                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                                        <SelectContent>
+                                                            {FONT_STYLES.map((font) => (
+                                                                <SelectItem key={font.value} value={font.value} className={cn(font.value)}>
+                                                                    {font.label}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                )}
+                                            />
+                                        </div>
                                         <Button type="button" variant="destructive" size="sm" className="w-full" onClick={() => remove(index)} disabled={isSaving}>
                                             <Trash2 className="mr-2 h-4 w-4" /> Remove
                                         </Button>
                                     </div>
                                 ))}
                                 <div className="flex items-center justify-center w-[220px] shrink-0">
-                                    <Button type="button" variant="outline" onClick={() => append({ imageUrl: '', caption: '', imagePrompt: 'manual upload' })} disabled={isSaving || fields.length >= 50}>
+                                    <Button type="button" variant="outline" onClick={() => append({ imageUrl: '', caption: '', imagePrompt: 'manual upload', fontStyle: 'font-roboto' })} disabled={isSaving || fields.length >= 50}>
                                         <PlusCircle className="mr-2 h-4 w-4" /> Add Page
                                     </Button>
                                 </div>

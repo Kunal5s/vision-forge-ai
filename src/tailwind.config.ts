@@ -10,6 +10,28 @@ export default {
   ],
   theme: {
   	extend: {
+      fontFamily: {
+        'roboto': ['Roboto', 'sans-serif'],
+        'open-sans': ['"Open Sans"', 'sans-serif'],
+        'lato': ['Lato', 'sans-serif'],
+        'montserrat': ['Montserrat', 'sans-serif'],
+        'oswald': ['Oswald', 'sans-serif'],
+        'slabo': ['"Slabo 27px"', 'serif'],
+        'roboto-condensed': ['"Roboto Condensed"', 'sans-serif'],
+        'source-sans': ['"Source Sans Pro"', 'sans-serif'],
+        'raleway': ['Raleway', 'sans-serif'],
+        'pt-sans': ['"PT Sans"', 'sans-serif'],
+        'lobster': ['Lobster', 'cursive'],
+        'pacifico': ['Pacifico', 'cursive'],
+        'bebas-neue': ['"Bebas Neue"', 'cursive'],
+        'anton': ['Anton', 'sans-serif'],
+        'dancing-script': ['"Dancing Script"', 'cursive'],
+        'indie-flower': ['"Indie Flower"', 'cursive'],
+        'caveat': ['Caveat', 'cursive'],
+        'shadows-into-light': ['"Shadows Into Light"', 'cursive'],
+        'amatic-sc': ['"Amatic SC"', 'cursive'],
+        'playfair-display': ['"Playfair Display"', 'serif'],
+      },
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
@@ -96,5 +118,5 @@ export default {
   		}
   	}
   },
-  plugins: [require("tailwindcss-animate"), require('@tailwindcss/typography')],
+  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
 } satisfies Config;

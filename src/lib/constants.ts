@@ -151,4 +151,27 @@ export const categorySlugMap: { [key: string]: string } = {
     'nft': 'NFT'
 };
 
+// Font styles for Web Stories
+export const FONT_STYLES: StyleOption[] = [
+    { label: 'Roboto', value: 'font-roboto' },
+    { label: 'Open Sans', value: 'font-open-sans' },
+    { label: 'Lato', value: 'font-lato' },
+    { label: 'Montserrat', value: 'font-montserrat' },
+    { label: 'Oswald', value: 'font-oswald' },
+    { label: 'Slabo 27px', value: 'font-slabo' },
+    { label: 'Roboto Condensed', value: 'font-roboto-condensed' },
+    { label: 'Source Sans Pro', value: 'font-source-sans' },
+    { label: 'Raleway', value: 'font-raleway' },
+    { label: 'PT Sans', value: 'font-pt-sans' },
+    { label: 'Lobster', value: 'font-lobster' },
+    { label: 'Pacifico', value: 'font-pacifico' },
+    { label: 'Bebas Neue', value: 'font-bebas-neue' },
+    { label: 'Anton', value: 'font-anton' },
+    { label: 'Dancing Script', value: 'font-dancing-script' },
+    { label: 'Indie Flower', value: 'font-indie-flower' },
+    { label: 'Caveat', value: 'font-caveat' },
+    { label: 'Shadows Into Light', value: 'font-shadows-into-light' },
+    { label: 'Amatic SC', value: 'font-amatic-sc' },
+    { label: 'Playfair Display', value: 'font-playfair-display' },
+];
     

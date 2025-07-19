@@ -18,6 +18,7 @@ const StoryPageClientSchema = z.object({
   imageUrl: z.string().min(1, "An image is required for each page."),
   caption: z.string().min(1, "Caption cannot be empty.").max(250, "Caption is too long."),
   imagePrompt: z.string().optional(), // The original prompt used for generation
+  fontStyle: z.string().optional(),
 });
 
 // Zod schema for the final story form submission
@@ -99,6 +100,7 @@ export async function createManualStoryAction(data: StoryFormData): Promise<{ su
       type: 'image',
       url: page.imageUrl,
       dataAiHint: page.imagePrompt || 'manual story upload',
+      fontStyle: page.fontStyle || 'font-roboto',
       content: {
         title: page.caption, // Using caption as the main text for each slide
       },
