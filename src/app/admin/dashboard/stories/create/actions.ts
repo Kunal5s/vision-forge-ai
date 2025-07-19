@@ -42,7 +42,7 @@ const StoryFormSchema = z.object({
 type StoryFormData = z.infer<typeof StoryFormSchema>;
 
 
-// Server action to generate story scenes (image prompts and captions) using an LLM
+// Server action to generate story scenes (image prompts and captions) using Google Gemini
 export async function generateStoryScenesAction(data: unknown): Promise<{ success: boolean; scenes?: Scene[]; error?: string }> {
   const validatedFields = StoryGenerationSchema.safeParse(data);
   if (!validatedFields.success) {
@@ -51,24 +51,20 @@ export async function generateStoryScenesAction(data: unknown): Promise<{ succes
   
   const { topic, description, imageCount } = validatedFields.data;
   
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return { success: false, error: "OpenRouter API key is not configured on the server." };
+    return { success: false, error: "Google Gemini API key is not configured on the server." };
   }
 
+  // Using the OpenAI library to call Google's Gemini endpoint
   const client = new OpenAI({
-    baseURL: "https://openrouter.ai/api/v1",
+    baseURL: "https://generativelanguage.googleapis.com/v1beta",
     apiKey: apiKey,
-    defaultHeaders: {
-        "HTTP-Referer": "https://imagenbrain.ai",
-        "X-Title": "Imagen BrainAi",
-    },
   });
 
   try {
     const response = await client.chat.completions.create({
-      model: "google/gemma-2-9b-it",
-      response_format: { type: "json_object" },
+      model: "models/gemini-pro",
       messages: [
         {
           role: "system",
@@ -76,12 +72,18 @@ export async function generateStoryScenesAction(data: unknown): Promise<{ succes
         },
         { role: "user", content: `Topic: ${topic}. Description: ${description}.` },
       ],
+      // Note: Google's Gemini endpoint via OpenAI compatibility might not support response_format.
+      // We rely on the prompt to generate valid JSON and parse it.
     });
 
     const content = response.choices[0].message.content;
     if (!content) throw new Error("AI returned an empty response.");
 
-    const parsed = JSON.parse(content);
+    // Clean the response to ensure it's valid JSON
+    const jsonString = content.replace(/```json/g, '').replace(/```/g, '').trim();
+
+    const parsed = JSON.parse(jsonString);
+    
     // Basic validation for the expected structure
     if (!parsed.scenes || !Array.isArray(parsed.scenes)) {
         throw new Error("AI response did not match the expected format.");
@@ -89,7 +91,7 @@ export async function generateStoryScenesAction(data: unknown): Promise<{ succes
     return { success: true, scenes: parsed.scenes };
 
   } catch (error) {
-    console.error("Error generating story scenes:", error);
+    console.error("Error generating story scenes with Gemini:", error);
     return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred." };
   }
 }
