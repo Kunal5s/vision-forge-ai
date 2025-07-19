@@ -6,7 +6,6 @@ import { BrainCircuit, LogIn, LogOut } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import React, { useEffect, useState } from 'react';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Button } from '../ui/button';
 import { logoutAction } from '@/app/admin/login/actions';
 import { useRouter } from 'next/navigation';
@@ -17,56 +16,46 @@ const CategoryNavBar = () => {
     const searchParams = useSearchParams();
     const router = useRouter();
 
-    // These pages will use client-side filtering instead of navigation
     const filterablePages = ['/blog', '/stories'];
     const isFilterablePage = filterablePages.includes(pathname);
     const currentCategorySlug = searchParams.get('category');
 
-    const handleCategoryClick = (slug: string) => {
+    const getLinkHref = (slug: string) => {
         if (isFilterablePage) {
-            // On filterable pages, update the query parameter to filter
             const params = new URLSearchParams(searchParams.toString());
-            if (currentCategorySlug === slug) {
-                 // If the same category is clicked again, remove the filter to show all
+             if (currentCategorySlug === slug) {
                 params.delete('category');
             } else {
                 params.set('category', slug);
             }
             const queryString = params.toString();
-            router.push(`${pathname}${queryString ? `?${queryString}` : ''}`);
-        } else {
-            // On other pages, navigate to the category page
-            router.push(`/${slug}`);
+            return `${pathname}${queryString ? `?${queryString}` : ''}`;
         }
+        return `/${slug}`;
     };
 
     return (
         <div className="w-full bg-background border-b">
-            <ScrollArea className="w-full whitespace-nowrap">
-                <nav className="h-14 flex items-center p-2 container mx-auto px-4">
-                    <div className="flex items-center gap-2">
-                        {Object.entries(categorySlugMap).map(([slug, name]) => {
-                             const isActive = isFilterablePage ? currentCategorySlug === slug : pathname === `/${slug}`;
-                             return (
-                                <Button
-                                    key={slug}
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleCategoryClick(slug)}
-                                    className={cn(
-                                        'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-                                        'border border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground',
-                                        isActive ? 'bg-secondary font-semibold' : ''
-                                    )}
-                                >
-                                    {name}
-                                </Button>
-                            )
-                        })}
-                    </div>
-                </nav>
-                <ScrollBar orientation="horizontal" className="h-2 opacity-0" />
-            </ScrollArea>
+            <nav className="h-14 flex items-center justify-center container mx-auto px-4 overflow-x-auto no-scrollbar">
+                <div className="flex items-center gap-6">
+                    {Object.entries(categorySlugMap).map(([slug, name]) => {
+                         const isActive = isFilterablePage ? currentCategorySlug === slug : pathname === `/${slug}`;
+                         return (
+                            <Link
+                                key={slug}
+                                href={getLinkHref(slug)}
+                                scroll={false}
+                                className={cn(
+                                    'text-sm font-medium transition-colors whitespace-nowrap',
+                                    isActive ? 'text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground'
+                                )}
+                            >
+                                {name}
+                            </Link>
+                        )
+                    })}
+                </div>
+            </nav>
         </div>
     );
 };
