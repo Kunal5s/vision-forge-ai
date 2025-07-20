@@ -14,7 +14,7 @@ import {
 
 export async function addImagesToArticleAction(
   content: string,
-  imageCount: number = 5
+  imageCount: number
 ): Promise<{ success: boolean; content?: string; error?: string }> {
   return serverAddImages(content, imageCount);
 }

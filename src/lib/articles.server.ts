@@ -40,8 +40,11 @@ function htmlToArticleContent(html: string): ArticleContentBlock[] {
                 content.push({ type: tagName as ArticleContentBlock['type'], content: element.outerHTML.trim(), alt: '' });
             } 
             // Handle tables wrapped in a div by the editor
-            else if (tagName === 'div' && element.firstChild?.nodeName.toLowerCase() === 'table') {
-                content.push({ type: 'table', content: element.innerHTML.trim(), alt: '' });
+            else if (tagName === 'div' && element.querySelector('table')) {
+                const table = element.querySelector('table');
+                if (table) {
+                    content.push({ type: 'table', content: table.outerHTML.trim(), alt: '' });
+                }
             }
             // Handle images, which might be wrapped in a div
             else if (tagName === 'div' && element.querySelector('img')) {
@@ -125,8 +128,8 @@ export async function addImagesToArticleAction(
   try {
     const dom = new JSDOM(`<body>${content}</body>`);
     const document = dom.window.document;
-    const insertionPoints = Array.from(document.querySelectorAll('h2, h3, p'));
     
+    // Remove existing Pollinations images to avoid duplication
     document.querySelectorAll('img[src*="pollinations.ai"]').forEach(img => {
         const parent = img.parentElement;
         if (parent && parent.tagName.toLowerCase() === 'div' && parent.classList.contains('my-8')) {
@@ -136,6 +139,7 @@ export async function addImagesToArticleAction(
         }
     });
 
+    const insertionPoints = Array.from(document.querySelectorAll('h2, h3, p'));
     const validPoints = insertionPoints.filter(p => p.textContent && p.textContent.trim().split(' ').length > 5);
     const numToAdd = Math.min(imageCount, validPoints.length);
     if (numToAdd === 0) return { success: false, error: 'No suitable locations found.' };
@@ -210,7 +214,7 @@ export async function editArticleAction(data: unknown) {
             keyTakeaways: (keyTakeaways || []).map(k => k.value).filter(Boolean),
             conclusion: conclusion || '',
             category,
-            publishedDate: (status === 'published' && !existingArticle.publishedDate) ? new Date().toISOString() : existingArticle.publishedDate
+            publishedDate: (status === 'published' && existingArticle.status !== 'published') ? new Date().toISOString() : existingArticle.publishedDate
         };
         
         await saveArticle(updatedArticleData, false, existingArticle.category, existingArticle.status);
@@ -302,14 +306,15 @@ export async function saveArticle(article: Article, isNew: boolean, oldCategory?
 
     // If the article moved category or status, remove it from the old location
     if (!isNew && oldCategory && oldStatus) {
-        const categoryChanged = newCategory !== oldCategory;
-        const statusChanged = (newStatusIsDraft && oldStatus !== 'draft') || (!newStatusIsDraft && oldStatus === 'draft');
+        const oldFileCategory = oldStatus === 'draft' ? 'drafts' : oldCategory;
+        const newFileCategory = newStatusIsDraft ? 'drafts' : newCategory;
         
-        if (categoryChanged || statusChanged) {
-            const oldFileCategory = oldStatus === 'draft' ? 'drafts' : oldCategory;
+        if (oldFileCategory !== newFileCategory) {
             let oldArticles = await getAllArticlesAdmin(oldFileCategory);
             const updatedOldArticles = oldArticles.filter(a => a.slug !== article.slug);
-            await saveUpdatedArticles(oldFileCategory, updatedOldArticles, `refactor: 🧹 Move article "${article.slug}" from ${oldFileCategory}`);
+            if (oldArticles.length !== updatedOldArticles.length) {
+                await saveUpdatedArticles(oldFileCategory, updatedOldArticles, `refactor: 🧹 Move article "${article.slug}" from ${oldFileCategory}`);
+            }
         }
     }
 }

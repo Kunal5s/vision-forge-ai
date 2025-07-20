@@ -25,7 +25,7 @@ import Image from 'next/image';
 import { RichTextEditor } from '@/components/vision-forge/RichTextEditor';
 import { ArticlePreview } from '@/components/vision-forge/ArticlePreview';
 import { useRouter } from 'next/navigation';
-import { ManualArticleSchema } from '@/lib/types';
+import { ManualArticleSchema, getFullArticleHtmlForPreview } from '@/lib/types';
 
 
 type ManualArticleFormData = z.infer<typeof ManualArticleSchema>;
@@ -224,12 +224,7 @@ export default function ManualPublishPage() {
   };
 
   const getFullArticleHtml = useCallback(() => {
-    const currentValues = getValues();
-    const takeawaysHtml = (currentValues.keyTakeaways || [])
-      .map(t => t.value ? `<li>${t.value}</li>` : '')
-      .join('');
-    
-    return `${currentValues.content}<h2>Key Takeaways</h2><ul>${takeawaysHtml}</ul><h2>Conclusion</h2>${currentValues.conclusion}`;
+    return getFullArticleHtmlForPreview(getValues());
   }, [getValues]);
   
 

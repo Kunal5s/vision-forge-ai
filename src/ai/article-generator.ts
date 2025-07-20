@@ -15,7 +15,7 @@ const ArticleOutputSchema = z.object({
   slug: z.string().min(1).describe("A URL-friendly slug, generated from the title."),
   summary: z.string().min(1).describe("A concise, engaging summary of the article, around 2-3 sentences long. This will be displayed prominently at the top."),
   articleContent: z.array(z.object({
-    type: z.enum(['h2', 'h3', 'h4', 'h5', 'h6', 'p', 'img']),
+    type: z.enum(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'img']),
     content: z.string().min(1),
     alt: z.string().optional(),
   })).describe("An array of content blocks. The VERY FIRST object must be a 'p' type with a summary of the article. Subsequent H2 headings should be followed by an image block (`{ \"type\": \"img\", \"content\": \"URL\", \"alt\": \"Description\" }`). Generate the specified number of images throughout the article. The total word count should match the user's request. **IMPORTANT: For all 'p', 'h2', 'h3' etc. blocks, the 'content' string MUST include rich HTML formatting like <strong> for bold, <em> for italic, and <u> for underline where appropriate to make the article engaging.**"),
@@ -44,7 +44,7 @@ const getJsonPromptStructureForArticle = (wordCount: string, style: string, mood
 
   Specifically for the "image" and "img" fields, you must create a descriptive and artistic prompt for Pollinations.ai based on the article's topic, and then construct the final URL. For example, if the topic is 'The Future of AI', your image prompt might be 'a glowing brain made of circuits and stars, digital art'. The final URL would then be 'https://image.pollinations.ai/prompt/a%20glowing%20brain%20made%20of%20circuits%20and%20stars%2C%20digital%20art?width=600&height=400&seed=...&nologo=true'. Each 'img' block needs a URL in its 'content' field and a descriptive 'alt' text.
 
-  For the "articleContent", the VERY FIRST object must be a 'p' type with a summary of the article. The rest should be a mix of heading types (h2-h6) and 'p' (paragraph) types to create a well-structured article of the required word count. Paragraphs should be short and easy to read.
+  For the "articleContent", the VERY FIRST object must be a 'p' type with a summary of the article. The rest should be a mix of heading types (h1-h6) and 'p' (paragraph) types to create a well-structured article of the required word count. Paragraphs should be short and easy to read.
 `;
 
 interface ArticleGenerationParams {

@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { categorySlugMap } from '@/lib/constants';
+import { saveArticle } from '@/lib/articles.server';
 
 const ArticleFormSchema = z.object({
   topic: z.string().min(1, 'Please enter a topic for the article.'),
@@ -75,11 +76,8 @@ export async function generateArticleAction(
       );
     }
     
-    // Server-side save function is in articles.server.ts
-    const { saveArticle } = await import('@/lib/articles.server');
-
     // Save the new article, which will handle adding it to the correct file.
-    await saveArticle(newArticle, true); // true indicates it's a new article
+    await saveArticle(newArticle, true);
 
     revalidatePath('/');
     revalidatePath('/admin/dashboard/edit');
