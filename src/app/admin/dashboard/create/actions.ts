@@ -115,3 +115,11 @@ export async function generateArticleAction(
   
   redirect(`/admin/dashboard/edit/${categorySlug}/${slug}`);
 }
+
+export async function editArticleAction(data: unknown) {
+    return serverEditArticleAction(data);
+}
+
+export async function deleteArticleAction(category: string, slug: string, isDraft: boolean) {
+    return deleteFromServer(category, slug, isDraft);
+}

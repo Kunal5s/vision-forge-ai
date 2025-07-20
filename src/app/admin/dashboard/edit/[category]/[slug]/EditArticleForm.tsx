@@ -13,7 +13,7 @@ import { ArrowLeft, Loader2, Save, Trash2, Wand2, Eye, PlusCircle, Globe, FileTe
 import { useState, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import type { Article } from '@/lib/articles';
-import { editArticleAction, deleteArticleAction } from '@/lib/articles.server';
+import { editArticleAction, deleteArticleAction } from '@/app/admin/dashboard/create/actions';
 import { addImagesToArticleAction, autoSaveArticleDraftAction } from '@/app/admin/dashboard/manual/actions';
 import {
   AlertDialog,
