@@ -17,10 +17,10 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { categorySlugMap, IMAGE_COUNTS } from '@/lib/constants';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, FileSignature, PlusCircle, Trash2, ImageIcon, Wand2, Eye, Save, CheckCircle } from 'lucide-react';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { ArrowLeft, Loader2, FileSignature, PlusCircle, Trash2, ImageIcon, Wand2, Eye, Save } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { createManualArticleAction, addImagesToArticleAction, autoSaveArticleDraftAction } from './actions';
+import { addImagesToArticleAction, createManualArticleAction } from '@/lib/articles.server';
 import Image from 'next/image';
 import { RichTextEditor } from '@/components/vision-forge/RichTextEditor';
 import { ArticlePreview } from '@/components/vision-forge/ArticlePreview';
@@ -31,15 +31,12 @@ import { ManualArticleSchema, getFullArticleHtmlForPreview } from '@/lib/types';
 type ManualArticleFormData = z.infer<typeof ManualArticleSchema>;
 
 export default function ManualPublishPage() {
-  const [isPublishing, setIsPublishing] = useState(false);
-  const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isAddingImagesToArticle, setIsAddingImagesToArticle] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [imageCount, setImageCount] = useState(IMAGE_COUNTS[1].value); 
-  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
 
   const { toast } = useToast();
@@ -57,42 +54,8 @@ export default function ManualPublishPage() {
     }
   });
 
-  const formValues = watch();
   const wordCount = (watch('content') || '').replace(/<[^>]*>?/gm, '').split(/\s+/).filter(Boolean).length;
   
-  const DRAFT_SLUG = watch('slug');
-
-  // Auto-saving logic to GitHub
-  useEffect(() => {
-    const performAutoSave = async () => {
-      if (isDirty && DRAFT_SLUG) {
-        setAutoSaveStatus('saving');
-        const currentData = getValues();
-        try {
-            const result = await autoSaveArticleDraftAction(currentData);
-            if (result.success) {
-                setAutoSaveStatus('saved');
-            } else {
-                setAutoSaveStatus('error');
-            }
-        } catch (e) {
-            console.error("GitHub auto-save failed:", e);
-            setAutoSaveStatus('error');
-        }
-      }
-    };
-    
-    if (isDirty && DRAFT_SLUG) {
-      if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
-      debounceTimeoutRef.current = setTimeout(performAutoSave, 10000); // Auto-save every 10 seconds
-    }
-    
-    return () => {
-      if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
-    };
-  }, [formValues, isDirty, DRAFT_SLUG, getValues]);
-
-
   const { fields, append, remove } = useFieldArray({
     control,
     name: "keyTakeaways",
@@ -169,9 +132,9 @@ export default function ManualPublishPage() {
   };
   
 
-  const onSubmit = async (data: ManualArticleFormData, status: 'published' | 'draft') => {
-    if (status === 'published') setIsPublishing(true);
-    if (status === 'draft') setIsSavingDraft(true);
+  const onSubmit = async (data: ManualArticleFormData) => {
+    setIsSubmitting(true);
+    const status = data.status || 'draft';
     
     toast({
       title: status === 'published' ? 'Publishing...' : 'Saving Draft...',
@@ -184,19 +147,11 @@ export default function ManualPublishPage() {
             description: 'Please generate or provide a featured image URL before publishing.',
             variant: 'destructive',
         });
-        setIsPublishing(false);
-        setIsSavingDraft(false);
+        setIsSubmitting(false);
         return;
     }
     
-    const takeaways = (data.keyTakeaways || []).filter(item => item && item.value.trim() !== '');
-
-    const result = await createManualArticleAction({
-      ...data,
-      status, // Pass the status to the action
-      keyTakeaways: takeaways.length > 0 ? takeaways.map(t => t.value ? { value: t.value } : { value: '' }) : [],
-      image: data.image
-    });
+    const result = await createManualArticleAction(data);
 
     if (result.success) {
       toast({
@@ -219,8 +174,7 @@ export default function ManualPublishPage() {
         duration: 9000,
       });
     }
-    setIsPublishing(false);
-    setIsSavingDraft(false);
+    setIsSubmitting(false);
   };
 
   const getFullArticleHtml = useCallback(() => {
@@ -247,13 +201,13 @@ export default function ManualPublishPage() {
         </Button>
       </div>
 
-      <form className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+      <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         <div className="lg:col-span-2 space-y-6">
             <Card>
                 <CardHeader>
                     <CardTitle className="text-2xl">Publish a New Article Manually</CardTitle>
                     <CardDescription>
-                    Write your article below. Drafts are auto-saved to GitHub every 10 seconds.
+                    Write your article below. Save your progress as a draft or publish it to the live site when you're ready.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -263,7 +217,7 @@ export default function ManualPublishPage() {
                       id="title" 
                       placeholder="Your engaging article title..."
                       {...register('title')} 
-                      disabled={isPublishing || isSavingDraft}
+                      disabled={isSubmitting}
                       className="text-2xl font-bold h-auto py-2 border-0 shadow-none px-0 focus-visible:ring-0" 
                     />
                     {errors.title && <p className="text-sm text-destructive mt-1">{errors.title.message}</p>}
@@ -280,7 +234,7 @@ export default function ManualPublishPage() {
                             <RichTextEditor 
                                 value={field.value || ''} 
                                 onChange={field.onChange}
-                                disabled={isPublishing || isSavingDraft}
+                                disabled={isSubmitting}
                                 placeholder="A short, engaging summary for the top of the article."
                             />
                         )}
@@ -297,7 +251,7 @@ export default function ManualPublishPage() {
                             <RichTextEditor 
                                 value={field.value} 
                                 onChange={field.onChange}
-                                disabled={isAddingImagesToArticle || isSavingDraft}
+                                disabled={isAddingImagesToArticle || isSubmitting}
                             />
                         )}
                     />
@@ -316,11 +270,11 @@ export default function ManualPublishPage() {
                                     <Input
                                         {...field}
                                         placeholder={`Takeaway #${index + 1}`}
-                                        disabled={isPublishing || isSavingDraft}
+                                        disabled={isSubmitting}
                                     />
                                 )}
                             />
-                          <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={isPublishing || isSavingDraft || fields.length <= 1}>
+                          <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={isSubmitting || fields.length <= 1}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -332,7 +286,7 @@ export default function ManualPublishPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => append({ value: "" })}
-                        disabled={isPublishing || isSavingDraft || fields.length >= 6}
+                        disabled={isSubmitting || fields.length >= 6}
                       >
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add Takeaway
@@ -348,7 +302,7 @@ export default function ManualPublishPage() {
                              <RichTextEditor 
                                 value={field.value} 
                                 onChange={field.onChange}
-                                disabled={isPublishing || isSavingDraft}
+                                disabled={isSubmitting}
                                 placeholder="Write your powerful conclusion here..."
                             />
                         )}
@@ -367,11 +321,6 @@ export default function ManualPublishPage() {
                 <CardContent className="space-y-4">
                      <div>
                         <p className="text-sm font-medium">Word Count: <span className="font-bold text-primary">{wordCount}</span></p>
-                        <div className="text-xs text-muted-foreground mt-2 flex items-center gap-2">
-                            {autoSaveStatus === 'saving' && <><Loader2 className="h-4 w-4 animate-spin" /> Saving draft to GitHub...</>}
-                            {autoSaveStatus === 'saved' && <><CheckCircle className="h-4 w-4 text-green-500" /> All changes saved.</>}
-                            {autoSaveStatus === 'error' && <p className="text-destructive">Auto-save failed.</p>}
-                        </div>
                     </div>
 
                     <div>
@@ -380,7 +329,7 @@ export default function ManualPublishPage() {
                         name="category"
                         control={control}
                         render={({ field }) => (
-                          <Select onValueChange={field.onChange} defaultValue={field.value || ''} value={field.value || ''} disabled={isPublishing || isSavingDraft}>
+                          <Select onValueChange={field.onChange} defaultValue={field.value || ''} value={field.value || ''} disabled={isSubmitting}>
                             <SelectTrigger id="category">
                               <SelectValue placeholder="Select a category" />
                             </SelectTrigger>
@@ -426,7 +375,7 @@ export default function ManualPublishPage() {
                             variant="secondary"
                             className="w-full mt-2"
                             onClick={() => fetchPreviewImage(titleValue)}
-                            disabled={isGeneratingImage || !titleValue || isSavingDraft || isPublishing}
+                            disabled={isGeneratingImage || !titleValue || isSubmitting}
                         >
                             {isGeneratingImage ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ImageIcon className="mr-2 h-4 w-4" />}
                             Generate Image from Title
@@ -441,7 +390,7 @@ export default function ManualPublishPage() {
                                 type="button"
                                 variant="secondary"
                                 onClick={addImagesToArticle}
-                                disabled={isAddingImagesToArticle || isPublishing || isSavingDraft}
+                                disabled={isAddingImagesToArticle || isSubmitting}
                                 className="w-full justify-center"
                             >
                                 {isAddingImagesToArticle ? (
@@ -451,7 +400,7 @@ export default function ManualPublishPage() {
                                 )}
                                 Add Images
                             </Button>
-                            <Select onValueChange={setImageCount} defaultValue={imageCount} disabled={isAddingImagesToArticle || isPublishing || isSavingDraft}>
+                            <Select onValueChange={setImageCount} defaultValue={imageCount} disabled={isAddingImagesToArticle || isSubmitting}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Number of Images" />
                                 </SelectTrigger>
@@ -468,11 +417,17 @@ export default function ManualPublishPage() {
 
                     <div className="space-y-2 border-t pt-4">
                       <Label>Actions</Label>
-                      <Button onClick={handleSubmit((data) => onSubmit(data, 'published'))} className="w-full" disabled={isPublishing || isSavingDraft || isGeneratingImage}>
-                        {isPublishing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Publishing...</> : <><FileSignature className="mr-2 h-4 w-4" /> Publish Article</>}
+                      <Button onClick={handleSubmit((data) => {
+                          setValue('status', 'published');
+                          onSubmit(data);
+                      })} className="w-full" disabled={isSubmitting || isGeneratingImage}>
+                        {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting...</> : <><FileSignature className="mr-2 h-4 w-4" /> Publish Article</>}
                       </Button>
-                       <Button onClick={handleSubmit((data) => onSubmit(data, 'draft'))} variant="secondary" className="w-full" disabled={isPublishing || isSavingDraft || isGeneratingImage}>
-                        {isSavingDraft ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : <><Save className="mr-2 h-4 w-4" /> Save as Draft</>}
+                       <Button onClick={handleSubmit((data) => {
+                           setValue('status', 'draft');
+                           onSubmit(data);
+                       })} variant="secondary" className="w-full" disabled={isSubmitting || isGeneratingImage}>
+                        {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting...</> : <><Save className="mr-2 h-4 w-4" /> Save as Draft</>}
                       </Button>
                       <Button type="button" variant="outline" className="w-full" onClick={() => setIsPreviewOpen(true)}>
                           <Eye className="mr-2 h-4 w-4" />

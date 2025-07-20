@@ -6,6 +6,7 @@ import { JSDOM } from 'jsdom';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { Octokit } from 'octokit';
+import { generateArticleForTopic } from '@/ai/article-generator';
 
 import { categorySlugMap } from './constants';
 import {
@@ -35,32 +36,31 @@ function htmlToArticleContent(html: string): ArticleContentBlock[] {
             const element = node as HTMLElement;
             const tagName = element.tagName.toLowerCase();
 
-            // Handle main content block types
             if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'blockquote'].includes(tagName)) {
-                content.push({ type: tagName as ArticleContentBlock['type'], content: element.outerHTML.trim(), alt: '' });
+                 const outerHTML = element.outerHTML.trim();
+                 if (outerHTML) {
+                    content.push({ type: tagName as ArticleContentBlock['type'], content: outerHTML, alt: '' });
+                 }
             } 
-            // Handle tables wrapped in a div by the editor
-            else if (tagName === 'div' && element.querySelector('table')) {
+            else if (element.querySelector('table')) { // Handles tables that might be wrapped in divs
                 const table = element.querySelector('table');
                 if (table) {
                     content.push({ type: 'table', content: table.outerHTML.trim(), alt: '' });
                 }
             }
-            // Handle images, which might be wrapped in a div
-            else if (tagName === 'div' && element.querySelector('img')) {
+            else if (element.querySelector('img')) { // Handles images that might be wrapped
                 const img = element.querySelector('img');
                 if (img?.src) {
                     content.push({ type: 'img', content: img.src, alt: img.alt || '' });
                 }
-            } else if (tagName === 'img' && element.hasAttribute('src')) {
+            } else if (tagName === 'img' && element.hasAttribute('src')) { // Handles direct image tags
                 content.push({ type: 'img', content: element.getAttribute('src')!, alt: element.getAttribute('alt') || '' });
             }
         }
     });
-
-    return content.filter(block => (block.content && block.content.trim() !== '') || block.type === 'img');
+    
+    return content.filter(block => (block.content && block.content.trim() !== '' && block.content !== '<p></p>') || block.type === 'img');
 }
-
 
 
 async function saveUpdatedArticles(
@@ -129,15 +129,7 @@ export async function addImagesToArticleAction(
     const dom = new JSDOM(`<body>${content}</body>`);
     const document = dom.window.document;
     
-    // Remove existing Pollinations images to avoid duplication
-    document.querySelectorAll('img[src*="pollinations.ai"]').forEach(img => {
-        const parent = img.parentElement;
-        if (parent && parent.tagName.toLowerCase() === 'div' && parent.classList.contains('my-8')) {
-            parent.remove();
-        } else {
-            img.remove();
-        }
-    });
+    document.querySelectorAll('img[src*="pollinations.ai"]').forEach(img => img.parentElement?.remove());
 
     const insertionPoints = Array.from(document.querySelectorAll('h2, h3, p'));
     const validPoints = insertionPoints.filter(p => p.textContent && p.textContent.trim().split(' ').length > 5);
@@ -152,7 +144,7 @@ export async function addImagesToArticleAction(
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(`${topic}, relevant photography, high detail, cinematic`)}?width=800&height=450&seed=${seed}&nologo=true`;
 
         const container = document.createElement('div');
-        container.className = 'my-8';
+        container.className = 'my-8'; // This class is just for potential styling, not parsing logic
         const img = document.createElement('img');
         img.src = url;
         img.alt = topic;
@@ -201,7 +193,7 @@ export async function editArticleAction(data: unknown) {
     const validatedFields = ManualArticleSchema.safeParse(data);
     if (!validatedFields.success) return { success: false, error: 'Invalid data.' };
     
-    const { title, slug, summary, content, keyTakeaways, conclusion, originalSlug, category, status, image } = validatedFields.data;
+    const { title, slug, summary, content, keyTakeaways, conclusion, originalSlug, originalStatus, category, status, image } = validatedFields.data;
     
     try {
         const existingArticle = await getArticleBySlug(originalSlug!);
@@ -217,7 +209,7 @@ export async function editArticleAction(data: unknown) {
             publishedDate: (status === 'published' && existingArticle.status !== 'published') ? new Date().toISOString() : existingArticle.publishedDate
         };
         
-        await saveArticle(updatedArticleData, false, existingArticle.category, existingArticle.status);
+        await saveArticle(updatedArticleData, false, existingArticle.category, originalStatus);
         
         revalidatePaths(slug, category);
         if (originalSlug !== slug) revalidatePaths(originalSlug, category);
@@ -226,32 +218,6 @@ export async function editArticleAction(data: unknown) {
     }
     
     redirect('/admin/dashboard/edit');
-}
-
-
-// Action for autosaving drafts
-export async function autoSaveArticleDraftAction(data: unknown): Promise<{ success: boolean; error?: string }> {
-    const validatedFields = ManualArticleSchema.safeParse(data);
-    if (!validatedFields.success) return { success: false, error: 'Invalid draft data.' };
-    
-    const articleData = validatedFields.data;
-    try {
-        const articleContent = htmlToArticleContent(articleData.content);
-        const draftArticle: Article = {
-            title: articleData.title || 'Untitled Draft', slug: articleData.slug,
-            category: articleData.category || 'Featured', status: 'draft',
-            image: articleData.image || 'https://placehold.co/600x400.png',
-            dataAiHint: 'autosave content', publishedDate: new Date().toISOString(),
-            summary: articleData.summary, articleContent,
-            keyTakeaways: (articleData.keyTakeaways || []).map(k => k.value),
-            conclusion: articleData.conclusion
-        };
-        await saveArticle(draftArticle, false, draftArticle.category, 'draft');
-        revalidatePath('/admin/dashboard/edit');
-        return { success: true };
-    } catch (e: any) {
-        return { success: false, error: e.message };
-    }
 }
 
 // Action to delete an article

@@ -96,11 +96,13 @@ export async function generateArticleAction(
   }
   
   const validatedData = validatedFields.data;
+  // This slug is a fallback/guess. The actual final slug is in `newArticle.slug`
   const slug = validatedData.topic.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-');
   const categorySlug =
       Object.keys(categorySlugMap).find(
         (key) => categorySlugMap[key] === validatedData.category
       ) || validatedData.category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   
+  // The redirect now points to the new edit page for the article
   redirect(`/admin/dashboard/edit/${categorySlug}/${slug}`);
 }

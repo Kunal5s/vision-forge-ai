@@ -9,8 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, Save, Trash2, Wand2, Eye, PlusCircle, Globe, FileText, CheckCircle } from 'lucide-react';
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { ArrowLeft, Loader2, Save, Trash2, Wand2, Eye, PlusCircle, Globe, FileText } from 'lucide-react';
+import { useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import type { Article } from '@/lib/articles';
 import {
@@ -35,7 +35,7 @@ import {
 } from '@/components/ui/select';
 import { IMAGE_COUNTS } from '@/lib/constants';
 import { ManualArticleSchema as EditSchema, articleContentToHtml, getFullArticleHtmlForPreview } from '@/lib/types';
-import { editArticleAction, deleteArticleAction, addImagesToArticleAction, autoSaveArticleDraftAction } from '@/lib/articles.server';
+import { editArticleAction, deleteArticleAction, addImagesToArticleAction } from '@/lib/articles.server';
 
 
 type EditFormData = z.infer<typeof EditSchema>;
@@ -52,13 +52,10 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
   const [isAddingImages, setIsAddingImages] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [imageCount, setImageCount] = useState(IMAGE_COUNTS[1].value); // Default to 2 images
-  
-  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { toast } = useToast();
   
-  const { register, handleSubmit, formState: { errors, isDirty }, control, getValues, setValue, watch, reset } = useForm<EditFormData>({
+  const { register, handleSubmit, formState: { errors }, control, getValues, setValue, watch } = useForm<EditFormData>({
     resolver: zodResolver(EditSchema),
     defaultValues: {
       title: article.title.replace(/<[^>]*>?/gm, ''),
@@ -71,48 +68,12 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
       conclusion: article.conclusion || '',
       image: article.image || '',
       originalSlug: article.slug,
+      originalStatus: article.status || 'published',
     }
   });
 
-  const formValues = watch(); // Watch all form values
   const wordCount = watch('content').replace(/<[^>]*>?/gm, '').split(/\s+/).filter(Boolean).length;
-  const isPublishedArticle = article.status === 'published';
-
-  // Auto-saving logic
-  useEffect(() => {
-    const performAutoSave = async () => {
-      if (!isDirty) return;
-      
-      setAutoSaveStatus('saving');
-      const currentData = getValues();
-      
-      // Use the server-side action to save the draft.
-      // This action will internally convert the 'content' HTML back to the structured array.
-      const result = await autoSaveArticleDraftAction(currentData);
-      
-      if (result.success) {
-        setAutoSaveStatus('saved');
-      } else {
-        setAutoSaveStatus('error');
-        console.error("Auto-save failed:", result.error);
-      }
-    };
-    
-    if (isDirty) {
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current);
-      }
-      debounceTimeoutRef.current = setTimeout(performAutoSave, 10000); // Auto-save every 10 seconds
-    }
-    
-    return () => {
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current);
-      }
-    };
-  }, [formValues, isDirty, getValues, article]);
-
-
+  
   const { fields, append, remove } = useFieldArray({
     control,
     name: "keyTakeaways",
@@ -125,7 +86,8 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
 
   const onSubmit = async (data: EditFormData) => {
     setIsSaving(true);
-    toast({ title: "Saving...", description: "Updating your article." });
+    const statusToSave = data.status || 'published';
+    toast({ title: statusToSave === 'published' ? 'Publishing...' : 'Saving Draft...', description: "Updating your article." });
 
     const result = await editArticleAction(data);
 
@@ -133,7 +95,7 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
       toast({ title: "Error Saving", description: result.error, variant: 'destructive' });
     } else {
       toast({ title: "Article Saved!", description: `"${data.title}" has been updated.` });
-      // Redirect handled by action
+      // Redirect is now handled by the server action
     }
     setIsSaving(false);
   };
@@ -142,14 +104,14 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
     setIsDeleting(true);
     toast({ title: "Deleting...", description: `Removing article "${article.title}".` });
     
-    const result = await deleteArticleAction(article.category, article.slug, !isPublishedArticle);
+    const result = await deleteArticleAction(article.category, article.slug, article.status === 'draft');
     
      if (result?.error) {
       toast({ title: "Error Deleting", description: result.error, variant: 'destructive' });
       setIsDeleting(false);
     } else {
       toast({ title: "Article Deleted", description: "The article has been successfully removed." });
-       // Redirect is handled by the action now
+       // Redirect is handled by the action
     }
   }
 
@@ -208,7 +170,7 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
                     <CardHeader>
                         <CardTitle className="text-2xl">Edit Article Content</CardTitle>
                         <CardDescription>
-                            Make changes to your article below. Drafts are auto-saved to GitHub every 10 seconds.
+                            Make changes to your article below. Save it as a draft or publish it to the live site.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
@@ -313,11 +275,6 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
                     <CardContent className="space-y-4">
                          <div>
                             <p className="text-sm font-medium">Word Count: <span className="font-bold text-primary">{wordCount}</span></p>
-                            <div className="text-xs text-muted-foreground mt-2 flex items-center gap-2">
-                                {autoSaveStatus === 'saving' && <><Loader2 className="h-4 w-4 animate-spin" /> Saving draft...</>}
-                                {autoSaveStatus === 'saved' && <><CheckCircle className="h-4 w-4 text-green-500" /> All changes saved.</>}
-                                {autoSaveStatus === 'error' && <p className="text-destructive">Auto-save failed.</p>}
-                            </div>
                         </div>
 
                         <div>

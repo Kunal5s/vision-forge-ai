@@ -36,6 +36,7 @@ export const ManualArticleSchema = z.object({
   conclusion: z.string().optional(),
   image: z.string().url('A valid image URL is required.'),
   originalSlug: z.string().optional(), // For identifying article on edit
+  originalStatus: z.enum(['published', 'draft']).optional(),
 });
 export type ManualArticleFormData = z.infer<typeof ManualArticleSchema>;
 
@@ -43,8 +44,8 @@ export type ManualArticleFormData = z.infer<typeof ManualArticleSchema>;
 export const articleContentToHtml = (content: Article['articleContent']): string => {
     return content.map(block => {
         if (block.type === 'img') {
-             // For images, create a standard img tag
-            return `<img src="${block.content}" alt="${block.alt || ''}" />`;
+             // For images, create a standard img tag wrapped in a div for styling
+            return `<div class="my-8"><img src="${block.content}" alt="${block.alt || ''}" class="rounded-lg shadow-lg mx-auto" /></div>`;
         }
         // For all other types (h1-h6, p, ul, ol etc.), the content is already valid HTML
         return block.content;
@@ -52,7 +53,7 @@ export const articleContentToHtml = (content: Article['articleContent']): string
 };
 
 // Helper function to generate a full article HTML string for previews
-export const getFullArticleHtmlForPreview = (data: ManualArticleFormData): string => {
+export const getFullArticleHtmlForPreview = (data: Partial<ManualArticleFormData>): string => {
   const takeawaysHtml = (data.keyTakeaways || [])
     .map(t => (t.value ? `<li>${t.value}</li>` : ''))
     .join('');
@@ -60,7 +61,7 @@ export const getFullArticleHtmlForPreview = (data: ManualArticleFormData): strin
   const conclusionHtml = data.conclusion ? `<h2>Conclusion</h2>${data.conclusion}` : '';
   const takeawaysSection = takeawaysHtml ? `<h2>Key Takeaways</h2><ul>${takeawaysHtml}</ul>` : '';
 
-  return `${data.summary || ''}${data.content}${takeawaysSection}${conclusionHtml}`;
+  return `${data.summary || ''}${data.content || ''}${takeawaysSection}${conclusionHtml}`;
 };
 
 
