@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEditor, EditorContent, Editor } from '@tiptap/react';
+import { useEditor, EditorContent, Editor, BubbleMenu } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
@@ -152,7 +152,7 @@ export function RichTextEditor({ value, onChange, disabled, placeholder = "Start
     const editor = useEditor({
         extensions: [
             StarterKit.configure({
-                heading: { levels: [1, 2, 3, 4, 5, 6] },
+                heading: { levels: [1, 2, 3, 4, 5, 6], HTMLAttributes: { class: 'font-bold' } },
                 bulletList: { keepMarks: true, keepAttributes: false },
                 orderedList: { keepMarks: true, keepAttributes: false },
                 codeBlock: false,
@@ -209,6 +209,16 @@ export function RichTextEditor({ value, onChange, disabled, placeholder = "Start
 
     return (
         <div className="border rounded-lg overflow-hidden">
+             {editor && (
+                <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }}>
+                    <div className="bg-foreground text-background p-1 rounded-md flex gap-1">
+                        <Button size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleBold().run()} className={cn("hover:bg-background/20", { 'bg-background/20': editor.isActive('bold') })}>Bold</Button>
+                        <Button size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleItalic().run()} className={cn("hover:bg-background/20",{ 'bg-background/20': editor.isActive('italic') })}>Italic</Button>
+                        <Button size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={cn("hover:bg-background/20",{ 'bg-background/20': editor.isActive('heading', { level: 2}) })}>H2</Button>
+                        <Button size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} className={cn("hover:bg-background/20",{ 'bg-background/20': editor.isActive('heading', { level: 3}) })}>H3</Button>
+                    </div>
+                </BubbleMenu>
+            )}
             <EditorToolbar editor={editor} />
             <EditorContent editor={editor} />
         </div>
