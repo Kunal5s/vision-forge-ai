@@ -41,7 +41,7 @@ const CategoryNavBar = () => {
       <nav className="border-b bg-background">
         <div className="container mx-auto px-4">
           <ScrollArea className="w-full whitespace-nowrap">
-            <div className="flex w-max space-x-4 py-3 md:justify-center md:w-full">
+            <div className="flex w-max space-x-2 py-3 md:justify-center md:w-full">
                 {categoriesToShow.map(([slug, name]) => {
                      const isActive = isFilterablePage ? currentCategorySlug === slug : pathname === `/${slug}`;
                      return (
@@ -51,8 +51,8 @@ const CategoryNavBar = () => {
                             scroll={false}
                             className={cn(
                                 'px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
-                                'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
-                                isActive && 'bg-muted text-foreground font-semibold'
+                                'bg-background text-foreground hover:bg-muted',
+                                isActive && 'bg-foreground text-background hover:bg-foreground/80'
                             )}
                         >
                             {name}
