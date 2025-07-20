@@ -15,7 +15,7 @@ const StoryPageClientSchema = z.object({
   imageUrl: z.string().min(1, "An image is required for each page."),
   caption: z.string().min(1, "Caption cannot be empty.").max(250, "Caption is too long."),
   imagePrompt: z.string().optional(),
-  fontStyle: z.string().optional(),
+  styleName: z.string().optional(),
 });
 
 const UpdateStoryFormSchema = z.object({
@@ -56,7 +56,7 @@ export async function updateStoryAction(data: UpdateStoryFormData): Promise<{ su
       type: 'image',
       url: page.imageUrl,
       dataAiHint: page.imagePrompt || 'manual story upload',
-      fontStyle: page.fontStyle || 'font-roboto',
+      styleName: page.styleName || 'Classic Black',
       content: {
         title: page.caption,
       },

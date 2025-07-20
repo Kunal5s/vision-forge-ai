@@ -16,12 +16,13 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { createManualStoryAction, generateStoryImagesAction } from './actions';
-import { categorySlugMap, FONT_STYLES } from '@/lib/constants';
+import { categorySlugMap, CAPTION_STYLES } from '@/lib/constants';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { StoryPlayer } from '@/components/vision-forge/StoryPlayer';
 import type { Story } from '@/lib/stories';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 
 // Schema for a single page on the client
@@ -29,7 +30,7 @@ const StoryPageClientSchema = z.object({
   imageUrl: z.string().min(1, "An image is required for each page."),
   caption: z.string().min(1, "Caption cannot be empty.").max(250, "Caption cannot be more than 250 characters."),
   imagePrompt: z.string().optional(),
-  fontStyle: z.string().optional().default('font-roboto'),
+  styleName: z.string().optional().default('Classic Black'),
 });
 
 // Schema for the full story form
@@ -148,7 +149,7 @@ export default function CreateManualStoryPage() {
                 imageUrl: img.imageUrl,
                 caption: '', // Leave caption empty for manual input
                 imagePrompt: img.imagePrompt,
-                fontStyle: 'font-roboto', // Default font
+                styleName: 'Classic Black', // Default style
             }));
             replace(newPages);
             toast({ title: "Images Generated!", description: `Successfully created ${newPages.length} story pages. Now, add your captions.` });
@@ -186,7 +187,7 @@ export default function CreateManualStoryPage() {
                 type: 'image',
                 url: p.imageUrl,
                 dataAiHint: p.imagePrompt || 'preview',
-                fontStyle: p.fontStyle,
+                styleName: p.styleName,
                 content: {
                     title: p.caption,
                 }
@@ -344,7 +345,7 @@ export default function CreateManualStoryPage() {
                         <ScrollArea className="w-full">
                             <div className="flex space-x-4 pb-4">
                                 {fields.map((field, index) => (
-                                    <div key={field.id} className="p-4 border rounded-md space-y-2 relative bg-background w-[220px] shrink-0">
+                                    <div key={field.id} className="p-4 border rounded-md space-y-3 relative bg-background w-[220px] shrink-0">
                                         <Label className="font-semibold">Page {index + 1}</Label>
                                         <div className="aspect-[9/16] relative bg-muted rounded-md overflow-hidden">
                                             {pagesValue[index]?.imageUrl ? (
@@ -371,34 +372,47 @@ export default function CreateManualStoryPage() {
                                             onChange={(e) => handleFileChange(e, index)}
                                         />
                                         {errors.pages?.[index]?.imageUrl && <p className="text-sm text-destructive mt-1">{errors.pages[index]?.imageUrl?.message}</p>}
-                                        <Textarea {...register(`pages.${index}.caption`)} placeholder="Enter a caption..." disabled={isPublishing} rows={3} />
-                                        {errors.pages?.[index]?.caption && <p className="text-sm text-destructive mt-1">{errors.pages[index]?.caption?.message}</p>}
+                                        
                                         <div>
-                                            <Label className="text-xs">Font Style</Label>
-                                             <Controller
-                                                name={`pages.${index}.fontStyle`}
-                                                control={control}
-                                                render={({ field }) => (
-                                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                                        <SelectContent>
-                                                            {FONT_STYLES.map((font) => (
-                                                                <SelectItem key={font.value} value={font.value} className={cn(font.value)}>
-                                                                    {font.label}
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                )}
-                                            />
+                                            <Label htmlFor={`caption-${index}`} className="text-xs">Caption</Label>
+                                            <Textarea id={`caption-${index}`} {...register(`pages.${index}.caption`)} placeholder="Enter caption..." disabled={isPublishing} rows={3} />
+                                            {errors.pages?.[index]?.caption && <p className="text-sm text-destructive mt-1">{errors.pages[index]?.caption?.message}</p>}
                                         </div>
-                                        <Button type="button" variant="destructive" size="sm" className="w-full" onClick={() => remove(index)} disabled={isPublishing}>
+
+                                        <div>
+                                            <Label className="text-xs">Caption Style</Label>
+                                             <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <Button variant="outline" className="w-full justify-start text-left font-normal h-9">
+                                                        <span>{watch(`pages.${index}.styleName`)}</span>
+                                                    </Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-[260px] p-0" align="start">
+                                                    <ScrollArea className="h-72">
+                                                        <div className="p-2 space-y-1">
+                                                            {CAPTION_STYLES.map((style) => (
+                                                                <Button
+                                                                    key={style.name}
+                                                                    variant="ghost"
+                                                                    className={cn("w-full h-auto justify-start p-2 text-left", style.className)}
+                                                                    onClick={() => setValue(`pages.${index}.styleName`, style.name, { shouldDirty: true })}
+                                                                >
+                                                                    {style.name}
+                                                                </Button>
+                                                            ))}
+                                                        </div>
+                                                    </ScrollArea>
+                                                </PopoverContent>
+                                            </Popover>
+                                        </div>
+
+                                        <Button type="button" variant="destructive" size="sm" className="w-full !mt-4" onClick={() => remove(index)} disabled={isPublishing}>
                                             <Trash2 className="mr-2 h-4 w-4" /> Remove
                                         </Button>
                                     </div>
                                 ))}
                                 <div className="flex items-center justify-center w-[220px] shrink-0">
-                                    <Button type="button" variant="outline" onClick={() => append({ imageUrl: '', caption: '', imagePrompt: 'manual upload', fontStyle: 'font-roboto' })} disabled={isPublishing || fields.length >= 50}>
+                                    <Button type="button" variant="outline" onClick={() => append({ imageUrl: '', caption: '', imagePrompt: 'manual upload', styleName: 'Classic Black' })} disabled={isPublishing || fields.length >= 50}>
                                         <PlusCircle className="mr-2 h-4 w-4" /> Add Page
                                     </Button>
                                 </div>

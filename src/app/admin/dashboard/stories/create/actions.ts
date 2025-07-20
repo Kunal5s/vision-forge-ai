@@ -18,7 +18,7 @@ const StoryPageClientSchema = z.object({
   imageUrl: z.string().min(1, "An image is required for each page."),
   caption: z.string().min(1, "Caption cannot be empty.").max(250, "Caption is too long."),
   imagePrompt: z.string().optional(), // The original prompt used for generation
-  fontStyle: z.string().optional(),
+  styleName: z.string().optional(),
 });
 
 // Zod schema for the final story form submission
@@ -47,7 +47,7 @@ export async function generateStoryImagesAction(data: unknown): Promise<{ succes
     const imagePromises = Array.from({ length: imageCount }).map(async (_, index): Promise<{ imageUrl: string, imagePrompt: string } | null> => {
         try {
             // Add specific instructions to avoid text and get the right aspect ratio.
-            const finalPrompt = `${prompt}, 9:16 aspect ratio, vertical, cinematic, watermark-free, no text, no signatures, high detail, no typography`;
+            const finalPrompt = `${prompt}, 9:16 aspect ratio, vertical, cinematic, watermark-free, no text, no signatures, high detail`;
             const seed = Math.floor(Math.random() * 1_000_000_000);
             const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=1080&height=1920&seed=${seed}&nologo=true`;
 
@@ -100,7 +100,7 @@ export async function createManualStoryAction(data: StoryFormData): Promise<{ su
       type: 'image',
       url: page.imageUrl,
       dataAiHint: page.imagePrompt || 'manual story upload',
-      fontStyle: page.fontStyle || 'font-roboto',
+      styleName: page.styleName || 'Classic Black',
       content: {
         title: page.caption, // Using caption as the main text for each slide
       },

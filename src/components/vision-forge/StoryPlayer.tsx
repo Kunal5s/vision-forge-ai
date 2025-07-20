@@ -10,6 +10,7 @@ import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { CAPTION_STYLES } from '@/lib/constants';
 
 interface StoryPlayerProps {
   story: Story;
@@ -56,6 +57,8 @@ export function StoryPlayer({ story, isPreview = false, onClose }: StoryPlayerPr
   }, [currentPage, isPaused, nextPage]);
 
   const page = story.pages[currentPage];
+  const activeStyle = CAPTION_STYLES.find(s => s.name === page?.styleName) || CAPTION_STYLES[0];
+
 
   const handleShare = async () => {
     const shareData = {
@@ -165,8 +168,8 @@ export function StoryPlayer({ story, isPreview = false, onClose }: StoryPlayerPr
         </div>
         
         {/* Content */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 z-50 flex flex-col items-start text-left">
-            {story.publishedDate && (
+        <div className="absolute bottom-0 left-0 right-0 p-6 z-50 flex flex-col items-center text-center">
+             {story.publishedDate && !isPreview && (
                  <div className="bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-lg mb-4">
                     <p className="text-white font-medium text-xs">
                         {format(new Date(story.publishedDate), 'MMMM d, yyyy')}
@@ -175,11 +178,8 @@ export function StoryPlayer({ story, isPreview = false, onClose }: StoryPlayerPr
             )}
             
             {page.content?.title && (
-                 <div className="bg-black/50 backdrop-blur-sm p-4 rounded-lg">
-                    <h1 className={cn(
-                        "text-white font-bold text-2xl leading-tight [text-shadow:0_1px_4px_rgba(0,0,0,0.5)]",
-                        page.fontStyle || 'font-roboto'
-                    )}>
+                 <div className={cn("w-auto inline-block", activeStyle.className)}>
+                    <h1 className="text-2xl leading-tight">
                         {page.content.title}
                     </h1>
                 </div>

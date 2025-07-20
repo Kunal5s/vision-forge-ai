@@ -151,27 +151,34 @@ export const categorySlugMap: { [key: string]: string } = {
     'nft': 'NFT'
 };
 
-// Font styles for Web Stories
-export const FONT_STYLES: StyleOption[] = [
-    { label: 'Roboto', value: 'font-roboto' },
-    { label: 'Open Sans', value: 'font-open-sans' },
-    { label: 'Lato', value: 'font-lato' },
-    { label: 'Montserrat', value: 'font-montserrat' },
-    { label: 'Oswald', value: 'font-oswald' },
-    { label: 'Slabo 27px', value: 'font-slabo' },
-    { label: 'Roboto Condensed', value: 'font-roboto-condensed' },
-    { label: 'Source Sans Pro', value: 'font-source-sans' },
-    { label: 'Raleway', value: 'font-raleway' },
-    { label: 'PT Sans', value: 'font-pt-sans' },
-    { label: 'Lobster', value: 'font-lobster' },
-    { label: 'Pacifico', value: 'font-pacifico' },
-    { label: 'Bebas Neue', value: 'font-bebas-neue' },
-    { label: 'Anton', value: 'font-anton' },
-    { label: 'Dancing Script', value: 'font-dancing-script' },
-    { label: 'Indie Flower', value: 'font-indie-flower' },
-    { label: 'Caveat', value: 'font-caveat' },
-    { label: 'Shadows Into Light', value: 'font-shadows-into-light' },
-    { label: 'Amatic SC', value: 'font-amatic-sc' },
-    { label: 'Playfair Display', value: 'font-playfair-display' },
+
+// --- WEB STORY CONSTANTS ---
+
+export interface CaptionStyle {
+    name: string;
+    className: string;
+}
+
+export const CAPTION_STYLES: CaptionStyle[] = [
+    { name: 'Classic Black', className: 'bg-black/60 text-white font-roboto p-3 rounded-lg' },
+    { name: 'Minimal White', className: 'bg-white/80 text-black font-open-sans p-3 rounded-lg' },
+    { name: 'Bold Uppercase', className: 'bg-transparent text-white font-oswald uppercase tracking-wider text-shadow-md' },
+    { name: 'Elegant Script', className: 'bg-transparent text-white font-dancing-script text-3xl text-shadow-lg' },
+    { name: 'Neon Glow', className: 'bg-transparent text-cyan-300 font-bebas-neue text-shadow-glow-cyan tracking-widest' },
+    { name: 'Simple Lowercase', className: 'bg-transparent text-white font-lato lowercase' },
+    { name: 'Subtle Shadow', className: 'bg-transparent text-white font-montserrat text-shadow-sm' },
+    { name: 'Inverted Box', className: 'bg-white text-black font-roboto-condensed p-2 rounded-md' },
+    { name: 'Yellow Highlight', className: 'bg-yellow-400 text-black font-bold font-anton p-2 mix-blend-screen' },
+    { name: 'Red Outline', className: 'bg-transparent text-white font-anton uppercase text-shadow-outline-red' },
+    { name: 'Handwritten Note', className: 'bg-transparent text-white font-indie-flower text-2xl' },
+    { name: 'Blue Box', className: 'bg-blue-600/70 text-white font-source-sans p-3 rounded' },
+    { name: 'Green Modern', className: 'bg-green-500/80 text-white font-raleway p-3' },
+    { name: 'Playful Type', className: 'bg-pink-500 text-white font-pacifico text-2xl p-3 rounded-full' },
+    { name: 'Formal Serif', className: 'bg-white/90 text-gray-800 font-playfair-display p-3' },
+    { name: 'Muted Gray', className: 'bg-gray-700/60 text-gray-200 font-pt-sans p-2 rounded-sm' },
+    { name: 'Condensed Tall', className: 'bg-black/50 text-white font-oswald tracking-wide p-2 uppercase' },
+    { name: 'Light Shadow', className: 'bg-transparent text-black font-lato text-shadow-light' },
+    { name: 'Purple Gradient', className: 'bg-gradient-to-r from-purple-600/70 to-pink-500/70 text-white font-montserrat p-3 rounded-lg' },
+    { name: 'Caveat Brush', className: 'bg-transparent text-white font-caveat text-3xl text-shadow-md' },
 ];
     

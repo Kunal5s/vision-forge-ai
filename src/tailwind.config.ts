@@ -10,6 +10,14 @@ export default {
   ],
   theme: {
   	extend: {
+      textShadow: {
+        sm: '0 1px 2px rgba(0, 0, 0, 0.5)',
+        md: '0 2px 4px rgba(0, 0, 0, 0.5)',
+        lg: '0 4px 8px rgba(0, 0, 0, 0.5)',
+        'glow-cyan': '0 0 8px rgba(0, 255, 255, 0.7)',
+        'outline-red': '1px 1px 0 #D90429, -1px -1px 0 #D90429, 1px -1px 0 #D90429, -1px 1px 0 #D90429',
+        'light': '0 1px 1px rgba(255, 255, 255, 0.7)',
+      },
       fontFamily: {
         'roboto': ['Roboto', 'sans-serif'],
         'open-sans': ['"Open Sans"', 'sans-serif'],
@@ -118,5 +126,31 @@ export default {
   		}
   	}
   },
-  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
+  plugins: [
+      require("tailwindcss-animate"), 
+      require("@tailwindcss/typography"),
+      function({ addUtilities, theme }: { addUtilities: any, theme: any }) {
+        const newUtilities = {
+          '.text-shadow-sm': {
+            textShadow: theme('textShadow.sm'),
+          },
+          '.text-shadow-md': {
+            textShadow: theme('textShadow.md'),
+          },
+          '.text-shadow-lg': {
+            textShadow: theme('textShadow.lg'),
+          },
+          '.text-shadow-glow-cyan': {
+            textShadow: theme('textShadow.glow-cyan'),
+          },
+          '.text-shadow-outline-red': {
+            textShadow: theme('textShadow.outline-red'),
+          },
+          '.text-shadow-light': {
+            textShadow: theme('textShadow.light'),
+          },
+        }
+        addUtilities(newUtilities, ['responsive', 'hover'])
+      }
+  ],
 } satisfies Config;

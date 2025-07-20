@@ -21,7 +21,7 @@ const StoryPageSchema = z.object({
   type: z.enum(['image', 'video']),
   url: z.string().min(1), // Can be a standard URL or a Data URI
   dataAiHint: z.string(),
-  fontStyle: z.string().optional(),
+  styleName: z.string().optional(),
   content: StoryPageContentSchema.optional(),
 });
 export type StoryPage = z.infer<typeof StoryPageSchema>;
