@@ -5,24 +5,31 @@ import { categorySlugMap } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import EditArticlesClientPage from '@/components/vision-forge/EditArticlesClientPage';
+import EditArticlesClientPage from './EditArticlesClientPage';
 
-// This function fetches all articles from all known categories.
-async function getAllArticles(): Promise<{ category: string, articles: Article[] }[]> {
+// This function fetches all articles from all known categories and drafts.
+async function getAllContent(): Promise<{
+    published: { category: string, articles: Article[] }[],
+    drafts: Article[]
+}> {
     const categories = Object.values(categorySlugMap);
-    const allArticlesData = await Promise.all(
+    const publishedArticlesData = await Promise.all(
         categories.map(async (categoryName) => {
-            // Use the admin function to get all articles, including drafts
             const articles = await getAllArticlesAdmin(categoryName);
-            return { category: categoryName, articles };
+            return { category: categoryName, articles: articles.filter(a => a.status === 'published') };
         })
     );
-    // Filter out categories that have no articles
-    return allArticlesData.filter(data => data.articles.length > 0);
+    
+    const draftArticles = await getAllArticlesAdmin('drafts');
+
+    return {
+        published: publishedArticlesData.filter(data => data.articles.length > 0),
+        drafts: draftArticles,
+    };
 }
 
 export default async function EditArticlesPage() {
-    const allArticlesByCategory = await getAllArticles();
+    const { published, drafts } = await getAllContent();
 
     return (
         <main className="flex-grow container mx-auto py-12 px-4 bg-muted/20 min-h-screen">
@@ -35,7 +42,10 @@ export default async function EditArticlesPage() {
                 </Button>
             </div>
             
-            <EditArticlesClientPage allArticlesByCategory={allArticlesByCategory} />
+            <EditArticlesClientPage
+                publishedArticlesByCategory={published}
+                draftArticles={drafts}
+            />
 
         </main>
     );

@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { Octokit } from 'octokit';
-import { getPrimaryBranch, getShaForFile } from '@/app/admin/dashboard/create/actions'; // Reuse GitHub helpers
+import { getPrimaryBranch, getShaForFile } from '@/lib/articles'; // Reuse GitHub helpers
 
 
 // Direct imports for reliability

@@ -14,7 +14,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import type { Article } from '@/lib/articles';
 import { editArticleAction, deleteArticleAction } from '../../../create/actions';
-import { addImagesToArticleAction, autoSaveArticleDraft } from './actions';
+import { autoSaveArticleDraft } from './actions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,24 +35,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { IMAGE_COUNTS } from '@/lib/constants';
+import { IMAGE_COUNTS, categorySlugMap } from '@/lib/constants';
+import { ManualArticleSchema as EditSchema } from '@/lib/types';
 
 
-const editSchema = z.object({
-  title: z.string().min(1, "Title is required."),
-  slug: z.string().min(1, "Slug is required."),
-  status: z.enum(['published', 'draft']),
-  summary: z.string().optional(),
-  content: z.string().min(50, 'Content must be at least 50 characters.'),
-  keyTakeaways: z.array(z.object({ value: z.string().min(1, 'Takeaway cannot be empty.') })).optional(),
-  conclusion: z.string().min(20, 'Conclusion must be at least 20 characters long.'),
-});
-
-type EditFormData = z.infer<typeof editSchema>;
+type EditFormData = z.infer<typeof EditSchema>;
 
 interface EditArticleFormProps {
     article: Article;
-    categoryName: string;
     categorySlug: string;
 }
 
@@ -64,7 +54,7 @@ const contentToHtml = (content: Article['articleContent']): string => {
     }).join(''); 
 }
 
-export default function EditArticleForm({ article, categoryName, categorySlug }: EditArticleFormProps) {
+export default function EditArticleForm({ article, categorySlug }: EditArticleFormProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isAddingImages, setIsAddingImages] = useState(false);
@@ -77,36 +67,45 @@ export default function EditArticleForm({ article, categoryName, categorySlug }:
   const { toast } = useToast();
   
   const { register, handleSubmit, formState: { errors, isDirty }, control, getValues, setValue, watch, reset } = useForm<EditFormData>({
-    resolver: zodResolver(editSchema),
+    resolver: zodResolver(EditSchema),
     defaultValues: {
       title: article.title.replace(/<[^>]*>?/gm, ''),
       slug: article.slug,
       status: article.status || 'published',
+      category: article.category,
       summary: article.summary || '',
       content: contentToHtml(article.articleContent),
       keyTakeaways: article.keyTakeaways?.map(t => ({ value: t })) || [{ value: '' }],
       conclusion: article.conclusion || '',
+      image: article.image || '',
+      originalSlug: article.slug,
     }
   });
 
   const formValues = watch(); // Watch all form values
   const wordCount = watch('content').replace(/<[^>]*>?/gm, '').split(/\s+/).filter(Boolean).length;
+  const isPublishedArticle = article.status === 'published';
 
   // Auto-saving logic
   useEffect(() => {
     const performAutoSave = async () => {
       setAutoSaveStatus('saving');
       const currentData = getValues();
-      const result = await autoSaveArticleDraft({
-        ...article,
-        title: currentData.title,
-        slug: currentData.slug,
-        status: currentData.status,
-        summary: currentData.summary,
-        articleContent: [{ type: 'p', content: currentData.content, alt:'' }], // Simplified for draft
-        keyTakeaways: (currentData.keyTakeaways || []).map(t => t.value),
-        conclusion: currentData.conclusion,
-      }, categoryName);
+      const draftArticleData: Article = {
+          title: currentData.title || 'Untitled Draft',
+          slug: currentData.slug,
+          category: currentData.category,
+          status: 'draft', // Always save as draft
+          image: currentData.image || 'https://placehold.co/600x400.png',
+          dataAiHint: article.dataAiHint || 'draft content',
+          publishedDate: article.publishedDate || new Date().toISOString(),
+          summary: currentData.summary,
+          articleContent: [{ type: 'p', content: currentData.content, alt: '' }], // Simplified for draft
+          keyTakeaways: (currentData.keyTakeaways || []).map(t => t.value),
+          conclusion: currentData.conclusion,
+      };
+
+      const result = await autoSaveArticleDraft(draftArticleData);
       
       if (result.success) {
         setAutoSaveStatus('saved');
@@ -116,7 +115,6 @@ export default function EditArticleForm({ article, categoryName, categorySlug }:
       }
     };
     
-    // Debounce the auto-save function
     if (isDirty) {
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
@@ -129,7 +127,7 @@ export default function EditArticleForm({ article, categoryName, categorySlug }:
         clearTimeout(debounceTimeoutRef.current);
       }
     };
-  }, [formValues, isDirty, getValues, article, categoryName, reset]); // Depends on watched formValues
+  }, [formValues, isDirty, getValues, article]);
 
 
   const { fields, append, remove } = useFieldArray({
@@ -151,14 +149,7 @@ export default function EditArticleForm({ article, categoryName, categorySlug }:
     setIsSaving(true);
     toast({ title: "Saving...", description: "Updating your article." });
 
-    const takeaways = (data.keyTakeaways || []).filter(item => item && item.value.trim() !== '');
-
-    const result = await editArticleAction({
-      ...data,
-      keyTakeaways: takeaways.length > 0 ? takeaways.map(t => t.value) : undefined,
-      originalSlug: article.slug,
-      category: categoryName
-    });
+    const result = await editArticleAction(data);
 
     if (result?.error) {
       toast({ title: "Error Saving", description: result.error, variant: 'destructive' });
@@ -172,13 +163,15 @@ export default function EditArticleForm({ article, categoryName, categorySlug }:
     setIsDeleting(true);
     toast({ title: "Deleting...", description: `Removing article "${article.title}".` });
     
-    const result = await deleteArticleAction(categoryName, article.slug);
+    // If it's a published article, we delete from the category file. If not, from drafts.
+    const result = await deleteArticleAction(article.category, article.slug, !isPublishedArticle);
     
      if (result?.error) {
       toast({ title: "Error Deleting", description: result.error, variant: 'destructive' });
       setIsDeleting(false);
     } else {
       toast({ title: "Article Deleted", description: "The article has been successfully removed." });
+       // Redirect is handled by the action now
     }
   }
 
@@ -218,7 +211,7 @@ export default function EditArticleForm({ article, categoryName, categorySlug }:
         onOpenChange={setIsPreviewOpen}
         title={watch('title')}
         content={getFullArticleHtml()}
-        category={categoryName}
+        category={watch('category')}
         image={article.image}
       />
       <div className="mb-8">

@@ -24,8 +24,9 @@ import { createManualArticleAction, addImagesToArticleAction } from './actions';
 import Image from 'next/image';
 import { RichTextEditor } from '@/components/vision-forge/RichTextEditor';
 import { ArticlePreview } from '@/components/vision-forge/ArticlePreview';
-import type { Article } from '@/lib/articles';
+import { type Article } from '@/lib/articles';
 import { autoSaveArticleDraft } from '../edit/[category]/[slug]/actions';
+import { useRouter } from 'next/navigation';
 
 
 const manualArticleSchema = z.object({
@@ -52,6 +53,7 @@ export default function ManualPublishPage() {
   const [imageCount, setImageCount] = useState(IMAGE_COUNTS[1].value); 
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const router = useRouter();
 
   const { toast } = useToast();
   const { register, handleSubmit, control, formState: { errors, isDirty }, watch, setValue, getValues, reset } = useForm<ManualArticleFormData>({
@@ -92,7 +94,7 @@ export default function ManualPublishPage() {
           conclusion: currentData.conclusion,
         };
 
-        const result = await autoSaveArticleDraft(draftArticle, draftArticle.category);
+        const result = await autoSaveArticleDraft(draftArticle);
         setAutoSaveStatus(result.success ? 'saved' : 'error');
       }
     };
@@ -217,6 +219,12 @@ export default function ManualPublishPage() {
         title: status === 'published' ? 'Article Published!' : 'Draft Saved!',
         description: `Your article "${result.title}" has been saved.`,
       });
+       // Redirect to the new edit page on successful save/publish
+       if (result.slug && result.category) {
+            router.push(`/admin/dashboard/edit/${result.category}/${result.slug}`);
+       } else {
+            router.push('/admin/dashboard/edit');
+       }
     } else {
       toast({
         title: 'Error Saving Article',
@@ -431,7 +439,7 @@ export default function ManualPublishPage() {
                             variant="secondary"
                             className="w-full mt-2"
                             onClick={() => fetchPreviewImage(titleValue)}
-                            disabled={isGeneratingImage || !titleValue}
+                            disabled={isGeneratingImage || !titleValue || isSavingDraft || isPublishing}
                         >
                             {isGeneratingImage ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ImageIcon className="mr-2 h-4 w-4" />}
                             Generate Image from Title

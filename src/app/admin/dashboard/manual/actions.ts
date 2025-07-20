@@ -1,14 +1,14 @@
 
 'use server';
 
-import { type Article, ArticleSchema as ArticleValidationSchema, ArticleContentBlock } from '@/lib/types';
+import { type Article, ArticleSchema as ArticleValidationSchema, ArticleContentBlock, ManualArticleSchema } from '@/lib/types';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { saveUpdatedArticles, getAllArticlesAdmin } from '@/lib/articles'; // Import the universal save function
+import { saveUpdatedArticles, getAllArticlesAdmin, deleteArticleAction } from '@/lib/articles'; // Import the universal save function
 import { redirect } from 'next/navigation';
 import { JSDOM } from 'jsdom';
 import { categorySlugMap } from '@/lib/constants';
-import { ManualArticleSchema } from '@/lib/types';
+
 
 function markdownToHtml(markdown: string): string {
     if (!markdown) return '';
@@ -107,6 +107,8 @@ type CreateArticleResult = {
   success: boolean;
   title?: string;
   error?: string;
+  slug?: string;
+  category?: string;
 };
 
 // Main server action for manual creation
@@ -147,20 +149,29 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
       return { success: false, error: "Failed to process article data correctly." };
     }
     
-    const existingArticles = await getAllArticlesAdmin(category);
-    const updatedArticles = [finalValidatedArticle.data, ...existingArticles];
-    
-    await saveUpdatedArticles(category, updatedArticles, `feat: ✨ Add new manual article "${newArticleData.title}"`);
+    // Save as draft or publish directly
+    if (status === 'published') {
+        const existingArticles = await getAllArticlesAdmin(category);
+        const updatedArticles = [finalValidatedArticle.data, ...existingArticles];
+        await saveUpdatedArticles(category, updatedArticles, `feat: ✨ Add new manual article "${newArticleData.title}"`);
+        // If there was a draft for this slug, delete it
+        await deleteArticleAction(category, slug, true);
+    } else {
+        // Save to drafts folder
+        await saveUpdatedArticles('drafts', [finalValidatedArticle.data], `docs: 📝 Save manual draft "${newArticleData.title}"`, `${slug}.json`);
+    }
 
     revalidatePath('/');
     const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category) || category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     revalidatePath(`/${categorySlug}`);
     revalidatePath(`/${categorySlug}/${newArticleData.slug}`);
+    revalidatePath('/admin/dashboard/edit');
     
+    // Redirect to the edit page after creation
+    return { success: true, title: newArticleData.title, slug, category: categorySlug };
+
   } catch (error) {
     console.error('Error in createManualArticleAction:', error);
     return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred.' };
   }
-  
-  redirect('/admin/dashboard/edit');
 }

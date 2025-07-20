@@ -7,7 +7,6 @@ import { ArticleSchema, type Article } from './types';
 import { Octokit } from 'octokit';
 
 // Direct imports to ensure files are bundled during the build process.
-// This is the most reliable way to access local JSON data in Next.js across all environments.
 import featuredArticles from '@/articles/featured.json';
 import inspirationArticles from '@/articles/inspiration.json';
 import nftArticles from '@/articles/nft.json';
@@ -18,6 +17,8 @@ import technologyArticles from '@/articles/technology.json';
 import trendsArticles from '@/articles/trends.json';
 import tutorialsArticles from '@/articles/tutorials.json';
 import usecasesArticles from '@/articles/usecases.json';
+// Import drafts if the file exists, otherwise use an empty array.
+import draftArticles from '@/articles/drafts.json';
 
 export type { Article, ArticleContentBlock } from './types';
 
@@ -34,32 +35,32 @@ const allCategoryData: { [key: string]: any } = {
     'technology': technologyArticles,
     'trends': trendsArticles,
     'tutorials': tutorialsArticles,
-    'usecases': usecasesArticles
+    'usecases': usecasesArticles,
+    'drafts': draftArticles,
 };
 
 async function loadAndValidateArticles(category: string): Promise<z.infer<typeof ArticleSchema>[]> {
-    // Find the corresponding slug for the given category name.
-    const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category);
+    // For drafts, the category IS the slug. Otherwise, find slug from map.
+    const categorySlug = category === 'drafts' ? 'drafts' : Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category);
     
     if (!categorySlug) {
         console.error(`No slug found for category "${category}"`);
         return [];
     }
 
-    // Retrieve the imported JSON data from our map using the correct slug.
     const articlesData = allCategoryData[categorySlug];
 
     if (!articlesData) {
+        // This is normal for the drafts file if it doesn't exist yet
+        if (category === 'drafts') return [];
         console.error(`No article data found for category slug "${categorySlug}"`);
         return [];
     }
     
     try {
-        // Validate the data against our Zod schema.
         const validatedArticles = ArticleFileSchema.safeParse(articlesData);
 
         if (validatedArticles.success) {
-            // Add a default publishedDate if it's missing
             return validatedArticles.data.map(article => ({
                 ...article,
                 publishedDate: article.publishedDate || new Date().toISOString()
@@ -76,17 +77,28 @@ async function loadAndValidateArticles(category: string): Promise<z.infer<typeof
 }
 
 // For public-facing pages: gets ONLY published articles.
-// This now correctly defaults status to 'published' if it's missing.
 export async function getArticles(category: string): Promise<z.infer<typeof ArticleSchema>[]> {
     const allArticles = await loadAndValidateArticles(category);
     return allArticles.filter(article => article.status === 'published');
 }
 
-// For admin pages: gets ALL articles, including drafts.
+// For admin pages: gets ALL articles from a specific category, including drafts within that file.
 export async function getAllArticlesAdmin(category: string): Promise<z.infer<typeof ArticleSchema>[]> {
-    const allArticles = await loadAndValidateArticles(category);
-    return allArticles;
+    return await loadAndValidateArticles(category);
 }
+
+// For editing page: get a single article, checking drafts first
+export async function getArticleForEdit(category: string, slug: string): Promise<Article | undefined> {
+    // 1. Check drafts first
+    const drafts = await getAllArticlesAdmin('drafts');
+    const draft = drafts.find(a => a.slug === slug);
+    if (draft) return draft;
+
+    // 2. If not in drafts, check the published category
+    const articles = await getAllArticlesAdmin(category);
+    return articles.find(a => a.slug === slug);
+}
+
 
 // Reusable GitHub helper functions
 export async function getShaForFile(octokit: Octokit, owner: string, repo: string, path: string, branch: string): Promise<string | undefined> {
@@ -103,7 +115,7 @@ export async function getShaForFile(octokit: Octokit, owner: string, repo: strin
         return data.sha;
     } catch (error: any) {
         if (error.status === 404) {
-            return undefined;
+            return undefined; // File doesn't exist, so no SHA
         }
         throw error;
     }
@@ -114,34 +126,34 @@ export async function getPrimaryBranch(octokit: Octokit, owner: string, repo: st
         return process.env.GITHUB_BRANCH;
     }
     try {
-        await octokit.rest.repos.getBranch({ owner, repo, branch: 'main' });
-        return 'main';
-    } catch (error: any) {
-        if (error.status === 404) {
-            try {
-                await octokit.rest.repos.getBranch({ owner, repo, branch: 'master' });
-                return 'master';
-            } catch (masterError) {
-                 console.error("Could not find 'main' or 'master' branch.", masterError);
-                 throw new Error("Could not determine primary branch. Neither 'main' nor 'master' found.");
-            }
-        }
-        throw error;
+        const { data: repoData } = await octokit.rest.repos.get({ owner, repo });
+        return repoData.default_branch;
+    } catch (error) {
+         console.error("Could not determine primary branch.", error);
+         throw new Error("Could not determine primary branch for the repository.");
     }
 }
 
 // Universal function to save updated articles to a specific category file on GitHub
-export async function saveUpdatedArticles(category: string, articles: Article[], commitMessage: string) {
-    const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category);
+export async function saveUpdatedArticles(
+    category: string, 
+    articles: Article[], 
+    commitMessage: string,
+    fileName?: string, // optional specific filename for drafts
+    isDeletion: boolean = false
+) {
+    const categorySlug = category === 'drafts' ? 'drafts' : Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category);
     if (!categorySlug) {
         throw new Error(`Invalid category name provided: ${category}`);
     }
     
-    const repoPath = `src/articles/${categorySlug}.json`;
+    // Use specific filename for drafts, otherwise use category slug.
+    const finalFileName = fileName || `${categorySlug}.json`;
+    const repoPath = category === 'drafts' ? `src/articles/drafts/${finalFileName}` : `src/articles/${finalFileName}`;
+    
     const fileContent = JSON.stringify(articles, null, 2);
 
     const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = process.env;
-
     if (!GITHUB_TOKEN || !GITHUB_REPO_OWNER || !GITHUB_REPO_NAME) {
         console.error("GitHub credentials are not configured on the server. Cannot save articles.");
         throw new Error("GitHub credentials not configured. Please check server environment variables.");
@@ -152,7 +164,14 @@ export async function saveUpdatedArticles(category: string, articles: Article[],
         const branch = await getPrimaryBranch(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME);
         const fileSha = await getShaForFile(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME, repoPath, branch);
 
-        await octokit.rest.repos.createOrUpdateFileContents({
+        if (isDeletion && !fileSha) {
+            console.log(`Draft file ${repoPath} not found for deletion, skipping.`);
+            return;
+        }
+
+        const method = fileSha ? 'createOrUpdateFileContents' : 'createOrUpdateFileContents';
+        
+        await octokit.rest.repos[method]({
             owner: GITHUB_REPO_OWNER,
             repo: GITHUB_REPO_NAME,
             path: repoPath,
@@ -162,10 +181,70 @@ export async function saveUpdatedArticles(category: string, articles: Article[],
             branch: branch,
         });
 
-        console.log(`Successfully committed article changes for category "${category}" to GitHub on branch "${branch}".`);
+        console.log(`Successfully committed changes for "${finalFileName}" to GitHub on branch "${branch}".`);
 
     } catch (error: any) {
-        console.error("Failed to commit changes to GitHub for category " + category, error);
-        throw new Error("Failed to save articles to GitHub. Please check your credentials and repository permissions.");
+        console.error(`Failed to commit changes to GitHub for file ${finalFileName}`, error);
+        throw new Error("Failed to save to GitHub. Please check your credentials and repository permissions.");
     }
+}
+
+
+// Server action for auto-saving a draft to the `drafts` folder on GitHub
+export async function autoSaveArticleDraft(draftData: Article): Promise<{ success: boolean; error?: string }> {
+    try {
+        // Validate draft data before saving
+        const validatedDraft = ArticleSchema.safeParse({ ...draftData, status: 'draft' });
+        if (!validatedDraft.success) {
+            return { success: false, error: 'Invalid draft data provided for auto-saving.' };
+        }
+        
+        const allDrafts = await getAllArticlesAdmin('drafts');
+        const draftIndex = allDrafts.findIndex(d => d.slug === validatedDraft.data.slug);
+
+        if (draftIndex > -1) {
+            allDrafts[draftIndex] = validatedDraft.data;
+        } else {
+            allDrafts.unshift(validatedDraft.data);
+        }
+        
+        // Save the entire drafts.json file
+        await saveUpdatedArticles('drafts', allDrafts, `docs: 📝 Autosave draft for "${validatedDraft.data.title}"`, 'drafts.json');
+
+        revalidatePath('/admin/dashboard/edit');
+        return { success: true };
+
+    } catch (error: any) {
+        console.error('Failed to auto-save draft to GitHub:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function deleteArticleAction(category: string, slug: string, isDraft: boolean = true) {
+    try {
+        const categorySlug = isDraft ? 'drafts' : (Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category) || category);
+        const articles = await getAllArticlesAdmin(categorySlug);
+        const updatedArticles = articles.filter(a => a.slug !== slug);
+
+        if (articles.length === updatedArticles.length) {
+            console.warn(`Article to delete (${slug}) was not found in ${categorySlug}.json`);
+            return { success: true, message: "Not found, no action taken." };
+        }
+
+        await saveUpdatedArticles(categorySlug, updatedArticles, `feat: 🗑️ Delete article "${slug}"`, `${categorySlug}.json`);
+        
+        revalidatePath(`/`);
+        revalidatePath(`/${categorySlug}`);
+        revalidatePath(`/${categorySlug}/${slug}`);
+        revalidatePath('/admin/dashboard/edit');
+
+    } catch (e: any) {
+        return { success: false, error: e.message };
+    }
+
+    if (!isDraft) {
+        redirect('/admin/dashboard/edit');
+    }
+    
+    return { success: true };
 }
