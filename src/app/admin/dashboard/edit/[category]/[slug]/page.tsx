@@ -1,7 +1,7 @@
 
 "use client";
 
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { categorySlugMap } from '@/lib/constants';
 import EditArticleForm from './EditArticleForm';
 import { getArticleForEdit } from './actions';
@@ -9,12 +9,15 @@ import { useEffect, useState } from 'react';
 import type { Article } from '@/lib/articles';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export default function EditArticlePage({ params }: { params: { category: string; slug: string } }) {
+export default function EditArticlePage() {
+    const params = useParams<{ category: string; slug: string }>();
     const [article, setArticle] = useState<Article | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        if (!params.category || !params.slug) return;
+        
         const loadArticle = async () => {
             setIsLoading(true);
             try {
@@ -56,7 +59,7 @@ export default function EditArticlePage({ params }: { params: { category: string
 
     return (
         <main className="flex-grow container mx-auto py-12 px-4 bg-muted/20 min-h-screen">
-           <EditArticleForm article={article} categoryName={categoryName} categorySlug={params.category} />
+           <EditArticleForm article={article} categorySlug={params.category} />
         </main>
     );
 }

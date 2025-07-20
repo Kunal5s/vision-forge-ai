@@ -20,28 +20,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ArrowLeft, Loader2, FileSignature, PlusCircle, Trash2, ImageIcon, Wand2, Eye, Save, CheckCircle } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { createManualArticleAction, addImagesToArticleAction } from './actions';
+import { createManualArticleAction, addImagesToArticleAction, autoSaveManualDraftAction } from './actions';
 import Image from 'next/image';
 import { RichTextEditor } from '@/components/vision-forge/RichTextEditor';
 import { ArticlePreview } from '@/components/vision-forge/ArticlePreview';
 import { type Article } from '@/lib/articles';
-import { autoSaveArticleDraft } from '../edit/[category]/[slug]/actions';
 import { useRouter } from 'next/navigation';
+import { ManualArticleSchema } from '@/lib/types';
 
 
-const manualArticleSchema = z.object({
-  title: z.string().min(5, 'Title must be at least 5 characters long.'),
-  slug: z.string().min(5, 'Slug must be at least 5 characters long. Use dashes instead of spaces.').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and dashes.'),
-  category: z.string().min(1, 'Please select a category.'),
-  status: z.enum(['published', 'draft']),
-  summary: z.string().optional(),
-  content: z.string().min(50, 'Content must be at least 50 characters long.'),
-  keyTakeaways: z.array(z.object({ value: z.string().min(1, 'Takeaway cannot be empty.') })).optional(),
-  conclusion: z.string().min(20, 'Conclusion must be at least 20 characters long.'),
-  image: z.string().url('A valid image URL is required.'),
-});
-
-type ManualArticleFormData = z.infer<typeof manualArticleSchema>;
+type ManualArticleFormData = z.infer<typeof ManualArticleSchema>;
 
 export default function ManualPublishPage() {
   const [isPublishing, setIsPublishing] = useState(false);
@@ -57,7 +45,7 @@ export default function ManualPublishPage() {
 
   const { toast } = useToast();
   const { register, handleSubmit, control, formState: { errors, isDirty }, watch, setValue, getValues, reset } = useForm<ManualArticleFormData>({
-    resolver: zodResolver(manualArticleSchema),
+    resolver: zodResolver(ManualArticleSchema),
     defaultValues: {
       title: '',
       slug: '',
@@ -72,9 +60,8 @@ export default function ManualPublishPage() {
 
   const formValues = watch();
   const wordCount = (watch('content') || '').replace(/<[^>]*>?/gm, '').split(/\s+/).filter(Boolean).length;
+  
   const DRAFT_SLUG = watch('slug');
-
-  const DRAFT_KEY = `manual-article-draft-${DRAFT_SLUG || ''}`;
 
   // Auto-saving logic to GitHub
   useEffect(() => {
@@ -83,10 +70,22 @@ export default function ManualPublishPage() {
         setAutoSaveStatus('saving');
         const currentData = getValues();
         try {
-            localStorage.setItem(DRAFT_KEY, JSON.stringify(currentData));
-            setAutoSaveStatus('saved');
+            const draftArticleData: Article = {
+                ...currentData,
+                status: 'draft', // Always save as draft
+                dataAiHint: 'autosave content',
+                publishedDate: new Date().toISOString(),
+                articleContent: [{ type: 'p', content: currentData.content, alt:''}],
+                keyTakeaways: (currentData.keyTakeaways || []).map(k => k.value)
+            };
+            const result = await autoSaveManualDraftAction(draftArticleData);
+            if (result.success) {
+                setAutoSaveStatus('saved');
+            } else {
+                setAutoSaveStatus('error');
+            }
         } catch (e) {
-            console.error("Local auto-save failed:", e);
+            console.error("GitHub auto-save failed:", e);
             setAutoSaveStatus('error');
         }
       }
@@ -94,31 +93,14 @@ export default function ManualPublishPage() {
     
     if (isDirty && DRAFT_SLUG) {
       if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
-      debounceTimeoutRef.current = setTimeout(performAutoSave, 5000); // Auto-save every 5 seconds
+      debounceTimeoutRef.current = setTimeout(performAutoSave, 10000); // Auto-save every 10 seconds
     }
     
     return () => {
       if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
     };
-  }, [formValues, isDirty, DRAFT_SLUG, getValues, DRAFT_KEY]);
-  
-  // Effect to restore draft from localStorage on load
-  useEffect(() => {
-    try {
-        const savedDraft = localStorage.getItem(DRAFT_KEY);
-        if (savedDraft) {
-            const draftData = JSON.parse(savedDraft);
-            reset(draftData);
-            toast({
-                title: 'Draft Restored',
-                description: 'Your previously unsaved work has been loaded.',
-            });
-        }
-    } catch(e) {
-        console.error("Failed to restore draft:", e);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run only once on component mount
+  }, [formValues, isDirty, DRAFT_SLUG, getValues]);
+
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -230,9 +212,7 @@ export default function ManualPublishPage() {
         title: status === 'published' ? 'Article Published!' : 'Draft Saved!',
         description: `Your article "${result.title}" has been saved.`,
       });
-      // Clear the local draft on successful submission
-      try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
-
+      
        // Redirect to the new edit page on successful save/publish
        if (result.slug && result.category) {
             router.push(`/admin/dashboard/edit/${result.category}/${result.slug}`);
@@ -286,7 +266,7 @@ export default function ManualPublishPage() {
                 <CardHeader>
                     <CardTitle className="text-2xl">Publish a New Article Manually</CardTitle>
                     <CardDescription>
-                    Write your article below. Drafts are auto-saved to your browser locally every few seconds.
+                    Write your article below. Drafts are auto-saved to GitHub every 10 seconds.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -342,11 +322,17 @@ export default function ManualPublishPage() {
                     <div className="space-y-2 mt-2">
                       {fields.map((field, index) => (
                         <div key={field.id} className="flex items-center gap-2">
-                          <Input
-                            {...register(`keyTakeaways.${index}.value`)}
-                            placeholder={`Takeaway #${index + 1}`}
-                            disabled={isPublishing || isSavingDraft}
-                          />
+                           <Controller
+                                name={`keyTakeaways.${index}.value`}
+                                control={control}
+                                render={({ field }) => (
+                                    <Input
+                                        {...field}
+                                        placeholder={`Takeaway #${index + 1}`}
+                                        disabled={isPublishing || isSavingDraft}
+                                    />
+                                )}
+                            />
                           <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={isPublishing || isSavingDraft || fields.length <= 1}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -395,7 +381,7 @@ export default function ManualPublishPage() {
                      <div>
                         <p className="text-sm font-medium">Word Count: <span className="font-bold text-primary">{wordCount}</span></p>
                         <div className="text-xs text-muted-foreground mt-2 flex items-center gap-2">
-                            {autoSaveStatus === 'saving' && <><Loader2 className="h-4 w-4 animate-spin" /> Saving draft...</>}
+                            {autoSaveStatus === 'saving' && <><Loader2 className="h-4 w-4 animate-spin" /> Saving draft to GitHub...</>}
                             {autoSaveStatus === 'saved' && <><CheckCircle className="h-4 w-4 text-green-500" /> All changes saved.</>}
                             {autoSaveStatus === 'error' && <p className="text-destructive">Auto-save failed.</p>}
                         </div>
@@ -498,7 +484,7 @@ export default function ManualPublishPage() {
                       <Button onClick={handleSubmit((data) => onSubmit(data, 'published'))} className="w-full" disabled={isPublishing || isSavingDraft || isGeneratingImage}>
                         {isPublishing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Publishing...</> : <><FileSignature className="mr-2 h-4 w-4" /> Publish Article</>}
                       </Button>
-                       <Button onClick={handleSubmit((data) => onSubmit(data, 'draft'))()} variant="secondary" className="w-full" disabled={isPublishing || isSavingDraft || isGeneratingImage}>
+                       <Button onClick={handleSubmit((data) => onSubmit(data, 'draft'))} variant="secondary" className="w-full" disabled={isPublishing || isSavingDraft || isGeneratingImage}>
                         {isSavingDraft ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : <><Save className="mr-2 h-4 w-4" /> Save as Draft</>}
                       </Button>
                       <Button type="button" variant="outline" className="w-full" onClick={() => setIsPreviewOpen(true)}>

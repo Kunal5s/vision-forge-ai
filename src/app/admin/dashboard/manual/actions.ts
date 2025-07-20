@@ -4,7 +4,7 @@
 import { type Article, ArticleSchema as ArticleValidationSchema, ArticleContentBlock, ManualArticleSchema } from '@/lib/types';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { saveUpdatedArticles, getAllArticlesAdmin, deleteArticleAction } from '@/lib/articles'; // Import the universal save function
+import { saveUpdatedArticles, getAllArticlesAdmin } from '@/lib/articles'; // Import the universal save function
 import { redirect } from 'next/navigation';
 import { JSDOM } from 'jsdom';
 import { categorySlugMap } from '@/lib/constants';
@@ -65,22 +65,28 @@ export async function addImagesToArticleAction(content: string, imageCount: numb
     try {
         const dom = new JSDOM(`<body>${content}</body>`);
         const document = dom.window.document;
+        
+        // Select all potential insertion points (headings and long paragraphs)
         const insertionPoints = Array.from(document.querySelectorAll('h2, h3, p'));
 
+        // Remove any previously added AI images to avoid duplicates
         document.querySelectorAll('img[src*="pollinations.ai"]').forEach(img => img.remove());
         
+        // Filter for points that have enough text content to be a meaningful prompt
         const validInsertionPoints = insertionPoints.filter(h => h.textContent && h.textContent.trim().split(' ').length > 5);
         
         const numImagesToAdd = Math.min(imageCount, validInsertionPoints.length);
         if (numImagesToAdd === 0) {
-            return { success: false, error: "No suitable locations found to add images. Try adding more headings or longer paragraphs." };
+            return { success: false, error: "No suitable locations found to add images. Try adding more subheadings or longer paragraphs." };
         }
         
+        // Distribute images evenly throughout the content
         const step = Math.max(1, Math.floor(validInsertionPoints.length / numImagesToAdd));
 
         for (let i = 0; i < numImagesToAdd; i++) {
             const pointIndex = Math.min(i * step, validInsertionPoints.length - 1);
             const insertionPoint = validInsertionPoints[pointIndex];
+            // Use the heading/paragraph text as a prompt for the image
             const topic = insertionPoint.textContent?.trim() || "relevant photography";
 
             if (topic) {
@@ -88,11 +94,19 @@ export async function addImagesToArticleAction(content: string, imageCount: numb
                 const finalPrompt = `${topic.substring(0, 100)}, relevant photography, high detail, cinematic`;
                 const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=800&height=450&seed=${seed}&nologo=true`;
 
+                const imgContainer = document.createElement('div');
+                imgContainer.className = "my-8"; // Consistent styling
                 const img = document.createElement('img');
                 img.src = pollinationsUrl;
                 img.alt = topic;
+                img.setAttribute('width', '800');
+                img.setAttribute('height', '450');
+                img.className = 'rounded-lg shadow-lg mx-auto';
                 
-                insertionPoint.parentNode?.insertBefore(img, insertionPoint.nextSibling);
+                imgContainer.appendChild(img);
+                
+                // Insert the new image container after the insertion point
+                insertionPoint.parentNode?.insertBefore(imgContainer, insertionPoint.nextSibling);
             }
         }
         
@@ -149,12 +163,6 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
       return { success: false, error: "Failed to process article data correctly." };
     }
     
-    // If it was auto-saved as a draft, we need to delete the old draft file if the slug is the same
-    // to avoid duplicates.
-    const allDrafts = await getAllArticlesAdmin('drafts');
-    const updatedDrafts = allDrafts.filter(d => d.slug !== slug);
-    await saveUpdatedArticles('drafts', updatedDrafts, `chore: 🧹 Clean up draft for "${title}"`, 'drafts.json');
-
     // Save as draft or publish directly
     if (status === 'published') {
         const existingArticles = await getAllArticlesAdmin(category);
@@ -163,7 +171,7 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
     } else {
         // Save to drafts folder
         const existingDrafts = await getAllArticlesAdmin('drafts');
-        await saveUpdatedArticles('drafts', [finalValidatedArticle.data, ...existingDrafts], `docs: 📝 Save manual draft "${newArticleData.title}"`, 'drafts.json');
+        await saveUpdatedArticles('drafts', [finalValidatedArticle.data, ...existingDrafts], `docs: 📝 Save manual draft "${newArticleData.title}"`);
     }
 
     revalidatePath('/');
@@ -179,4 +187,69 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
     console.error('Error in createManualArticleAction:', error);
     return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred.' };
   }
+}
+
+// Action to save a draft to the dedicated autosave-drafts branch/folder
+export async function autoSaveManualDraftAction(draftData: Article): Promise<{ success: boolean; error?: string }> {
+    const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = process.env;
+    if (!GITHUB_TOKEN || !GITHUB_REPO_OWNER || !GITHUB_REPO_NAME) {
+        return { success: false, error: "GitHub credentials not configured on the server." };
+    }
+
+    const octokit = new Octokit({ auth: GITHUB_TOKEN });
+    const primaryBranch = await getPrimaryBranch(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME);
+    const draftBranch = 'autosave-drafts';
+    
+    // Ensure the branch exists, creating it from the primary branch if it doesn't
+    try {
+        await octokit.rest.repos.getBranch({
+            owner: GITHUB_REPO_OWNER,
+            repo: GITHUB_REPO_NAME,
+            branch: draftBranch,
+        });
+    } catch (error: any) {
+        if (error.status === 404) {
+            const { data: { object: { sha } } } = await octokit.rest.repos.getBranch({
+                owner: GITHUB_REPO_OWNER,
+                repo: GITHUB_REPO_NAME,
+                branch: primaryBranch,
+            });
+            await octokit.rest.git.createRef({
+                owner: GITHUB_REPO_OWNER,
+                repo: GITHUB_REPO_NAME,
+                ref: `refs/heads/${draftBranch}`,
+                sha,
+            });
+        } else {
+            throw error;
+        }
+    }
+
+    try {
+        const validatedDraft = ArticleSchema.safeParse({ ...draftData, status: 'draft' });
+        if (!validatedDraft.success) {
+            return { success: false, error: 'Invalid draft data for auto-saving.' };
+        }
+        
+        const repoPath = `src/articles/drafts/${validatedDraft.data.slug}.json`;
+        const fileContent = JSON.stringify(validatedDraft.data, null, 2);
+        
+        const fileSha = await getShaForFile(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME, repoPath, draftBranch);
+
+        await octokit.rest.repos.createOrUpdateFileContents({
+            owner: GITHUB_REPO_OWNER,
+            repo: GITHUB_REPO_NAME,
+            path: repoPath,
+            message: `docs: 📝 Autosave draft for "${validatedDraft.data.title}"`,
+            content: Buffer.from(fileContent).toString('base64'),
+            sha: fileSha,
+            branch: draftBranch,
+        });
+        
+        return { success: true };
+
+    } catch (error: any) {
+        console.error('Failed to auto-save draft to GitHub:', error);
+        return { success: false, error: error.message };
+    }
 }
