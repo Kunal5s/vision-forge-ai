@@ -125,7 +125,7 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
   const { title, slug, category, status, summary, content, keyTakeaways, conclusion, image } = validatedFields.data;
 
   try {
-    const formattedContentHtml = content; // Assuming content is already HTML from RichTextEditor
+    const formattedContentHtml = markdownToHtml(content); // Auto-format markdown-like text
     const articleContent = htmlToArticleContent(formattedContentHtml);
 
     const newArticleData: Article = {
@@ -149,16 +149,21 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
       return { success: false, error: "Failed to process article data correctly." };
     }
     
+    // If it was auto-saved as a draft, we need to delete the old draft file if the slug is the same
+    // to avoid duplicates.
+    const allDrafts = await getAllArticlesAdmin('drafts');
+    const updatedDrafts = allDrafts.filter(d => d.slug !== slug);
+    await saveUpdatedArticles('drafts', updatedDrafts, `chore: 🧹 Clean up draft for "${title}"`, 'drafts.json');
+
     // Save as draft or publish directly
     if (status === 'published') {
         const existingArticles = await getAllArticlesAdmin(category);
         const updatedArticles = [finalValidatedArticle.data, ...existingArticles];
         await saveUpdatedArticles(category, updatedArticles, `feat: ✨ Add new manual article "${newArticleData.title}"`);
-        // If there was a draft for this slug, delete it
-        await deleteArticleAction(category, slug, true);
     } else {
         // Save to drafts folder
-        await saveUpdatedArticles('drafts', [finalValidatedArticle.data], `docs: 📝 Save manual draft "${newArticleData.title}"`, `${slug}.json`);
+        const existingDrafts = await getAllArticlesAdmin('drafts');
+        await saveUpdatedArticles('drafts', [finalValidatedArticle.data, ...existingDrafts], `docs: 📝 Save manual draft "${newArticleData.title}"`, 'drafts.json');
     }
 
     revalidatePath('/');

@@ -71,8 +71,10 @@ export default function ManualPublishPage() {
   });
 
   const formValues = watch();
-  const wordCount = watch('content').replace(/<[^>]*>?/gm, '').split(/\s+/).filter(Boolean).length;
+  const wordCount = (watch('content') || '').replace(/<[^>]*>?/gm, '').split(/\s+/).filter(Boolean).length;
   const DRAFT_SLUG = watch('slug');
+
+  const DRAFT_KEY = `manual-article-draft-${DRAFT_SLUG || ''}`;
 
   // Auto-saving logic to GitHub
   useEffect(() => {
@@ -80,34 +82,43 @@ export default function ManualPublishPage() {
       if (isDirty && DRAFT_SLUG) {
         setAutoSaveStatus('saving');
         const currentData = getValues();
-        const draftArticle: Article = {
-          title: currentData.title || 'Untitled Draft',
-          slug: DRAFT_SLUG,
-          category: currentData.category || 'Featured',
-          status: 'draft',
-          image: currentData.image || 'https://placehold.co/600x400.png',
-          dataAiHint: 'draft content',
-          publishedDate: new Date().toISOString(),
-          summary: currentData.summary,
-          articleContent: [{ type: 'p', content: currentData.content, alt: '' }],
-          keyTakeaways: (currentData.keyTakeaways || []).map(t => t.value),
-          conclusion: currentData.conclusion,
-        };
-
-        const result = await autoSaveArticleDraft(draftArticle);
-        setAutoSaveStatus(result.success ? 'saved' : 'error');
+        try {
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(currentData));
+            setAutoSaveStatus('saved');
+        } catch (e) {
+            console.error("Local auto-save failed:", e);
+            setAutoSaveStatus('error');
+        }
       }
     };
     
     if (isDirty && DRAFT_SLUG) {
       if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
-      debounceTimeoutRef.current = setTimeout(performAutoSave, 10000); // Auto-save every 10 seconds
+      debounceTimeoutRef.current = setTimeout(performAutoSave, 5000); // Auto-save every 5 seconds
     }
     
     return () => {
       if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
     };
-  }, [formValues, isDirty, DRAFT_SLUG, getValues]);
+  }, [formValues, isDirty, DRAFT_SLUG, getValues, DRAFT_KEY]);
+  
+  // Effect to restore draft from localStorage on load
+  useEffect(() => {
+    try {
+        const savedDraft = localStorage.getItem(DRAFT_KEY);
+        if (savedDraft) {
+            const draftData = JSON.parse(savedDraft);
+            reset(draftData);
+            toast({
+                title: 'Draft Restored',
+                description: 'Your previously unsaved work has been loaded.',
+            });
+        }
+    } catch(e) {
+        console.error("Failed to restore draft:", e);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on component mount
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -219,6 +230,9 @@ export default function ManualPublishPage() {
         title: status === 'published' ? 'Article Published!' : 'Draft Saved!',
         description: `Your article "${result.title}" has been saved.`,
       });
+      // Clear the local draft on successful submission
+      try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+
        // Redirect to the new edit page on successful save/publish
        if (result.slug && result.category) {
             router.push(`/admin/dashboard/edit/${result.category}/${result.slug}`);
@@ -272,7 +286,7 @@ export default function ManualPublishPage() {
                 <CardHeader>
                     <CardTitle className="text-2xl">Publish a New Article Manually</CardTitle>
                     <CardDescription>
-                    Write your article below. Drafts are auto-saved to GitHub every 10 seconds once a slug is generated.
+                    Write your article below. Drafts are auto-saved to your browser locally every few seconds.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -393,7 +407,7 @@ export default function ManualPublishPage() {
                         name="category"
                         control={control}
                         render={({ field }) => (
-                          <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value || ''} disabled={isPublishing || isSavingDraft}>
+                          <Select onValueChange={field.onChange} defaultValue={field.value || ''} value={field.value || ''} disabled={isPublishing || isSavingDraft}>
                             <SelectTrigger id="category">
                               <SelectValue placeholder="Select a category" />
                             </SelectTrigger>
@@ -481,10 +495,10 @@ export default function ManualPublishPage() {
 
                     <div className="space-y-2 border-t pt-4">
                       <Label>Actions</Label>
-                      <Button onClick={() => handleSubmit((data) => onSubmit(data, 'published'))()} className="w-full" disabled={isPublishing || isSavingDraft || isGeneratingImage}>
+                      <Button onClick={handleSubmit((data) => onSubmit(data, 'published'))} className="w-full" disabled={isPublishing || isSavingDraft || isGeneratingImage}>
                         {isPublishing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Publishing...</> : <><FileSignature className="mr-2 h-4 w-4" /> Publish Article</>}
                       </Button>
-                       <Button onClick={() => handleSubmit((data) => onSubmit(data, 'draft'))()} variant="secondary" className="w-full" disabled={isPublishing || isSavingDraft || isGeneratingImage}>
+                       <Button onClick={handleSubmit((data) => onSubmit(data, 'draft'))()} variant="secondary" className="w-full" disabled={isPublishing || isSavingDraft || isGeneratingImage}>
                         {isSavingDraft ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : <><Save className="mr-2 h-4 w-4" /> Save as Draft</>}
                       </Button>
                       <Button type="button" variant="outline" className="w-full" onClick={() => setIsPreviewOpen(true)}>
