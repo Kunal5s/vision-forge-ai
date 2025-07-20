@@ -167,26 +167,28 @@ export function StoryPlayer({ story, isPreview = false, onClose }: StoryPlayerPr
         {/* Content */}
         <div className="absolute bottom-0 left-0 right-0 p-6 z-50 flex flex-col items-start text-left">
             {story.publishedDate && (
-                 <div className="bg-black/40 backdrop-blur-sm p-2 rounded-md mb-2">
+                 <div className="bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-lg mb-4">
                     <p className="text-white font-medium text-xs">
                         {format(new Date(story.publishedDate), 'MMMM d, yyyy')}
                     </p>
                 </div>
             )}
             
-            {page.content?.title && 
-                <h1 className={cn(
-                    "text-white font-bold text-2xl leading-tight [text-shadow:0_2px_4px_rgba(0,0,0,0.7)]",
-                    page.fontStyle || 'font-roboto'
-                )}>
-                    {page.content.title}
-                </h1>
-            }
+            {page.content?.title && (
+                 <div className="bg-black/50 backdrop-blur-sm p-4 rounded-lg">
+                    <h1 className={cn(
+                        "text-white font-bold text-2xl leading-tight [text-shadow:0_1px_4px_rgba(0,0,0,0.5)]",
+                        page.fontStyle || 'font-roboto'
+                    )}>
+                        {page.content.title}
+                    </h1>
+                </div>
+            )}
             
             {story.websiteUrl && (
-                <div className="w-full mt-4">
+                <div className="w-full mt-6">
                   <a href={story.websiteUrl} target="_blank" rel="noopener noreferrer" className="block w-full">
-                      <Button variant="secondary" className="bg-white/90 text-black hover:bg-white rounded-full w-full">
+                      <Button variant="secondary" className="bg-white/90 text-black hover:bg-white rounded-full w-full h-12 text-base">
                           <LinkIcon className="mr-2 h-4 w-4" />
                           Visit Website
                       </Button>
