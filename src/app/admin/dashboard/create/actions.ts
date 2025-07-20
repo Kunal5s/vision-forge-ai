@@ -6,11 +6,6 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { categorySlugMap } from '@/lib/constants';
-import {
-  saveUpdatedArticles,
-  deleteArticleAction as deleteFromServer,
-  editArticleAction as serverEditArticleAction,
-} from '@/lib/articles.server';
 
 const ArticleFormSchema = z.object({
   topic: z.string().min(1, 'Please enter a topic for the article.'),
@@ -79,14 +74,12 @@ export async function generateArticleAction(
         'AI failed to generate the article. This could be due to model unavailability, a complex topic, or an incorrect response format. Please try again with a different model or topic, or check your API key credits.'
       );
     }
+    
+    // Server-side save function is in articles.server.ts
+    const { saveArticle } = await import('@/lib/articles.server');
 
-    // Save the new article as a draft
-    await saveUpdatedArticles(
-      'drafts',
-      [newArticle],
-      `feat: ✨ Add new AI article draft "${newArticle.title}"`,
-      `${newArticle.slug}.json`
-    );
+    // Save the new article, which will handle adding it to the correct file.
+    await saveArticle(newArticle, true); // true indicates it's a new article
 
     revalidatePath('/');
     revalidatePath('/admin/dashboard/edit');
@@ -103,23 +96,13 @@ export async function generateArticleAction(
       error: error instanceof Error ? error.message : 'An unknown error occurred.',
     };
   }
-  // Redirect on success is now handled inside the generating component,
-  // as redirect() must be called outside of a try/catch block.
-  // For simplicity, we assume the component will handle it based on success status.
+  
   const validatedData = validatedFields.data;
+  const slug = validatedData.topic.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-');
   const categorySlug =
       Object.keys(categorySlugMap).find(
         (key) => categorySlugMap[key] === validatedData.category
       ) || validatedData.category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  const slug = validatedData.topic.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-');
   
   redirect(`/admin/dashboard/edit/${categorySlug}/${slug}`);
-}
-
-export async function editArticleAction(data: unknown) {
-    return serverEditArticleAction(data);
-}
-
-export async function deleteArticleAction(category: string, slug: string, isDraft: boolean) {
-    return deleteFromServer(category, slug, isDraft);
 }

@@ -46,13 +46,9 @@ const allCategoryData: { [key: string]: any } = {
 async function loadAndValidateArticles(
   category: string
 ): Promise<z.infer<typeof ArticleSchema>[]> {
-  // For drafts, the category IS the slug. Otherwise, find slug from map.
-  const categorySlug =
-    category === 'drafts'
-      ? 'drafts'
-      : Object.keys(categorySlugMap).find(
-          (key) => categorySlugMap[key] === category
-        );
+  const categorySlug = Object.keys(categorySlugMap).find(
+      (key) => categorySlugMap[key] === category
+    ) || category; // Fallback for 'drafts'
 
   if (!categorySlug) {
     console.error(`No slug found for category "${category}"`);
@@ -112,15 +108,15 @@ export async function getArticleForEdit(
   category: string,
   slug: string
 ): Promise<Article | undefined> {
-  // 1. Check drafts first
-  const drafts = await getAllArticlesAdmin('drafts');
-  const draft = drafts.find((a) => a.slug === slug);
-  if (draft) return draft;
-
-  // 2. If not in drafts, check the published category
-  const articles = await getAllArticlesAdmin(category);
-  return articles.find((a) => a.slug === slug);
+  const allCategories = [...Object.values(categorySlugMap), 'drafts'];
+  for (const catName of allCategories) {
+      const articles = await getAllArticlesAdmin(catName);
+      const foundArticle = articles.find(a => a.slug === slug);
+      if (foundArticle) return foundArticle;
+  }
+  return undefined;
 }
+
 
 // Reusable GitHub helper functions
 export async function getShaForFile(

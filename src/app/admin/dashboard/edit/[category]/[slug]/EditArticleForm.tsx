@@ -13,8 +13,6 @@ import { ArrowLeft, Loader2, Save, Trash2, Wand2, Eye, PlusCircle, Globe, FileTe
 import { useState, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import type { Article } from '@/lib/articles';
-import { editArticleAction, deleteArticleAction } from '@/app/admin/dashboard/create/actions';
-import { addImagesToArticleAction, autoSaveArticleDraftAction } from '@/app/admin/dashboard/manual/actions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,6 +35,7 @@ import {
 } from '@/components/ui/select';
 import { IMAGE_COUNTS } from '@/lib/constants';
 import { ManualArticleSchema as EditSchema } from '@/lib/types';
+import { editArticleAction, deleteArticleAction, addImagesToArticleAction, autoSaveArticleDraftAction } from './actions';
 
 
 type EditFormData = z.infer<typeof EditSchema>;
@@ -46,10 +45,14 @@ interface EditArticleFormProps {
     categorySlug: string;
 }
 
-const contentToHtml = (content: Article['articleContent']): string => {
+// Helper function to convert the structured content array back to a single HTML string for the editor
+const articleContentToHtml = (content: Article['articleContent']): string => {
     return content.map(block => {
-        // Since content is now stored as HTML, this can be simplified.
-        // The block.type is less relevant if block.content is full HTML.
+        if (block.type === 'img') {
+             // For images, create a standard img tag inside a div for consistent styling
+            return `<div class="my-8"><img src="${block.content}" alt="${block.alt || ''}" width="800" height="450" class="rounded-lg shadow-lg mx-auto" /></div>`;
+        }
+        // For all other types (h1-h6, p, ul, ol etc.), the content is already valid HTML
         return block.content;
     }).join(''); 
 }
@@ -74,7 +77,7 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
       status: article.status || 'published',
       category: article.category,
       summary: article.summary || '',
-      content: contentToHtml(article.articleContent),
+      content: articleContentToHtml(article.articleContent),
       keyTakeaways: article.keyTakeaways?.map(t => ({ value: t })) || [{ value: '' }],
       conclusion: article.conclusion || '',
       image: article.image || '',
@@ -93,21 +96,10 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
       
       setAutoSaveStatus('saving');
       const currentData = getValues();
-      const draftArticleData: Article = {
-          title: currentData.title || 'Untitled Draft',
-          slug: currentData.slug,
-          category: currentData.category,
-          status: 'draft', // Always save as draft
-          image: currentData.image || 'https://placehold.co/600x400.png',
-          dataAiHint: article.dataAiHint || 'draft content',
-          publishedDate: article.publishedDate || new Date().toISOString(),
-          summary: currentData.summary,
-          articleContent: [{ type: 'p', content: currentData.content, alt: '' }], // Simplified for draft
-          keyTakeaways: (currentData.keyTakeaways || []).map(t => t.value),
-          conclusion: currentData.conclusion,
-      };
-
-      const result = await autoSaveArticleDraftAction(draftArticleData);
+      
+      // Use the server-side action to save the draft.
+      // This action will internally convert the 'content' HTML back to the structured array.
+      const result = await autoSaveArticleDraftAction(currentData);
       
       if (result.success) {
         setAutoSaveStatus('saved');
@@ -388,7 +380,7 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
                             <div className="flex flex-col gap-2">
                                 <Button type="submit" disabled={isSaving || isDeleting || isAddingImages} className="w-full">
                                     {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                    Save & Publish
+                                    Save Changes
                                 </Button>
                                 <Button type="button" variant="outline" onClick={() => setIsPreviewOpen(true)} className="w-full">
                                     <Eye className="mr-2 h-4 w-4" />

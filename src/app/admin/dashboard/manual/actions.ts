@@ -1,17 +1,16 @@
 
 'use server';
 
-import { type Article } from '@/lib/types';
 import {
   addImagesToArticleAction as serverAddImages,
   createManualArticleAction as serverCreateManual,
-  autoSaveManualDraftAction as serverAutoSave,
+  autoSaveArticleDraftAction as serverAutoSave,
 } from '@/lib/articles.server';
 
 // This file now acts as a clean 'use server' boundary.
 // It re-exports the server actions from a central library file.
 // This prevents client components from accidentally importing files
-// that use server-only libraries like `jsdom`.
+// that use server-only libraries.
 
 export async function addImagesToArticleAction(
   content: string,
@@ -24,8 +23,8 @@ export async function createManualArticleAction(data: unknown) {
   return serverCreateManual(data);
 }
 
-export async function autoSaveManualDraftAction(
-  draftData: Article
+export async function autoSaveArticleDraftAction(
+  data: unknown
 ): Promise<{ success: boolean; error?: string }> {
-  return serverAutoSave(draftData);
+  return serverAutoSave(data);
 }

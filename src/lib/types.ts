@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 export const ArticleContentBlockSchema = z.object({
@@ -18,7 +19,7 @@ export const ArticleSchema = z.object({
   summary: z.string().optional(),
   articleContent: z.array(ArticleContentBlockSchema),
   keyTakeaways: z.array(z.string()).optional(),
-  conclusion: z.string().min(1).optional(),
+  conclusion: z.string().optional(),
 });
 export type Article = z.infer<typeof ArticleSchema>;
 
@@ -32,7 +33,7 @@ export const ManualArticleSchema = z.object({
   summary: z.string().optional(),
   content: z.string().min(50, 'Content must be at least 50 characters long.'),
   keyTakeaways: z.array(z.object({ value: z.string() })).optional(),
-  conclusion: z.string().min(20, 'Conclusion must be at least 20 characters long.'),
+  conclusion: z.string().optional(),
   image: z.string().url('A valid image URL is required.'),
   originalSlug: z.string().optional(), // For identifying article on edit
 });

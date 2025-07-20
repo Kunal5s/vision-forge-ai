@@ -20,11 +20,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ArrowLeft, Loader2, FileSignature, PlusCircle, Trash2, ImageIcon, Wand2, Eye, Save, CheckCircle } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { createManualArticleAction, addImagesToArticleAction, autoSaveManualDraftAction } from './actions';
+import { createManualArticleAction, addImagesToArticleAction, autoSaveArticleDraftAction } from './actions';
 import Image from 'next/image';
 import { RichTextEditor } from '@/components/vision-forge/RichTextEditor';
 import { ArticlePreview } from '@/components/vision-forge/ArticlePreview';
-import { type Article } from '@/lib/articles';
 import { useRouter } from 'next/navigation';
 import { ManualArticleSchema } from '@/lib/types';
 
@@ -44,7 +43,7 @@ export default function ManualPublishPage() {
   const router = useRouter();
 
   const { toast } = useToast();
-  const { register, handleSubmit, control, formState: { errors, isDirty }, watch, setValue, getValues, reset } = useForm<ManualArticleFormData>({
+  const { register, handleSubmit, control, formState: { errors, isDirty }, watch, setValue, getValues } = useForm<ManualArticleFormData>({
     resolver: zodResolver(ManualArticleSchema),
     defaultValues: {
       title: '',
@@ -70,15 +69,7 @@ export default function ManualPublishPage() {
         setAutoSaveStatus('saving');
         const currentData = getValues();
         try {
-            const draftArticleData: Article = {
-                ...currentData,
-                status: 'draft', // Always save as draft
-                dataAiHint: 'autosave content',
-                publishedDate: new Date().toISOString(),
-                articleContent: [{ type: 'p', content: currentData.content, alt:''}],
-                keyTakeaways: (currentData.keyTakeaways || []).map(k => k.value)
-            };
-            const result = await autoSaveManualDraftAction(draftArticleData);
+            const result = await autoSaveArticleDraftAction(currentData);
             if (result.success) {
                 setAutoSaveStatus('saved');
             } else {
@@ -215,7 +206,8 @@ export default function ManualPublishPage() {
       
        // Redirect to the new edit page on successful save/publish
        if (result.slug && result.category) {
-            router.push(`/admin/dashboard/edit/${result.category}/${result.slug}`);
+            const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === result.category) || result.category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+            router.push(`/admin/dashboard/edit/${categorySlug}/${result.slug}`);
        } else {
             router.push('/admin/dashboard/edit');
        }
