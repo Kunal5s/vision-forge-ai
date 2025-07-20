@@ -68,6 +68,7 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
     // State for the AI generator form
     const [aiPrompt, setAiPrompt] = useState('');
     const [aiImageCount, setAiImageCount] = useState(10);
+    const [globalStyle, setGlobalStyle] = useState('Classic Black');
 
     const { register, handleSubmit, control, formState: { errors }, watch, setValue, reset } = useForm<StoryFormData>({
         resolver: zodResolver(StoryFormSchema),
@@ -96,6 +97,12 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
                     pages: clientPages,
                     originalSlug: fetchedStory.slug,
                 });
+                
+                // Set the initial global style based on the first page
+                if (clientPages.length > 0 && clientPages[0].styleName) {
+                    setGlobalStyle(clientPages[0].styleName);
+                }
+
             } else {
                  toast({ title: 'Error', description: 'Story not found.', variant: 'destructive' });
             }
@@ -116,6 +123,13 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
     const websiteUrlValue = watch('websiteUrl');
     const seoDescriptionValue = watch('seoDescription');
     const categoryValue = watch('category');
+
+    // Effect to apply global style to all pages
+    useEffect(() => {
+        pagesValue.forEach((_, index) => {
+            setValue(`pages.${index}.styleName`, globalStyle, { shouldDirty: true });
+        });
+    }, [globalStyle, pagesValue, setValue]);
 
 
     const generateSlug = useCallback((title: string) => {
@@ -183,7 +197,7 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
                 imageUrl: img.imageUrl,
                 caption: '', // Leave caption empty for manual input
                 imagePrompt: img.imagePrompt,
-                styleName: 'Classic Black',
+                styleName: globalStyle,
             }));
             replace(newPages); // Replace all pages with newly generated ones
             toast({ title: "Images Generated!", description: `Successfully replaced story with ${newPages.length} new pages.` });
@@ -414,8 +428,38 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
             
             <Card className="mt-8 col-span-1 lg:col-span-2">
                 <CardHeader>
-                    <CardTitle>Edit Story Pages ({fields.length})</CardTitle>
-                    <CardDescription>Add captions, reorder pages, remove them, or upload your own. You need at least 5 pages to publish.</CardDescription>
+                    <div className='flex flex-col sm:flex-row justify-between sm:items-center gap-4'>
+                        <div>
+                            <CardTitle>Edit Story Pages ({fields.length})</CardTitle>
+                            <CardDescription>Add captions, reorder pages, or upload your own. You need at least 5 pages to publish.</CardDescription>
+                        </div>
+                         <div className="w-full sm:w-auto">
+                            <Label className="text-xs">Apply Style to All Pages</Label>
+                             <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" className="w-full justify-start text-left font-normal h-9">
+                                        <span>{globalStyle}</span>
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[260px] p-0" align="start">
+                                    <ScrollArea className="h-72">
+                                        <div className="p-2 space-y-1">
+                                            {CAPTION_STYLES.map((style) => (
+                                                <Button
+                                                    key={style.name}
+                                                    variant="ghost"
+                                                    className={cn("w-full h-auto justify-start p-2 text-left", style.className)}
+                                                    onClick={() => setGlobalStyle(style.name)}
+                                                >
+                                                    {style.name}
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    </ScrollArea>
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+                    </div>
                      {errors.pages && <p className="text-sm text-destructive mt-2">{errors.pages.root?.message || errors.pages.message}</p>}
                 </CardHeader>
                 <CardContent>
@@ -463,40 +507,13 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
                                             {errors.pages?.[index]?.caption && <p className="text-sm text-destructive mt-1">{errors.pages[index]?.caption?.message}</p>}
                                         </div>
 
-                                        <div>
-                                            <Label className="text-xs">Caption Style</Label>
-                                             <Popover>
-                                                <PopoverTrigger asChild>
-                                                    <Button variant="outline" className="w-full justify-start text-left font-normal h-9">
-                                                        <span>{watch(`pages.${index}.styleName`)}</span>
-                                                    </Button>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-[260px] p-0" align="start">
-                                                    <ScrollArea className="h-72">
-                                                        <div className="p-2 space-y-1">
-                                                            {CAPTION_STYLES.map((style) => (
-                                                                <Button
-                                                                    key={style.name}
-                                                                    variant="ghost"
-                                                                    className={cn("w-full h-auto justify-start p-2 text-left", style.className)}
-                                                                    onClick={() => setValue(`pages.${index}.styleName`, style.name, { shouldDirty: true })}
-                                                                >
-                                                                    {style.name}
-                                                                </Button>
-                                                            ))}
-                                                        </div>
-                                                    </ScrollArea>
-                                                </PopoverContent>
-                                            </Popover>
-                                        </div>
-
                                         <Button type="button" variant="destructive" size="sm" className="w-full !mt-4" onClick={() => remove(index)} disabled={isSaving}>
                                             <Trash2 className="mr-2 h-4 w-4" /> Remove
                                         </Button>
                                     </div>
                                 ))}
                                 <div className="flex items-center justify-center w-[220px] shrink-0">
-                                    <Button type="button" variant="outline" onClick={() => append({ imageUrl: '', caption: '', imagePrompt: 'manual upload', styleName: 'Classic Black' })} disabled={isSaving || fields.length >= 50}>
+                                    <Button type="button" variant="outline" onClick={() => append({ imageUrl: '', caption: '', imagePrompt: 'manual upload', styleName: globalStyle })} disabled={isSaving || fields.length >= 50}>
                                         <PlusCircle className="mr-2 h-4 w-4" /> Add Page
                                     </Button>
                                 </div>
