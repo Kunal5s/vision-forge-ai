@@ -15,7 +15,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import Image from 'next/image';
 import parse from 'html-react-parser';
 import { X } from 'lucide-react';
-import { JSDOM } from 'jsdom'; // Use on client with caution or find alternative
 
 interface ArticlePreviewProps {
   isOpen: boolean;
@@ -25,30 +24,6 @@ interface ArticlePreviewProps {
   category: string;
   image: string;
 }
-
-const renderContentForPreview = (html: string) => {
-    // This function will parse the HTML and prepare it for rendering.
-    // We can use this to handle any special cases if needed. For now, it's direct parsing.
-    return parse(html, {
-        replace: domNode => {
-            if (domNode.type === 'tag' && domNode.name === 'img') {
-                const { src, alt } = domNode.attribs;
-                return (
-                    <div className="my-8">
-                        <Image
-                            src={src}
-                            alt={alt || 'Article image'}
-                            width={800}
-                            height={450}
-                            className="rounded-lg shadow-lg mx-auto"
-                        />
-                    </div>
-                );
-            }
-        }
-    });
-};
-
 
 export function ArticlePreview({
   isOpen,
@@ -98,7 +73,7 @@ export function ArticlePreview({
               </header>
 
               <article className="prose dark:prose-invert max-w-none">
-                {renderContentForPreview(content)}
+                {parse(content)}
               </article>
             </div>
           </main>

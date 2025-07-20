@@ -1,65 +1,16 @@
 
 'use server';
 
-import { type Article, ArticleSchema as ArticleValidationSchema, ArticleContentBlock, ManualArticleSchema } from '@/lib/types';
+import { type Article, ArticleSchema as ArticleValidationSchema, ArticleContentBlock, ManualArticleSchema, htmlToArticleContent } from '@/lib/types';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { saveUpdatedArticles, getAllArticlesAdmin } from '@/lib/articles'; // Import the universal save function
 import { redirect } from 'next/navigation';
 import { JSDOM } from 'jsdom';
 import { categorySlugMap } from '@/lib/constants';
+import { Octokit } from 'octokit';
+import { getPrimaryBranch, getShaForFile } from '@/lib/articles';
 
-
-function markdownToHtml(markdown: string): string {
-    if (!markdown) return '';
-    let html = markdown
-        .replace(/^###### (.*$)/gim, '<h6>$1</h6>')
-        .replace(/^##### (.*$)/gim, '<h5>$1</h5>')
-        .replace(/^#### (.*$)/gim, '<h4>$1</h4>')
-        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-        .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
-        .replace(/__(.*?)__/gim, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/gim, '<em>$1</em>')
-        .replace(/_(.*?)_/gim, '<em>$1</em>')
-        .replace(/`([^`]+)`/gim, '<code>$1</code>')
-        .replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2">$1</a>')
-        .replace(/^\s*-\s+/gim, '<li>')
-        .replace(/^\s*\d+\.\s+/gim, '<li>')
-        .replace(/\n/g, '<br>');
-
-    html = html.replace(/(<li>.*?<\/li>)/gs, '<ul>$1</ul>').replace(/<\/ul>\s*<ul>/g, ''); 
-
-    return html;
-}
-
-function htmlToArticleContent(html: string): ArticleContentBlock[] {
-  if (typeof window !== 'undefined') {
-    return []; 
-  }
-    const dom = new JSDOM(html);
-    const document = dom.window.document;
-    const content: ArticleContentBlock[] = [];
-    document.body.childNodes.forEach(node => {
-      if (node.nodeType === dom.window.Node.ELEMENT_NODE) {
-        const element = node as HTMLElement;
-        const tagName = element.tagName.toLowerCase();
-        
-        if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'blockquote'].includes(tagName)) {
-           const innerHTML = element.innerHTML.trim();
-           if (innerHTML) {
-             content.push({ type: 'p', content: element.outerHTML, alt: '' }); // Save wrapper tag
-           }
-        } else if (tagName === 'img' && element.hasAttribute('src')) {
-           content.push({ type: 'img', content: element.getAttribute('src')!, alt: element.getAttribute('alt') || '' });
-        } else if (tagName === 'table') {
-           content.push({ type: 'p', content: element.outerHTML, alt: '' });
-        }
-      }
-    });
-    return content.filter(block => (block.content && block.content.trim() !== '') || block.type === 'img');
-}
 
 export async function addImagesToArticleAction(content: string, imageCount: number = 5): Promise<{success: boolean, content?: string, error?: string}> {
     try {
@@ -70,7 +21,14 @@ export async function addImagesToArticleAction(content: string, imageCount: numb
         const insertionPoints = Array.from(document.querySelectorAll('h2, h3, p'));
 
         // Remove any previously added AI images to avoid duplicates
-        document.querySelectorAll('img[src*="pollinations.ai"]').forEach(img => img.remove());
+        document.querySelectorAll('img[src*="pollinations.ai"]').forEach(img => {
+            const parent = img.parentElement;
+            if (parent && parent.tagName.toLowerCase() === 'div' && parent.classList.contains('my-8')) {
+                parent.remove();
+            } else {
+                img.remove();
+            }
+        });
         
         // Filter for points that have enough text content to be a meaningful prompt
         const validInsertionPoints = insertionPoints.filter(h => h.textContent && h.textContent.trim().split(' ').length > 5);
@@ -139,8 +97,7 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
   const { title, slug, category, status, summary, content, keyTakeaways, conclusion, image } = validatedFields.data;
 
   try {
-    const formattedContentHtml = markdownToHtml(content); // Auto-format markdown-like text
-    const articleContent = htmlToArticleContent(formattedContentHtml);
+    const articleContent = htmlToArticleContent(content);
 
     const newArticleData: Article = {
       title,

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { categorySlugMap } from './constants';
 import { ArticleSchema, type Article } from './types';
 import { Octokit } from 'octokit';
+import type { ArticleContentBlock } from './types';
 
 // Direct imports to ensure files are bundled during the build process.
 import featuredArticles from '@/articles/featured.json';
@@ -240,10 +241,6 @@ export async function deleteArticleAction(category: string, slug: string, isDraf
 
     } catch (e: any) {
         return { success: false, error: e.message };
-    }
-
-    if (!isDraft) {
-        redirect('/admin/dashboard/edit');
     }
     
     return { success: true };

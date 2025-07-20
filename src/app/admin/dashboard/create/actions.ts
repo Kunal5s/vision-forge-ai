@@ -2,14 +2,12 @@
 'use server';
 
 import { generateArticleForTopic } from '@/ai/article-generator';
-import { type Article, ArticleContentBlock, ArticleSchema as ArticleValidationSchema } from '@/lib/types';
+import { type Article, ArticleContentBlock, ArticleSchema as ArticleValidationSchema, ManualArticleSchema as EditSchema, htmlToArticleContent } from '@/lib/types';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { JSDOM } from 'jsdom';
 import { categorySlugMap } from '@/lib/constants';
-import { getAllArticlesAdmin, saveUpdatedArticles, getArticleForEdit } from '@/lib/articles';
-import { ManualArticleSchema as EditSchema } from '@/lib/types';
+import { getAllArticlesAdmin, saveUpdatedArticles, getArticleForEdit, deleteArticleAction as deleteFromServer } from '@/lib/articles';
 
 
 const ArticleFormSchema = z.object({
@@ -32,38 +30,6 @@ type GenerateArticleResult = {
   title?: string;
   error?: string;
 };
-
-// This function converts markdown-style text to basic HTML for headings, bold, and italic.
-// It's a simplified parser intended for the auto-formatting feature.
-function markdownToHtml(markdown: string): string {
-    if (!markdown) return '';
-
-    // Replace headings (e.g., ## My Heading -> <h2>My Heading</h2>)
-    let html = markdown
-        .replace(/^###### (.*$)/gim, '<h6>$1</h6>')
-        .replace(/^##### (.*$)/gim, '<h5>$1</h5>')
-        .replace(/^#### (.*$)/gim, '<h4>$1</h4>')
-        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-        .replace(/^# (.*$)/gim, '<h1>$1</h1>');
-
-    // Replace bold (**text** or __text__) and italic (*text* or _text_)
-    html = html
-        .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
-        .replace(/__(.*?)__/gim, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/gim, '<em>$1</em>')
-        .replace(/_(.*?)_/gim, '<em>$1</em>');
-    
-    // Convert paragraph line breaks to <p> tags
-    html = html.split('\n\n').map(p => p.trim() ? `<p>${p.trim()}</p>` : '').join('');
-    
-    // A simple fix to avoid wrapping existing block-level elements in <p>
-    html = html.replace(/<p><(h[1-6]|ul|ol|li|blockquote|table)/g, '<$1');
-    html = html.replace(/<\/(h[1-6]|ul|ol|li|blockquote|table)><\/p>/g, '</$1>');
-
-
-    return html;
-}
 
 
 export async function generateArticleAction(data: unknown): Promise<GenerateArticleResult> {
@@ -125,35 +91,6 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
   }
 }
 
-function htmlToArticleContent(html: string): ArticleContentBlock[] {
-    if (typeof window !== 'undefined' || !html) {
-        return [];
-    }
-
-    const dom = new JSDOM(html);
-    const document = dom.window.document;
-    const content: ArticleContentBlock[] = [];
-    
-    document.body.childNodes.forEach(node => {
-        if (node.nodeType === dom.window.Node.ELEMENT_NODE) {
-            const element = node as HTMLElement;
-            // Use the outerHTML to preserve the element itself (e.g., <h2>...</h2>)
-            const tagName = element.tagName.toLowerCase() as ArticleContentBlock['type'];
-
-            if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'blockquote', 'table'].includes(tagName)) {
-                const outerHTML = element.outerHTML.trim();
-                if (outerHTML) {
-                    // Store the block with its wrapper tag
-                    content.push({ type: tagName, content: outerHTML, alt:'' });
-                }
-            } else if (tagName === 'img' && element.hasAttribute('src')) {
-                content.push({ type: 'img', content: element.getAttribute('src')!, alt: element.getAttribute('alt') || '' });
-            }
-        }
-    });
-    return content.filter(block => (block.content && block.content.trim() !== '') || block.type === 'img');
-}
-
 export async function editArticleAction(data: unknown) {
   const validatedFields = EditSchema.safeParse(data);
   if (!validatedFields.success) {
@@ -167,9 +104,7 @@ export async function editArticleAction(data: unknown) {
         throw new Error("Article to edit was not found.");
     }
     
-    // Auto-format markdown to HTML on save
-    const formattedContent = markdownToHtml(content);
-    const newArticleContent = htmlToArticleContent(formattedContent);
+    const newArticleContent = htmlToArticleContent(content);
 
     const updatedArticleData: Article = {
       ...existingArticle,
@@ -204,7 +139,7 @@ export async function editArticleAction(data: unknown) {
         
         await saveUpdatedArticles(category, publishedArticles, `feat: ✏️ Publish article "${title}"`);
         // Delete from drafts
-        await deleteArticleAction(category, originalSlug, true);
+        await deleteFromServer(category, originalSlug, true);
 
     } else { // Saving as draft
         await saveUpdatedArticles('drafts', [finalValidatedArticle.data], `docs: 📝 Autosave draft for "${title}"`, `${slug}.json`);
@@ -224,29 +159,9 @@ export async function editArticleAction(data: unknown) {
 }
 
 export async function deleteArticleAction(category: string, slug: string, isDraft: boolean = true) {
-    try {
-        if (isDraft) {
-            // Delete a single file from the drafts folder
-            await saveUpdatedArticles('drafts', [], `feat: 🗑️ Delete draft "${slug}"`, `${slug}.json`, true);
-        } else {
-            // Remove from a category file
-            const articles = await getAllArticlesAdmin(category);
-            const updatedArticles = articles.filter(a => a.slug !== slug);
-            
-            if (articles.length === updatedArticles.length) {
-                console.warn(`Article to delete (${slug}) was not found in category ${category}.`);
-                return { success: true }; // Don't throw error if not found
-            }
-            await saveUpdatedArticles(category, updatedArticles, `feat: 🗑️ Delete article "${slug}"`);
-        }
-
-        revalidatePath(`/`);
-        const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category) || category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-        revalidatePath(`/${categorySlug}`);
-        revalidatePath('/admin/dashboard/edit');
-
-    } catch (e: any) {
-        return { success: false, error: e.message };
+    const result = await deleteFromServer(category, slug, isDraft);
+     if (result?.error) {
+        return { success: false, error: result.error };
     }
     
     if(!isDraft) {
