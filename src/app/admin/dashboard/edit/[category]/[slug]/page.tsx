@@ -21,7 +21,7 @@ export default function EditArticlePage() {
         const loadArticle = async () => {
             setIsLoading(true);
             try {
-                const fetchedArticle = await getArticleForEdit(params.category, params.slug);
+                const fetchedArticle = await getArticleForEdit(params.category as string, params.slug as string);
                 if (fetchedArticle) {
                     setArticle(fetchedArticle);
                 } else {
@@ -59,7 +59,7 @@ export default function EditArticlePage() {
 
     return (
         <main className="flex-grow container mx-auto py-12 px-4 bg-muted/20 min-h-screen">
-           <EditArticleForm article={article} categorySlug={params.category} />
+           <EditArticleForm article={article} categorySlug={params.category as string} />
         </main>
     );
 }

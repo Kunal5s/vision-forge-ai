@@ -33,6 +33,12 @@ export function htmlToArticleContent(html: string): ArticleContentBlock[] {
                 if (outerHTML) {
                     content.push({ type: tagName, content: outerHTML, alt:'' });
                 }
+            } else if (tagName === 'div' && element.querySelector('img')) {
+                // Handle images wrapped in divs which is common from RTEs
+                const img = element.querySelector('img');
+                if (img && img.hasAttribute('src')) {
+                    content.push({ type: 'img', content: img.getAttribute('src')!, alt: img.getAttribute('alt') || '' });
+                }
             } else if (tagName === 'img' && element.hasAttribute('src')) {
                 content.push({ type: 'img', content: element.getAttribute('src')!, alt: element.getAttribute('alt') || '' });
             }
@@ -143,7 +149,7 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
       conclusion: conclusion || '',
     };
 
-    const finalValidatedArticle = ArticleValidationSchema.safeParse(newArticleData);
+    const finalValidatedArticle = ArticleSchema.safeParse(newArticleData);
 
     if (!finalValidatedArticle.success) {
       console.error("Final Validation Failed after processing:", finalValidatedArticle.error.flatten());

@@ -7,6 +7,7 @@ import { getAllArticlesAdmin, getPrimaryBranch, getShaForFile, saveUpdatedArticl
 import { revalidatePath } from 'next/cache';
 import { addImagesToArticleAction as serverAddImages } from '../../../manual/actions';
 import { Octokit } from 'octokit';
+import { categorySlugMap } from '@/lib/constants';
 
 
 export async function autoSaveArticleDraft(draftData: Article): Promise<{ success: boolean; error?: string }> {
@@ -86,34 +87,41 @@ export async function getArticleForEdit(categorySlug: string, articleSlug: strin
     if (!GITHUB_TOKEN || !GITHUB_REPO_OWNER || !GITHUB_REPO_NAME) {
         console.warn("GitHub credentials not configured. Falling back to local file system for drafts.");
         const drafts = await getAllArticlesAdmin('drafts');
-        return drafts.find(d => d.slug === articleSlug);
+        const draft = drafts.find(d => d.slug === articleSlug);
+        if (draft) return draft;
+    } else {
+        const octokit = new Octokit({ auth: GITHUB_TOKEN });
+        const draftBranch = 'autosave-drafts';
+        const repoPath = `src/articles/drafts/${articleSlug}.json`;
+
+        // 1. Try to fetch from the autosave-drafts branch
+        try {
+            const { data } = await octokit.rest.repos.getContent({
+                owner: GITHUB_REPO_OWNER,
+                repo: GITHUB_REPO_NAME,
+                path: repoPath,
+                ref: draftBranch,
+            });
+
+            if ('content' in data) {
+                const fileContent = Buffer.from(data.content, 'base64').toString('utf-8');
+                return ArticleSchema.parse(JSON.parse(fileContent));
+            }
+        } catch (error: any) {
+            if (error.status !== 404) {
+                console.error(`Failed to fetch draft from GitHub branch "${draftBranch}":`, error);
+            }
+        }
     }
     
-    const octokit = new Octokit({ auth: GITHUB_TOKEN });
-    const draftBranch = 'autosave-drafts';
-    const repoPath = `src/articles/drafts/${articleSlug}.json`;
 
-    // 1. Try to fetch from the autosave-drafts branch
-    try {
-        const { data } = await octokit.rest.repos.getContent({
-            owner: GITHUB_REPO_OWNER,
-            repo: GITHUB_REPO_NAME,
-            path: repoPath,
-            ref: draftBranch,
-        });
-
-        if ('content' in data) {
-            const fileContent = Buffer.from(data.content, 'base64').toString('utf-8');
-            return ArticleSchema.parse(JSON.parse(fileContent));
-        }
-    } catch (error: any) {
-        if (error.status !== 404) {
-            console.error(`Failed to fetch draft from GitHub branch "${draftBranch}":`, error);
-        }
-    }
-
-    // 2. If not in drafts branch, check the published category
+    // 2. If not in drafts branch or github is not configured, check the published category
     const categoryName = Object.entries(categorySlugMap).find(([slug]) => slug === categorySlug)?.[1] || categorySlug;
     const articles = await getAllArticlesAdmin(categoryName);
-    return articles.find(a => a.slug === articleSlug);
+    const publishedArticle = articles.find(a => a.slug === articleSlug);
+    if(publishedArticle) return publishedArticle;
+
+    // 3. Lastly, check the local drafts file as a final fallback
+    const localDrafts = await getAllArticlesAdmin('drafts');
+    return localDrafts.find(a => a.slug === articleSlug);
 }

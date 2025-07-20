@@ -2,7 +2,7 @@
 'use server';
 
 import { generateArticleForTopic } from '@/ai/article-generator';
-import { type Article, ArticleSchema as ArticleValidationSchema } from '@/lib/types';
+import { type Article, ArticleSchema as ArticleValidationSchema, ManualArticleSchema } from '@/lib/types';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -120,7 +120,7 @@ export async function editArticleAction(data: unknown) {
       publishedDate: status === 'published' ? (existingArticle.publishedDate || new Date().toISOString()) : new Date().toISOString(),
     };
     
-    const finalValidatedArticle = ArticleValidationSchema.safeParse(updatedArticleData);
+    const finalValidatedArticle = ArticleSchema.safeParse(updatedArticleData);
     if (!finalValidatedArticle.success) {
       console.error("Final validation failed after edit processing:", finalValidatedArticle.error.flatten());
       return { success: false, error: "Failed to process edited article data correctly." };
