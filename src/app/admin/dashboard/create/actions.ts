@@ -123,38 +123,38 @@ const EditSchema = z.object({
 });
 
 function markdownToHtml(markdown: string): string {
+    // This function handles basic markdown conversions.
     let html = markdown
-        // Headers
-        .replace(/^###### (.*$)/gim, '<h6>$1</h6>')
-        .replace(/^##### (.*$)/gim, '<h5>$1</h5>')
-        .replace(/^#### (.*$)/gim, '<h4>$1</h4>')
-        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
         .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-        // Bold
-        .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
-        .replace(/__(.*)__/gim, '<strong>$1</strong>')
-        // Italic
-        .replace(/\*(.*)\*/gim, '<em>$1</em>')
-        .replace(/_(.*)_/gim, '<em>$1</em>')
-        // New lines to paragraphs
-        .replace(/\n\n/g, '</p><p>')
+        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+        .replace(/^#### (.*$)/gim, '<h4>$1</h4>')
+        .replace(/^##### (.*$)/gim, '<h5>$1</h5>')
+        .replace(/^###### (.*$)/gim, '<h6>$1</h6>')
+        .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
+        .replace(/__(.*?)__/gim, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/gim, '<em>$1</em>')
+        .replace(/_(.*?)_/gim, '<em>$1</em>')
+        .replace(/`([^`]+)`/gim, '<code>$1</code>')
+        .replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2">$1</a>')
+        .replace(/^\s*-\s+/gim, '<li>')
+        .replace(/^\s*\d+\.\s+/gim, '<li>')
         .replace(/\n/g, '<br>');
 
-    return `<p>${html}</p>`;
+    // Wrap list items in <ul> or <ol>
+    html = html.replace(/(<li>.*?<\/li>)/gs, '<ul>$1</ul>').replace(/<\/ul>\s*<ul>/g, ''); // Basic list wrapping
+
+    return html;
 }
 
 function htmlToArticleContent(html: string): Article['articleContent'] {
-    // Process markdown-style headings first
-    const processedHtml = markdownToHtml(html);
-
     if (typeof window !== 'undefined') {
         // This part is for client-side, but might not be reached if we only run on server
         return [];
     }
 
     // Server-side parsing with JSDOM
-    const dom = new JSDOM(processedHtml);
+    const dom = new JSDOM(html);
     const document = dom.window.document;
     const content: Article['articleContent'] = [];
     
@@ -163,10 +163,10 @@ function htmlToArticleContent(html: string): Article['articleContent'] {
             const element = node as HTMLElement;
             const tagName = element.tagName.toLowerCase();
 
-            if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p'].includes(tagName)) {
+            if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'blockquote'].includes(tagName)) {
                 const innerHTML = element.innerHTML.trim();
                 if (innerHTML) {
-                    content.push({ type: tagName as any, content: innerHTML });
+                    content.push({ type: 'p', content: element.outerHTML }); // Save wrapper tag
                 }
             } else if (tagName === 'img' && element.hasAttribute('src')) {
                 content.push({ type: 'img', content: element.getAttribute('src')!, alt: element.getAttribute('alt') || '' });
@@ -193,8 +193,8 @@ export async function editArticleAction(data: unknown) {
       throw new Error("Article not found.");
     }
     
-    // Convert the rich text HTML (which might contain markdown) to our structured JSON format on save
-    const newArticleContent = htmlToArticleContent(content);
+    const formattedHtml = markdownToHtml(content);
+    const newArticleContent = htmlToArticleContent(formattedHtml);
 
     // Get the existing article to preserve its properties like image
     const existingArticle = articles[articleIndex];

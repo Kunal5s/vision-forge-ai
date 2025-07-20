@@ -124,7 +124,6 @@ export default function EditArticleForm({ article, categoryName, categorySlug }:
         debounceTimeoutRef.current = setTimeout(() => {
           try {
             localStorage.setItem(DRAFT_KEY, JSON.stringify(value));
-            console.log("Draft saved to localStorage");
           } catch (e) {
             console.error("Failed to save draft to localStorage", e);
           }

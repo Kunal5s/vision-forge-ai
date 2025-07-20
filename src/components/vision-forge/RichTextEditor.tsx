@@ -10,7 +10,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import { useCallback, useRef } from 'react';
 import { 
     Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon, ImageIcon,
-    Heading1, Heading2, Heading3, Palette, AlignLeft, AlignCenter, AlignRight, Pilcrow
+    Heading1, Heading2, Heading3, Heading4, Heading5, Heading6, Palette, AlignLeft, AlignCenter, AlignRight, Pilcrow, List, ListOrdered, Quote, Code, Table as TableIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -106,6 +106,22 @@ const EditorToolbar = ({ editor }: { editor: Editor | null }) => {
                 <Heading3 className="h-4 w-4" />
             </Button>
             <div className="h-6 border-l mx-1" />
+            <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().toggleBulletList().run()} className={cn({'bg-background': editor.isActive('bulletList')})}>
+                <List className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().toggleOrderedList().run()} className={cn({'bg-background': editor.isActive('orderedList')})}>
+                <ListOrdered className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().toggleBlockquote().run()} className={cn({'bg-background': editor.isActive('blockquote')})}>
+                <Quote className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().toggleCodeBlock().run()} className={cn({'bg-background': editor.isActive('codeBlock')})}>
+                <Code className="h-4 w-4" />
+            </Button>
+             <Button variant="ghost" size="sm" onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}>
+                <TableIcon className="h-4 w-4" />
+            </Button>
+            <div className="h-6 border-l mx-1" />
             <Select value={currentFont} onValueChange={value => editor.chain().focus().setFontFamily(value).run()}>
                 <SelectTrigger className="w-[120px] h-8 text-xs">
                     <SelectValue placeholder="Font" />
@@ -155,9 +171,6 @@ export function RichTextEditor({ value, onChange, disabled, placeholder = "Start
                 heading: { levels: [1, 2, 3, 4, 5, 6], HTMLAttributes: { class: 'font-bold' } },
                 bulletList: { keepMarks: true, keepAttributes: false },
                 orderedList: { keepMarks: true, keepAttributes: false },
-                codeBlock: false,
-                blockquote: true,
-                horizontalRule: true,
             }),
             Underline,
             Link.configure({ openOnClick: false, autolink: true, linkOnPaste: true }),
@@ -167,6 +180,13 @@ export function RichTextEditor({ value, onChange, disabled, placeholder = "Start
                 HTMLAttributes: {
                   class: 'rounded-lg shadow-md mx-auto',
                 },
+            }).extend({
+                addOptions() {
+                    return {
+                        ...this.parent?.(),
+                        allowBase64: true,
+                    }
+                },
             }),
             Placeholder.configure({ placeholder }),
             FontFamily.configure({
@@ -175,7 +195,7 @@ export function RichTextEditor({ value, onChange, disabled, placeholder = "Start
             TextStyle,
             Color,
             TextAlign.configure({
-                types: ['heading', 'paragraph', 'image'],
+                types: ['heading', 'paragraph'],
             }),
             Dropcursor.configure({
                 color: '#4094F7',
@@ -211,11 +231,22 @@ export function RichTextEditor({ value, onChange, disabled, placeholder = "Start
         <div className="border rounded-lg overflow-hidden">
              {editor && (
                 <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }} className="bg-foreground text-background p-1 rounded-md flex gap-1 items-center">
-                    <Button size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleBold().run()} className={cn("hover:bg-background/20 text-sm", { 'bg-background/20': editor.isActive('bold') })}>Bold</Button>
-                    <Button size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleItalic().run()} className={cn("hover:bg-background/20 text-sm",{ 'bg-background/20': editor.isActive('italic') })}>Italic</Button>
+                    <Button size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleBold().run()} className={cn("hover:bg-background/20 text-sm", { 'bg-background/20': editor.isActive('bold') })}>
+                        <Bold className="h-4 w-4" />
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleItalic().run()} className={cn("hover:bg-background/20 text-sm",{ 'bg-background/20': editor.isActive('italic') })}>
+                        <Italic className="h-4 w-4" />
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleUnderline().run()} className={cn("hover:bg-background/20 text-sm",{ 'bg-background/20': editor.isActive('underline') })}>
+                        <UnderlineIcon className="h-4 w-4" />
+                    </Button>
                     <div className="h-5 border-l border-background/50 mx-1" />
+                    <Button size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} className={cn("hover:bg-background/20 text-sm",{ 'bg-background/20': editor.isActive('heading', { level: 1}) })}>H1</Button>
                     <Button size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={cn("hover:bg-background/20 text-sm",{ 'bg-background/20': editor.isActive('heading', { level: 2}) })}>H2</Button>
                     <Button size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} className={cn("hover:bg-background/20 text-sm",{ 'bg-background/20': editor.isActive('heading', { level: 3}) })}>H3</Button>
+                    <Button size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleHeading({ level: 4 }).run()} className={cn("hover:bg-background/20 text-sm",{ 'bg-background/20': editor.isActive('heading', { level: 4}) })}>H4</Button>
+                    <Button size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleHeading({ level: 5 }).run()} className={cn("hover:bg-background/20 text-sm",{ 'bg-background/20': editor.isActive('heading', { level: 5}) })}>H5</Button>
+                    <Button size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleHeading({ level: 6 }).run()} className={cn("hover:bg-background/20 text-sm",{ 'bg-background/20': editor.isActive('heading', { level: 6}) })}>H6</Button>
                 </BubbleMenu>
             )}
             <EditorToolbar editor={editor} />

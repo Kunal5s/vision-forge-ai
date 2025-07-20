@@ -30,10 +30,12 @@ const manualArticleSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters long.'),
   slug: z.string().min(5, 'Slug must be at least 5 characters long. Use dashes instead of spaces.').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and dashes.'),
   category: z.string().min(1, 'Please select a category.'),
+  status: z.enum(['published', 'draft']),
   summary: z.string().optional(),
   content: z.string().min(50, 'Content must be at least 50 characters long.'),
   keyTakeaways: z.array(z.object({ value: z.string().min(1, 'Takeaway cannot be empty.') })).optional(),
   conclusion: z.string().min(20, 'Conclusion must be at least 20 characters long.'),
+  image: z.string().url('A valid image URL is required.'),
 });
 
 type ManualArticleFormData = z.infer<typeof manualArticleSchema>;
@@ -70,7 +72,8 @@ export default function ManualPublishPage() {
         if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
         debounceTimeoutRef.current = setTimeout(() => {
             try {
-                localStorage.setItem(DRAFT_KEY, JSON.stringify(formValues));
+                const currentData = getValues();
+                localStorage.setItem(DRAFT_KEY, JSON.stringify(currentData));
             } catch (e) {
                 console.error("Failed to save draft", e);
             }
@@ -79,7 +82,7 @@ export default function ManualPublishPage() {
     return () => {
         if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
     };
-  }, [formValues, isDirty]);
+  }, [formValues, isDirty, getValues]);
 
   // Restore draft logic
   useEffect(() => {
@@ -203,7 +206,7 @@ export default function ManualPublishPage() {
     const result = await createManualArticleAction({
       ...data,
       status, // Pass the status to the action
-      keyTakeaways: takeaways.length > 0 ? takeaways.map(t => ({value: t.value})) : undefined,
+      keyTakeaways: takeaways.length > 0 ? takeaways.map(t => t.value) : undefined,
       image: previewImage
     });
 
@@ -227,12 +230,13 @@ export default function ManualPublishPage() {
   };
 
   const getFullArticleHtml = useCallback(() => {
-    const takeawaysHtml = (takeawaysValue || [])
+    const currentValues = getValues();
+    const takeawaysHtml = (currentValues.keyTakeaways || [])
       .map(t => t.value ? `<li>${t.value}</li>` : '')
       .join('');
     
-    return `${contentValue}<h2>Key Takeaways</h2><ul>${takeawaysHtml}</ul><h2>Conclusion</h2>${conclusionValue}`;
-  }, [contentValue, takeawaysValue, conclusionValue]);
+    return `${currentValues.content}<h2>Key Takeaways</h2><ul>${takeawaysHtml}</ul><h2>Conclusion</h2>${currentValues.conclusion}`;
+  }, [getValues]);
   
 
   return (
