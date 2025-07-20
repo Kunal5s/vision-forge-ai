@@ -16,11 +16,9 @@ const CategoryNavBar = () => {
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
-    const filterablePages = ['/blog', '/stories'];
-    const isFilterablePage = filterablePages.includes(pathname);
+    const isFilterablePage = ['/blog', '/stories'].includes(pathname);
     const currentCategorySlug = searchParams.get('category');
     
-    // Remove "Featured" category from the navigation
     const categoriesToShow = Object.entries(categorySlugMap).filter(([slug]) => slug !== 'featured');
 
     const getLinkHref = (slug: string) => {
@@ -41,7 +39,7 @@ const CategoryNavBar = () => {
       <nav className="border-b bg-background">
         <div className="container mx-auto px-4">
           <ScrollArea className="w-full whitespace-nowrap">
-            <div className="flex w-max space-x-2 py-3 justify-start md:w-full md:justify-center">
+            <div className="flex w-max space-x-2 py-3 justify-start md:justify-center">
                 {categoriesToShow.map(([slug, name]) => {
                      const isActive = isFilterablePage ? currentCategorySlug === slug : pathname === `/${slug}`;
                      return (
@@ -83,17 +81,18 @@ export function Header() {
     router.push('/admin/login');
   }
   
-  const headerHeightClass = isAdminRoute ? "pt-16" : "pt-[124px]";
+  const headerHeightClass = isAdminRoute ? "h-16" : "h-[124px]";
+  const spacerHeightClass = isAdminRoute ? "pt-16" : "pt-[124px]";
 
   if (!isClient) {
     return (
-       <header className={cn("fixed top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60", isAdminRoute ? "h-16" : "h-[124px]")} />
+       <header className={cn("fixed top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60", headerHeightClass)} />
     );
   }
 
   return (
     <>
-      <header className="fixed top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+      <header className={cn("fixed top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b", headerHeightClass)}>
         <div>
             <div className={cn("container mx-auto flex items-center justify-between px-4 h-16")}>
                 <Link href="/" className="flex flex-shrink-0 items-center gap-2">
@@ -123,7 +122,7 @@ export function Header() {
         {!isAdminRoute && <CategoryNavBar />}
       </header>
       {/* This div acts as a spacer to push content below the fixed header */}
-      <div className={headerHeightClass} />
+      <div className={spacerHeightClass} />
     </>
   );
 }
