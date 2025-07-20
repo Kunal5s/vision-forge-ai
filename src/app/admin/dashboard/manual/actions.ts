@@ -1,15 +1,17 @@
 
 'use server';
 
-import { getAllArticlesAdmin, Article } from '@/lib/articles';
+import { type Article, ArticleSchema as ArticleValidationSchema, ArticleContentBlock } from '@/lib/types';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { saveUpdatedArticles } from '../create/actions'; // Import the universal save function
+import { saveUpdatedArticles, getAllArticlesAdmin } from '@/lib/articles'; // Import the universal save function
 import { redirect } from 'next/navigation';
 import { JSDOM } from 'jsdom';
+import { categorySlugMap } from '@/lib/constants';
+import { ManualArticleSchema } from '@/lib/types';
 
 function markdownToHtml(markdown: string): string {
-    // This function handles basic markdown conversions.
+    if (!markdown) return '';
     let html = markdown
         .replace(/^###### (.*$)/gim, '<h6>$1</h6>')
         .replace(/^##### (.*$)/gim, '<h5>$1</h5>')
@@ -27,21 +29,18 @@ function markdownToHtml(markdown: string): string {
         .replace(/^\s*\d+\.\s+/gim, '<li>')
         .replace(/\n/g, '<br>');
 
-    // Wrap list items in <ul> or <ol>
-    html = html.replace(/(<li>.*?<\/li>)/gs, '<ul>$1</ul>').replace(/<\/ul>\s*<ul>/g, ''); // Basic list wrapping
+    html = html.replace(/(<li>.*?<\/li>)/gs, '<ul>$1</ul>').replace(/<\/ul>\s*<ul>/g, ''); 
 
     return html;
 }
 
-// Helper function to parse HTML into article content blocks, now with formatting
-function htmlToArticleContent(html: string): Article['articleContent'] {
+function htmlToArticleContent(html: string): ArticleContentBlock[] {
   if (typeof window !== 'undefined') {
     return []; 
   }
-    // Server-side parsing
     const dom = new JSDOM(html);
     const document = dom.window.document;
-    const content: Article['articleContent'] = [];
+    const content: ArticleContentBlock[] = [];
     document.body.childNodes.forEach(node => {
       if (node.nodeType === dom.window.Node.ELEMENT_NODE) {
         const element = node as HTMLElement;
@@ -50,12 +49,12 @@ function htmlToArticleContent(html: string): Article['articleContent'] {
         if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'blockquote'].includes(tagName)) {
            const innerHTML = element.innerHTML.trim();
            if (innerHTML) {
-             content.push({ type: 'p', content: element.outerHTML }); // Save wrapper tag
+             content.push({ type: 'p', content: element.outerHTML, alt: '' }); // Save wrapper tag
            }
         } else if (tagName === 'img' && element.hasAttribute('src')) {
            content.push({ type: 'img', content: element.getAttribute('src')!, alt: element.getAttribute('alt') || '' });
         } else if (tagName === 'table') {
-           content.push({ type: 'p', content: element.outerHTML });
+           content.push({ type: 'p', content: element.outerHTML, alt: '' });
         }
       }
     });
@@ -66,22 +65,17 @@ export async function addImagesToArticleAction(content: string, imageCount: numb
     try {
         const dom = new JSDOM(`<body>${content}</body>`);
         const document = dom.window.document;
-
-        // Find all potential insertion points (after H2, H3, or P tags)
         const insertionPoints = Array.from(document.querySelectorAll('h2, h3, p'));
 
-        // Remove existing AI-generated images to avoid duplicates on re-runs
         document.querySelectorAll('img[src*="pollinations.ai"]').forEach(img => img.remove());
         
-        // Filter out very short paragraphs and get the best candidates
         const validInsertionPoints = insertionPoints.filter(h => h.textContent && h.textContent.trim().split(' ').length > 5);
         
         const numImagesToAdd = Math.min(imageCount, validInsertionPoints.length);
         if (numImagesToAdd === 0) {
-            return { success: false, error: "No suitable locations found in the article to add images. Try adding more headings or longer paragraphs." };
+            return { success: false, error: "No suitable locations found to add images. Try adding more headings or longer paragraphs." };
         }
         
-        // Distribute images evenly among the best candidate locations
         const step = Math.max(1, Math.floor(validInsertionPoints.length / numImagesToAdd));
 
         for (let i = 0; i < numImagesToAdd; i++) {
@@ -91,7 +85,6 @@ export async function addImagesToArticleAction(content: string, imageCount: numb
 
             if (topic) {
                 const seed = Math.floor(Math.random() * 1_000_000);
-                // Create a more descriptive prompt for better images
                 const finalPrompt = `${topic.substring(0, 100)}, relevant photography, high detail, cinematic`;
                 const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=800&height=450&seed=${seed}&nologo=true`;
 
@@ -99,7 +92,6 @@ export async function addImagesToArticleAction(content: string, imageCount: numb
                 img.src = pollinationsUrl;
                 img.alt = topic;
                 
-                // Insert the image after the chosen insertion point
                 insertionPoint.parentNode?.insertBefore(img, insertionPoint.nextSibling);
             }
         }
@@ -110,19 +102,6 @@ export async function addImagesToArticleAction(content: string, imageCount: numb
         return { success: false, error: "Could not process article content to add images." };
     }
 }
-
-
-const ManualArticleSchema = z.object({
-  title: z.string().min(5, 'Title must be at least 5 characters long.'),
-  slug: z.string().min(5, 'Slug must be at least 5 characters long.').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and dashes.'),
-  category: z.string().min(1, 'Please select a category.'),
-  status: z.enum(['published', 'draft']),
-  summary: z.string().optional(),
-  content: z.string().min(50, 'Content must be at least 50 characters long.'),
-  keyTakeaways: z.array(z.object({ value: z.string() })).optional(),
-  conclusion: z.string().min(20, 'Conclusion must be at least 20 characters long.'),
-  image: z.string().url('A valid image URL is required.'),
-});
 
 type CreateArticleResult = {
   success: boolean;
@@ -144,14 +123,14 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
   const { title, slug, category, status, summary, content, keyTakeaways, conclusion, image } = validatedFields.data;
 
   try {
-    const articleContent = htmlToArticleContent(content);
-    
-    // Create a new article object
-    const newArticle: Article = {
+    const formattedContentHtml = content; // Assuming content is already HTML from RichTextEditor
+    const articleContent = htmlToArticleContent(formattedContentHtml);
+
+    const newArticleData: Article = {
       title,
       slug,
       category,
-      status, // Save the status
+      status,
       image,
       dataAiHint: "manual content upload",
       publishedDate: new Date().toISOString(),
@@ -160,18 +139,23 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
       keyTakeaways: keyTakeaways ? keyTakeaways.map(k => k.value).filter(v => v && v.trim() !== '') : [],
       conclusion: conclusion || '',
     };
+
+    const finalValidatedArticle = ArticleValidationSchema.safeParse(newArticleData);
+
+    if (!finalValidatedArticle.success) {
+      console.error("Final Validation Failed after processing:", finalValidatedArticle.error.flatten());
+      return { success: false, error: "Failed to process article data correctly." };
+    }
     
     const existingArticles = await getAllArticlesAdmin(category);
-    const updatedArticles = [newArticle, ...existingArticles];
+    const updatedArticles = [finalValidatedArticle.data, ...existingArticles];
     
-    // Save the article to GitHub
-    await saveUpdatedArticles(category, updatedArticles, `feat: ✨ Add new manual article "${newArticle.title}"`);
+    await saveUpdatedArticles(category, updatedArticles, `feat: ✨ Add new manual article "${newArticleData.title}"`);
 
-    // Revalidate paths to show new content immediately
     revalidatePath('/');
-    const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category) || category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     revalidatePath(`/${categorySlug}`);
-    revalidatePath(`/${categorySlug}/${newArticle.slug}`);
+    revalidatePath(`/${categorySlug}/${newArticleData.slug}`);
     
   } catch (error) {
     console.error('Error in createManualArticleAction:', error);

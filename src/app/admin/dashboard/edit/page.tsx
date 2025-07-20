@@ -1,10 +1,11 @@
 
-import { getAllArticlesAdmin, type Article } from '@/lib/articles';
+import { getAllArticlesAdmin } from '@/lib/articles';
+import { type Article } from '@/lib/types';
 import { categorySlugMap } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import EditArticlesClientPage from './EditArticlesClientPage';
+import EditArticlesClientPage from '@/components/vision-forge/EditArticlesClientPage';
 
 // This function fetches all articles from all known categories.
 async function getAllArticles(): Promise<{ category: string, articles: Article[] }[]> {

@@ -74,7 +74,7 @@ export default function ManualPublishPage() {
 
   // Auto-saving logic to GitHub
   useEffect(() => {
-    const handleAutoSave = async () => {
+    const performAutoSave = async () => {
       if (isDirty && DRAFT_SLUG) {
         setAutoSaveStatus('saving');
         const currentData = getValues();
@@ -83,11 +83,11 @@ export default function ManualPublishPage() {
           slug: DRAFT_SLUG,
           category: currentData.category || 'Featured',
           status: 'draft',
-          image: previewImage || 'https://placehold.co/600x400.png',
+          image: currentData.image || 'https://placehold.co/600x400.png',
           dataAiHint: 'draft content',
           publishedDate: new Date().toISOString(),
           summary: currentData.summary,
-          articleContent: [{ type: 'p', content: currentData.content }],
+          articleContent: [{ type: 'p', content: currentData.content, alt: '' }],
           keyTakeaways: (currentData.keyTakeaways || []).map(t => t.value),
           conclusion: currentData.conclusion,
         };
@@ -99,13 +99,13 @@ export default function ManualPublishPage() {
     
     if (isDirty && DRAFT_SLUG) {
       if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
-      debounceTimeoutRef.current = setTimeout(handleAutoSave, 10000);
+      debounceTimeoutRef.current = setTimeout(performAutoSave, 10000); // Auto-save every 10 seconds
     }
     
     return () => {
       if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
     };
-  }, [formValues, isDirty, DRAFT_SLUG, getValues, previewImage]);
+  }, [formValues, isDirty, DRAFT_SLUG, getValues]);
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -114,9 +114,6 @@ export default function ManualPublishPage() {
 
   const titleValue = watch('title');
   const categoryValue = watch('category');
-  const contentValue = watch('content');
-  const conclusionValue = watch('conclusion');
-  const takeawaysValue = watch('keyTakeaways');
 
   const generateSlug = useCallback((title: string) => {
     return title
@@ -138,31 +135,24 @@ export default function ManualPublishPage() {
   const fetchPreviewImage = useCallback(async (topic: string) => {
     if (!topic) return;
     setIsGeneratingImage(true);
+    toast({ title: "Generating Image...", description: "Please wait while the AI creates a preview."});
     try {
         const seed = Math.floor(Math.random() * 1_000_000);
         const finalPrompt = `${topic}, digital art, high detail`;
         const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=600&height=400&seed=${seed}&nologo=true`;
         setPreviewImage(pollinationsUrl);
-        setValue('image', pollinationsUrl, { shouldValidate: true });
+        setValue('image', pollinationsUrl, { shouldValidate: true, shouldDirty: true });
+        toast({ title: "Image Generated!", description: "A preview image has been created."});
     } catch (e) {
         console.error("Failed to generate preview image", e);
         const placeholder = 'https://placehold.co/600x400.png';
         setPreviewImage(placeholder);
-        setValue('image', placeholder, { shouldValidate: true });
+        setValue('image', placeholder, { shouldValidate: true, shouldDirty: true });
+        toast({ title: "Error", description: "Could not generate an image.", variant: "destructive" });
     } finally {
         setIsGeneratingImage(false);
     }
-  }, [setValue]);
-
-  useEffect(() => {
-    if (titleValue) {
-        const debounceTimer = setTimeout(() => {
-            fetchPreviewImage(titleValue);
-        }, 1500);
-        
-        return () => clearTimeout(debounceTimer);
-    }
-  }, [titleValue, fetchPreviewImage]);
+  }, [setValue, toast]);
 
   const addImagesToArticle = async () => {
     setIsAddingImagesToArticle(true);
@@ -202,10 +192,10 @@ export default function ManualPublishPage() {
       description: `Saving "${data.title}" to GitHub. Please wait.`,
     });
 
-    if (!previewImage) {
+    if (!data.image) {
         toast({
             title: 'Error',
-            description: 'Please wait for the preview image to load before publishing.',
+            description: 'Please generate or provide a featured image URL before publishing.',
             variant: 'destructive',
         });
         setIsPublishing(false);
@@ -218,8 +208,8 @@ export default function ManualPublishPage() {
     const result = await createManualArticleAction({
       ...data,
       status, // Pass the status to the action
-      keyTakeaways: takeaways.length > 0 ? takeaways.map(t => t.value) : undefined,
-      image: previewImage
+      keyTakeaways: takeaways.length > 0 ? takeaways.map(t => t.value ? { value: t.value } : { value: '' }) : [],
+      image: data.image
     });
 
     if (result.success) {
@@ -254,10 +244,10 @@ export default function ManualPublishPage() {
        <ArticlePreview 
         isOpen={isPreviewOpen}
         onOpenChange={setIsPreviewOpen}
-        title={titleValue}
+        title={watch('title')}
         content={getFullArticleHtml()}
         category={categoryValue}
-        image={previewImage || ''}
+        image={previewImage || watch('image') || ''}
       />
       <div className="mb-8">
         <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
@@ -274,7 +264,7 @@ export default function ManualPublishPage() {
                 <CardHeader>
                     <CardTitle className="text-2xl">Publish a New Article Manually</CardTitle>
                     <CardDescription>
-                    Write your article below. Drafts are auto-saved to GitHub every 10 seconds.
+                    Write your article below. Drafts are auto-saved to GitHub every 10 seconds once a slug is generated.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -419,15 +409,15 @@ export default function ManualPublishPage() {
                                   <Loader2 className="mx-auto h-10 w-10 animate-spin" />
                                   <p className="text-sm mt-2">Generating image...</p>
                                 </div>
-                            ) : previewImage ? (
+                            ) : previewImage || watch('image') ? (
                                 <Image 
-                                  src={previewImage} 
+                                  src={previewImage || watch('image')} 
                                   alt="Article preview"
                                   width={600}
                                   height={400}
                                   className="object-cover"
                                   data-ai-hint="manual content feature"
-                                  key={previewImage}
+                                  key={previewImage || watch('image')}
                                 />
                             ) : (
                                 <div className="text-center text-muted-foreground p-4">
@@ -436,6 +426,17 @@ export default function ManualPublishPage() {
                                 </div>
                             )}
                         </div>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            className="w-full mt-2"
+                            onClick={() => fetchPreviewImage(titleValue)}
+                            disabled={isGeneratingImage || !titleValue}
+                        >
+                            {isGeneratingImage ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ImageIcon className="mr-2 h-4 w-4" />}
+                            Generate Image from Title
+                        </Button>
+                         {errors.image && <p className="text-sm text-destructive mt-1">{errors.image.message}</p>}
                     </div>
                     
                     <div className="space-y-2 border-t pt-4">
@@ -472,10 +473,10 @@ export default function ManualPublishPage() {
 
                     <div className="space-y-2 border-t pt-4">
                       <Label>Actions</Label>
-                      <Button onClick={handleSubmit((data) => onSubmit(data, 'published'))} className="w-full" disabled={isPublishing || isSavingDraft || !previewImage || isGeneratingImage}>
+                      <Button onClick={() => handleSubmit((data) => onSubmit(data, 'published'))()} className="w-full" disabled={isPublishing || isSavingDraft || isGeneratingImage}>
                         {isPublishing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Publishing...</> : <><FileSignature className="mr-2 h-4 w-4" /> Publish Article</>}
                       </Button>
-                       <Button onClick={handleSubmit((data) => onSubmit(data, 'draft'))} variant="secondary" className="w-full" disabled={isPublishing || isSavingDraft || !previewImage || isGeneratingImage}>
+                       <Button onClick={() => handleSubmit((data) => onSubmit(data, 'draft'))()} variant="secondary" className="w-full" disabled={isPublishing || isSavingDraft || isGeneratingImage}>
                         {isSavingDraft ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : <><Save className="mr-2 h-4 w-4" /> Save as Draft</>}
                       </Button>
                       <Button type="button" variant="outline" className="w-full" onClick={() => setIsPreviewOpen(true)}>

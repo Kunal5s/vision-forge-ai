@@ -2,14 +2,11 @@
 'use server';
 
 import { z } from 'zod';
-import { promises as fs } from 'fs';
-import path from 'path';
 import { revalidatePath } from 'next/cache';
 import { AuthorSchema, type AuthorData } from '@/lib/author';
 import { Octokit } from 'octokit';
-import { getPrimaryBranch, getShaForFile } from '../create/actions'; // Reuse helper functions
+import { getPrimaryBranch, getShaForFile } from '@/lib/articles'; // Reuse helper functions
 
-const authorFilePath = path.join(process.cwd(), 'src/lib/author.json');
 const authorRepoPath = 'src/lib/author.json'; // Path in the repository
 
 // Action to get the current author data by fetching it directly from GitHub

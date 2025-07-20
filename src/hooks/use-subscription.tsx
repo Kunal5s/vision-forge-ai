@@ -2,7 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { type Subscription, type Plan, type Credits, SubscriptionSchema } from '@/types';
+import { type Subscription, type Plan, type Credits, SubscriptionSchema } from '@/lib/types';
 import { useToast } from './use-toast';
 
 const PLAN_CREDITS: Record<Plan, Credits> = {

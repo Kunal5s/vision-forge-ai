@@ -89,33 +89,30 @@ export default function EditArticleForm({ article, categoryName, categorySlug }:
     }
   });
 
-  const formValues = watch();
+  const formValues = watch(); // Watch all form values
   const wordCount = watch('content').replace(/<[^>]*>?/gm, '').split(/\s+/).filter(Boolean).length;
 
   // Auto-saving logic
   useEffect(() => {
-    const handleAutoSave = async () => {
-      if (isDirty) {
-        setAutoSaveStatus('saving');
-        const currentData = getValues();
-        const result = await autoSaveArticleDraft({
-          ...article,
-          title: currentData.title,
-          slug: currentData.slug,
-          status: currentData.status,
-          summary: currentData.summary,
-          articleContent: [{ type: 'p', content: currentData.content }], // Simplified for draft
-          keyTakeaways: (currentData.keyTakeaways || []).map(t => t.value),
-          conclusion: currentData.conclusion,
-          publishedDate: article.publishedDate,
-        }, categoryName);
-        
-        if (result.success) {
-          setAutoSaveStatus('saved');
-        } else {
-          setAutoSaveStatus('error');
-          console.error("Auto-save failed:", result.error);
-        }
+    const performAutoSave = async () => {
+      setAutoSaveStatus('saving');
+      const currentData = getValues();
+      const result = await autoSaveArticleDraft({
+        ...article,
+        title: currentData.title,
+        slug: currentData.slug,
+        status: currentData.status,
+        summary: currentData.summary,
+        articleContent: [{ type: 'p', content: currentData.content, alt:'' }], // Simplified for draft
+        keyTakeaways: (currentData.keyTakeaways || []).map(t => t.value),
+        conclusion: currentData.conclusion,
+      }, categoryName);
+      
+      if (result.success) {
+        setAutoSaveStatus('saved');
+      } else {
+        setAutoSaveStatus('error');
+        console.error("Auto-save failed:", result.error);
       }
     };
     
@@ -124,7 +121,7 @@ export default function EditArticleForm({ article, categoryName, categorySlug }:
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
       }
-      debounceTimeoutRef.current = setTimeout(handleAutoSave, 10000); // Auto-save every 10 seconds
+      debounceTimeoutRef.current = setTimeout(performAutoSave, 10000); // Auto-save every 10 seconds
     }
     
     return () => {
@@ -132,7 +129,7 @@ export default function EditArticleForm({ article, categoryName, categorySlug }:
         clearTimeout(debounceTimeoutRef.current);
       }
     };
-  }, [formValues, isDirty, getValues, article, categoryName]);
+  }, [formValues, isDirty, getValues, article, categoryName, reset]); // Depends on watched formValues
 
 
   const { fields, append, remove } = useFieldArray({

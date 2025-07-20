@@ -2,16 +2,14 @@
 'use server';
 
 import { generateArticleForTopic } from '@/ai/article-generator';
-import { getAllArticlesAdmin, Article } from '@/lib/articles';
+import { type Article, ArticleContentBlock, ArticleSchema as ArticleValidationSchema, ManualArticleSchema as EditSchema } from '@/lib/types';
 import { z } from 'zod';
-import { Octokit } from 'octokit';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { JSDOM } from 'jsdom';
-import OpenAI from 'openai';
 import { categorySlugMap } from '@/lib/constants';
+import { getAllArticlesAdmin, saveUpdatedArticles } from '@/lib/articles';
 
-// Schema for the final article generation submission
 const ArticleFormSchema = z.object({
   topic: z.string().min(1, 'Please enter a topic for the article.'),
   category: z.string().min(1, 'Please select a category.'),
@@ -32,6 +30,39 @@ type GenerateArticleResult = {
   title?: string;
   error?: string;
 };
+
+// This function converts markdown-style text to basic HTML for headings, bold, and italic.
+// It's a simplified parser intended for the auto-formatting feature.
+function markdownToHtml(markdown: string): string {
+    if (!markdown) return '';
+
+    // Replace headings (e.g., ## My Heading -> <h2>My Heading</h2>)
+    let html = markdown
+        .replace(/^###### (.*$)/gim, '<h6>$1</h6>')
+        .replace(/^##### (.*$)/gim, '<h5>$1</h5>')
+        .replace(/^#### (.*$)/gim, '<h4>$1</h4>')
+        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+        .replace(/^# (.*$)/gim, '<h1>$1</h1>');
+
+    // Replace bold (**text** or __text__) and italic (*text* or _text_)
+    html = html
+        .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
+        .replace(/__(.*?)__/gim, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/gim, '<em>$1</em>')
+        .replace(/_(.*?)_/gim, '<em>$1</em>');
+    
+    // Convert paragraph line breaks to <p> tags
+    html = html.split('\n\n').map(p => p.trim() ? `<p>${p.trim()}</p>` : '').join('');
+    
+    // A simple fix to avoid wrapping existing block-level elements in <p>
+    html = html.replace(/<p><(h[1-6]|ul|ol|li|blockquote|table)/g, '<$1');
+    html = html.replace(/<\/(h[1-6]|ul|ol|li|blockquote|table)><\/p>/g, '</$1>');
+
+
+    return html;
+}
+
 
 export async function generateArticleAction(data: unknown): Promise<GenerateArticleResult> {
   const validatedFields = ArticleFormSchema.safeParse(data);
@@ -90,88 +121,29 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
   }
 }
 
-export async function getShaForFile(octokit: Octokit, owner: string, repo: string, path: string, branch: string): Promise<string | undefined> {
-    try {
-        const { data } = await octokit.rest.repos.getContent({
-            owner,
-            repo,
-            path,
-            ref: branch,
-        });
-        if (Array.isArray(data) || !('sha' in data)) {
-            return undefined;
-        }
-        return data.sha;
-    } catch (error: any) {
-        if (error.status === 404) {
-            return undefined;
-        }
-        throw error;
-    }
-}
-
-const EditSchema = z.object({
-    title: z.string().min(1, "Title cannot be empty."),
-    slug: z.string().min(1, "Slug cannot be empty."),
-    summary: z.string().optional(),
-    content: z.string(), 
-    keyTakeaways: z.array(z.string()).optional(),
-    conclusion: z.string(),
-    originalSlug: z.string(),
-    category: z.string(),
-    status: z.enum(['published', 'draft']),
-});
-
-function markdownToHtml(markdown: string): string {
-    // This function handles basic markdown conversions.
-    let html = markdown
-        .replace(/^###### (.*$)/gim, '<h6>$1</h6>')
-        .replace(/^##### (.*$)/gim, '<h5>$1</h5>')
-        .replace(/^#### (.*$)/gim, '<h4>$1</h4>')
-        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-        .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
-        .replace(/__(.*?)__/gim, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/gim, '<em>$1</em>')
-        .replace(/_(.*?)_/gim, '<em>$1</em>')
-        .replace(/`([^`]+)`/gim, '<code>$1</code>')
-        .replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2">$1</a>')
-        .replace(/^\s*-\s+/gim, '<li>')
-        .replace(/^\s*\d+\.\s+/gim, '<li>')
-        .replace(/\n/g, '<br>');
-
-    // Wrap list items in <ul> or <ol>
-    html = html.replace(/(<li>.*?<\/li>)/gs, '<ul>$1</ul>').replace(/<\/ul>\s*<ul>/g, ''); // Basic list wrapping
-
-    return html;
-}
-
-function htmlToArticleContent(html: string): Article['articleContent'] {
-    if (typeof window !== 'undefined') {
-        // This part is for client-side, but might not be reached if we only run on server
+function htmlToArticleContent(html: string): ArticleContentBlock[] {
+    if (typeof window !== 'undefined' || !html) {
         return [];
     }
 
-    // Server-side parsing with JSDOM
     const dom = new JSDOM(html);
     const document = dom.window.document;
-    const content: Article['articleContent'] = [];
+    const content: ArticleContentBlock[] = [];
     
     document.body.childNodes.forEach(node => {
         if (node.nodeType === dom.window.Node.ELEMENT_NODE) {
             const element = node as HTMLElement;
-            const tagName = element.tagName.toLowerCase();
+            // Use the outerHTML to preserve the element itself (e.g., <h2>...</h2>)
+            const tagName = element.tagName.toLowerCase() as ArticleContentBlock['type'];
 
-            if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'blockquote'].includes(tagName)) {
-                const innerHTML = element.innerHTML.trim();
-                if (innerHTML) {
-                    content.push({ type: 'p', content: element.outerHTML }); // Save wrapper tag
+            if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'blockquote', 'table'].includes(tagName)) {
+                const outerHTML = element.outerHTML.trim();
+                if (outerHTML) {
+                    // Store the block with its wrapper tag
+                    content.push({ type: tagName, content: outerHTML, alt:'' });
                 }
             } else if (tagName === 'img' && element.hasAttribute('src')) {
                 content.push({ type: 'img', content: element.getAttribute('src')!, alt: element.getAttribute('alt') || '' });
-            } else if (tagName === 'table') {
-                content.push({ type: 'p', content: element.outerHTML });
             }
         }
     });
@@ -183,7 +155,7 @@ export async function editArticleAction(data: unknown) {
   if (!validatedFields.success) {
     return { success: false, error: "Invalid data." };
   }
-  const { title, slug, summary, content, keyTakeaways, conclusion, originalSlug, category, status } = validatedFields.data;
+  const { title, slug, summary, content, keyTakeaways, conclusion, originalSlug, category, status, image } = validatedFields.data;
 
   try {
     const articles = await getAllArticlesAdmin(category);
@@ -193,25 +165,33 @@ export async function editArticleAction(data: unknown) {
       throw new Error("Article not found.");
     }
     
-    // We assume the content is already HTML from the smart editor
-    const newArticleContent = htmlToArticleContent(content);
+    // Auto-format markdown to HTML on save
+    const formattedContent = markdownToHtml(content);
+    const newArticleContent = htmlToArticleContent(formattedContent);
 
-    // Get the existing article to preserve its properties like image
     const existingArticle = articles[articleIndex];
 
-    const updatedArticle: Article = {
+    const updatedArticleData: Article = {
       ...existingArticle,
       title,
       slug,
-      summary,
-      status, // Save the new status
-      articleContent: newArticleContent,
-      keyTakeaways: keyTakeaways || [],
+      summary: summary || '',
+      status,
+      image,
+      articleContent: newArticleContent.length > 0 ? newArticleContent : existingArticle.articleContent,
+      keyTakeaways: (keyTakeaways || []).map(k => k.value).filter(v => v && v.trim() !== ''),
       conclusion: conclusion,
-      publishedDate: new Date().toISOString(), // Update the date on every edit
+      publishedDate: new Date().toISOString(),
     };
+    
+    const finalValidatedArticle = ArticleValidationSchema.safeParse(updatedArticleData);
+    if (!finalValidatedArticle.success) {
+      console.error("Final validation failed after edit processing:", finalValidatedArticle.error.flatten());
+      return { success: false, error: "Failed to process edited article data correctly." };
+    }
 
-    articles[articleIndex] = updatedArticle;
+
+    articles[articleIndex] = finalValidatedArticle.data;
 
     await saveUpdatedArticles(category, articles, `feat: ✏️ Edit article "${title}"`);
     
@@ -219,7 +199,7 @@ export async function editArticleAction(data: unknown) {
     const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category) || category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     revalidatePath(`/${categorySlug}`);
     revalidatePath(`/${categorySlug}/${slug}`);
-    revalidatePath('/author/kunal-sonpitre'); // Revalidate author page
+    revalidatePath('/author/kunal-sonpitre');
 
   } catch (e: any) {
     return { success: false, error: e.message };
@@ -242,64 +222,11 @@ export async function deleteArticleAction(category: string, slug: string) {
         revalidatePath(`/`);
         const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category) || category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
         revalidatePath(`/${categorySlug}`);
-        revalidatePath('/author/kunal-sonpitre'); // Revalidate author page
+        revalidatePath('/author/kunal-sonpitre');
 
     } catch (e: any) {
         return { success: false, error: e.message };
     }
 
     redirect('/admin/dashboard/edit');
-}
-
-export async function getPrimaryBranch(octokit: Octokit, owner: string, repo: string): Promise<string> {
-    if (process.env.GITHUB_BRANCH) {
-        return process.env.GITHUB_BRANCH;
-    }
-    try {
-        await octokit.rest.repos.getBranch({ owner, repo, branch: 'main' });
-        return 'main';
-    } catch (error: any) {
-        if (error.status === 404) {
-            try {
-                await octokit.rest.repos.getBranch({ owner, repo, branch: 'master' });
-                return 'master';
-            } catch (masterError) {
-                 console.error("Could not find 'main' or 'master' branch.", masterError);
-                 throw new Error("Could not determine primary branch. Neither 'main' nor 'master' found.");
-            }
-        }
-        throw error;
-    }
-}
-
-export async function saveUpdatedArticles(category: string, articles: Article[], commitMessage: string) {
-    const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category) || category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    const repoPath = `src/articles/${categorySlug}.json`;
-    const fileContent = JSON.stringify(articles, null, 2);
-
-    const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = process.env;
-    if (!GITHUB_TOKEN || !GITHUB_REPO_OWNER || !GITHUB_REPO_NAME) {
-        console.error("GitHub credentials are not configured on the server. Cannot save article.");
-        throw new Error("GitHub credentials not configured. Please check Vercel environment variables. Make sure GITHUB_TOKEN, GITHUB_REPO_OWNER, and GITHUB_REPO_NAME are all set.");
-    }
-
-    try {
-        const octokit = new Octokit({ auth: GITHUB_TOKEN });
-        const branch = await getPrimaryBranch(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME);
-        const fileSha = await getShaForFile(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME, repoPath, branch);
-        
-        await octokit.rest.repos.createOrUpdateFileContents({
-            owner: GITHUB_REPO_OWNER,
-            repo: GITHUB_REPO_NAME,
-            path: repoPath,
-            message: commitMessage,
-            content: Buffer.from(fileContent).toString('base64'),
-            sha: fileSha,
-            branch: branch,
-        });
-        console.log(`Successfully committed changes for "${category}" to GitHub on branch "${branch}".`);
-    } catch (error) {
-        console.error("Failed to commit changes to GitHub.", error);
-        throw new Error("Failed to save article to GitHub. Please check your credentials (token, owner, repo name) and repository permissions.");
-    }
 }

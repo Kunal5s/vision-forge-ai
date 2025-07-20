@@ -2,17 +2,28 @@
 'use server';
 
 import { z } from 'zod';
-import { type Article } from '@/lib/articles';
+import { type Article, ArticleSchema } from '@/lib/types';
 import { Octokit } from 'octokit';
-import { getPrimaryBranch, getShaForFile } from '../../../create/actions'; // Reuse helper functions
+import { getPrimaryBranch, getShaForFile } from '@/lib/articles'; // Reuse helper functions
 import { categorySlugMap } from '@/lib/constants';
+import { revalidatePath } from 'next/cache';
+import { addImagesToArticleAction as serverAddImages } from '../../../manual/actions';
+
 
 // Fetches the specific article data, including draft content if it exists
 export async function getArticleForEdit(category: string, slug: string): Promise<Article | undefined> {
-    const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
-    const owner = process.env.GITHUB_REPO_OWNER!;
-    const repo = process.env.GITHUB_REPO_NAME!;
-    const branch = 'autosave-drafts'; // Always check the drafts branch first
+    const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = process.env;
+
+    if (!GITHUB_TOKEN || !GITHUB_REPO_OWNER || !GITHUB_REPO_NAME) {
+        console.warn("GitHub credentials not configured. Cannot fetch articles for edit.");
+        // Fallback or error handling can be improved here
+        return undefined;
+    }
+    
+    const octokit = new Octokit({ auth: GITHUB_TOKEN });
+    const owner = GITHUB_REPO_OWNER;
+    const repo = GITHUB_REPO_NAME;
+    const draftBranch = 'autosave-drafts'; // Always check the drafts branch first
 
     const draftPath = `src/articles/drafts/${slug}.json`;
     let articleData: Article | undefined;
@@ -23,46 +34,52 @@ export async function getArticleForEdit(category: string, slug: string): Promise
             owner,
             repo,
             path: draftPath,
-            ref: branch,
+            ref: `heads/${draftBranch}`,
         });
-        if ('content' in data) {
+        if ('content' in data && data.content) {
             const fileContent = Buffer.from(data.content, 'base64').toString('utf-8');
             articleData = JSON.parse(fileContent) as Article;
+            console.log(`Loaded draft for "${slug}" from "autosave-drafts" branch.`);
+            return ArticleSchema.parse(articleData);
         }
     } catch (error: any) {
-        // If draft not found (404), proceed to fetch from the main branch.
         if (error.status !== 404) {
             console.error('Error fetching draft from GitHub:', error);
+        } else {
+            console.log(`No draft found for "${slug}" in "autosave-drafts" branch. Checking main branch.`);
         }
     }
 
     // 2. If no draft found, fetch from the main published branch
-    if (!articleData) {
-        const categoryName = Object.entries(categorySlugMap).find(([catSlug]) => catSlug === category)?.[1];
-        if (!categoryName) return undefined;
-        
-        const mainBranch = await getPrimaryBranch(octokit, owner, repo);
-        const articlesPath = `src/articles/${category}.json`;
-        
-        try {
-            const { data } = await octokit.rest.repos.getContent({
-                owner,
-                repo,
-                path: articlesPath,
-                ref: mainBranch,
-            });
-            if ('content' in data) {
-                const fileContent = Buffer.from(data.content, 'base64').toString('utf-8');
-                const articles: Article[] = JSON.parse(fileContent);
-                articleData = articles.find(a => a.slug === slug);
-            }
-        } catch (error) {
-            console.error('Error fetching published article from GitHub:', error);
-            return undefined;
+    const categoryName = Object.entries(categorySlugMap).find(([catSlug]) => catSlug === category)?.[1];
+    if (!categoryName) return undefined;
+    
+    const mainBranch = await getPrimaryBranch(octokit, owner, repo);
+    const articlesPath = `src/articles/${categorySlug}.json`; // Use category slug here
+    
+    try {
+        const { data } = await octokit.rest.repos.getContent({
+            owner,
+            repo,
+            path: articlesPath,
+            ref: mainBranch,
+        });
+        if ('content' in data && data.content) {
+            const fileContent = Buffer.from(data.content, 'base64').toString('utf-8');
+            const articles: Article[] = JSON.parse(fileContent);
+            articleData = articles.find(a => a.slug === slug);
         }
+    } catch (error: any) {
+        if (error.status !== 404) {
+          console.error(`Error fetching published article from GitHub path: ${articlesPath}`, error);
+        }
+        return undefined;
     }
-
-    return articleData;
+    
+    if (articleData) {
+      return ArticleSchema.parse(articleData);
+    }
+    return undefined;
 }
 
 
@@ -102,6 +119,7 @@ export async function autoSaveArticleDraft(draftData: Article, category: string)
                     ref: `refs/heads/${branch}`,
                     sha,
                 });
+                console.log(`Created 'autosave-drafts' branch.`);
             } else {
                 throw error;
             }
@@ -119,9 +137,17 @@ export async function autoSaveArticleDraft(draftData: Article, category: string)
             branch: branch,
         });
 
+        // This revalidation is important if you have a page that lists drafts
+        revalidatePath('/admin/dashboard/edit');
+
         return { success: true };
     } catch (error: any) {
         console.error('Failed to auto-save draft to GitHub:', error);
         return { success: false, error: error.message };
     }
+}
+
+
+export async function addImagesToArticleAction(content: string, imageCount: number = 5): Promise<{success: boolean, content?: string, error?: string}> {
+    return serverAddImages(content, imageCount);
 }
