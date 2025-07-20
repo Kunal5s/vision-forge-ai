@@ -10,6 +10,7 @@ import { Button } from '../ui/button';
 import { logoutAction } from '@/app/admin/login/actions';
 import { useRouter } from 'next/navigation';
 import { categorySlugMap } from '@/lib/constants';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 const CategoryNavBar = () => {
     const pathname = usePathname();
@@ -37,29 +38,32 @@ const CategoryNavBar = () => {
     };
 
     return (
-        <div className="w-full bg-muted border-b border-border/60">
-            <nav className="container mx-auto px-4 py-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                    {categoriesToShow.map(([slug, name]) => {
-                         const isActive = isFilterablePage ? currentCategorySlug === slug : pathname === `/${slug}`;
-                         return (
-                            <Link
-                                key={slug}
-                                href={getLinkHref(slug)}
-                                scroll={false}
-                                className={cn(
-                                    'px-3 py-1.5 text-sm font-medium rounded-md transition-colors whitespace-nowrap',
-                                    'text-foreground/80 bg-background border border-border/80 hover:bg-accent hover:text-accent-foreground',
-                                    isActive && 'bg-accent text-accent-foreground font-semibold border-accent'
-                                )}
-                            >
-                                {name}
-                            </Link>
-                        )
-                    })}
-                </div>
-            </nav>
+      <nav className="border-b bg-background">
+        <div className="container mx-auto px-4">
+          <ScrollArea className="w-full whitespace-nowrap">
+            <div className="flex w-max space-x-4 py-3 md:justify-center md:w-full">
+                {categoriesToShow.map(([slug, name]) => {
+                     const isActive = isFilterablePage ? currentCategorySlug === slug : pathname === `/${slug}`;
+                     return (
+                        <Link
+                            key={slug}
+                            href={getLinkHref(slug)}
+                            scroll={false}
+                            className={cn(
+                                'px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
+                                'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+                                isActive && 'bg-muted text-foreground font-semibold'
+                            )}
+                        >
+                            {name}
+                        </Link>
+                    )
+                })}
+            </div>
+            <ScrollBar orientation="horizontal" className="h-0" />
+          </ScrollArea>
         </div>
+      </nav>
     );
 };
 
@@ -78,38 +82,36 @@ export function Header() {
     await logoutAction();
     router.push('/admin/login');
   }
-
-  // Calculate total header height for consistent layout padding
-  const headerHeightClass = isAdminRoute ? "h-16" : "pt-16";
-  const mainHeaderHeightClass = "h-16";
+  
+  const headerHeightClass = isAdminRoute ? "pt-16" : "pt-[124px]";
 
   if (!isClient) {
     return (
-       <header className={cn("fixed top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60", isAdminRoute ? "h-16" : "h-32")} />
+       <header className={cn("fixed top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60", isAdminRoute ? "h-16" : "h-[124px]")} />
     );
   }
 
   return (
     <>
-      <header className="fixed top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
-        <div className="bg-foreground text-background">
-            <div className={cn("container mx-auto flex items-center justify-between px-4", mainHeaderHeightClass)}>
+      <header className="fixed top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+        <div>
+            <div className={cn("container mx-auto flex items-center justify-between px-4 h-16")}>
                 <Link href="/" className="flex flex-shrink-0 items-center gap-2">
-                <BrainCircuit className="h-7 w-7 text-background" />
-                <span className="text-xl font-bold text-background">
+                <BrainCircuit className="h-7 w-7 text-foreground" />
+                <span className="text-xl font-bold text-foreground">
                     Imagen BrainAi
                 </span>
                 </Link>
                 
                 <div className="flex items-center gap-4">
                     {isAdminRoute ? (
-                    <Button variant="outline" onClick={handleLogout} className="bg-transparent text-background border-background/50 hover:bg-background/10">
+                    <Button variant="outline" onClick={handleLogout}>
                         <LogOut className="mr-2 h-4 w-4" />
                         Logout
                     </Button>
                     ) : (
                     <Link href="/admin/login">
-                        <Button variant="outline" className="bg-transparent text-background border-background/50 hover:bg-background/10">
+                        <Button variant="outline">
                             <LogIn className="mr-2 h-4 w-4" />
                             Admin
                         </Button>
@@ -121,7 +123,7 @@ export function Header() {
         {!isAdminRoute && <CategoryNavBar />}
       </header>
       {/* This div acts as a spacer to push content below the fixed header */}
-      <div className={isAdminRoute ? "pt-16" : "pt-[124px]"} />
+      <div className={headerHeightClass} />
     </>
   );
 }
