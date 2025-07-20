@@ -9,11 +9,33 @@ import { saveUpdatedArticles } from '../create/actions'; // Import the universal
 import { redirect } from 'next/navigation';
 import { JSDOM } from 'jsdom';
 
+function markdownToHtml(markdown: string): string {
+    let html = markdown
+        .replace(/^###### (.*$)/gim, '<h6>$1</h6>')
+        .replace(/^##### (.*$)/gim, '<h5>$1</h5>')
+        .replace(/^#### (.*$)/gim, '<h4>$1</h4>')
+        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+        .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
+        .replace(/__(.*)__/gim, '<strong>$1</strong>')
+        .replace(/\*(.*)\*/gim, '<em>$1</em>')
+        .replace(/_(.*)_/gim, '<em>$1</em>')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n/g, '<br>');
+    return `<p>${html}</p>`;
+}
+
 // Helper function to parse HTML into article content blocks, now with formatting
 function htmlToArticleContent(html: string): Article['articleContent'] {
-  if (typeof window === 'undefined') {
+    // Process markdown-style headings first
+    const processedHtml = markdownToHtml(html);
+
+  if (typeof window !== 'undefined') {
+    return []; 
+  }
     // Server-side parsing
-    const dom = new JSDOM(html);
+    const dom = new JSDOM(processedHtml);
     const document = dom.window.document;
     const content: Article['articleContent'] = [];
     document.body.childNodes.forEach(node => {
@@ -34,9 +56,6 @@ function htmlToArticleContent(html: string): Article['articleContent'] {
       }
     });
     return content.filter(block => (block.content && block.content.trim() !== '') || block.type === 'img');
-  }
-  // Client-side parsing (though this function is now only used on server)
-  return []; 
 }
 
 export async function addImagesToArticleAction(content: string, imageCount: number = 5): Promise<{success: boolean, content?: string, error?: string}> {

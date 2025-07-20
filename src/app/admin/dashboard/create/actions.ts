@@ -122,33 +122,60 @@ const EditSchema = z.object({
     status: z.enum(['published', 'draft']),
 });
 
+function markdownToHtml(markdown: string): string {
+    let html = markdown
+        // Headers
+        .replace(/^###### (.*$)/gim, '<h6>$1</h6>')
+        .replace(/^##### (.*$)/gim, '<h5>$1</h5>')
+        .replace(/^#### (.*$)/gim, '<h4>$1</h4>')
+        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+        // Bold
+        .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
+        .replace(/__(.*)__/gim, '<strong>$1</strong>')
+        // Italic
+        .replace(/\*(.*)\*/gim, '<em>$1</em>')
+        .replace(/_(.*)_/gim, '<em>$1</em>')
+        // New lines to paragraphs
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n/g, '<br>');
+
+    return `<p>${html}</p>`;
+}
+
 function htmlToArticleContent(html: string): Article['articleContent'] {
-  if (typeof window === 'undefined') {
-    // Server-side parsing
-    const dom = new JSDOM(html);
+    // Process markdown-style headings first
+    const processedHtml = markdownToHtml(html);
+
+    if (typeof window !== 'undefined') {
+        // This part is for client-side, but might not be reached if we only run on server
+        return [];
+    }
+
+    // Server-side parsing with JSDOM
+    const dom = new JSDOM(processedHtml);
     const document = dom.window.document;
     const content: Article['articleContent'] = [];
+    
     document.body.childNodes.forEach(node => {
-      if (node.nodeType === dom.window.Node.ELEMENT_NODE) {
-        const element = node as HTMLElement;
-        const tagName = element.tagName.toLowerCase();
-        
-        if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p'].includes(tagName)) {
-           const innerHTML = element.innerHTML.trim();
-           if (innerHTML) {
-             content.push({ type: tagName as any, content: innerHTML });
-           }
-        } else if (tagName === 'img' && element.hasAttribute('src')) {
-           content.push({ type: 'img', content: element.getAttribute('src')!, alt: element.getAttribute('alt') || '' });
-        } else if (tagName === 'table') {
-           content.push({ type: 'p', content: element.outerHTML });
+        if (node.nodeType === dom.window.Node.ELEMENT_NODE) {
+            const element = node as HTMLElement;
+            const tagName = element.tagName.toLowerCase();
+
+            if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p'].includes(tagName)) {
+                const innerHTML = element.innerHTML.trim();
+                if (innerHTML) {
+                    content.push({ type: tagName as any, content: innerHTML });
+                }
+            } else if (tagName === 'img' && element.hasAttribute('src')) {
+                content.push({ type: 'img', content: element.getAttribute('src')!, alt: element.getAttribute('alt') || '' });
+            } else if (tagName === 'table') {
+                content.push({ type: 'p', content: element.outerHTML });
+            }
         }
-      }
     });
     return content.filter(block => (block.content && block.content.trim() !== '') || block.type === 'img');
-  }
-  // Client-side parsing (though this function is now only used on server)
-  return []; 
 }
 
 export async function editArticleAction(data: unknown) {
@@ -166,7 +193,7 @@ export async function editArticleAction(data: unknown) {
       throw new Error("Article not found.");
     }
     
-    // Convert the rich text HTML to our structured JSON format on save
+    // Convert the rich text HTML (which might contain markdown) to our structured JSON format on save
     const newArticleContent = htmlToArticleContent(content);
 
     // Get the existing article to preserve its properties like image
