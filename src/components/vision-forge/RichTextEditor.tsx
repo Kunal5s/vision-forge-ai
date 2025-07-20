@@ -168,9 +168,20 @@ export function RichTextEditor({ value, onChange, disabled, placeholder = "Start
     const editor = useEditor({
         extensions: [
             StarterKit.configure({
-                heading: { levels: [1, 2, 3, 4, 5, 6], HTMLAttributes: { class: 'font-bold' } },
+                heading: { 
+                    levels: [1, 2, 3, 4, 5, 6], 
+                    HTMLAttributes: { class: 'font-bold' } 
+                },
                 bulletList: { keepMarks: true, keepAttributes: false },
                 orderedList: { keepMarks: true, keepAttributes: false },
+                // Enable markdown input rules for common shortcuts
+                blockquote: true,
+                bold: true,
+                code: true,
+                codeBlock: true,
+                italic: true,
+                strike: true,
+                // Add other StarterKit extensions you need here
             }),
             Underline,
             Link.configure({ openOnClick: false, autolink: true, linkOnPaste: true }),
