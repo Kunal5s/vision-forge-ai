@@ -20,7 +20,7 @@ export default function RootLayoutClient({ children }: { children: React.ReactNo
   return (
     <>
       {showHeaderAndFooter && <Header />}
-      <div className={isAdminDashboard ? "" : (showHeaderAndFooter ? "flex-grow pt-28" : "flex-grow")}>
+      <div className={isAdminDashboard ? "" : "flex-grow"}>
         {children}
       </div>
       {showHeaderAndFooter && <PreFooterCallToAction />}
