@@ -127,6 +127,19 @@ export async function getAllArticlesAdmin(category: string): Promise<z.infer<typ
     return await loadAndValidateArticles(category);
 }
 
+// For editing page: get a single article, checking drafts first
+export async function getArticleForEdit(category: string, slug: string): Promise<Article | undefined> {
+    // 1. Check drafts first
+    const drafts = await getAllArticlesAdmin('drafts');
+    const draft = drafts.find(a => a.slug === slug);
+    if (draft) return draft;
+
+    // 2. If not in drafts, check the published category
+    const articles = await getAllArticlesAdmin(category);
+    return articles.find(a => a.slug === slug);
+}
+
+
 // Reusable GitHub helper functions
 export async function getShaForFile(octokit: Octokit, owner: string, repo: string, path: string, branch: string): Promise<string | undefined> {
     try {
@@ -165,18 +178,16 @@ export async function getPrimaryBranch(octokit: Octokit, owner: string, repo: st
 export async function saveUpdatedArticles(
     category: string, 
     articles: Article[], 
-    commitMessage: string,
-    fileName?: string, // optional specific filename for drafts
-    isDeletion: boolean = false
+    commitMessage: string
 ) {
     const categorySlug = category === 'drafts' ? 'drafts' : Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category);
     if (!categorySlug) {
         throw new Error(`Invalid category name provided: ${category}`);
     }
     
-    // Use specific filename for drafts, otherwise use category slug.
-    const finalFileName = fileName || `${categorySlug}.json`;
-    const repoPath = category === 'drafts' ? `src/articles/drafts/${finalFileName}` : `src/articles/${finalFileName}`;
+    // Use 'drafts' for the filename if category is drafts, otherwise use the slug.
+    const finalFileName = `${categorySlug}.json`;
+    const repoPath = `src/articles/${finalFileName}`;
     
     const fileContent = JSON.stringify(articles, null, 2);
 
@@ -191,14 +202,7 @@ export async function saveUpdatedArticles(
         const branch = await getPrimaryBranch(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME);
         const fileSha = await getShaForFile(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME, repoPath, branch);
 
-        if (isDeletion && !fileSha) {
-            console.log(`Draft file ${repoPath} not found for deletion, skipping.`);
-            return;
-        }
-
-        const method = fileSha ? 'createOrUpdateFileContents' : 'createOrUpdateFileContents';
-        
-        await octokit.rest.repos[method]({
+        await octokit.rest.repos.createOrUpdateFileContents({
             owner: GITHUB_REPO_OWNER,
             repo: GITHUB_REPO_NAME,
             path: repoPath,
@@ -217,6 +221,36 @@ export async function saveUpdatedArticles(
 }
 
 
+// Server action for auto-saving a draft to the `drafts` folder on GitHub
+export async function autoSaveArticleDraft(draftData: Article): Promise<{ success: boolean; error?: string }> {
+    try {
+        // Validate draft data before saving
+        const validatedDraft = ArticleSchema.safeParse({ ...draftData, status: 'draft' });
+        if (!validatedDraft.success) {
+            return { success: false, error: 'Invalid draft data provided for auto-saving.' };
+        }
+        
+        const allDrafts = await getAllArticlesAdmin('drafts');
+        const draftIndex = allDrafts.findIndex(d => d.slug === validatedDraft.data.slug);
+
+        if (draftIndex > -1) {
+            allDrafts[draftIndex] = validatedDraft.data;
+        } else {
+            allDrafts.unshift(validatedDraft.data);
+        }
+        
+        // Save the entire drafts.json file
+        await saveUpdatedArticles('drafts', allDrafts, `docs: 📝 Autosave draft for "${validatedDraft.data.title}"`);
+
+        revalidatePath('/admin/dashboard/edit');
+        return { success: true };
+
+    } catch (error: any) {
+        console.error('Failed to auto-save draft to GitHub:', error);
+        return { success: false, error: error.message };
+    }
+}
+
 export async function deleteArticleAction(category: string, slug: string, isDraft: boolean = true) {
     try {
         const categorySlug = isDraft ? 'drafts' : (Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category) || category);
@@ -228,7 +262,7 @@ export async function deleteArticleAction(category: string, slug: string, isDraf
             return { success: true, message: "Not found, no action taken." };
         }
 
-        await saveUpdatedArticles(categorySlug, updatedArticles, `feat: 🗑️ Delete article "${slug}"`, `${categorySlug}.json`);
+        await saveUpdatedArticles(categorySlug, updatedArticles, `feat: 🗑️ Delete article "${slug}"`);
         
         revalidatePath(`/`);
         revalidatePath(`/${categorySlug}`);
@@ -246,6 +280,7 @@ export async function deleteArticleAction(category: string, slug: string, isDraf
     return { success: true };
 }
 
+
 export async function editArticleAction(data: unknown) {
   const validatedFields = ManualArticleSchema.safeParse(data);
   if (!validatedFields.success) {
@@ -260,24 +295,24 @@ export async function editArticleAction(data: unknown) {
     const allArticles = await getAllArticlesAdmin(originalCategory);
     const articleIndex = allArticles.findIndex(a => a.slug === originalSlug);
 
-    if (articleIndex === -1) {
+    if (articleIndex === -1 && !isOriginallyDraft) {
       throw new Error("Article to edit was not found.");
     }
-    const existingArticle = allArticles[articleIndex];
-
+    
     const newArticleContent = htmlToArticleContent(content);
 
     const updatedArticleData: Article = {
-      ...existingArticle,
       title,
       slug,
-      summary: summary || '',
+      category,
       status,
       image,
-      articleContent: newArticleContent.length > 0 ? newArticleContent : existingArticle.articleContent,
+      dataAiHint: "manual content update",
+      publishedDate: (articleIndex > -1 && allArticles[articleIndex].publishedDate) || new Date().toISOString(),
+      summary: summary || '',
+      articleContent: newArticleContent.length > 0 ? newArticleContent : (articleIndex > -1 ? allArticles[articleIndex].articleContent : []),
       keyTakeaways: (keyTakeaways || []).map(k => k.value).filter(v => v && v.trim() !== ''),
       conclusion: conclusion,
-      publishedDate: status === 'published' && !existingArticle.publishedDate ? new Date().toISOString() : existingArticle.publishedDate,
     };
     
     const finalValidatedArticle = ArticleSchema.safeParse(updatedArticleData);
@@ -286,23 +321,23 @@ export async function editArticleAction(data: unknown) {
       return { success: false, error: "Failed to process edited article data correctly." };
     }
     
+    // Handle moving between draft/published status
     if (status === 'published') {
         const publishedArticles = await getAllArticlesAdmin(category);
-        
-        if (originalCategory === category) {
-            // Updating an already published article in the same category
-            publishedArticles[articleIndex] = finalValidatedArticle.data;
+        const existingPublishedIndex = publishedArticles.findIndex(a => a.slug === originalSlug);
+
+        if (existingPublishedIndex > -1) {
+            publishedArticles[existingPublishedIndex] = finalValidatedArticle.data;
         } else {
-            // Publishing a draft to a new category
             publishedArticles.unshift(finalValidatedArticle.data);
         }
         await saveUpdatedArticles(category, publishedArticles, `feat: ✏️ Publish article "${title}"`);
         
-        // If it was originally a draft, delete it from drafts.json
-        if(isOriginallyDraft) {
-            await deleteArticleAction('drafts', originalSlug, true);
+        if (isOriginallyDraft) {
+            const drafts = await getAllArticlesAdmin('drafts');
+            const updatedDrafts = drafts.filter(d => d.slug !== originalSlug);
+            await saveUpdatedArticles('drafts', updatedDrafts, `refactor: 🧹 Remove published draft "${originalSlug}"`);
         }
-
     } else { // Saving as draft
         const drafts = await getAllArticlesAdmin('drafts');
         const draftIndex = drafts.findIndex(d => d.slug === originalSlug);
@@ -311,7 +346,14 @@ export async function editArticleAction(data: unknown) {
         } else {
             drafts.unshift(finalValidatedArticle.data);
         }
-        await saveUpdatedArticles('drafts', drafts, `docs: 📝 Autosave draft for "${title}"`, 'drafts.json');
+        await saveUpdatedArticles('drafts', drafts, `docs: 📝 Update draft "${title}"`);
+
+        // If it was originally published, remove it from the published category
+        if (!isOriginallyDraft) {
+            const publishedArticles = await getAllArticlesAdmin(category);
+            const updatedPublished = publishedArticles.filter(p => p.slug !== originalSlug);
+            await saveUpdatedArticles(category, updatedPublished, `refactor: ♻️ Unpublish article "${originalSlug}" to drafts`);
+        }
     }
 
     revalidatePath(`/`);
@@ -323,5 +365,139 @@ export async function editArticleAction(data: unknown) {
   } catch (e: any) {
     return { success: false, error: e.message };
   }
-  redirect('/admin/dashboard/edit');
+}
+
+type CreateArticleResult = {
+  success: boolean;
+  title?: string;
+  error?: string;
+  slug?: string;
+  category?: string;
+};
+
+// Main server action for manual creation
+export async function createManualArticleAction(data: unknown): Promise<CreateArticleResult> {
+  const validatedFields = ManualArticleSchema.safeParse(data);
+
+  if (!validatedFields.success) {
+    console.error("Validation Errors:", validatedFields.error.flatten());
+    const errorMessages = validatedFields.error.flatten().fieldErrors;
+    const formattedError = Object.entries(errorMessages).map(([field, errors]) => `${field}: ${errors?.join(', ')}`).join('; ');
+    return { success: false, error: formattedError || 'Invalid input data.' };
+  }
+  
+  const { title, slug, category, status, summary, content, keyTakeaways, conclusion, image } = validatedFields.data;
+
+  try {
+    const articleContent = htmlToArticleContent(content);
+
+    const newArticleData: Article = {
+      title,
+      slug,
+      category,
+      status,
+      image,
+      dataAiHint: "manual content upload",
+      publishedDate: new Date().toISOString(),
+      summary: summary || '',
+      articleContent,
+      keyTakeaways: keyTakeaways ? keyTakeaways.map(k => k.value).filter(v => v && v.trim() !== '') : [],
+      conclusion: conclusion || '',
+    };
+
+    const finalValidatedArticle = ArticleSchema.safeParse(newArticleData);
+
+    if (!finalValidatedArticle.success) {
+      console.error("Final Validation Failed after processing:", finalValidatedArticle.error.flatten());
+      return { success: false, error: "Failed to process article data correctly." };
+    }
+    
+    // Save as draft or publish directly
+    if (status === 'published') {
+        const existingArticles = await getAllArticlesAdmin(category);
+        const updatedArticles = [finalValidatedArticle.data, ...existingArticles];
+        await saveUpdatedArticles(category, updatedArticles, `feat: ✨ Add new manual article "${newArticleData.title}"`);
+    } else {
+        // Save to drafts folder
+        const allDrafts = await getAllArticlesAdmin('drafts');
+        const updatedDrafts = [finalValidatedArticle.data, ...allDrafts];
+        await saveUpdatedArticles('drafts', updatedDrafts, `docs: 📝 Save manual draft "${newArticleData.title}"`);
+    }
+
+    revalidatePath('/');
+    const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category) || category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    revalidatePath(`/${categorySlug}`);
+    revalidatePath(`/${categorySlug}/${newArticleData.slug}`);
+    revalidatePath('/admin/dashboard/edit');
+    
+    // Redirect to the edit page after creation
+    return { success: true, title: newArticleData.title, slug, category: categorySlug };
+
+  } catch (error) {
+    console.error('Error in createManualArticleAction:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred.' };
+  }
+}
+
+export async function addImagesToArticleAction(content: string, imageCount: number = 5): Promise<{success: boolean, content?: string, error?: string}> {
+    try {
+        const dom = new JSDOM(`<body>${content}</body>`);
+        const document = dom.window.document;
+        
+        // Select all potential insertion points (headings and long paragraphs)
+        const insertionPoints = Array.from(document.querySelectorAll('h2, h3, p'));
+
+        // Remove any previously added AI images to avoid duplicates
+        document.querySelectorAll('img[src*="pollinations.ai"]').forEach(img => {
+            const parent = img.parentElement;
+            if (parent && parent.tagName.toLowerCase() === 'div' && parent.classList.contains('my-8')) {
+                parent.remove();
+            } else {
+                img.remove();
+            }
+        });
+        
+        // Filter for points that have enough text content to be a meaningful prompt
+        const validInsertionPoints = insertionPoints.filter(h => h.textContent && h.textContent.trim().split(' ').length > 5);
+        
+        const numImagesToAdd = Math.min(imageCount, validInsertionPoints.length);
+        if (numImagesToAdd === 0) {
+            return { success: false, error: "No suitable locations found to add images. Try adding more subheadings or longer paragraphs." };
+        }
+        
+        // Distribute images evenly throughout the content
+        const step = Math.max(1, Math.floor(validInsertionPoints.length / numImagesToAdd));
+
+        for (let i = 0; i < numImagesToAdd; i++) {
+            const pointIndex = Math.min(i * step, validInsertionPoints.length - 1);
+            const insertionPoint = validInsertionPoints[pointIndex];
+            // Use the heading/paragraph text as a prompt for the image
+            const topic = insertionPoint.textContent?.trim() || "relevant photography";
+
+            if (topic) {
+                const seed = Math.floor(Math.random() * 1_000_000);
+                const finalPrompt = `${topic.substring(0, 100)}, relevant photography, high detail, cinematic`;
+                const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=800&height=450&seed=${seed}&nologo=true`;
+
+                const imgContainer = document.createElement('div');
+                imgContainer.className = "my-8"; // Consistent styling
+                const img = document.createElement('img');
+                img.src = pollinationsUrl;
+                img.alt = topic;
+                img.setAttribute('width', '800');
+                img.setAttribute('height', '450');
+                img.className = 'rounded-lg shadow-lg mx-auto';
+                
+                imgContainer.appendChild(img);
+                
+                // Insert the new image container after the insertion point
+                insertionPoint.parentNode?.insertBefore(imgContainer, insertionPoint.nextSibling);
+            }
+        }
+        
+        return { success: true, content: document.body.innerHTML };
+    } catch (e: any) {
+        console.error("Failed to add images to article content on server:", e);
+        return { success: false, error: "Could not process article content to add images." };
+    }
 }

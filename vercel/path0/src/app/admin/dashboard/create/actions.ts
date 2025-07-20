@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { categorySlugMap } from '@/lib/constants';
-import { getAllArticlesAdmin, saveUpdatedArticles, getArticleForEdit, deleteArticleAction as deleteFromServer, editArticleAction as serverEditArticleAction } from '@/lib/articles';
+import { getAllArticlesAdmin, saveUpdatedArticles, deleteArticleAction as deleteFromServer, editArticleAction as serverEditArticleAction } from '@/lib/articles';
 
 
 const ArticleFormSchema = z.object({
@@ -74,8 +74,9 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
     }
     
     // Since this is a newly generated article, it starts as a draft.
-    // We save it to the drafts file. It will be moved on publish.
-    await saveUpdatedArticles('drafts', [newArticle], `feat: ✨ Add new AI article draft "${newArticle.title}"`, `${newArticle.slug}.json`);
+    const allDrafts = await getAllArticlesAdmin('drafts');
+    const updatedDrafts = [newArticle, ...allDrafts];
+    await saveUpdatedArticles('drafts', updatedDrafts, `feat: ✨ Add new AI article draft "${newArticle.title}"`);
 
     revalidatePath('/');
     revalidatePath('/admin/dashboard/edit');
@@ -89,4 +90,24 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
     console.error('Error in generateArticleAction:', error);
     return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred.' };
   }
+}
+
+export async function editArticleAction(data: unknown) {
+  const result = await serverEditArticleAction(data);
+  if (result?.error) {
+    return { success: false, error: result.error };
+  }
+  redirect('/admin/dashboard/edit');
+}
+
+export async function deleteArticleAction(category: string, slug: string, isDraft: boolean = true) {
+    const result = await deleteFromServer(category, slug, isDraft);
+     if (result?.error) {
+        return { success: false, error: result.error };
+    }
+    
+    if(!isDraft) {
+        redirect('/admin/dashboard/edit');
+    }
+    return { success: true };
 }
