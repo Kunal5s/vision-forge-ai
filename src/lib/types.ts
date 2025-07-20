@@ -1,5 +1,7 @@
 
 import { z } from 'zod';
+import type { ManualArticleFormData } from '@/lib/types';
+
 
 export const ArticleContentBlockSchema = z.object({
   type: z.enum(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'img', 'ul', 'ol', 'blockquote', 'table']),
@@ -38,6 +40,31 @@ export const ManualArticleSchema = z.object({
   originalSlug: z.string().optional(), // For identifying article on edit
 });
 export type ManualArticleFormData = z.infer<typeof ManualArticleSchema>;
+
+// Helper function to convert the structured content array back to a single HTML string for the editor
+export const articleContentToHtml = (content: Article['articleContent']): string => {
+    return content.map(block => {
+        if (block.type === 'img') {
+             // For images, create a standard img tag inside a div for consistent styling
+            return `<div class="my-8"><img src="${block.content}" alt="${block.alt || ''}" width="800" height="450" class="rounded-lg shadow-lg mx-auto" /></div>`;
+        }
+        // For all other types (h1-h6, p, ul, ol etc.), the content is already valid HTML
+        return block.content;
+    }).join(''); 
+};
+
+// Helper function to generate a full article HTML string for previews
+export const getFullArticleHtmlForPreview = (data: ManualArticleFormData): string => {
+  const takeawaysHtml = (data.keyTakeaways || [])
+    .map(t => (t.value ? `<li>${t.value}</li>` : ''))
+    .join('');
+  
+  const conclusionHtml = data.conclusion ? `<h2>Conclusion</h2>${data.conclusion}` : '';
+  const takeawaysSection = takeawaysHtml ? `<h2>Key Takeaways</h2><ul>${takeawaysHtml}</ul>` : '';
+
+  return `${data.summary || ''}${data.content}${takeawaysSection}${conclusionHtml}`;
+};
+
 
 
 // Subscription types

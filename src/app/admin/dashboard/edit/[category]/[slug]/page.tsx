@@ -4,7 +4,7 @@
 import { notFound, useParams } from 'next/navigation';
 import { categorySlugMap } from '@/lib/constants';
 import EditArticleForm from './EditArticleForm';
-import { getArticleForEdit } from './actions';
+import { getArticleForEdit } from '@/lib/articles';
 import { useEffect, useState } from 'react';
 import type { Article } from '@/lib/articles';
 import { Skeleton } from '@/components/ui/skeleton';

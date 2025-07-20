@@ -24,63 +24,40 @@ import {
 // This function uses JSDOM and must only be used on the server.
 // It is NOT exported, so it's a private utility for this module.
 function htmlToArticleContent(html: string): ArticleContentBlock[] {
-  if (!html) {
-    return [];
-  }
+    if (!html) return [];
+    
+    const dom = new JSDOM(html);
+    const document = dom.window.document;
+    const content: ArticleContentBlock[] = [];
 
-  const dom = new JSDOM(`<body>${html}</body>`);
-  const document = dom.window.document;
-  const content: ArticleContentBlock[] = [];
+    document.body.childNodes.forEach((node) => {
+        if (node.nodeType === dom.window.Node.ELEMENT_NODE) {
+            const element = node as HTMLElement;
+            const tagName = element.tagName.toLowerCase();
 
-  document.body.childNodes.forEach((node) => {
-    if (node.nodeType === dom.window.Node.ELEMENT_NODE) {
-      const element = node as HTMLElement;
-      // Use the outerHTML to preserve the element itself (e.g., <h2>...</h2>)
-      const tagName =
-        element.tagName.toLowerCase() as ArticleContentBlock['type'];
-
-      if (
-        [
-          'h1',
-          'h2',
-          'h3',
-          'h4',
-          'h5',
-          'h6',
-          'p',
-          'ul',
-          'ol',
-          'blockquote',
-          'table',
-        ].includes(tagName)
-      ) {
-        const outerHTML = element.outerHTML.trim();
-        if (outerHTML) {
-          content.push({ type: tagName, content: outerHTML, alt: '' });
+            // Handle main content block types
+            if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'blockquote'].includes(tagName)) {
+                content.push({ type: tagName as ArticleContentBlock['type'], content: element.outerHTML.trim(), alt: '' });
+            } 
+            // Handle tables wrapped in a div by the editor
+            else if (tagName === 'div' && element.firstChild?.nodeName.toLowerCase() === 'table') {
+                content.push({ type: 'table', content: element.innerHTML.trim(), alt: '' });
+            }
+            // Handle images, which might be wrapped in a div
+            else if (tagName === 'div' && element.querySelector('img')) {
+                const img = element.querySelector('img');
+                if (img?.src) {
+                    content.push({ type: 'img', content: img.src, alt: img.alt || '' });
+                }
+            } else if (tagName === 'img' && element.hasAttribute('src')) {
+                content.push({ type: 'img', content: element.getAttribute('src')!, alt: element.getAttribute('alt') || '' });
+            }
         }
-      } else if (tagName === 'div' && element.querySelector('img')) {
-        // Handle images wrapped in divs which is common from RTEs
-        const img = element.querySelector('img');
-        if (img && img.hasAttribute('src')) {
-          content.push({
-            type: 'img',
-            content: img.getAttribute('src')!,
-            alt: img.getAttribute('alt') || '',
-          });
-        }
-      } else if (tagName === 'img' && element.hasAttribute('src')) {
-        content.push({
-          type: 'img',
-          content: element.getAttribute('src')!,
-          alt: element.getAttribute('alt') || '',
-        });
-      }
-    }
-  });
-  return content.filter(
-    (block) => (block.content && block.content.trim() !== '') || block.type === 'img'
-  );
+    });
+
+    return content.filter(block => (block.content && block.content.trim() !== '') || block.type === 'img');
 }
+
 
 
 async function saveUpdatedArticles(
@@ -168,7 +145,7 @@ export async function addImagesToArticleAction(
         const point = validPoints[i * step];
         const topic = (point.textContent || 'relevant photography').substring(0, 100);
         const seed = Math.floor(Math.random() * 1_000_000);
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(`${topic}, relevant photography`)}?width=800&height=450&seed=${seed}&nologo=true`;
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(`${topic}, relevant photography, high detail, cinematic`)}?width=800&height=450&seed=${seed}&nologo=true`;
 
         const container = document.createElement('div');
         container.className = 'my-8';

@@ -34,8 +34,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { IMAGE_COUNTS } from '@/lib/constants';
-import { ManualArticleSchema as EditSchema } from '@/lib/types';
-import { editArticleAction, deleteArticleAction, addImagesToArticleAction, autoSaveArticleDraftAction } from './actions';
+import { ManualArticleSchema as EditSchema, articleContentToHtml, getFullArticleHtmlForPreview } from '@/lib/types';
+import { editArticleAction, deleteArticleAction, addImagesToArticleAction, autoSaveArticleDraftAction } from '@/lib/articles.server';
 
 
 type EditFormData = z.infer<typeof EditSchema>;
@@ -45,17 +45,6 @@ interface EditArticleFormProps {
     categorySlug: string;
 }
 
-// Helper function to convert the structured content array back to a single HTML string for the editor
-const articleContentToHtml = (content: Article['articleContent']): string => {
-    return content.map(block => {
-        if (block.type === 'img') {
-             // For images, create a standard img tag inside a div for consistent styling
-            return `<div class="my-8"><img src="${block.content}" alt="${block.alt || ''}" width="800" height="450" class="rounded-lg shadow-lg mx-auto" /></div>`;
-        }
-        // For all other types (h1-h6, p, ul, ol etc.), the content is already valid HTML
-        return block.content;
-    }).join(''); 
-}
 
 export default function EditArticleForm({ article, categorySlug }: EditArticleFormProps) {
   const [isSaving, setIsSaving] = useState(false);
@@ -130,12 +119,7 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
   });
   
   const getFullArticleHtml = useCallback(() => {
-    const currentValues = getValues();
-    const takeawaysHtml = (currentValues.keyTakeaways || [])
-      .map(t => t.value ? `<li>${t.value}</li>` : '')
-      .join('');
-    
-    return `${currentValues.content}<h2>Key Takeaways</h2><ul>${takeawaysHtml}</ul><h2>Conclusion</h2>${currentValues.conclusion}`;
+    return getFullArticleHtmlForPreview(getValues());
   }, [getValues]);
 
 
