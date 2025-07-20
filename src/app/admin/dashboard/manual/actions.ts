@@ -1,7 +1,7 @@
 
 'use server';
 
-import { type Article, ArticleSchema as ArticleValidationSchema, ArticleContentBlock, ManualArticleSchema, htmlToArticleContent } from '@/lib/types';
+import { type Article, ArticleSchema as ArticleValidationSchema, type ArticleContentBlock, ManualArticleSchema } from '@/lib/types';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { saveUpdatedArticles, getAllArticlesAdmin } from '@/lib/articles'; // Import the universal save function
@@ -10,6 +10,36 @@ import { JSDOM } from 'jsdom';
 import { categorySlugMap } from '@/lib/constants';
 import { Octokit } from 'octokit';
 import { getPrimaryBranch, getShaForFile } from '@/lib/articles';
+
+// New function to reliably parse HTML into the structured content blocks.
+// This function uses JSDOM and must only be used on the server.
+export function htmlToArticleContent(html: string): ArticleContentBlock[] {
+    if (!html) {
+        return [];
+    }
+
+    const dom = new JSDOM(html);
+    const document = dom.window.document;
+    const content: ArticleContentBlock[] = [];
+    
+    document.body.childNodes.forEach(node => {
+        if (node.nodeType === dom.window.Node.ELEMENT_NODE) {
+            const element = node as HTMLElement;
+            // Use the outerHTML to preserve the element itself (e.g., <h2>...</h2>)
+            const tagName = element.tagName.toLowerCase() as ArticleContentBlock['type'];
+
+            if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'blockquote', 'table'].includes(tagName)) {
+                const outerHTML = element.outerHTML.trim();
+                if (outerHTML) {
+                    content.push({ type: tagName, content: outerHTML, alt:'' });
+                }
+            } else if (tagName === 'img' && element.hasAttribute('src')) {
+                content.push({ type: 'img', content: element.getAttribute('src')!, alt: element.getAttribute('alt') || '' });
+            }
+        }
+    });
+    return content.filter(block => (block.content && block.content.trim() !== '') || block.type === 'img');
+}
 
 
 export async function addImagesToArticleAction(content: string, imageCount: number = 5): Promise<{success: boolean, content?: string, error?: string}> {

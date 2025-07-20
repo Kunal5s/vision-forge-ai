@@ -2,12 +2,13 @@
 'use server';
 
 import { generateArticleForTopic } from '@/ai/article-generator';
-import { type Article, ArticleContentBlock, ArticleSchema as ArticleValidationSchema, ManualArticleSchema as EditSchema, htmlToArticleContent } from '@/lib/types';
+import { type Article, ArticleSchema as ArticleValidationSchema } from '@/lib/types';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { categorySlugMap } from '@/lib/constants';
 import { getAllArticlesAdmin, saveUpdatedArticles, getArticleForEdit, deleteArticleAction as deleteFromServer } from '@/lib/articles';
+import { htmlToArticleContent } from '../manual/actions';
 
 
 const ArticleFormSchema = z.object({
@@ -92,7 +93,7 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
 }
 
 export async function editArticleAction(data: unknown) {
-  const validatedFields = EditSchema.safeParse(data);
+  const validatedFields = ManualArticleSchema.safeParse(data);
   if (!validatedFields.success) {
     return { success: false, error: "Invalid data." };
   }

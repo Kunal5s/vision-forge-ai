@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { JSDOM } from 'jsdom';
 
 export const ArticleContentBlockSchema = z.object({
   type: z.enum(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'img', 'ul', 'ol', 'blockquote', 'table']),
@@ -65,33 +64,3 @@ export const SubscriptionSchema = z.object({
 
 // The main type is inferred from the schema
 export type Subscription = z.infer<typeof SubscriptionSchema>;
-
-
-// New function to reliably parse HTML into the structured content blocks.
-export function htmlToArticleContent(html: string): ArticleContentBlock[] {
-    if (!html) {
-        return [];
-    }
-
-    const dom = new JSDOM(html);
-    const document = dom.window.document;
-    const content: ArticleContentBlock[] = [];
-    
-    document.body.childNodes.forEach(node => {
-        if (node.nodeType === dom.window.Node.ELEMENT_NODE) {
-            const element = node as HTMLElement;
-            // Use the outerHTML to preserve the element itself (e.g., <h2>...</h2>)
-            const tagName = element.tagName.toLowerCase() as ArticleContentBlock['type'];
-
-            if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'blockquote', 'table'].includes(tagName)) {
-                const outerHTML = element.outerHTML.trim();
-                if (outerHTML) {
-                    content.push({ type: tagName, content: outerHTML, alt:'' });
-                }
-            } else if (tagName === 'img' && element.hasAttribute('src')) {
-                content.push({ type: 'img', content: element.getAttribute('src')!, alt: element.getAttribute('alt') || '' });
-            }
-        }
-    });
-    return content.filter(block => (block.content && block.content.trim() !== '') || block.type === 'img');
-}
