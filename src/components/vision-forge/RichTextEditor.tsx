@@ -24,6 +24,8 @@ import Table from '@tiptap/extension-table';
 import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 import TableRow from '@tiptap/extension-table-row';
+import { Markdown } from 'tiptap-markdown';
+
 
 const EditorToolbar = ({ editor }: { editor: Editor | null }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -174,15 +176,14 @@ export function RichTextEditor({ value, onChange, disabled, placeholder = "Start
                 },
                 bulletList: { keepMarks: true, keepAttributes: false },
                 orderedList: { keepMarks: true, keepAttributes: false },
-                // Enable markdown input rules for common shortcuts
                 blockquote: true,
                 bold: true,
                 code: true,
                 codeBlock: true,
                 italic: true,
                 strike: true,
-                // Add other StarterKit extensions you need here
             }),
+            Markdown,
             Underline,
             Link.configure({ openOnClick: false, autolink: true, linkOnPaste: true }),
             Image.configure({
