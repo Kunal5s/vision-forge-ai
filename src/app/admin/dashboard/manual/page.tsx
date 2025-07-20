@@ -17,13 +17,15 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { categorySlugMap, IMAGE_COUNTS } from '@/lib/constants';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, FileSignature, PlusCircle, Trash2, ImageIcon, Wand2, Eye, Save } from 'lucide-react';
+import { ArrowLeft, Loader2, FileSignature, PlusCircle, Trash2, ImageIcon, Wand2, Eye, Save, CheckCircle } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { createManualArticleAction, addImagesToArticleAction } from './actions';
 import Image from 'next/image';
 import { RichTextEditor } from '@/components/vision-forge/RichTextEditor';
 import { ArticlePreview } from '@/components/vision-forge/ArticlePreview';
+import type { Article } from '@/lib/articles';
+import { autoSaveArticleDraft } from '../edit/[category]/[slug]/actions';
 
 
 const manualArticleSchema = z.object({
@@ -48,9 +50,8 @@ export default function ManualPublishPage() {
   const [isAddingImagesToArticle, setIsAddingImagesToArticle] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [imageCount, setImageCount] = useState(IMAGE_COUNTS[1].value); 
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const DRAFT_KEY = 'draft-manual-article';
-
 
   const { toast } = useToast();
   const { register, handleSubmit, control, formState: { errors, isDirty }, watch, setValue, getValues, reset } = useForm<ManualArticleFormData>({
@@ -62,41 +63,49 @@ export default function ManualPublishPage() {
       content: '',
       keyTakeaways: [{ value: '' }],
       conclusion: '',
+      status: 'draft',
+      image: '',
     }
   });
 
-  // Auto-saving logic
   const formValues = watch();
+  const wordCount = watch('content').replace(/<[^>]*>?/gm, '').split(/\s+/).filter(Boolean).length;
+  const DRAFT_SLUG = watch('slug');
+
+  // Auto-saving logic to GitHub
   useEffect(() => {
-    if (isDirty) {
-        if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
-        debounceTimeoutRef.current = setTimeout(() => {
-            try {
-                const currentData = getValues();
-                localStorage.setItem(DRAFT_KEY, JSON.stringify(currentData));
-            } catch (e) {
-                console.error("Failed to save draft", e);
-            }
-        }, 2000);
-    }
-    return () => {
-        if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
+    const handleAutoSave = async () => {
+      if (isDirty && DRAFT_SLUG) {
+        setAutoSaveStatus('saving');
+        const currentData = getValues();
+        const draftArticle: Article = {
+          title: currentData.title || 'Untitled Draft',
+          slug: DRAFT_SLUG,
+          category: currentData.category || 'Featured',
+          status: 'draft',
+          image: previewImage || 'https://placehold.co/600x400.png',
+          dataAiHint: 'draft content',
+          publishedDate: new Date().toISOString(),
+          summary: currentData.summary,
+          articleContent: [{ type: 'p', content: currentData.content }],
+          keyTakeaways: (currentData.keyTakeaways || []).map(t => t.value),
+          conclusion: currentData.conclusion,
+        };
+
+        const result = await autoSaveArticleDraft(draftArticle, draftArticle.category);
+        setAutoSaveStatus(result.success ? 'saved' : 'error');
+      }
     };
-  }, [formValues, isDirty, getValues]);
-
-  // Restore draft logic
-  useEffect(() => {
-    try {
-        const savedDraft = localStorage.getItem(DRAFT_KEY);
-        if (savedDraft) {
-            reset(JSON.parse(savedDraft));
-            toast({ title: "Draft Restored", description: "Your previously unsaved work has been loaded." });
-        }
-    } catch (e) {
-        console.error("Failed to restore draft", e);
+    
+    if (isDirty && DRAFT_SLUG) {
+      if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
+      debounceTimeoutRef.current = setTimeout(handleAutoSave, 10000);
     }
-  }, [reset, toast]);
-
+    
+    return () => {
+      if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
+    };
+  }, [formValues, isDirty, DRAFT_SLUG, getValues, previewImage]);
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -134,13 +143,16 @@ export default function ManualPublishPage() {
         const finalPrompt = `${topic}, digital art, high detail`;
         const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=600&height=400&seed=${seed}&nologo=true`;
         setPreviewImage(pollinationsUrl);
+        setValue('image', pollinationsUrl, { shouldValidate: true });
     } catch (e) {
         console.error("Failed to generate preview image", e);
-        setPreviewImage(`https://placehold.co/600x400.png`);
+        const placeholder = 'https://placehold.co/600x400.png';
+        setPreviewImage(placeholder);
+        setValue('image', placeholder, { shouldValidate: true });
     } finally {
         setIsGeneratingImage(false);
     }
-  }, []);
+  }, [setValue]);
 
   useEffect(() => {
     if (titleValue) {
@@ -215,8 +227,6 @@ export default function ManualPublishPage() {
         title: status === 'published' ? 'Article Published!' : 'Draft Saved!',
         description: `Your article "${result.title}" has been saved.`,
       });
-      // Clear draft from local storage on successful save
-      localStorage.removeItem(DRAFT_KEY);
     } else {
       toast({
         title: 'Error Saving Article',
@@ -264,7 +274,7 @@ export default function ManualPublishPage() {
                 <CardHeader>
                     <CardTitle className="text-2xl">Publish a New Article Manually</CardTitle>
                     <CardDescription>
-                    Write your article below. Your work is auto-saved as a draft every few seconds.
+                    Write your article below. Drafts are auto-saved to GitHub every 10 seconds.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -370,6 +380,15 @@ export default function ManualPublishPage() {
                     <CardTitle>Publishing Tools</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                     <div>
+                        <p className="text-sm font-medium">Word Count: <span className="font-bold text-primary">{wordCount}</span></p>
+                        <div className="text-xs text-muted-foreground mt-2 flex items-center gap-2">
+                            {autoSaveStatus === 'saving' && <><Loader2 className="h-4 w-4 animate-spin" /> Saving draft...</>}
+                            {autoSaveStatus === 'saved' && <><CheckCircle className="h-4 w-4 text-green-500" /> All changes saved.</>}
+                            {autoSaveStatus === 'error' && <p className="text-destructive">Auto-save failed.</p>}
+                        </div>
+                    </div>
+
                     <div>
                       <Label htmlFor="category">Category</Label>
                       <Controller

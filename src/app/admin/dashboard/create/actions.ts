@@ -125,12 +125,12 @@ const EditSchema = z.object({
 function markdownToHtml(markdown: string): string {
     // This function handles basic markdown conversions.
     let html = markdown
-        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-        .replace(/^#### (.*$)/gim, '<h4>$1</h4>')
-        .replace(/^##### (.*$)/gim, '<h5>$1</h5>')
         .replace(/^###### (.*$)/gim, '<h6>$1</h6>')
+        .replace(/^##### (.*$)/gim, '<h5>$1</h5>')
+        .replace(/^#### (.*$)/gim, '<h4>$1</h4>')
+        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
         .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
         .replace(/__(.*?)__/gim, '<strong>$1</strong>')
         .replace(/\*(.*?)\*/gim, '<em>$1</em>')
@@ -193,8 +193,8 @@ export async function editArticleAction(data: unknown) {
       throw new Error("Article not found.");
     }
     
-    const formattedHtml = markdownToHtml(content);
-    const newArticleContent = htmlToArticleContent(formattedHtml);
+    // We assume the content is already HTML from the smart editor
+    const newArticleContent = htmlToArticleContent(content);
 
     // Get the existing article to preserve its properties like image
     const existingArticle = articles[articleIndex];

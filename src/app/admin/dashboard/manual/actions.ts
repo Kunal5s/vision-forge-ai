@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { getAllArticlesAdmin, Article } from '@/lib/articles';
@@ -12,12 +11,12 @@ import { JSDOM } from 'jsdom';
 function markdownToHtml(markdown: string): string {
     // This function handles basic markdown conversions.
     let html = markdown
-        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-        .replace(/^#### (.*$)/gim, '<h4>$1</h4>')
-        .replace(/^##### (.*$)/gim, '<h5>$1</h5>')
         .replace(/^###### (.*$)/gim, '<h6>$1</h6>')
+        .replace(/^##### (.*$)/gim, '<h5>$1</h5>')
+        .replace(/^#### (.*$)/gim, '<h4>$1</h4>')
+        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
         .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
         .replace(/__(.*?)__/gim, '<strong>$1</strong>')
         .replace(/\*(.*?)\*/gim, '<em>$1</em>')
@@ -115,7 +114,7 @@ export async function addImagesToArticleAction(content: string, imageCount: numb
 
 const ManualArticleSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters long.'),
-  slug: z.string().min(5, 'Slug must be at least 5 characters long.'),
+  slug: z.string().min(5, 'Slug must be at least 5 characters long.').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and dashes.'),
   category: z.string().min(1, 'Please select a category.'),
   status: z.enum(['published', 'draft']),
   summary: z.string().optional(),
@@ -145,8 +144,7 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
   const { title, slug, category, status, summary, content, keyTakeaways, conclusion, image } = validatedFields.data;
 
   try {
-    const formattedHtml = markdownToHtml(content);
-    const articleContent = htmlToArticleContent(formattedHtml);
+    const articleContent = htmlToArticleContent(content);
     
     // Create a new article object
     const newArticle: Article = {
@@ -160,7 +158,7 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
       summary: summary || '',
       articleContent,
       keyTakeaways: keyTakeaways ? keyTakeaways.map(k => k.value).filter(v => v && v.trim() !== '') : [],
-      conclusion,
+      conclusion: conclusion || '',
     };
     
     const existingArticles = await getAllArticlesAdmin(category);

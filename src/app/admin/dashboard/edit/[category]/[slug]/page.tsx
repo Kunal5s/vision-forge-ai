@@ -1,33 +1,58 @@
 
-import { getAllArticlesAdmin, type Article } from '@/lib/articles';
+"use client";
+
 import { notFound } from 'next/navigation';
 import { categorySlugMap } from '@/lib/constants';
 import EditArticleForm from './EditArticleForm';
+import { getArticleForEdit } from './actions';
+import { useEffect, useState } from 'react';
+import type { Article } from '@/lib/articles';
+import { Skeleton } from '@/components/ui/skeleton';
 
-// This page now uses the same form component as the create page, ensuring consistency.
+export default function EditArticlePage({ params }: { params: { category: string; slug: string } }) {
+    const [article, setArticle] = useState<Article | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-// Function to find the article
-async function getArticleData(categorySlug: string, articleSlug: string): Promise<{ article: Article, categoryName: string } | undefined> {
-    const categoryName = Object.entries(categorySlugMap).find(([slug]) => slug === categorySlug)?.[1];
-    if (!categoryName) return undefined;
+    useEffect(() => {
+        const loadArticle = async () => {
+            setIsLoading(true);
+            try {
+                const fetchedArticle = await getArticleForEdit(params.category, params.slug);
+                if (fetchedArticle) {
+                    setArticle(fetchedArticle);
+                } else {
+                    setError('Article not found.');
+                }
+            } catch (err) {
+                setError('Failed to load article data.');
+                console.error(err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        loadArticle();
+    }, [params.category, params.slug]);
+
+    if (isLoading) {
+        return (
+            <main className="flex-grow container mx-auto py-12 px-4 bg-muted/20 min-h-screen">
+                <div className="space-y-4">
+                    <Skeleton className="h-10 w-1/4" />
+                    <Skeleton className="h-[400px] w-full" />
+                    <Skeleton className="h-[200px] w-full" />
+                </div>
+            </main>
+        );
+    }
     
-    // Use the admin function to get all articles, including drafts
-    const articles = await getAllArticlesAdmin(categoryName);
-    const article = articles.find(article => article.slug === articleSlug);
-
-    if (!article) return undefined;
-
-    return { article, categoryName };
-}
-
-export default async function EditArticlePage({ params }: { params: { category: string; slug: string } }) {
-    const data = await getArticleData(params.category, params.slug);
-
-    if (!data) {
+    if (error || !article) {
         notFound();
     }
+    
+    // Determine the category name from the slug, or use the one from the article data.
+    const categoryName = Object.entries(categorySlugMap).find(([slug]) => slug === params.category)?.[1] || article.category;
 
-    const { article, categoryName } = data;
 
     return (
         <main className="flex-grow container mx-auto py-12 px-4 bg-muted/20 min-h-screen">

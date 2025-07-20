@@ -9,12 +9,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, Save, Trash2, Wand2, Eye, PlusCircle, Globe, FileText } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, Trash2, Wand2, Eye, PlusCircle, Globe, FileText, CheckCircle } from 'lucide-react';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import type { Article } from '@/lib/articles';
 import { editArticleAction, deleteArticleAction } from '../../../create/actions';
-import { addImagesToArticleAction } from '../../../manual/actions';
+import { addImagesToArticleAction, autoSaveArticleDraft } from './actions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,18 +58,9 @@ interface EditArticleFormProps {
 
 const contentToHtml = (content: Article['articleContent']): string => {
     return content.map(block => {
-        const contentWithTags = block.content;
-        switch (block.type) {
-            case 'h1': return `<h1>${contentWithTags}</h1>`;
-            case 'h2': return `<h2>${contentWithTags}</h2>`;
-            case 'h3': return `<h3>${contentWithTags}</h3>`;
-            case 'h4': return `<h4>${contentWithTags}</h4>`;
-            case 'h5': return `<h5>${contentWithTags}</h5>`;
-            case 'h6': return `<h6>${contentWithTags}</h6>`;
-            case 'p': return `<p>${contentWithTags}</p>`;
-            case 'img': return `<img src="${block.content}" alt="${block.alt || ''}" />`;
-            default: return `<p>${contentWithTags}</p>`;
-        }
+        // Since content is now stored as HTML, this can be simplified.
+        // The block.type is less relevant if block.content is full HTML.
+        return block.content;
     }).join(''); 
 }
 
@@ -79,11 +70,12 @@ export default function EditArticleForm({ article, categoryName, categorySlug }:
   const [isAddingImages, setIsAddingImages] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [imageCount, setImageCount] = useState(IMAGE_COUNTS[1].value); // Default to 2 images
+  
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { toast } = useToast();
-  const DRAFT_KEY = `draft-article-${categorySlug}-${article.slug}`;
-
+  
   const { register, handleSubmit, formState: { errors, isDirty }, control, getValues, setValue, watch, reset } = useForm<EditFormData>({
     resolver: zodResolver(editSchema),
     defaultValues: {
@@ -93,50 +85,54 @@ export default function EditArticleForm({ article, categoryName, categorySlug }:
       summary: article.summary || '',
       content: contentToHtml(article.articleContent),
       keyTakeaways: article.keyTakeaways?.map(t => ({ value: t })) || [{ value: '' }],
-      conclusion: article.conclusion,
+      conclusion: article.conclusion || '',
     }
   });
 
   const formValues = watch();
+  const wordCount = watch('content').replace(/<[^>]*>?/gm, '').split(/\s+/).filter(Boolean).length;
 
+  // Auto-saving logic
   useEffect(() => {
-    try {
-      const savedDraft = localStorage.getItem(DRAFT_KEY);
-      if (savedDraft) {
-        const draftData = JSON.parse(savedDraft);
-        reset(draftData); // Use reset to update form values
-        toast({
-          title: "Draft Restored",
-          description: "Your unsaved changes have been loaded.",
-        });
-      }
-    } catch (e) {
-      console.error("Failed to load draft from localStorage", e);
-    }
-  }, [DRAFT_KEY, reset, toast]);
-
-  useEffect(() => {
-    const subscription = watch((value) => {
+    const handleAutoSave = async () => {
       if (isDirty) {
-        if (debounceTimeoutRef.current) {
-          clearTimeout(debounceTimeoutRef.current);
+        setAutoSaveStatus('saving');
+        const currentData = getValues();
+        const result = await autoSaveArticleDraft({
+          ...article,
+          title: currentData.title,
+          slug: currentData.slug,
+          status: currentData.status,
+          summary: currentData.summary,
+          articleContent: [{ type: 'p', content: currentData.content }], // Simplified for draft
+          keyTakeaways: (currentData.keyTakeaways || []).map(t => t.value),
+          conclusion: currentData.conclusion,
+          publishedDate: article.publishedDate,
+        }, categoryName);
+        
+        if (result.success) {
+          setAutoSaveStatus('saved');
+        } else {
+          setAutoSaveStatus('error');
+          console.error("Auto-save failed:", result.error);
         }
-        debounceTimeoutRef.current = setTimeout(() => {
-          try {
-            localStorage.setItem(DRAFT_KEY, JSON.stringify(value));
-          } catch (e) {
-            console.error("Failed to save draft to localStorage", e);
-          }
-        }, 2000); // Save every 2 seconds after user stops typing
       }
-    });
+    };
+    
+    // Debounce the auto-save function
+    if (isDirty) {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+      debounceTimeoutRef.current = setTimeout(handleAutoSave, 10000); // Auto-save every 10 seconds
+    }
+    
     return () => {
-      subscription.unsubscribe();
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
       }
     };
-  }, [watch, DRAFT_KEY, isDirty]);
+  }, [formValues, isDirty, getValues, article, categoryName]);
 
 
   const { fields, append, remove } = useFieldArray({
@@ -171,12 +167,6 @@ export default function EditArticleForm({ article, categoryName, categorySlug }:
       toast({ title: "Error Saving", description: result.error, variant: 'destructive' });
     } else {
       toast({ title: "Article Saved!", description: `"${data.title}" has been updated.` });
-      // Clear the auto-saved draft from localStorage on successful save
-      try {
-        localStorage.removeItem(DRAFT_KEY);
-      } catch (e) {
-        console.error("Failed to remove draft from localStorage", e);
-      }
     }
     setIsSaving(false);
   };
@@ -192,11 +182,6 @@ export default function EditArticleForm({ article, categoryName, categorySlug }:
       setIsDeleting(false);
     } else {
       toast({ title: "Article Deleted", description: "The article has been successfully removed." });
-       try {
-        localStorage.removeItem(DRAFT_KEY);
-      } catch (e) {
-        console.error("Failed to remove draft from localStorage", e);
-      }
     }
   }
 
@@ -255,7 +240,7 @@ export default function EditArticleForm({ article, categoryName, categorySlug }:
                     <CardHeader>
                         <CardTitle className="text-2xl">Edit Article Content</CardTitle>
                         <CardDescription>
-                            Make changes to your article below. Your work is auto-saved as a draft every few seconds.
+                            Make changes to your article below. Drafts are auto-saved to GitHub every 10 seconds.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
@@ -358,6 +343,15 @@ export default function EditArticleForm({ article, categoryName, categorySlug }:
                         <CardTitle>Publishing Tools</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                         <div>
+                            <p className="text-sm font-medium">Word Count: <span className="font-bold text-primary">{wordCount}</span></p>
+                            <div className="text-xs text-muted-foreground mt-2 flex items-center gap-2">
+                                {autoSaveStatus === 'saving' && <><Loader2 className="h-4 w-4 animate-spin" /> Saving draft...</>}
+                                {autoSaveStatus === 'saved' && <><CheckCircle className="h-4 w-4 text-green-500" /> All changes saved.</>}
+                                {autoSaveStatus === 'error' && <p className="text-destructive">Auto-save failed.</p>}
+                            </div>
+                        </div>
+
                         <div>
                             <Label htmlFor="status">Status</Label>
                             <Controller
@@ -402,7 +396,7 @@ export default function EditArticleForm({ article, categoryName, categorySlug }:
                             <div className="flex flex-col gap-2">
                                 <Button type="submit" disabled={isSaving || isDeleting || isAddingImages} className="w-full">
                                     {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                    Save Changes
+                                    Save & Publish
                                 </Button>
                                 <Button type="button" variant="outline" onClick={() => setIsPreviewOpen(true)} className="w-full">
                                     <Eye className="mr-2 h-4 w-4" />
