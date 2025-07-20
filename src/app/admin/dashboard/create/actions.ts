@@ -122,58 +122,33 @@ const EditSchema = z.object({
     status: z.enum(['published', 'draft']),
 });
 
-// Function to convert markdown-like text to basic HTML for the editor
-function markdownToHtml(text: string): string {
-  // First, clean up stray HTML tags that might interfere
-  let cleanText = text.replace(/<\/?(p|h[1-6]|table|tr|td|th|tbody|thead)>/g, '');
-
-  let html = cleanText
-    .split('\n')
-    .map(line => {
-      line = line.trim();
-      if (line.startsWith('###### ')) return `<h6>${line.substring(7)}</h6>`;
-      if (line.startsWith('##### ')) return `<h5>${line.substring(6)}</h5>`;
-      if (line.startsWith('#### ')) return `<h4>${line.substring(5)}</h4>`;
-      if (line.startsWith('### ')) return `<h3>${line.substring(4)}</h3>`;
-      if (line.startsWith('## ')) return `<h2>${line.substring(3)}</h2>`;
-      if (line.startsWith('# ')) return `<h1>${line.substring(2)}</h1>`;
-      // Wrap non-heading lines in <p> tags only if they contain text
-      if (line.length > 0) return `<p>${line}</p>`;
-      return '';
-    })
-    .join('');
-
-  return html;
-}
-
-
-function parseAndFormatContent(html: string): Article['articleContent'] {
-  const formattedHtml = markdownToHtml(html);
-  const dom = new JSDOM(formattedHtml);
-  const document = dom.window.document;
-  const content: Article['articleContent'] = [];
-  
-  document.body.childNodes.forEach(node => {
-    if (node.nodeType === dom.window.Node.ELEMENT_NODE) {
-      const element = node as HTMLElement;
-      const tagName = element.tagName.toLowerCase();
-
-      if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p'].includes(tagName)) {
-        const textContent = element.innerHTML.trim();
-        if (textContent) {
-          content.push({ type: tagName as any, content: textContent });
+function htmlToArticleContent(html: string): Article['articleContent'] {
+  if (typeof window === 'undefined') {
+    // Server-side parsing
+    const dom = new JSDOM(html);
+    const document = dom.window.document;
+    const content: Article['articleContent'] = [];
+    document.body.childNodes.forEach(node => {
+      if (node.nodeType === dom.window.Node.ELEMENT_NODE) {
+        const element = node as HTMLElement;
+        const tagName = element.tagName.toLowerCase();
+        
+        if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p'].includes(tagName)) {
+           const innerHTML = element.innerHTML.trim();
+           if (innerHTML) {
+             content.push({ type: tagName as any, content: innerHTML });
+           }
+        } else if (tagName === 'img' && element.hasAttribute('src')) {
+           content.push({ type: 'img', content: element.getAttribute('src')!, alt: element.getAttribute('alt') || '' });
+        } else if (tagName === 'table') {
+           content.push({ type: 'p', content: element.outerHTML });
         }
-      } else if (tagName === 'img' && element.hasAttribute('src')) {
-        content.push({ type: 'img', content: element.getAttribute('src')!, alt: element.getAttribute('alt') || '' });
-      } else if (tagName === 'table') {
-        // To keep tables as a single block, we just push the outerHTML.
-        // The frontend will be responsible for styling it.
-        content.push({ type: 'p', content: element.outerHTML });
       }
-    }
-  });
-
-  return content.filter(block => (block.content && block.content.trim() !== '') || block.type === 'img');
+    });
+    return content.filter(block => (block.content && block.content.trim() !== '') || block.type === 'img');
+  }
+  // Client-side parsing (though this function is now only used on server)
+  return []; 
 }
 
 export async function editArticleAction(data: unknown) {
@@ -191,8 +166,8 @@ export async function editArticleAction(data: unknown) {
       throw new Error("Article not found.");
     }
     
-    // Automatically format content on save
-    const newArticleContent = parseAndFormatContent(content);
+    // Convert the rich text HTML to our structured JSON format on save
+    const newArticleContent = htmlToArticleContent(content);
 
     // Get the existing article to preserve its properties like image
     const existingArticle = articles[articleIndex];

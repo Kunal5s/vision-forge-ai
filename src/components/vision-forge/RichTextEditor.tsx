@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEditor, EditorContent, Editor, BubbleMenu } from '@tiptap/react';
+import { useEditor, EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
@@ -9,7 +9,7 @@ import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
 import { useCallback, useRef } from 'react';
 import { 
-    Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon, Image as ImageIcon,
+    Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon, ImageIcon,
     Heading1, Heading2, Heading3, Palette, AlignLeft, AlignCenter, AlignRight, Pilcrow
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
