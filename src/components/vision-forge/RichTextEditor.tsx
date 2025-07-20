@@ -210,13 +210,12 @@ export function RichTextEditor({ value, onChange, disabled, placeholder = "Start
     return (
         <div className="border rounded-lg overflow-hidden">
              {editor && (
-                <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }}>
-                    <div className="bg-foreground text-background p-1 rounded-md flex gap-1">
-                        <Button size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleBold().run()} className={cn("hover:bg-background/20", { 'bg-background/20': editor.isActive('bold') })}>Bold</Button>
-                        <Button size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleItalic().run()} className={cn("hover:bg-background/20",{ 'bg-background/20': editor.isActive('italic') })}>Italic</Button>
-                        <Button size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={cn("hover:bg-background/20",{ 'bg-background/20': editor.isActive('heading', { level: 2}) })}>H2</Button>
-                        <Button size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} className={cn("hover:bg-background/20",{ 'bg-background/20': editor.isActive('heading', { level: 3}) })}>H3</Button>
-                    </div>
+                <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }} className="bg-foreground text-background p-1 rounded-md flex gap-1 items-center">
+                    <Button size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleBold().run()} className={cn("hover:bg-background/20 text-sm", { 'bg-background/20': editor.isActive('bold') })}>Bold</Button>
+                    <Button size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleItalic().run()} className={cn("hover:bg-background/20 text-sm",{ 'bg-background/20': editor.isActive('italic') })}>Italic</Button>
+                    <div className="h-5 border-l border-background/50 mx-1" />
+                    <Button size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={cn("hover:bg-background/20 text-sm",{ 'bg-background/20': editor.isActive('heading', { level: 2}) })}>H2</Button>
+                    <Button size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} className={cn("hover:bg-background/20 text-sm",{ 'bg-background/20': editor.isActive('heading', { level: 3}) })}>H3</Button>
                 </BubbleMenu>
             )}
             <EditorToolbar editor={editor} />
