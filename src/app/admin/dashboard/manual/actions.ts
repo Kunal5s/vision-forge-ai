@@ -11,9 +11,9 @@ import { categorySlugMap } from '@/lib/constants';
 import { Octokit } from 'octokit';
 import { getPrimaryBranch, getShaForFile } from '@/lib/articles';
 
-// New function to reliably parse HTML into the structured content blocks.
-// This function uses JSDOM and must only be used on the server.
-export function htmlToArticleContent(html: string): ArticleContentBlock[] {
+// This function is NOT exported, so it is not a Server Action.
+// It's a private utility for use within this file only.
+function htmlToArticleContent(html: string): ArticleContentBlock[] {
     if (!html) {
         return [];
     }

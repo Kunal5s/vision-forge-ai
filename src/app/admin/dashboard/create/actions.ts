@@ -7,8 +7,7 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { categorySlugMap } from '@/lib/constants';
-import { getAllArticlesAdmin, saveUpdatedArticles, getArticleForEdit, deleteArticleAction as deleteFromServer } from '@/lib/articles';
-import { htmlToArticleContent } from '../manual/actions';
+import { getAllArticlesAdmin, saveUpdatedArticles, getArticleForEdit, deleteArticleAction as deleteFromServer, editArticleAction as serverEditArticleAction } from '@/lib/articles';
 
 
 const ArticleFormSchema = z.object({
@@ -93,69 +92,10 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
 }
 
 export async function editArticleAction(data: unknown) {
-  const validatedFields = ManualArticleSchema.safeParse(data);
-  if (!validatedFields.success) {
-    return { success: false, error: "Invalid data." };
+  const result = await serverEditArticleAction(data);
+  if (result?.error) {
+    return { success: false, error: result.error };
   }
-  const { title, slug, summary, content, keyTakeaways, conclusion, originalSlug, category, status, image } = validatedFields.data;
-
-  try {
-    const existingArticle = await getArticleForEdit(category, originalSlug);
-    if (!existingArticle) {
-        throw new Error("Article to edit was not found.");
-    }
-    
-    const newArticleContent = htmlToArticleContent(content);
-
-    const updatedArticleData: Article = {
-      ...existingArticle,
-      title,
-      slug,
-      summary: summary || '',
-      status,
-      image,
-      articleContent: newArticleContent.length > 0 ? newArticleContent : existingArticle.articleContent,
-      keyTakeaways: (keyTakeaways || []).map(k => k.value).filter(v => v && v.trim() !== ''),
-      conclusion: conclusion,
-      publishedDate: status === 'published' ? (existingArticle.publishedDate || new Date().toISOString()) : new Date().toISOString(),
-    };
-    
-    const finalValidatedArticle = ArticleSchema.safeParse(updatedArticleData);
-    if (!finalValidatedArticle.success) {
-      console.error("Final validation failed after edit processing:", finalValidatedArticle.error.flatten());
-      return { success: false, error: "Failed to process edited article data correctly." };
-    }
-    
-    // If publishing, add to category file and delete from drafts.
-    // If just saving draft, update the draft file.
-    if (status === 'published') {
-        const publishedArticles = await getAllArticlesAdmin(category);
-        const articleIndex = publishedArticles.findIndex(a => a.slug === originalSlug);
-        
-        if (articleIndex > -1) {
-            publishedArticles[articleIndex] = finalValidatedArticle.data;
-        } else {
-            publishedArticles.unshift(finalValidatedArticle.data);
-        }
-        
-        await saveUpdatedArticles(category, publishedArticles, `feat: ✏️ Publish article "${title}"`);
-        // Delete from drafts
-        await deleteFromServer(category, originalSlug, true);
-
-    } else { // Saving as draft
-        await saveUpdatedArticles('drafts', [finalValidatedArticle.data], `docs: 📝 Autosave draft for "${title}"`, `${slug}.json`);
-    }
-
-    revalidatePath(`/`);
-    const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category) || category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    revalidatePath(`/${categorySlug}`);
-    revalidatePath(`/${categorySlug}/${slug}`);
-    revalidatePath('/admin/dashboard/edit');
-
-  } catch (e: any) {
-    return { success: false, error: e.message };
-  }
-  
   redirect('/admin/dashboard/edit');
 }
 

@@ -3,9 +3,11 @@
 
 import { z } from 'zod';
 import { categorySlugMap } from './constants';
-import { ArticleSchema, type Article } from './types';
+import { ArticleSchema, type Article, ManualArticleSchema } from './types';
 import { Octokit } from 'octokit';
 import type { ArticleContentBlock } from './types';
+import { JSDOM } from 'jsdom';
+import { revalidatePath } from 'next/cache';
 
 // Direct imports to ensure files are bundled during the build process.
 import featuredArticles from '@/articles/featured.json';
@@ -39,6 +41,41 @@ const allCategoryData: { [key: string]: any } = {
     'usecases': usecasesArticles,
     'drafts': draftArticles,
 };
+
+// This function is NOT exported, so it is not a Server Action.
+// It's a private utility for use within this file only.
+function htmlToArticleContent(html: string): ArticleContentBlock[] {
+    if (!html) {
+        return [];
+    }
+
+    const dom = new JSDOM(html);
+    const document = dom.window.document;
+    const content: ArticleContentBlock[] = [];
+    
+    document.body.childNodes.forEach(node => {
+        if (node.nodeType === dom.window.Node.ELEMENT_NODE) {
+            const element = node as HTMLElement;
+            const tagName = element.tagName.toLowerCase() as ArticleContentBlock['type'];
+
+            if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'blockquote', 'table'].includes(tagName)) {
+                const outerHTML = element.outerHTML.trim();
+                if (outerHTML) {
+                    content.push({ type: tagName, content: outerHTML, alt:'' });
+                }
+            } else if (tagName === 'div' && element.querySelector('img')) {
+                const img = element.querySelector('img');
+                if (img && img.hasAttribute('src')) {
+                    content.push({ type: 'img', content: img.getAttribute('src')!, alt: img.getAttribute('alt') || '' });
+                }
+            } else if (tagName === 'img' && element.hasAttribute('src')) {
+                content.push({ type: 'img', content: element.getAttribute('src')!, alt: element.getAttribute('alt') || '' });
+            }
+        }
+    });
+    return content.filter(block => (block.content && block.content.trim() !== '') || block.type === 'img');
+}
+
 
 async function loadAndValidateArticles(category: string): Promise<z.infer<typeof ArticleSchema>[]> {
     // For drafts, the category IS the slug. Otherwise, find slug from map.
@@ -244,4 +281,70 @@ export async function deleteArticleAction(category: string, slug: string, isDraf
     }
     
     return { success: true };
+}
+
+
+export async function editArticleAction(data: unknown) {
+  const validatedFields = ManualArticleSchema.safeParse(data);
+  if (!validatedFields.success) {
+    return { success: false, error: "Invalid data." };
+  }
+  const { title, slug, summary, content, keyTakeaways, conclusion, originalSlug, category, status, image } = validatedFields.data;
+
+  try {
+    const existingArticle = await getArticleForEdit(category, originalSlug);
+    if (!existingArticle) {
+        throw new Error("Article to edit was not found.");
+    }
+    
+    const newArticleContent = htmlToArticleContent(content);
+
+    const updatedArticleData: Article = {
+      ...existingArticle,
+      title,
+      slug,
+      summary: summary || '',
+      status,
+      image,
+      articleContent: newArticleContent.length > 0 ? newArticleContent : existingArticle.articleContent,
+      keyTakeaways: (keyTakeaways || []).map(k => k.value).filter(v => v && v.trim() !== ''),
+      conclusion: conclusion,
+      publishedDate: status === 'published' ? (existingArticle.publishedDate || new Date().toISOString()) : new Date().toISOString(),
+    };
+    
+    const finalValidatedArticle = ArticleSchema.safeParse(updatedArticleData);
+    if (!finalValidatedArticle.success) {
+      console.error("Final validation failed after edit processing:", finalValidatedArticle.error.flatten());
+      return { success: false, error: "Failed to process edited article data correctly." };
+    }
+    
+    // If publishing, add to category file and delete from drafts.
+    // If just saving draft, update the draft file.
+    if (status === 'published') {
+        const publishedArticles = await getAllArticlesAdmin(category);
+        const articleIndex = publishedArticles.findIndex(a => a.slug === originalSlug);
+        
+        if (articleIndex > -1) {
+            publishedArticles[articleIndex] = finalValidatedArticle.data;
+        } else {
+            publishedArticles.unshift(finalValidatedArticle.data);
+        }
+        
+        await saveUpdatedArticles(category, publishedArticles, `feat: ✏️ Publish article "${title}"`);
+        // Delete from drafts
+        await deleteArticleAction(category, originalSlug, true);
+
+    } else { // Saving as draft
+        await saveUpdatedArticles('drafts', [finalValidatedArticle.data], `docs: 📝 Autosave draft for "${title}"`, `${slug}.json`);
+    }
+
+    revalidatePath(`/`);
+    const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category) || category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    revalidatePath(`/${categorySlug}`);
+    revalidatePath(`/${categorySlug}/${slug}`);
+    revalidatePath('/admin/dashboard/edit');
+
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
 }
