@@ -1,7 +1,7 @@
 
 'use server';
 
-import { type Article, ArticleSchema as ArticleValidationSchema, type ArticleContentBlock, ManualArticleSchema, htmlToArticleContent } from '@/lib/types';
+import { type Article, ArticleSchema as ArticleValidationSchema, type ArticleContentBlock, ManualArticleSchema } from '@/lib/types';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { saveUpdatedArticles, getAllArticlesAdmin } from '@/lib/articles'; // Import the universal save function
@@ -10,6 +10,43 @@ import { JSDOM } from 'jsdom';
 import { categorySlugMap } from '@/lib/constants';
 import { Octokit } from 'octokit';
 import { getPrimaryBranch, getShaForFile } from '@/lib/articles';
+
+// This function is NOT exported, so it is not a Server Action.
+// It's a private utility for use within this file only.
+function htmlToArticleContent(html: string): ArticleContentBlock[] {
+    if (!html) {
+        return [];
+    }
+
+    const dom = new JSDOM(`<body>${html}</body>`);
+    const document = dom.window.document;
+    const content: ArticleContentBlock[] = [];
+    
+    document.body.childNodes.forEach(node => {
+        if (node.nodeType === dom.window.Node.ELEMENT_NODE) {
+            const element = node as HTMLElement;
+            // Use the outerHTML to preserve the element itself (e.g., <h2>...</h2>)
+            const tagName = element.tagName.toLowerCase() as ArticleContentBlock['type'];
+
+            if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'blockquote', 'table'].includes(tagName)) {
+                const outerHTML = element.outerHTML.trim();
+                if (outerHTML) {
+                    content.push({ type: tagName, content: outerHTML, alt:'' });
+                }
+            } else if (tagName === 'div' && element.querySelector('img')) {
+                // Handle images wrapped in divs which is common from RTEs
+                const img = element.querySelector('img');
+                if (img && img.hasAttribute('src')) {
+                    content.push({ type: 'img', content: img.getAttribute('src')!, alt: img.getAttribute('alt') || '' });
+                }
+            } else if (tagName === 'img' && element.hasAttribute('src')) {
+                content.push({ type: 'img', content: element.getAttribute('src')!, alt: element.getAttribute('alt') || '' });
+            }
+        }
+    });
+    return content.filter(block => (block.content && block.content.trim() !== '') || block.type === 'img');
+}
+
 
 export async function addImagesToArticleAction(content: string, imageCount: number = 5): Promise<{success: boolean, content?: string, error?: string}> {
     try {
@@ -127,7 +164,8 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
     } else {
         // Save to drafts folder
         const existingDrafts = await getAllArticlesAdmin('drafts');
-        await saveUpdatedArticles('drafts', [finalValidatedArticle.data, ...existingDrafts], `docs: 📝 Save manual draft "${newArticleData.title}"`);
+        const updatedDrafts = [finalValidatedArticle.data, ...existingDrafts];
+        await saveUpdatedArticles('drafts', updatedDrafts, `docs: 📝 Save manual draft "${newArticleData.title}"`);
     }
 
     revalidatePath('/');
@@ -147,61 +185,25 @@ export async function createManualArticleAction(data: unknown): Promise<CreateAr
 
 // Action to save a draft to the dedicated autosave-drafts branch/folder
 export async function autoSaveManualDraftAction(draftData: Article): Promise<{ success: boolean; error?: string }> {
-    const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = process.env;
-    if (!GITHUB_TOKEN || !GITHUB_REPO_OWNER || !GITHUB_REPO_NAME) {
-        return { success: false, error: "GitHub credentials not configured on the server." };
-    }
-
-    const octokit = new Octokit({ auth: GITHUB_TOKEN });
-    const primaryBranch = await getPrimaryBranch(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME);
-    const draftBranch = 'autosave-drafts';
-    
-    // Ensure the branch exists, creating it from the primary branch if it doesn't
     try {
-        await octokit.rest.repos.getBranch({
-            owner: GITHUB_REPO_OWNER,
-            repo: GITHUB_REPO_NAME,
-            branch: draftBranch,
-        });
-    } catch (error: any) {
-        if (error.status === 404) {
-            const { data: { object: { sha } } } = await octokit.rest.repos.getBranch({
-                owner: GITHUB_REPO_OWNER,
-                repo: GITHUB_REPO_NAME,
-                branch: primaryBranch,
-            });
-            await octokit.rest.git.createRef({
-                owner: GITHUB_REPO_OWNER,
-                repo: GITHUB_REPO_NAME,
-                ref: `refs/heads/${draftBranch}`,
-                sha,
-            });
-        } else {
-            throw error;
-        }
-    }
-
-    try {
+        // Validate draft data before saving
         const validatedDraft = ArticleSchema.safeParse({ ...draftData, status: 'draft' });
         if (!validatedDraft.success) {
-            return { success: false, error: 'Invalid draft data for auto-saving.' };
+            return { success: false, error: 'Invalid draft data provided for auto-saving.' };
         }
         
-        const repoPath = `src/articles/drafts/${validatedDraft.data.slug}.json`;
-        const fileContent = JSON.stringify(validatedDraft.data, null, 2);
-        
-        const fileSha = await getShaForFile(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME, repoPath, draftBranch);
+        const allDrafts = await getAllArticlesAdmin('drafts');
+        const draftIndex = allDrafts.findIndex(d => d.slug === validatedDraft.data.slug);
 
-        await octokit.rest.repos.createOrUpdateFileContents({
-            owner: GITHUB_REPO_OWNER,
-            repo: GITHUB_REPO_NAME,
-            path: repoPath,
-            message: `docs: 📝 Autosave draft for "${validatedDraft.data.title}"`,
-            content: Buffer.from(fileContent).toString('base64'),
-            sha: fileSha,
-            branch: draftBranch,
-        });
+        if (draftIndex > -1) {
+            allDrafts[draftIndex] = validatedDraft.data;
+        } else {
+            allDrafts.unshift(validatedDraft.data);
+        }
         
+        // Save the entire drafts.json file
+        await saveUpdatedArticles('drafts', allDrafts, `docs: 📝 Autosave draft for "${validatedDraft.data.title}"`);
+
         return { success: true };
 
     } catch (error: any) {

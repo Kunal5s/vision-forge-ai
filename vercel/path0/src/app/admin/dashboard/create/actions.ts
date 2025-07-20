@@ -74,7 +74,7 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
     }
     
     // Since this is a newly generated article, it starts as a draft.
-    // We save it to the drafts folder. It will be moved on publish.
+    // We save it to the drafts file. It will be moved on publish.
     await saveUpdatedArticles('drafts', [newArticle], `feat: ✨ Add new AI article draft "${newArticle.title}"`, `${newArticle.slug}.json`);
 
     revalidatePath('/');
@@ -89,24 +89,4 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
     console.error('Error in generateArticleAction:', error);
     return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred.' };
   }
-}
-
-export async function editArticleAction(data: unknown) {
-  const result = await serverEditArticleAction(data);
-  if (result?.error) {
-    return { success: false, error: result.error };
-  }
-  redirect('/admin/dashboard/edit');
-}
-
-export async function deleteArticleAction(category: string, slug: string, isDraft: boolean = true) {
-    const result = await deleteFromServer(category, slug, isDraft);
-     if (result?.error) {
-        return { success: false, error: result.error };
-    }
-    
-    if(!isDraft) {
-        redirect('/admin/dashboard/edit');
-    }
-    return { success: true };
 }

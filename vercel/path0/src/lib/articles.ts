@@ -7,6 +7,7 @@ import { ArticleSchema, type Article, ManualArticleSchema, type ArticleContentBl
 import { Octokit } from 'octokit';
 import { JSDOM } from 'jsdom';
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 
 // Direct imports to ensure files are bundled during the build process.
 import featuredArticles from '@/articles/featured.json';
@@ -31,7 +32,7 @@ function htmlToArticleContent(html: string): ArticleContentBlock[] {
         return [];
     }
 
-    const dom = new JSDOM(html);
+    const dom = new JSDOM(`<body>${html}</body>`);
     const document = dom.window.document;
     const content: ArticleContentBlock[] = [];
     
@@ -126,19 +127,6 @@ export async function getAllArticlesAdmin(category: string): Promise<z.infer<typ
     return await loadAndValidateArticles(category);
 }
 
-// For editing page: get a single article, checking drafts first
-export async function getArticleForEdit(category: string, slug: string): Promise<Article | undefined> {
-    // 1. Check drafts first
-    const drafts = await getAllArticlesAdmin('drafts');
-    const draft = drafts.find(a => a.slug === slug);
-    if (draft) return draft;
-
-    // 2. If not in drafts, check the published category
-    const articles = await getAllArticlesAdmin(category);
-    return articles.find(a => a.slug === slug);
-}
-
-
 // Reusable GitHub helper functions
 export async function getShaForFile(octokit: Octokit, owner: string, repo: string, path: string, branch: string): Promise<string | undefined> {
     try {
@@ -229,36 +217,6 @@ export async function saveUpdatedArticles(
 }
 
 
-// Server action for auto-saving a draft to the `drafts` folder on GitHub
-export async function autoSaveArticleDraft(draftData: Article): Promise<{ success: boolean; error?: string }> {
-    try {
-        // Validate draft data before saving
-        const validatedDraft = ArticleSchema.safeParse({ ...draftData, status: 'draft' });
-        if (!validatedDraft.success) {
-            return { success: false, error: 'Invalid draft data provided for auto-saving.' };
-        }
-        
-        const allDrafts = await getAllArticlesAdmin('drafts');
-        const draftIndex = allDrafts.findIndex(d => d.slug === validatedDraft.data.slug);
-
-        if (draftIndex > -1) {
-            allDrafts[draftIndex] = validatedDraft.data;
-        } else {
-            allDrafts.unshift(validatedDraft.data);
-        }
-        
-        // Save the entire drafts.json file
-        await saveUpdatedArticles('drafts', allDrafts, `docs: 📝 Autosave draft for "${validatedDraft.data.title}"`, 'drafts.json');
-
-        revalidatePath('/admin/dashboard/edit');
-        return { success: true };
-
-    } catch (error: any) {
-        console.error('Failed to auto-save draft to GitHub:', error);
-        return { success: false, error: error.message };
-    }
-}
-
 export async function deleteArticleAction(category: string, slug: string, isDraft: boolean = true) {
     try {
         const categorySlug = isDraft ? 'drafts' : (Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category) || category);
@@ -281,9 +239,12 @@ export async function deleteArticleAction(category: string, slug: string, isDraf
         return { success: false, error: e.message };
     }
     
+    // Redirect must happen outside the try/catch
+    if(!isDraft) {
+        redirect('/admin/dashboard/edit');
+    }
     return { success: true };
 }
-
 
 export async function editArticleAction(data: unknown) {
   const validatedFields = ManualArticleSchema.safeParse(data);
@@ -293,11 +254,17 @@ export async function editArticleAction(data: unknown) {
   const { title, slug, summary, content, keyTakeaways, conclusion, originalSlug, category, status, image } = validatedFields.data;
 
   try {
-    const existingArticle = await getArticleForEdit(category, originalSlug);
-    if (!existingArticle) {
-        throw new Error("Article to edit was not found.");
+    const isOriginallyDraft = (await getAllArticlesAdmin('drafts')).some(d => d.slug === originalSlug);
+    const originalCategory = isOriginallyDraft ? 'drafts' : category;
+
+    const allArticles = await getAllArticlesAdmin(originalCategory);
+    const articleIndex = allArticles.findIndex(a => a.slug === originalSlug);
+
+    if (articleIndex === -1) {
+      throw new Error("Article to edit was not found.");
     }
-    
+    const existingArticle = allArticles[articleIndex];
+
     const newArticleContent = htmlToArticleContent(content);
 
     const updatedArticleData: Article = {
@@ -310,7 +277,7 @@ export async function editArticleAction(data: unknown) {
       articleContent: newArticleContent.length > 0 ? newArticleContent : existingArticle.articleContent,
       keyTakeaways: (keyTakeaways || []).map(k => k.value).filter(v => v && v.trim() !== ''),
       conclusion: conclusion,
-      publishedDate: status === 'published' ? (existingArticle.publishedDate || new Date().toISOString()) : new Date().toISOString(),
+      publishedDate: status === 'published' && !existingArticle.publishedDate ? new Date().toISOString() : existingArticle.publishedDate,
     };
     
     const finalValidatedArticle = ArticleSchema.safeParse(updatedArticleData);
@@ -319,24 +286,32 @@ export async function editArticleAction(data: unknown) {
       return { success: false, error: "Failed to process edited article data correctly." };
     }
     
-    // If publishing, add to category file and delete from drafts.
-    // If just saving draft, update the draft file.
     if (status === 'published') {
         const publishedArticles = await getAllArticlesAdmin(category);
-        const articleIndex = publishedArticles.findIndex(a => a.slug === originalSlug);
         
-        if (articleIndex > -1) {
+        if (originalCategory === category) {
+            // Updating an already published article in the same category
             publishedArticles[articleIndex] = finalValidatedArticle.data;
         } else {
+            // Publishing a draft to a new category
             publishedArticles.unshift(finalValidatedArticle.data);
         }
-        
         await saveUpdatedArticles(category, publishedArticles, `feat: ✏️ Publish article "${title}"`);
-        // Delete from drafts
-        await deleteArticleAction(category, originalSlug, true);
+        
+        // If it was originally a draft, delete it from drafts.json
+        if(isOriginallyDraft) {
+            await deleteArticleAction('drafts', originalSlug, true);
+        }
 
     } else { // Saving as draft
-        await saveUpdatedArticles('drafts', [finalValidatedArticle.data], `docs: 📝 Autosave draft for "${title}"`, `${slug}.json`);
+        const drafts = await getAllArticlesAdmin('drafts');
+        const draftIndex = drafts.findIndex(d => d.slug === originalSlug);
+        if (draftIndex > -1) {
+            drafts[draftIndex] = finalValidatedArticle.data;
+        } else {
+            drafts.unshift(finalValidatedArticle.data);
+        }
+        await saveUpdatedArticles('drafts', drafts, `docs: 📝 Autosave draft for "${title}"`, 'drafts.json');
     }
 
     revalidatePath(`/`);
@@ -348,4 +323,5 @@ export async function editArticleAction(data: unknown) {
   } catch (e: any) {
     return { success: false, error: e.message };
   }
+  redirect('/admin/dashboard/edit');
 }

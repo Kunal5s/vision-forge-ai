@@ -13,7 +13,7 @@ import { ArrowLeft, Loader2, Save, Trash2, Wand2, Eye, PlusCircle, Globe, FileTe
 import { useState, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import type { Article } from '@/lib/articles';
-import { editArticleAction, deleteArticleAction } from '../../../create/actions';
+import { editArticleAction, deleteArticleAction } from '@/lib/articles';
 import { autoSaveArticleDraft } from './actions';
 import {
   AlertDialog,
@@ -154,10 +154,11 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
 
     if (result?.error) {
       toast({ title: "Error Saving", description: result.error, variant: 'destructive' });
+      setIsSaving(false);
     } else {
       toast({ title: "Article Saved!", description: `"${data.title}" has been updated.` });
+      // On success, the server action will redirect, so no need to setIsSaving(false) here.
     }
-    setIsSaving(false);
   };
   
   const handleDelete = async () => {
