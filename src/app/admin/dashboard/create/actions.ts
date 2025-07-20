@@ -2,13 +2,15 @@
 'use server';
 
 import { generateArticleForTopic } from '@/ai/article-generator';
-import { type Article, ArticleSchema as ArticleValidationSchema, ManualArticleSchema, htmlToArticleContent } from '@/lib/types';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { categorySlugMap } from '@/lib/constants';
-import { getAllArticlesAdmin, saveUpdatedArticles, getArticleForEdit, deleteArticleAction as deleteFromServer, editArticleAction as serverEditArticleAction } from '@/lib/articles';
-
+import {
+  saveUpdatedArticles,
+  deleteArticleAction as deleteFromServer,
+  editArticleAction as serverEditArticleAction,
+} from '@/lib/articles.server';
 
 const ArticleFormSchema = z.object({
   topic: z.string().min(1, 'Please enter a topic for the article.'),
@@ -24,31 +26,34 @@ const ArticleFormSchema = z.object({
   huggingFaceApiKey: z.string().optional(),
 });
 
-
 type GenerateArticleResult = {
   success: boolean;
   title?: string;
   error?: string;
 };
 
-
-export async function generateArticleAction(data: unknown): Promise<GenerateArticleResult> {
+export async function generateArticleAction(
+  data: unknown
+): Promise<GenerateArticleResult> {
   const validatedFields = ArticleFormSchema.safeParse(data);
 
   if (!validatedFields.success) {
-    console.error("Validation Errors:", validatedFields.error.flatten());
-    return { success: false, error: 'Invalid input data for article generation.' };
+    console.error('Validation Errors:', validatedFields.error.flatten());
+    return {
+      success: false,
+      error: 'Invalid input data for article generation.',
+    };
   }
-  
-  const { 
-    topic, 
+
+  const {
+    topic,
     category,
     provider,
-    model, 
-    style, 
-    mood, 
-    wordCount, 
-    imageCount, 
+    model,
+    style,
+    mood,
+    wordCount,
+    imageCount,
     openRouterApiKey,
     sambaNovaApiKey,
     huggingFaceApiKey,
@@ -56,12 +61,12 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
 
   try {
     const newArticle = await generateArticleForTopic({
-      topic, 
-      category, 
+      topic,
+      category,
       provider,
-      model, 
-      style, 
-      mood, 
+      model,
+      style,
+      mood,
       wordCount,
       imageCount,
       openRouterApiKey,
@@ -70,43 +75,43 @@ export async function generateArticleAction(data: unknown): Promise<GenerateArti
     });
 
     if (!newArticle) {
-      throw new Error('AI failed to generate the article. This could be due to model unavailability, a complex topic, or an incorrect response format. Please try again with a different model or topic, or check your API key credits.');
+      throw new Error(
+        'AI failed to generate the article. This could be due to model unavailability, a complex topic, or an incorrect response format. Please try again with a different model or topic, or check your API key credits.'
+      );
     }
-    
-    // Since this is a newly generated article, it starts as a draft.
-    // We save it to the drafts folder. It will be moved on publish.
-    await saveUpdatedArticles('drafts', [newArticle], `feat: ✨ Add new AI article draft "${newArticle.title}"`, `${newArticle.slug}.json`);
+
+    // Save the new article as a draft
+    await saveUpdatedArticles(
+      'drafts',
+      [newArticle],
+      `feat: ✨ Add new AI article draft "${newArticle.title}"`,
+      `${newArticle.slug}.json`
+    );
 
     revalidatePath('/');
     revalidatePath('/admin/dashboard/edit');
-    const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category) || category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const categorySlug =
+      Object.keys(categorySlugMap).find(
+        (key) => categorySlugMap[key] === category
+      ) || category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     revalidatePath(`/${categorySlug}`);
     revalidatePath(`/${categorySlug}/${newArticle.slug}`);
-    
-    redirect(`/admin/dashboard/edit/${categorySlug}/${newArticle.slug}`);
-
   } catch (error) {
     console.error('Error in generateArticleAction:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred.' };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'An unknown error occurred.',
+    };
   }
-}
-
-export async function editArticleAction(data: unknown) {
-  const result = await serverEditArticleAction(data);
-  if (result?.error) {
-    return { success: false, error: result.error };
-  }
-  redirect('/admin/dashboard/edit');
-}
-
-export async function deleteArticleAction(category: string, slug: string, isDraft: boolean = true) {
-    const result = await deleteFromServer(category, slug, isDraft);
-     if (result?.error) {
-        return { success: false, error: result.error };
-    }
-    
-    if(!isDraft) {
-        redirect('/admin/dashboard/edit');
-    }
-    return { success: true };
+  // Redirect on success is now handled inside the generating component,
+  // as redirect() must be called outside of a try/catch block.
+  // For simplicity, we assume the component will handle it based on success status.
+  const validatedData = validatedFields.data;
+  const categorySlug =
+      Object.keys(categorySlugMap).find(
+        (key) => categorySlugMap[key] === validatedData.category
+      ) || validatedData.category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const slug = validatedData.topic.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-');
+  
+  redirect(`/admin/dashboard/edit/${categorySlug}/${slug}`);
 }

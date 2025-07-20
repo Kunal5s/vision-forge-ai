@@ -13,8 +13,8 @@ import { ArrowLeft, Loader2, Save, Trash2, Wand2, Eye, PlusCircle, Globe, FileTe
 import { useState, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import type { Article } from '@/lib/articles';
-import { editArticleAction, deleteArticleAction } from '../../../create/actions';
-import { autoSaveArticleDraft } from './actions';
+import { editArticleAction, deleteArticleAction } from '@/lib/articles.server';
+import { addImagesToArticleAction, autoSaveArticleDraftAction } from '@/app/admin/dashboard/manual/actions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,9 +35,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { IMAGE_COUNTS, categorySlugMap } from '@/lib/constants';
+import { IMAGE_COUNTS } from '@/lib/constants';
 import { ManualArticleSchema as EditSchema } from '@/lib/types';
-import { addImagesToArticleAction } from '../../../manual/actions';
 
 
 type EditFormData = z.infer<typeof EditSchema>;
@@ -90,6 +89,8 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
   // Auto-saving logic
   useEffect(() => {
     const performAutoSave = async () => {
+      if (!isDirty) return;
+      
       setAutoSaveStatus('saving');
       const currentData = getValues();
       const draftArticleData: Article = {
@@ -106,7 +107,7 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
           conclusion: currentData.conclusion,
       };
 
-      const result = await autoSaveArticleDraft(draftArticleData);
+      const result = await autoSaveArticleDraftAction(draftArticleData);
       
       if (result.success) {
         setAutoSaveStatus('saved');
@@ -156,6 +157,7 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
       toast({ title: "Error Saving", description: result.error, variant: 'destructive' });
     } else {
       toast({ title: "Article Saved!", description: `"${data.title}" has been updated.` });
+      // Redirect handled by action
     }
     setIsSaving(false);
   };
@@ -164,7 +166,6 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
     setIsDeleting(true);
     toast({ title: "Deleting...", description: `Removing article "${article.title}".` });
     
-    // If it's a published article, we delete from the category file. If not, from drafts.
     const result = await deleteArticleAction(article.category, article.slug, !isPublishedArticle);
     
      if (result?.error) {
