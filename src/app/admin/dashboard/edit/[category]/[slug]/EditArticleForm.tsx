@@ -73,23 +73,25 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
     }
   });
   
-  const [debouncedContent] = useDebounce(watch('content'), 10000);
+  const [debouncedValue] = useDebounce(watch(), 10000); // Watch all fields for debouncing
+  
   const watchedImage = watch('image');
   const titleValue = watch('title');
 
-  useEffect(() => {
-    const autoSaveDraft = async () => {
-        if (isDirty && getValues('status') === 'draft') {
-            const result = await autoSaveArticleDraftAction(getValues());
-            if (result.success) {
-                toast({ title: 'Draft Auto-Saved', description: 'Your progress has been saved to drafts.' });
-            }
+  const autoSaveDraft = useCallback(async () => {
+    if (isDirty && getValues('status') === 'draft') {
+        const result = await autoSaveArticleDraftAction(getValues());
+        if (result.success) {
+            toast({ title: 'Draft Auto-Saved', description: 'Your progress has been saved.' });
+        } else {
+            console.error("Autosave failed:", result.error);
         }
-    };
-    if (debouncedContent) {
-        autoSaveDraft();
     }
-  }, [debouncedContent, getValues, isDirty, toast]);
+  }, [getValues, isDirty, toast]);
+
+  useEffect(() => {
+    autoSaveDraft();
+  }, [debouncedValue, autoSaveDraft]);
 
   const wordCount = watch('content').replace(/<[^>]*>?/gm, '').split(/\s+/).filter(Boolean).length;
   
@@ -218,7 +220,7 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
                     <CardHeader>
                         <CardTitle className="text-2xl">Edit Article Content</CardTitle>
                         <CardDescription>
-                            Make changes to your article below. Drafts are auto-saved every 10 seconds.
+                            Your progress is saved as a draft when you stop typing. Use the buttons to publish.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
@@ -302,31 +304,8 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
                         </div>
 
                         <div>
-                            <Label htmlFor="status">Status</Label>
-                            <Controller
-                                name="status"
-                                control={control}
-                                render={({ field }) => (
-                                    <Select onValueChange={field.onChange} value={field.value} disabled={isSaving || isDeleting}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select status..." />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="published">
-                                                <div className="flex items-center gap-2"><Globe className="h-4 w-4 text-green-500" /> Published</div>
-                                            </SelectItem>
-                                            <SelectItem value="draft">
-                                                <div className="flex items-center gap-2"><FileText className="h-4 w-4 text-yellow-500" /> Draft</div>
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                )}
-                            />
-                        </div>
-                        
-                        <div className="space-y-2 border-t pt-4">
                             <Label>AI Tools</Label>
-                            <div className="flex flex-col sm:flex-row lg:flex-col gap-2">
+                            <div className="flex flex-col sm:flex-row lg:flex-col gap-2 mt-2">
                                 <Button type="button" variant="secondary" onClick={handleAddImages} disabled={isAddingImages || isSaving || isDeleting} className="w-full justify-center">
                                     {isAddingImages ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
                                     Add Images
@@ -343,9 +322,19 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
                          <div className="space-y-2 border-t pt-4">
                             <Label>Actions</Label>
                             <div className="flex flex-col gap-2">
-                                <Button type="submit" disabled={isSaving || isDeleting || isAddingImages} className="w-full">
-                                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                    {getValues('status') === 'draft' ? 'Save Draft' : 'Publish Changes'}
+                                <Button onClick={handleSubmit((data) => {
+                                    setValue('status', 'published');
+                                    onSubmit(data);
+                                })} className="w-full" disabled={isSaving || isDeleting || isAddingImages}>
+                                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Globe className="mr-2 h-4 w-4" />}
+                                    Publish
+                                </Button>
+                                <Button onClick={handleSubmit((data) => {
+                                   setValue('status', 'draft');
+                                   onSubmit(data);
+                                })} variant="secondary" className="w-full" disabled={isSaving || isDeleting || isAddingImages}>
+                                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                    Save as Draft
                                 </Button>
                                 <Button type="button" variant="outline" onClick={() => setIsPreviewOpen(true)} className="w-full">
                                     <Eye className="mr-2 h-4 w-4" />

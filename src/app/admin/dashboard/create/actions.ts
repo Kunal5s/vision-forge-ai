@@ -79,14 +79,19 @@ export async function generateArticleAction(
     // Save the new article, which will handle adding it to the correct file.
     await saveArticle(newArticle, true);
 
-    revalidatePath('/');
-    revalidatePath('/admin/dashboard/edit');
     const categorySlug =
       Object.keys(categorySlugMap).find(
         (key) => categorySlugMap[key] === category
       ) || category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      
+    revalidatePath('/');
+    revalidatePath('/admin/dashboard/edit');
     revalidatePath(`/${categorySlug}`);
     revalidatePath(`/${categorySlug}/${newArticle.slug}`);
+
+    // The redirect now points to the new edit page for the article
+    redirect(`/admin/dashboard/edit/${categorySlug}/${newArticle.slug}`);
+
   } catch (error) {
     console.error('Error in generateArticleAction:', error);
     return {
@@ -94,15 +99,4 @@ export async function generateArticleAction(
       error: error instanceof Error ? error.message : 'An unknown error occurred.',
     };
   }
-  
-  const validatedData = validatedFields.data;
-  // This slug is a fallback/guess. The actual final slug is in `newArticle.slug`
-  const slug = validatedData.topic.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-');
-  const categorySlug =
-      Object.keys(categorySlugMap).find(
-        (key) => categorySlugMap[key] === validatedData.category
-      ) || validatedData.category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  
-  // The redirect now points to the new edit page for the article
-  redirect(`/admin/dashboard/edit/${categorySlug}/${slug}`);
 }

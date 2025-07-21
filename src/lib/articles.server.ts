@@ -36,18 +36,12 @@ function htmlToArticleContent(html: string): ArticleContentBlock[] {
             const element = node as HTMLElement;
             const tagName = element.tagName.toLowerCase();
 
-            if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'blockquote'].includes(tagName)) {
+            if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'blockquote', 'table'].includes(tagName)) {
                  const outerHTML = element.outerHTML.trim();
                  if (outerHTML) {
                     content.push({ type: tagName as ArticleContentBlock['type'], content: outerHTML, alt: '' });
                  }
             } 
-            else if (element.querySelector('table')) { // Handles tables that might be wrapped in divs
-                const table = element.querySelector('table');
-                if (table) {
-                    content.push({ type: 'table', content: table.outerHTML.trim(), alt: '' });
-                }
-            }
             else if (element.querySelector('img')) { // Handles images that might be wrapped
                 const img = element.querySelector('img');
                 if (img?.src) {

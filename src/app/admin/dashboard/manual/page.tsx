@@ -53,23 +53,23 @@ export default function ManualPublishPage() {
     }
   });
   
-  const [debouncedContent] = useDebounce(watch('content'), 10000);
-
-  useEffect(() => {
-    const autoSaveDraft = async () => {
-        // Only autosave if the form has been touched and it's a draft
-        if (isDirty) {
-            const result = await autoSaveArticleDraftAction(getValues());
-            if (result.success) {
-                toast({ title: 'Draft Auto-Saved', description: 'Your progress has been saved.' });
-            }
+  const [debouncedValue] = useDebounce(watch(), 10000); // Watch all form fields
+  
+  const autoSaveDraft = useCallback(async () => {
+    // Only autosave if the form has been touched and has the key fields
+    if (isDirty && getValues('title') && getValues('slug') && getValues('category')) {
+        const result = await autoSaveArticleDraftAction(getValues());
+        if (result.success) {
+            toast({ title: 'Draft Auto-Saved', description: 'Your progress has been saved.' });
+        } else {
+            console.error("Autosave failed:", result.error);
         }
-    };
-    if (debouncedContent) {
-        autoSaveDraft();
     }
-  }, [debouncedContent, getValues, isDirty, toast]);
-
+  }, [getValues, isDirty, toast]);
+  
+  useEffect(() => {
+    autoSaveDraft();
+  }, [debouncedValue, autoSaveDraft]);
 
   const wordCount = (watch('content') || '').replace(/<[^>]*>?/gm, '').split(/\s+/).filter(Boolean).length;
   
@@ -219,7 +219,7 @@ export default function ManualPublishPage() {
                 <CardHeader>
                     <CardTitle className="text-2xl">Publish a New Article Manually</CardTitle>
                     <CardDescription>
-                    Write your article below. Save your progress as a draft or publish it to the live site when you're ready.
+                    Write your article below. Save as a draft, or publish to the live site when ready.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
