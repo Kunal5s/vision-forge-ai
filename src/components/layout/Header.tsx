@@ -3,9 +3,9 @@
 
 import Link from 'next/link';
 import { BrainCircuit, LogIn, LogOut } from 'lucide-react';
-import { usePathname, useSearchParams, Suspense } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Button } from '../ui/button';
 import { logoutAction } from '@/app/admin/login/actions';
 import { useRouter } from 'next/navigation';
