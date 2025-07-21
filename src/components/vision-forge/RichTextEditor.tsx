@@ -183,7 +183,13 @@ export function RichTextEditor({ value, onChange, disabled, placeholder = "Start
                 italic: true,
                 strike: true,
             }),
-            Markdown,
+            Markdown.configure({
+                html: true,
+                tightLists: true,
+                linkify: true,
+                breaks: true,
+                transformPastedText: true,
+            }),
             Underline,
             Link.configure({ openOnClick: false, autolink: true, linkOnPaste: true }),
             Image.configure({
