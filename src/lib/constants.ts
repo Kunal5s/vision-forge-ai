@@ -159,31 +159,32 @@ export interface CaptionStyle {
     className: string;
 }
 
-const baseCaptionClass = 'bg-black/60 text-white p-3 rounded-lg text-shadow-md';
+const baseCaptionClass = 'bg-black/80 text-white p-3 rounded-lg text-shadow-md';
 
 export const CAPTION_STYLES: CaptionStyle[] = [
-    { name: 'Classic Black', className: `${baseCaptionClass} font-roboto` },
-    { name: 'Minimal White', className: `${baseCaptionClass} font-open-sans` },
-    { name: 'Bold Uppercase', className: `${baseCaptionClass} font-oswald uppercase tracking-wider` },
-    { name: 'Elegant Script', className: `${baseCaptionClass} font-dancing-script text-3xl` },
-    { name: 'Neon Glow', className: `${baseCaptionClass} text-cyan-300 font-bebas-neue tracking-widest` },
-    { name: 'Simple Lowercase', className: `${baseCaptionClass} font-lato lowercase` },
-    { name: 'Subtle Shadow', className: `${baseCaptionClass} font-montserrat` },
-    { name: 'Inverted Box', className: `${baseCaptionClass} font-roboto-condensed` },
-    { name: 'Yellow Highlight', className: `${baseCaptionClass} font-anton` },
-    { name: 'Red Outline', className: `${baseCaptionClass} font-anton uppercase` },
-    { name: 'Handwritten Note', className: `${baseCaptionClass} font-indie-flower text-2xl` },
-    { name: 'Blue Box', className: `${baseCaptionClass} font-source-sans` },
-    { name: 'Green Modern', className: `${baseCaptionClass} font-raleway` },
-    { name: 'Playful Type', className: `${baseCaptionClass} font-pacifico text-2xl` },
-    { name: 'Formal Serif', className: `${baseCaptionClass} font-playfair-display` },
-    { name: 'Muted Gray', className: `${baseCaptionClass} font-pt-sans` },
-    { name: 'Condensed Tall', className: `${baseCaptionClass} font-oswald tracking-wide uppercase` },
-    { name: 'Light Shadow', className: `${baseCaptionClass} font-lato` },
-    { name: 'Purple Gradient', className: `${baseCaptionClass} font-montserrat` },
-    { name: 'Caveat Brush', className: `${baseCaptionClass} font-caveat text-3xl` },
+    { name: 'Classic Black', className: `${baseCaptionClass} font-sans` },
+    { name: 'Minimal White', className: `${baseCaptionClass} font-sans` },
+    { name: 'Bold Uppercase', className: `${baseCaptionClass} font-sans uppercase tracking-wider` },
+    { name: 'Elegant Script', className: `${baseCaptionClass} font-serif text-3xl` },
+    { name: 'Neon Glow', className: `${baseCaptionClass} text-cyan-300 font-sans tracking-widest` },
+    { name: 'Simple Lowercase', className: `${baseCaptionClass} font-sans lowercase` },
+    { name: 'Subtle Shadow', className: `${baseCaptionClass} font-sans` },
+    { name: 'Inverted Box', className: `${baseCaptionClass} font-sans` },
+    { name: 'Yellow Highlight', className: `${baseCaptionClass} font-sans` },
+    { name: 'Red Outline', className: `${baseCaptionClass} font-sans uppercase` },
+    { name: 'Handwritten Note', className: `${baseCaptionClass} font-serif text-2xl` },
+    { name: 'Blue Box', className: `${baseCaptionClass} font-sans` },
+    { name: 'Green Modern', className: `${baseCaptionClass} font-sans` },
+    { name: 'Playful Type', className: `${baseCaptionClass} font-serif text-2xl` },
+    { name: 'Formal Serif', className: `${baseCaptionClass} font-serif` },
+    { name: 'Muted Gray', className: `${baseCaptionClass} font-sans` },
+    { name: 'Condensed Tall', className: `${baseCaptionClass} font-sans tracking-wide uppercase` },
+    { name: 'Light Shadow', className: `${baseCaptionClass} font-sans` },
+    { name: 'Purple Gradient', className: `${baseCaptionClass} font-sans` },
+    { name: 'Caveat Brush', className: `${baseCaptionClass} font-serif text-3xl` },
 ];
     
+
 
 
 
