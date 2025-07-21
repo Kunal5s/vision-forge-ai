@@ -7,7 +7,10 @@ import RootLayoutClient from './layout-client';
 import { Suspense } from 'react';
 import { verifySession } from './admin/login/actions';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+});
 
 export const metadata: Metadata = {
   title: {
@@ -34,7 +37,7 @@ export default async function RootLayout({
   const session = await verifySession();
   return (
     <html lang="en" className="h-full">
-      <body className={`${inter.variable} font-sans antialiased flex flex-col min-h-full bg-background`}>
+      <body className={`${inter.variable} antialiased flex flex-col min-h-full bg-background`}>
         <SubscriptionProvider>
           <Suspense>
             <RootLayoutClient session={session}>

@@ -1,6 +1,4 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Oswald:wght@400;700&family=Slabo+27px&family=Roboto+Condensed:wght@400;700&family=Source+Sans+Pro:wght@400;700&family=Raleway:wght@400;700&family=PT+Sans:wght@400;700&family=Lobster&family=Pacifico&family=Bebas+Neue&family=Anton&family=Dancing+Script:wght@400;700&family=Indie+Flower&family=Caveat&family=Shadows+Into+Light&family=Amatic+SC:wght@400;700&family=Playfair+Display:wght@400;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -82,13 +80,10 @@
   body {
     @apply bg-background text-foreground;
     min-height: 100vh;
+    font-family: var(--font-inter), sans-serif;
   }
   .text-23px {
     font-size: 23px;
-  }
-  
-  html {
-    font-family: var(--font-sans), sans-serif;
   }
 
   .prose {

@@ -1,6 +1,7 @@
 
 import type { Metadata } from 'next';
-import { Geist_Sans, Geist_Mono } from 'next/font/google';
+import { Geist_Sans } from 'next/font/sans';
+import { Geist_Mono } from 'next/font/mono';
 import './globals.css';
 import { SubscriptionProvider } from '@/hooks/use-subscription';
 import RootLayoutClient from './layout-client';
