@@ -19,8 +19,8 @@ export default {
         'light': '0 1px 1px rgba(255, 255, 255, 0.7)',
       },
       fontFamily: {
-        sans: ['var(--font-geist-sans)'],
-        mono: ['var(--font-geist-mono)'],
+        sans: ['Geist', 'sans-serif'],
+        mono: ['Geist Mono', 'monospace'],
       },
   		colors: {
   			background: 'hsl(var(--background))',

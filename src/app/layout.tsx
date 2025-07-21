@@ -1,22 +1,10 @@
 
 import type { Metadata } from 'next';
-import { Geist_Sans } from 'next/font/sans';
-import { Geist_Mono } from 'next/font/mono';
 import './globals.css';
 import { SubscriptionProvider } from '@/hooks/use-subscription';
 import RootLayoutClient from './layout-client';
 import { Suspense } from 'react';
 import { verifySession } from './admin/login/actions';
-
-const geistSans = Geist_Sans({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-});
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-});
 
 export const metadata: Metadata = {
   title: {
@@ -43,7 +31,7 @@ export default async function RootLayout({
   const session = await verifySession();
   return (
     <html lang="en" className="h-full">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-full bg-background`}>
+      <body className="antialiased flex flex-col min-h-full bg-background">
         <SubscriptionProvider>
           <Suspense>
             <RootLayoutClient session={session}>
