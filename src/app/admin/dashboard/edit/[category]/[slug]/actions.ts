@@ -8,7 +8,6 @@ import { JSDOM } from 'jsdom';
 
 import { categorySlugMap } from '@/lib/constants';
 import {
-  ArticleSchema,
   ManualArticleSchema,
   type Article,
   type ArticleContentBlock,

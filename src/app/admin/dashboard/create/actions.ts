@@ -4,12 +4,9 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { Octokit } from 'octokit';
-import { JSDOM } from 'jsdom';
 import { generateArticleForTopic } from '@/ai/article-generator';
 import { categorySlugMap } from '@/lib/constants';
-import { ArticleSchema, type Article, type ArticleContentBlock } from '@/lib/types';
-import { getAllArticlesAdmin, getPrimaryBranch, getShaForFile, saveArticle } from '@/lib/articles';
+import { saveArticle } from '@/lib/articles';
 
 // Schema for the form on the create page. It's different from ManualArticleSchema
 // because it includes AI provider details and doesn't have existing content.
