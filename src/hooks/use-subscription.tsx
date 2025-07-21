@@ -62,7 +62,8 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    setIsLoading(true);
+    setIsLoading(true); // Always start with loading true
+    let loadedSub: Subscription | null = null;
     try {
       const storedSub = localStorage.getItem('imagenBrainAiSubscription');
       if (storedSub) {
@@ -75,37 +76,26 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
           const expiryDate = new Date(purchaseDate);
           expiryDate.setDate(purchaseDate.getDate() + PLAN_VALIDITY_DAYS);
 
-          // Check for expiration
           if (new Date() > expiryDate && parsedSub.plan !== 'free') {
-            console.log("Subscription expired, resetting to free plan.");
             localStorage.removeItem('imagenBrainAiSubscription');
-            setSubscription(createFreePlan());
+            loadedSub = createFreePlan();
           } else {
-            // Plan is valid
-            setSubscription(parsedSub);
+            loadedSub = parsedSub;
           }
         } else {
-          // Validation failed, clear storage and use free plan
-          console.warn("Invalid subscription data in localStorage, resetting.", validation.error);
           localStorage.removeItem('imagenBrainAiSubscription');
-          setSubscription(createFreePlan());
+          loadedSub = createFreePlan();
         }
       } else {
-        // No subscription found, use free plan
-        setSubscription(createFreePlan());
+        loadedSub = createFreePlan();
       }
     } catch (e) {
       console.error("Failed to load or parse subscription from localStorage, resetting.", e);
-      // On any error, clear storage and use free plan
-      try {
-        localStorage.removeItem('imagenBrainAiSubscription');
-      } catch (removeError) {
-        console.error("Failed to remove item from localStorage", removeError);
-      }
-      setSubscription(createFreePlan());
-    } finally {
-      setIsLoading(false);
+      try { localStorage.removeItem('imagenBrainAiSubscription'); } catch (err) {}
+      loadedSub = createFreePlan();
     }
+    setSubscription(loadedSub);
+    setIsLoading(false); // Set loading to false after state is set
   }, []); // Empty dependency array ensures this runs only ONCE on client mount.
 
   const activateSubscription = useCallback((email: string): boolean => {

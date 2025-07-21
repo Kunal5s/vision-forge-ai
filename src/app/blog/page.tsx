@@ -1,15 +1,12 @@
 
-
 'use client';
 
 import { getArticles } from '@/lib/articles';
 import type { Article } from '@/lib/articles';
-import { Suspense, useEffect, useState, useMemo } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { ArticlesSkeleton } from '@/components/vision-forge/ArticlesSkeleton';
 import { categorySlugMap } from '@/lib/constants';
 import { BlogPageClient } from './BlogPageClient';
-
-export const dynamic = 'force-dynamic';
 
 function AllArticlesList() {
     const [allArticles, setAllArticles] = useState<Article[]>([]);

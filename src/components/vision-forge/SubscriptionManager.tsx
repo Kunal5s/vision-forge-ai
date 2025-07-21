@@ -16,8 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useSubscription } from '@/hooks/use-subscription';
-import { Sparkles } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Sparkles, Loader2 } from 'lucide-react';
 
 export function SubscriptionManager() {
   const { subscription, activateSubscription, deactivateSubscription, isLoading } = useSubscription();
@@ -54,7 +53,12 @@ export function SubscriptionManager() {
   const isLoggedIn = subscription && subscription.plan !== 'free';
 
   if (isLoading) {
-    return <Button variant="outline" className="text-xs h-8 md:h-9" disabled>Loading Plan...</Button>;
+    return (
+        <Button variant="default" className="text-xs h-9 w-full md:w-auto bg-foreground text-background hover:bg-foreground/90" disabled>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Loading Plan...
+        </Button>
+    );
   }
 
   return (

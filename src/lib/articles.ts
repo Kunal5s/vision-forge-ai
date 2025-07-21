@@ -6,6 +6,7 @@ import { categorySlugMap } from '@/lib/constants';
 import { ArticleSchema } from '@/lib/types';
 import { Octokit } from 'octokit';
 
+// Direct imports for reliability
 import featuredArticles from '@/articles/featured.json';
 import inspirationArticles from '@/articles/inspiration.json';
 import nftArticles from '@/articles/nft.json';
@@ -22,19 +23,21 @@ export type { Article, ArticleContentBlock } from './types';
 
 const ArticleFileSchema = z.array(ArticleSchema);
 
+// A map to hold all imported story data
 const allCategoryData: { [key: string]: any } = {
-  featured: featuredArticles,
-  inspiration: inspirationArticles,
-  nft: nftArticles,
-  prompts: promptsArticles,
-  storybook: storybookArticles,
-  styles: stylesArticles,
-  technology: technologyArticles,
-  trends: trendsArticles,
-  tutorials: tutorialsArticles,
-  usecases: usecasesArticles,
-  drafts: draftArticles,
+  'featured': featuredArticles,
+  'inspiration': inspirationArticles,
+  'nft': nftArticles,
+  'prompts': promptsArticles,
+  'storybook': storybookArticles,
+  'styles': stylesArticles,
+  'technology': technologyArticles,
+  'trends': trendsArticles,
+  'tutorials': tutorialsArticles,
+  'usecases': usecasesArticles,
+  'drafts': draftArticles,
 };
+
 
 async function loadAndValidateArticles(
   category: string
@@ -80,32 +83,56 @@ async function loadAndValidateArticles(
   }
 }
 
+
+// Gets only published articles
 export async function getArticles(
   category: string
 ): Promise<z.infer<typeof ArticleSchema>[]> {
   const allArticles = await loadAndValidateArticles(category);
-  return allArticles.filter((article) => article.status === 'published');
+  // Filter for published articles and sort by most recent first
+  return allArticles
+    .filter((article) => article.status === 'published')
+    .sort((a, b) => {
+        if (a.publishedDate && b.publishedDate) {
+            return new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime();
+        }
+        return a.title.localeCompare(b.title);
+    });
 }
 
+// Gets all articles, including drafts (for admin)
 export async function getAllArticlesAdmin(
   category: string
 ): Promise<z.infer<typeof ArticleSchema>[]> {
-  return await loadAndValidateArticles(category);
+  const allArticles = await loadAndValidateArticles(category);
+  return allArticles.sort((a, b) => {
+    if (a.publishedDate && b.publishedDate) {
+      return new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime();
+    }
+    return a.title.localeCompare(b.title);
+  });
 }
 
+// Get a single article by its slug from any category (for edit page)
 export async function getArticleForEdit(
-  category: string,
+  categorySlug: string,
   slug: string
 ): Promise<z.infer<typeof ArticleSchema> | undefined> {
-  const allCategories = [...Object.values(categorySlugMap), 'drafts'];
+  // We need to search all categories, including drafts
+  const allCategories = Object.values(categorySlugMap);
+  allCategories.push('drafts'); // Add drafts to the search list
+  
   for (const catName of allCategories) {
       const articles = await getAllArticlesAdmin(catName);
       const foundArticle = articles.find(a => a.slug === slug);
       if (foundArticle) return foundArticle;
   }
+
   return undefined;
 }
 
+
+// --- GitHub Helper Functions ---
 
 export async function getShaForFile(
   octokit: Octokit,

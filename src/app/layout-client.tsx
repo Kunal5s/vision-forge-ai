@@ -7,8 +7,14 @@ import { Footer } from '@/components/layout/Footer';
 import { PreFooterCallToAction } from '@/components/layout/PreFooterCallToAction';
 import { Toaster } from '@/components/ui/toaster';
 import { CookieConsent } from '@/components/layout/CookieConsent';
+import type { SessionPayload } from 'jose';
 
-export default function RootLayoutClient({ children }: { children: React.ReactNode }) {
+interface RootLayoutClientProps {
+  children: React.ReactNode;
+  session: SessionPayload | null;
+}
+
+export default function RootLayoutClient({ children, session }: RootLayoutClientProps) {
   const pathname = usePathname();
   const isAdminRoute = pathname.startsWith('/admin');
   const isLoginPage = pathname === '/admin/login';
@@ -19,7 +25,7 @@ export default function RootLayoutClient({ children }: { children: React.ReactNo
 
   return (
     <>
-      {showHeaderAndFooter && <Header />}
+      {showHeaderAndFooter ? <Header session={session} /> : null}
       <div className={isAdminRoute ? "" : "flex-grow"}>
         {children}
       </div>

@@ -1,11 +1,13 @@
 
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Geist_Sans, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { SubscriptionProvider } from '@/hooks/use-subscription';
 import RootLayoutClient from './layout-client';
+import { Suspense } from 'react';
+import { verifySession } from './admin/login/actions';
 
-const geistSans = Geist({
+const geistSans = Geist_Sans({
   variable: '--font-geist-sans',
   subsets: ['latin'],
 });
@@ -32,18 +34,21 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await verifySession();
   return (
     <html lang="en" className="h-full">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-full bg-background`}>
         <SubscriptionProvider>
-          <RootLayoutClient>
-            {children}
-          </RootLayoutClient>
+          <Suspense>
+            <RootLayoutClient session={session}>
+              {children}
+            </RootLayoutClient>
+          </Suspense>
         </SubscriptionProvider>
       </body>
     </html>

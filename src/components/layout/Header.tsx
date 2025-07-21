@@ -3,16 +3,17 @@
 
 import Link from 'next/link';
 import { BrainCircuit, LogIn, LogOut } from 'lucide-react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams, Suspense } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import React from 'react';
 import { Button } from '../ui/button';
-import { logoutAction, verifySession } from '@/app/admin/login/actions';
+import { logoutAction } from '@/app/admin/login/actions';
 import { useRouter } from 'next/navigation';
 import { categorySlugMap } from '@/lib/constants';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import type { SessionPayload } from 'jose';
 
-const CategoryNavBar = () => {
+const CategoryNavBarContent = () => {
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
@@ -65,80 +66,68 @@ const CategoryNavBar = () => {
     );
 };
 
-export function Header() {
+const CategoryNavBar = () => (
+    <Suspense fallback={<div className="border-b h-[53px]" />}>
+        <CategoryNavBarContent />
+    </Suspense>
+);
+
+
+interface HeaderProps {
+    session: SessionPayload | null;
+}
+
+export function Header({ session }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const isAdminRoute = pathname.startsWith('/admin');
-  const [session, setSession] = React.useState<any>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
-  
-  React.useEffect(() => {
-    if (isAdminRoute) {
-      const checkSession = async () => {
-        const s = await verifySession();
-        setSession(s);
-        setIsLoading(false);
-      }
-      checkSession();
-    } else {
-        setIsLoading(false);
-    }
-  }, [pathname, isAdminRoute]);
 
   const handleLogout = async () => {
     await logoutAction();
     router.push('/admin/login');
     router.refresh(); 
   }
-  
-  const headerHeightClass = isAdminRoute ? "h-16" : "h-[124px]";
-  const spacerHeightClass = isAdminRoute ? "pt-16" : "pt-[124px]";
-  
-  const showAdminButtons = isAdminRoute;
 
   return (
-    <>
-      <header className={cn("fixed top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b", headerHeightClass)}>
-        <div>
-            <div className={cn("container mx-auto flex items-center justify-between px-4 h-16")}>
-                <Link href="/" className="flex flex-shrink-0 items-center gap-2">
-                <BrainCircuit className="h-7 w-7 text-foreground" />
-                <span className="text-xl font-bold text-foreground">
-                    Imagen BrainAi
-                </span>
-                </Link>
-                
-                <div className="flex items-center gap-4">
-                  {!showAdminButtons ? (
-                     <Link href="/admin/login">
-                        <Button variant="outline">
-                            <LogIn className="mr-2 h-4 w-4" />
-                            Admin
-                        </Button>
-                    </Link>
-                  ) : isLoading ? (
-                     <Button variant="outline" disabled>
-                        Loading...
+    <header className={cn("sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b")}>
+      <div>
+        <div className={cn("container mx-auto flex items-center justify-between px-4 h-16")}>
+          <Link href="/" className="flex flex-shrink-0 items-center gap-2">
+            <BrainCircuit className="h-7 w-7 text-foreground" />
+            <span className="text-xl font-bold text-foreground">
+              Imagen BrainAi
+            </span>
+          </Link>
+
+          <div className="flex items-center gap-4">
+            {isAdminRoute ? (
+              <>
+                {session ? (
+                  <Button variant="outline" onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                  </Button>
+                ) : (
+                  <Link href="/admin/login">
+                    <Button variant="outline">
+                      <LogIn className="mr-2 h-4 w-4" />
+                      Admin Login
                     </Button>
-                  ) : session ? (
-                    <Button variant="outline" onClick={handleLogout}>
-                        <LogOut className="mr-2 h-4 w-4" />
-                        Logout
-                    </Button>
-                  ) : (
-                    <Link href="/admin/login">
-                        <Button variant="outline">
-                            <LogIn className="mr-2 h-4 w-4" />
-                            Admin
-                        </Button>
-                    </Link>
-                  )}
-                </div>
-            </div>
+                  </Link>
+                )}
+              </>
+            ) : (
+              <Link href="/admin/login">
+                <Button variant="outline">
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Admin
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
-        {!isAdminRoute && <CategoryNavBar />}
-      </header>
-      <div className={spacerHeightClass} />
-    </>
+      </div>
+      {!isAdminRoute && <CategoryNavBar />}
+    </header>
   );
 }

@@ -54,6 +54,9 @@ export default function EditArticlesClientPage({ publishedArticlesByCategory, dr
         <div className="space-y-4">
             {articles.map(article => {
                 const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === article.category) || article.category.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
+                const editUrl = isDraft 
+                    ? `/admin/dashboard/edit/drafts/${article.slug}` 
+                    : `/admin/dashboard/edit/${categorySlug}/${article.slug}`;
                 return (
                     <div key={article.slug} className="flex items-start md:items-center gap-4 p-4 border rounded-lg bg-background hover:bg-muted/50 transition-colors flex-wrap md:flex-nowrap">
                         <Image
@@ -73,7 +76,7 @@ export default function EditArticlesClientPage({ publishedArticlesByCategory, dr
                                 </Badge>
                                  <Badge variant="outline">{article.category}</Badge>
                                 <p className="text-xs text-muted-foreground truncate">
-                                    /{categorySlug}/{article.slug}
+                                    /{isDraft ? 'drafts' : categorySlug}/{article.slug}
                                 </p>
                             </div>
                             <p className="text-sm text-muted-foreground line-clamp-2 hidden md:block">
@@ -81,7 +84,7 @@ export default function EditArticlesClientPage({ publishedArticlesByCategory, dr
                             </p>
                         </div>
                         <Button asChild variant="secondary" size="sm" className="shrink-0 ml-auto">
-                            <Link href={`/admin/dashboard/edit/${categorySlug}/${article.slug}`}>
+                            <Link href={editUrl}>
                                 <Edit className="mr-2 h-4 w-4" />
                                 Edit
                             </Link>
