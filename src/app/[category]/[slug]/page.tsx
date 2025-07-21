@@ -9,7 +9,7 @@ import type { Metadata } from 'next';
 import { categorySlugMap } from '@/lib/constants';
 import type { Article, ArticleContentBlock } from '@/lib/articles';
 import { cn } from '@/lib/utils';
-import parse from 'html-react-parser';
+import parse, { domToReact } from 'html-react-parser';
 import { format } from 'date-fns';
 import { AuthorBio } from '@/components/vision-forge/AuthorBio';
 import { getAuthorData } from '@/app/admin/dashboard/author/actions';
@@ -78,7 +78,22 @@ export default async function ArticlePage({ params }: { params: { category: stri
     const toc = getTableOfContents(article.articleContent);
     const author = await getAuthorData();
 
+    // Find the index of the "Key Takeaways" heading
+    const keyTakeawaysHeadingIndex = article.articleContent.findIndex(block => 
+        block.type === 'h2' && block.content.toLowerCase().includes('key takeaways')
+    );
+    
+    let keyTakeawaysList: ArticleContentBlock | null = null;
+    if (keyTakeawaysHeadingIndex !== -1 && article.articleContent[keyTakeawaysHeadingIndex + 1]?.type === 'ul') {
+        keyTakeawaysList = article.articleContent[keyTakeawaysHeadingIndex + 1];
+    }
+    
     const renderContentBlock = (block: ArticleContentBlock, index: number) => {
+        // Skip rendering the original "Key Takeaways" heading and list if we found them
+        if (keyTakeawaysList && (index === keyTakeawaysHeadingIndex || index === keyTakeawaysHeadingIndex + 1)) {
+            return null;
+        }
+
         const slug = ['h2', 'h3', 'h4', 'h5', 'h6'].includes(block.type)
             ? block.content.replace(/<[^>]*>?/gm, '').toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '')
             : undefined;
@@ -189,33 +204,33 @@ export default async function ArticlePage({ params }: { params: { category: stri
                     {article.articleContent.map(renderContentBlock)}
                 </article>
                 
-                {article.keyTakeaways && article.keyTakeaways.length > 0 && (
+                {keyTakeawaysList && (
                     <section className="my-12">
                         <Card className="bg-muted/50 border-border">
                             <CardHeader>
                                 <CardTitle className="text-2xl font-semibold">Key Takeaways</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <ul className="space-y-4">
-                                    {article.keyTakeaways.map((takeaway, index) => (
-                                        <li key={index} className="flex items-start gap-3">
-                                            <CheckCircle className="h-5 w-5 text-primary mt-1 shrink-0" />
-                                            <span className="text-foreground/80">{parse(takeaway)}</span>
-                                        </li>
-                                    ))}
-                                </ul>
+                                {parse(keyTakeawaysList.content, {
+                                     replace: (domNode: any) => {
+                                        if (domNode.name === 'ul') {
+                                            return <ul className="space-y-4 list-none p-0">{domToReact(domNode.children)}</ul>;
+                                        }
+                                        if (domNode.name === 'li') {
+                                            return (
+                                                <li className="flex items-start gap-3">
+                                                    <CheckCircle className="h-5 w-5 text-primary mt-1 shrink-0" />
+                                                    <span className="text-foreground/80">{domToReact(domNode.children)}</span>
+                                                </li>
+                                            )
+                                        }
+                                     }
+                                })}
                             </CardContent>
                         </Card>
                     </section>
                 )}
-
-                {article.conclusion && (
-                     <div className="prose lg:prose-xl dark:prose-invert max-w-none space-y-6 mt-12">
-                        <h2>Conclusion</h2>
-                        <div className="prose-p:text-lg dark:prose-invert max-w-none">{parse(article.conclusion)}</div>
-                    </div>
-                )}
-
+                
                 <div className="mt-16 pt-8 border-t">
                     <h2 className="text-2xl font-bold tracking-tight text-foreground mb-4">About the Author</h2>
                     <AuthorBio author={author} />

@@ -18,9 +18,7 @@ const ArticleOutputSchema = z.object({
     type: z.enum(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'img']),
     content: z.string().min(1),
     alt: z.string().optional(),
-  })).describe("An array of content blocks. The VERY FIRST object must be a 'p' type with a summary of the article. Subsequent H2 headings should be followed by an image block (`{ \"type\": \"img\", \"content\": \"URL\", \"alt\": \"Description\" }`). Generate the specified number of images throughout the article. The total word count should match the user's request. **IMPORTANT: For all 'p', 'h2', 'h3' etc. blocks, the 'content' string MUST include rich HTML formatting like <strong> for bold, <em> for italic, and <u> for underline where appropriate to make the article engaging.**"),
-  keyTakeaways: z.array(z.string()).describe("An array of 4-5 key takeaways from the article."),
-  conclusion: z.string().min(1).describe("A strong, summarizing conclusion for the article. **This conclusion MUST also be formatted with HTML tags like <strong> and <em> for emphasis.**"),
+  })).describe("An array of content blocks. The VERY FIRST object must be a 'p' type with a summary of the article. Subsequent H2 headings should be followed by an image block (`{ \"type\": \"img\", \"content\": \"URL\", \"alt\": \"Description\" }`). Generate the specified number of images throughout the article. The total word count should match the user's request. **IMPORTANT: For all 'p', 'h2', 'h3' etc. blocks, the 'content' string MUST include rich HTML formatting like <strong> for bold, <em> for italic, and <u> for underline where appropriate to make the article engaging.** The article MUST end with an H2 heading titled 'Key Takeaways' followed by a 'ul' list of 4-5 key points, and then another H2 heading titled 'Conclusion' followed by a final 'p' block."),
 });
 
 const getJsonPromptStructureForArticle = (wordCount: string, style: string, mood: string, imageCount: string) => `
@@ -31,10 +29,11 @@ const getJsonPromptStructureForArticle = (wordCount: string, style: string, mood
   - The writing style MUST be **${style}**.
   - The overall mood and tone of the article MUST be **${mood}**.
   - You MUST include exactly **${imageCount}** different, relevant images within the article content. Place an image block after most H2 headings.
+  - At the very end of the article, you MUST include an H2 heading titled "Key Takeaways" followed by a UL list of 4-5 key points, and then another H2 heading titled "Conclusion" followed by a final paragraph.
   - You MUST write in a human-like, conversational, and engaging tone. Use storytelling techniques, personal anecdotes (where appropriate), and a natural narrative flow. Avoid robotic language and overly formal structures. The goal is to create content that resonates emotionally with the reader and feels like it was written by an expert human author.
 
   **FORMATTING INSTRUCTIONS:**
-  - For all text-based content within the JSON (like 'title', 'summary', 'content' for 'p' and 'h' tags, 'keyTakeaways', and 'conclusion'), you MUST embed appropriate HTML tags for rich formatting.
+  - For all text-based content within the JSON (like 'title', 'summary', 'content' for 'p' and 'h' tags), you MUST embed appropriate HTML tags for rich formatting.
   - Use <strong> for bolding important keywords and phrases.
   - Use <em> for emphasizing points with italics.
   - Use <u> for underlining where it makes sense stylistically.
@@ -184,3 +183,4 @@ export async function generateArticleForTopic(params: ArticleGenerationParams): 
 
     throw new Error(`All AI models for provider ${provider} failed to generate the article. Please check your API key, the complexity of the topic, or try again later.`);
 }
+
