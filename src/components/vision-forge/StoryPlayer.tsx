@@ -179,7 +179,7 @@ export function StoryPlayer({ story, isPreview = false, onClose }: StoryPlayerPr
             
             {page.content?.title && (
                  <div className={cn("w-auto inline-block", activeStyle.className)}>
-                    <h1 className="text-2xl leading-tight">
+                    <h1 className="text-2xl leading-tight drop-shadow-md">
                         {page.content.title}
                     </h1>
                 </div>
