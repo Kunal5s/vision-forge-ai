@@ -14,12 +14,12 @@ import {
   type Article,
   ManualArticleSchema,
   type ArticleContentBlock,
-} from './types';
+} from '@/lib/types';
 import {
   getAllArticlesAdmin,
   getPrimaryBranch,
   getShaForFile,
-} from './articles';
+} from '@/lib/articles';
 
 
 // This function uses JSDOM and must only be used on the server.
