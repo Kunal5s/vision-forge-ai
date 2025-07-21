@@ -2,9 +2,9 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { JSDOM } from 'jsdom';
 import { ManualArticleSchema } from '@/lib/types';
-import { saveArticle, addImagesToArticleAction as addImagesToArticleInContent, autoSaveArticleDraftAction as autoSaveDraftToRepo } from '@/app/admin/dashboard/edit/[category]/[slug]/actions';
-
+import { saveArticle as saveArticleToRepo, addImagesToArticleAction as addImagesToArticleContent, autoSaveArticleDraftAction as autoSaveDraftToRepo } from '@/app/admin/dashboard/edit/[category]/[slug]/actions';
 
 // This action creates the article and then redirects
 export async function createManualArticleAction(data: unknown) {
@@ -13,10 +13,10 @@ export async function createManualArticleAction(data: unknown) {
       throw new Error('Invalid data.');
     }
     
-    const { title, slug, category } = validatedFields.data;
+    const { slug, category } = validatedFields.data;
   
     try {
-        await saveArticle(data, true);
+        await saveArticleToRepo(data, true);
         const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
         redirect(`/admin/dashboard/edit/${categorySlug}/${slug}`);
     } catch (e: any) {
@@ -26,7 +26,7 @@ export async function createManualArticleAction(data: unknown) {
 
 // These actions just pass through to the server lib
 export async function addImagesToArticleAction(content: string, imageCount: number): Promise<{ success: boolean; content?: string; error?: string }> {
-    return addImagesToArticleInContent(content, imageCount);
+    return addImagesToArticleContent(content, imageCount);
 }
 
 export async function autoSaveArticleDraftAction(data: unknown): Promise<{ success: boolean; error?: string }> {

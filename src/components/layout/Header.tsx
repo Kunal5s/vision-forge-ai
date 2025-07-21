@@ -67,24 +67,44 @@ const CategoryNavBar = () => {
 
 
 export function Header() {
-  const [isClient, setIsClient] = useState(false);
+  const [sessionStatus, setSessionStatus] = useState<'loading' | 'authed' | 'unauthed'>('loading');
   const pathname = usePathname();
   const router = useRouter();
   const isAdminRoute = pathname.startsWith('/admin');
   
+  // This effect checks the session only on the client side
   useEffect(() => {
-    setIsClient(true);
-  }, []);
+    // Only check session if we're on an admin route to avoid unnecessary checks on public pages
+    if (isAdminRoute) {
+      const checkSession = async () => {
+        try {
+          const res = await fetch('/api/auth/session'); // A simple API route to check the session cookie
+          if (res.ok) {
+            setSessionStatus('authed');
+          } else {
+            setSessionStatus('unauthed');
+          }
+        } catch (error) {
+          setSessionStatus('unauthed');
+        }
+      };
+      checkSession();
+    } else {
+      setSessionStatus('unauthed'); // Default for non-admin routes
+    }
+  }, [pathname, isAdminRoute]);
 
   const handleLogout = async () => {
     await logoutAction();
+    setSessionStatus('unauthed'); // Update state on logout
     router.push('/admin/login');
   }
   
   const headerHeightClass = isAdminRoute ? "h-16" : "h-[124px]";
   const spacerHeightClass = isAdminRoute ? "pt-16" : "pt-[124px]";
 
-  if (!isClient) {
+  // Don't render anything until client-side check is done, prevents layout shift
+  if (sessionStatus === 'loading' && isAdminRoute) {
     return (
        <header className={cn("fixed top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60", headerHeightClass)} />
     );
@@ -103,18 +123,18 @@ export function Header() {
                 </Link>
                 
                 <div className="flex items-center gap-4">
-                    {isAdminRoute ? (
-                    <Button variant="outline" onClick={handleLogout}>
-                        <LogOut className="mr-2 h-4 w-4" />
-                        Logout
-                    </Button>
-                    ) : (
-                    <Link href="/admin/login">
-                        <Button variant="outline">
-                            <LogIn className="mr-2 h-4 w-4" />
-                            Admin
+                    {isAdminRoute && sessionStatus === 'authed' ? (
+                        <Button variant="outline" onClick={handleLogout}>
+                            <LogOut className="mr-2 h-4 w-4" />
+                            Logout
                         </Button>
-                    </Link>
+                    ) : (
+                        <Link href="/admin/login">
+                            <Button variant="outline">
+                                <LogIn className="mr-2 h-4 w-4" />
+                                Admin
+                            </Button>
+                        </Link>
                     )}
                 </div>
             </div>

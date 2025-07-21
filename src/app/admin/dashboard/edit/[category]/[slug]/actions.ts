@@ -136,47 +136,51 @@ export async function saveArticle(data: unknown, isNew: boolean) {
     }
 }
 
-export async function editArticleAction(data: unknown) {
+export async function editArticleAction(data: unknown): Promise<{ success: boolean; error?: string }> {
     try {
         await saveArticle(data, false);
-        // Successful save, redirect handled by client
     } catch (e: any) {
         return { success: false, error: e.message };
     }
     redirect('/admin/dashboard/edit');
 }
 
-export async function deleteArticleAction(category: string, slug: string, isDraft: boolean) {
+export async function deleteArticleAction(category: string, slug: string, isDraft: boolean): Promise<{ success: boolean; error?: string }> {
     const categoryName = isDraft ? 'drafts' : category;
-    let articles = await getAllArticlesAdmin(categoryName);
-    const updatedArticles = articles.filter(a => a.slug !== slug);
+    try {
+        let articles = await getAllArticlesAdmin(categoryName);
+        const updatedArticles = articles.filter(a => a.slug !== slug);
 
-    if (articles.length === updatedArticles.length) {
-        console.warn(`Article to delete (${slug}) not found in ${categoryName}.json`);
-    } else {
-        const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === categoryName) || categoryName;
-        const repoPath = `src/articles/${categorySlug}.json`;
-        const fileContent = JSON.stringify(updatedArticles, null, 2);
-        
-        const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = process.env;
-        if (!GITHUB_TOKEN || !GITHUB_REPO_OWNER || !GITHUB_REPO_NAME) throw new Error('GitHub credentials not configured.');
-        
-        const octokit = new Octokit({ auth: GITHUB_TOKEN });
-        const branch = await getPrimaryBranch(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME);
-        const sha = await getShaForFile(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME, repoPath, branch);
+        if (articles.length === updatedArticles.length) {
+            console.warn(`Article to delete (${slug}) not found in ${categoryName}.json`);
+        } else {
+            const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === categoryName) || categoryName;
+            const repoPath = `src/articles/${categorySlug}.json`;
+            const fileContent = JSON.stringify(updatedArticles, null, 2);
+            
+            const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = process.env;
+            if (!GITHUB_TOKEN || !GITHUB_REPO_OWNER || !GITHUB_REPO_NAME) throw new Error('GitHub credentials not configured.');
+            
+            const octokit = new Octokit({ auth: GITHUB_TOKEN });
+            const branch = await getPrimaryBranch(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME);
+            const sha = await getShaForFile(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME, repoPath, branch);
 
-        await octokit.rest.repos.createOrUpdateFileContents({
-            owner: GITHUB_REPO_OWNER,
-            repo: GITHUB_REPO_NAME,
-            path: repoPath,
-            message: `feat: 🗑️ Delete article "${slug}"`,
-            content: Buffer.from(fileContent).toString('base64'),
-            sha,
-            branch,
-        });
+            await octokit.rest.repos.createOrUpdateFileContents({
+                owner: GITHUB_REPO_OWNER,
+                repo: GITHUB_REPO_NAME,
+                path: repoPath,
+                message: `feat: 🗑️ Delete article "${slug}"`,
+                content: Buffer.from(fileContent).toString('base64'),
+                sha,
+                branch,
+            });
+        }
+        
+        revalidateArticlePaths(slug, category);
+    } catch(e: any) {
+        return { success: false, error: e.message };
     }
-    
-    revalidateArticlePaths(slug, category);
+
     redirect('/admin/dashboard/edit');
 }
 
