@@ -12,21 +12,27 @@ export function CookieConsent() {
 
   useEffect(() => {
     // We run this in a try-catch block to prevent server-side rendering errors
+    // when localStorage is not available.
     try {
-      const consent = localStorage.getItem('cookie_consent');
-      if (consent !== 'true') {
-        setShowBanner(true);
+      if (typeof window !== 'undefined') {
+        const consent = localStorage.getItem('cookie_consent');
+        if (consent !== 'true') {
+          setShowBanner(true);
+        }
       }
     } catch (error) {
         // If localStorage is not available, we can't store consent, so we don't show the banner.
         // This is a graceful fallback for environments where localStorage is blocked.
+        console.error("Could not access localStorage:", error);
         setShowBanner(false);
     }
   }, []);
 
   const handleAccept = () => {
     try {
-        localStorage.setItem('cookie_consent', 'true');
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('cookie_consent', 'true');
+        }
         setShowBanner(false);
     } catch(error) {
         // Even if we can't save, we should hide the banner to not block the UI
