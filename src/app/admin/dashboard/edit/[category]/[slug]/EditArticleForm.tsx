@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useForm, Controller, useFieldArray } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -9,8 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, Save, Trash2, Wand2, Eye, PlusCircle, Globe, FileText } from 'lucide-react';
-import { useState, useCallback, useRef } from 'react';
+import { ArrowLeft, Loader2, Save, Trash2, Wand2, Eye, Globe, FileText, ImageIcon, Upload } from 'lucide-react';
+import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import type { Article } from '@/lib/articles';
 import {
@@ -35,7 +35,9 @@ import {
 } from '@/components/ui/select';
 import { IMAGE_COUNTS } from '@/lib/constants';
 import { ManualArticleSchema as EditSchema, articleContentToHtml, getFullArticleHtmlForPreview } from '@/lib/types';
-import { editArticleAction, deleteArticleAction, addImagesToArticleAction } from '@/lib/articles.server';
+import { editArticleAction, deleteArticleAction, addImagesToArticleAction, autoSaveArticleDraftAction } from './actions';
+import { useDebounce } from 'use-debounce';
+import Image from 'next/image';
 
 
 type EditFormData = z.infer<typeof EditSchema>;
@@ -50,12 +52,13 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isAddingImages, setIsAddingImages] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [imageCount, setImageCount] = useState(IMAGE_COUNTS[1].value); // Default to 2 images
 
   const { toast } = useToast();
   
-  const { register, handleSubmit, formState: { errors }, control, getValues, setValue, watch } = useForm<EditFormData>({
+  const { register, handleSubmit, formState: { errors, isDirty }, control, getValues, setValue, watch } = useForm<EditFormData>({
     resolver: zodResolver(EditSchema),
     defaultValues: {
       title: article.title.replace(/<[^>]*>?/gm, ''),
@@ -64,20 +67,31 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
       category: article.category,
       summary: article.summary || '',
       content: articleContentToHtml(article.articleContent),
-      keyTakeaways: article.keyTakeaways?.map(t => ({ value: t })) || [{ value: '' }],
-      conclusion: article.conclusion || '',
       image: article.image || '',
       originalSlug: article.slug,
       originalStatus: article.status || 'published',
     }
   });
+  
+  const [debouncedContent] = useDebounce(watch('content'), 10000);
+  const watchedImage = watch('image');
+  const titleValue = watch('title');
+
+  useEffect(() => {
+    const autoSaveDraft = async () => {
+        if (isDirty && getValues('status') === 'draft') {
+            const result = await autoSaveArticleDraftAction(getValues());
+            if (result.success) {
+                toast({ title: 'Draft Auto-Saved', description: 'Your progress has been saved to drafts.' });
+            }
+        }
+    };
+    if (debouncedContent) {
+        autoSaveDraft();
+    }
+  }, [debouncedContent, getValues, isDirty, toast]);
 
   const wordCount = watch('content').replace(/<[^>]*>?/gm, '').split(/\s+/).filter(Boolean).length;
-  
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "keyTakeaways",
-  });
   
   const getFullArticleHtml = useCallback(() => {
     return getFullArticleHtmlForPreview(getValues());
@@ -87,7 +101,7 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
   const onSubmit = async (data: EditFormData) => {
     setIsSaving(true);
     const statusToSave = data.status || 'published';
-    toast({ title: statusToSave === 'published' ? 'Publishing...' : 'Saving Draft...', description: "Updating your article." });
+    toast({ title: statusToSave === 'published' ? 'Publishing...' : 'Saving Changes...', description: "Updating your article on GitHub." });
 
     const result = await editArticleAction(data);
 
@@ -143,6 +157,40 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
     }
   };
 
+  const handleGenerateFeaturedImage = useCallback(async (topic: string) => {
+    if (!topic) return;
+    setIsGeneratingImage(true);
+    toast({ title: "Generating Image...", description: "Please wait while the AI creates a preview."});
+    try {
+        const seed = Math.floor(Math.random() * 1_000_000);
+        const finalPrompt = `${topic}, digital art, high detail`;
+        const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=600&height=400&seed=${seed}&nologo=true`;
+        setValue('image', pollinationsUrl, { shouldValidate: true, shouldDirty: true });
+        toast({ title: "Image Generated!", description: "A new featured image has been created."});
+    } catch (e) {
+        console.error("Failed to generate preview image", e);
+        toast({ title: "Error", description: "Could not generate an image.", variant: "destructive" });
+    } finally {
+        setIsGeneratingImage(false);
+    }
+  }, [setValue, toast]);
+
+  const handleManualImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast({ title: "Invalid File", description: "Please upload an image.", variant: "destructive" });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64String = event.target?.result as string;
+        setValue('image', base64String, { shouldValidate: true, shouldDirty: true });
+        toast({ title: "Image Uploaded", description: "New featured image is ready." });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   return (
     <>
@@ -152,7 +200,7 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
         title={watch('title')}
         content={getFullArticleHtml()}
         category={watch('category')}
-        image={article.image}
+        image={watchedImage}
       />
       <div className="mb-8">
         <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
@@ -170,7 +218,7 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
                     <CardHeader>
                         <CardTitle className="text-2xl">Edit Article Content</CardTitle>
                         <CardDescription>
-                            Make changes to your article below. Save it as a draft or publish it to the live site.
+                            Make changes to your article below. Drafts are auto-saved every 10 seconds.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
@@ -219,50 +267,6 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
                         />
                         {errors.content && <p className="text-sm text-destructive mt-1">{errors.content.message}</p>}
                         </div>
-
-                        <div className="space-y-2 border-t pt-4">
-                        <Label className="text-lg font-semibold">Key Takeaways</Label>
-                            {fields.map((field, index) => (
-                            <div key={field.id} className="flex items-center gap-2">
-                                <Input
-                                {...register(`keyTakeaways.${index}.value`)}
-                                placeholder={`Takeaway #${index + 1}`}
-                                disabled={isSaving || isDeleting}
-                                />
-                                <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={isSaving || isDeleting || fields.length <= 1}>
-                                <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </div>
-                            ))}
-                        {errors.keyTakeaways && <p className="text-sm text-destructive mt-1">{errors.keyTakeaways.root?.message || (errors.keyTakeaways as any)[0]?.value?.message}</p>}
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => append({ value: "" })}
-                            disabled={isSaving || isDeleting || fields.length >= 6}
-                        >
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Add Takeaway
-                        </Button>
-                        </div>
-
-                        <div>
-                        <Label htmlFor="conclusion">Conclusion</Label>
-                        <Controller
-                            name="conclusion"
-                            control={control}
-                            render={({ field }) => (
-                                <RichTextEditor 
-                                    value={field.value} 
-                                    onChange={field.onChange}
-                                    disabled={isSaving || isDeleting}
-                                    placeholder="Write your powerful conclusion here..."
-                                />
-                            )}
-                        />
-                        {errors.conclusion && <p className="text-sm text-destructive mt-1">{errors.conclusion.message}</p>}
-                        </div>
                     </CardContent>
                 </Card>
             </div>
@@ -275,6 +279,26 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
                     <CardContent className="space-y-4">
                          <div>
                             <p className="text-sm font-medium">Word Count: <span className="font-bold text-primary">{wordCount}</span></p>
+                        </div>
+                        
+                        <div>
+                            <Label>Featured Image</Label>
+                            <div className="mt-2 aspect-video w-full rounded-md border bg-muted flex items-center justify-center overflow-hidden">
+                                {isGeneratingImage ? (
+                                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                                ) : (
+                                    watchedImage && <Image src={watchedImage} alt="Featured image preview" width={300} height={169} className="object-cover w-full h-full" data-ai-hint="article feature" />
+                                )}
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 mt-2">
+                                <Button type="button" variant="secondary" onClick={() => handleGenerateFeaturedImage(titleValue)} disabled={isGeneratingImage || !titleValue}>
+                                    <Wand2 className="mr-2 h-4 w-4" /> AI Generate
+                                </Button>
+                                <Button type="button" variant="outline" onClick={() => document.getElementById('manual-upload-input')?.click()} disabled={isGeneratingImage}>
+                                    <Upload className="mr-2 h-4 w-4" /> Upload
+                                </Button>
+                                <input id="manual-upload-input" type="file" className="hidden" accept="image/*" onChange={handleManualImageUpload} />
+                            </div>
                         </div>
 
                         <div>
@@ -321,7 +345,7 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
                             <div className="flex flex-col gap-2">
                                 <Button type="submit" disabled={isSaving || isDeleting || isAddingImages} className="w-full">
                                     {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                    Save Changes
+                                    {getValues('status') === 'draft' ? 'Save Draft' : 'Publish Changes'}
                                 </Button>
                                 <Button type="button" variant="outline" onClick={() => setIsPreviewOpen(true)} className="w-full">
                                     <Eye className="mr-2 h-4 w-4" />

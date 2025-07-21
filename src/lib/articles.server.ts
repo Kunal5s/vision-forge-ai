@@ -8,7 +8,7 @@ import { redirect } from 'next/navigation';
 import { Octokit } from 'octokit';
 import { generateArticleForTopic } from '@/ai/article-generator';
 
-import { categorySlugMap } from './constants';
+import { categorySlugMap } from '@/lib/constants';
 import {
   ArticleSchema,
   type Article,

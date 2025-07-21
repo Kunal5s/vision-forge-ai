@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useForm, Controller, useFieldArray } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -17,15 +17,16 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { categorySlugMap, IMAGE_COUNTS } from '@/lib/constants';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, FileSignature, PlusCircle, Trash2, ImageIcon, Wand2, Eye, Save } from 'lucide-react';
+import { ArrowLeft, Loader2, FileSignature, ImageIcon, Wand2, Eye, Save } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { addImagesToArticleAction, createManualArticleAction } from '@/lib/articles.server';
+import { createManualArticleAction, addImagesToArticleAction, autoSaveArticleDraftAction } from './actions';
 import Image from 'next/image';
 import { RichTextEditor } from '@/components/vision-forge/RichTextEditor';
 import { ArticlePreview } from '@/components/vision-forge/ArticlePreview';
 import { useRouter } from 'next/navigation';
 import { ManualArticleSchema, getFullArticleHtmlForPreview } from '@/lib/types';
+import { useDebounce } from 'use-debounce';
 
 
 type ManualArticleFormData = z.infer<typeof ManualArticleSchema>;
@@ -47,20 +48,31 @@ export default function ManualPublishPage() {
       slug: '',
       summary: '',
       content: '',
-      keyTakeaways: [{ value: '' }],
-      conclusion: '',
       status: 'draft',
       image: '',
     }
   });
+  
+  const [debouncedContent] = useDebounce(watch('content'), 10000);
+
+  useEffect(() => {
+    const autoSaveDraft = async () => {
+        // Only autosave if the form has been touched and it's a draft
+        if (isDirty) {
+            const result = await autoSaveArticleDraftAction(getValues());
+            if (result.success) {
+                toast({ title: 'Draft Auto-Saved', description: 'Your progress has been saved.' });
+            }
+        }
+    };
+    if (debouncedContent) {
+        autoSaveDraft();
+    }
+  }, [debouncedContent, getValues, isDirty, toast]);
+
 
   const wordCount = (watch('content') || '').replace(/<[^>]*>?/gm, '').split(/\s+/).filter(Boolean).length;
   
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "keyTakeaways",
-  });
-
   const titleValue = watch('title');
   const categoryValue = watch('category');
 
@@ -256,58 +268,6 @@ export default function ManualPublishPage() {
                         )}
                     />
                     {errors.content && <p className="text-sm text-destructive mt-1">{errors.content.message}</p>}
-                  </div>
-                  
-                  <div className="space-y-2 border-t pt-4">
-                    <Label className="text-lg font-semibold">Key Takeaways</Label>
-                    <div className="space-y-2 mt-2">
-                      {fields.map((field, index) => (
-                        <div key={field.id} className="flex items-center gap-2">
-                           <Controller
-                                name={`keyTakeaways.${index}.value`}
-                                control={control}
-                                render={({ field }) => (
-                                    <Input
-                                        {...field}
-                                        placeholder={`Takeaway #${index + 1}`}
-                                        disabled={isSubmitting}
-                                    />
-                                )}
-                            />
-                          <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={isSubmitting || fields.length <= 1}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                     {errors.keyTakeaways && <p className="text-sm text-destructive mt-1">{errors.keyTakeaways.root?.message || (errors.keyTakeaways as any)[0]?.value?.message}</p>}
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => append({ value: "" })}
-                        disabled={isSubmitting || fields.length >= 6}
-                      >
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Takeaway
-                    </Button>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="conclusion" className="text-lg font-semibold">Conclusion</Label>
-                     <Controller
-                        name="conclusion"
-                        control={control}
-                        render={({ field }) => (
-                             <RichTextEditor 
-                                value={field.value} 
-                                onChange={field.onChange}
-                                disabled={isSubmitting}
-                                placeholder="Write your powerful conclusion here..."
-                            />
-                        )}
-                    />
-                    {errors.conclusion && <p className="text-sm text-destructive mt-1">{errors.conclusion.message}</p>}
                   </div>
               </CardContent>
             </Card>

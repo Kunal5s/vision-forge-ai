@@ -38,6 +38,7 @@ export type ManualArticleFormData = z.infer<typeof ManualArticleSchema>;
 
 // Helper function to convert the structured content array back to a single HTML string for the editor
 export const articleContentToHtml = (content: Article['articleContent']): string => {
+    if (!content) return '';
     return content.map(block => {
         if (block.type === 'img') {
              // For images, create a standard img tag wrapped in a div for styling
