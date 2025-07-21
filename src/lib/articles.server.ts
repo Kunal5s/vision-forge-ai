@@ -129,27 +129,43 @@ export async function addImagesToArticleAction(
     const dom = new JSDOM(`<body>${content}</body>`);
     const document = dom.window.document;
     
-    document.querySelectorAll('img[src*="pollinations.ai"]').forEach(img => img.parentElement?.remove());
-
-    const insertionPoints = Array.from(document.querySelectorAll('h2, h3, p'));
-    const validPoints = insertionPoints.filter(p => p.textContent && p.textContent.trim().split(' ').length > 5);
-    const numToAdd = Math.min(imageCount, validPoints.length);
-    if (numToAdd === 0) return { success: false, error: 'No suitable locations found.' };
+    // Remove any previously AI-generated images to avoid duplicates
+    document.querySelectorAll('img[src*="pollinations.ai"]').forEach(img => {
+      // If the image is wrapped in a div (our standard structure), remove the div.
+      if (img.parentElement?.tagName.toLowerCase() === 'div' && img.parentElement.classList.contains('my-8')) {
+        img.parentElement.remove();
+      } else {
+        img.remove();
+      }
+    });
     
-    const step = Math.max(1, Math.floor(validPoints.length / numToAdd));
+    const insertionPoints = Array.from(document.querySelectorAll('h2, h3'));
+    const validPoints = insertionPoints.filter(p => p.textContent && p.textContent.trim().length > 10);
+    
+    if (validPoints.length === 0) {
+      return { success: false, error: 'No suitable locations found. Add some H2 or H3 subheadings.' };
+    }
+
+    const numToAdd = Math.min(imageCount, validPoints.length);
+    
     for (let i = 0; i < numToAdd; i++) {
-        const point = validPoints[i * step];
+        // Distribute images more evenly
+        const pointIndex = Math.floor(i * (validPoints.length / numToAdd));
+        const point = validPoints[pointIndex];
+        
         const topic = (point.textContent || 'relevant photography').substring(0, 100);
         const seed = Math.floor(Math.random() * 1_000_000);
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(`${topic}, relevant photography, high detail, cinematic`)}?width=800&height=450&seed=${seed}&nologo=true`;
 
         const container = document.createElement('div');
-        container.className = 'my-8'; // This class is just for potential styling, not parsing logic
+        container.className = 'my-8';
         const img = document.createElement('img');
         img.src = url;
         img.alt = topic;
         img.className = 'rounded-lg shadow-lg mx-auto';
         container.appendChild(img);
+        
+        // Insert the image after the heading
         point.parentNode?.insertBefore(container, point.nextSibling);
     }
     return { success: true, content: document.body.innerHTML };
@@ -163,7 +179,7 @@ export async function createManualArticleAction(data: unknown) {
     const validatedFields = ManualArticleSchema.safeParse(data);
     if (!validatedFields.success) return { success: false, error: 'Invalid data.' };
     
-    const { title, slug, category, status, summary, content, keyTakeaways, conclusion, image } = validatedFields.data;
+    const { title, slug, category, status, summary, content, image } = validatedFields.data;
     
     try {
         const articleContent = htmlToArticleContent(content);
@@ -171,8 +187,6 @@ export async function createManualArticleAction(data: unknown) {
             title, slug, category, status, image, dataAiHint: 'manual content',
             publishedDate: new Date().toISOString(),
             summary: summary || '', articleContent,
-            keyTakeaways: (keyTakeaways || []).map(k => k.value).filter(Boolean),
-            conclusion: conclusion || ''
         };
         
         const finalValidatedArticle = ArticleSchema.safeParse(newArticleData);
@@ -193,7 +207,7 @@ export async function editArticleAction(data: unknown) {
     const validatedFields = ManualArticleSchema.safeParse(data);
     if (!validatedFields.success) return { success: false, error: 'Invalid data.' };
     
-    const { title, slug, summary, content, keyTakeaways, conclusion, originalSlug, originalStatus, category, status, image } = validatedFields.data;
+    const { title, slug, summary, content, originalSlug, originalStatus, category, status, image } = validatedFields.data;
     
     try {
         const existingArticle = await getArticleBySlug(originalSlug!);
@@ -203,8 +217,6 @@ export async function editArticleAction(data: unknown) {
         const updatedArticleData: Article = {
             ...existingArticle, title, slug, summary: summary || '', status, image,
             articleContent: newArticleContent.length > 0 ? newArticleContent : existingArticle.articleContent,
-            keyTakeaways: (keyTakeaways || []).map(k => k.value).filter(Boolean),
-            conclusion: conclusion || '',
             category,
             publishedDate: (status === 'published' && existingArticle.status !== 'published') ? new Date().toISOString() : existingArticle.publishedDate
         };
@@ -292,4 +304,41 @@ function revalidatePaths(slug: string, categoryName: string) {
     revalidatePath(`/${categorySlug}`);
     revalidatePath(`/${categorySlug}/${slug}`);
     revalidatePath('/admin/dashboard/edit');
+}
+
+// Autosave function for drafts
+export async function autoSaveArticleDraftAction(data: unknown): Promise<{ success: boolean; error?: string }> {
+  const validatedFields = ManualArticleSchema.safeParse(data);
+  if (!validatedFields.success) return { success: false, error: 'Invalid data.' };
+
+  const { title, slug, category, summary, content, image } = validatedFields.data;
+  if (!slug || !category || !title) {
+    return { success: false, error: "Title, slug, and category are required for auto-saving." };
+  }
+
+  try {
+    const articleContent = htmlToArticleContent(content);
+    const draftArticleData: Article = {
+      title, slug, category, status: 'draft', image: image || 'https://placehold.co/600x400.png',
+      dataAiHint: 'draft content',
+      publishedDate: new Date().toISOString(),
+      summary: summary || '',
+      articleContent,
+    };
+    
+    let drafts = await getAllArticlesAdmin('drafts');
+    const existingIndex = drafts.findIndex(d => d.slug === slug);
+    if (existingIndex > -1) {
+        drafts[existingIndex] = draftArticleData;
+    } else {
+        drafts.unshift(draftArticleData);
+    }
+    
+    await saveUpdatedArticles('drafts', drafts, `chore(autosave): ✍️ auto-save draft for "${title}"`);
+    revalidatePath('/admin/dashboard/edit');
+    return { success: true };
+  } catch (e: any) {
+    console.error("Autosave failed:", e.message);
+    return { success: false, error: e.message };
+  }
 }

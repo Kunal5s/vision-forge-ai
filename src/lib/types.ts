@@ -18,8 +18,6 @@ export const ArticleSchema = z.object({
   publishedDate: z.string().datetime().optional(),
   summary: z.string().optional(),
   articleContent: z.array(ArticleContentBlockSchema),
-  keyTakeaways: z.array(z.string()).optional(),
-  conclusion: z.string().optional(),
 });
 export type Article = z.infer<typeof ArticleSchema>;
 
@@ -32,8 +30,6 @@ export const ManualArticleSchema = z.object({
   status: z.enum(['published', 'draft']),
   summary: z.string().optional(),
   content: z.string().min(50, 'Content must be at least 50 characters long.'),
-  keyTakeaways: z.array(z.object({ value: z.string() })).optional(),
-  conclusion: z.string().optional(),
   image: z.string().url('A valid image URL is required.'),
   originalSlug: z.string().optional(), // For identifying article on edit
   originalStatus: z.enum(['published', 'draft']).optional(),
@@ -54,14 +50,7 @@ export const articleContentToHtml = (content: Article['articleContent']): string
 
 // Helper function to generate a full article HTML string for previews
 export const getFullArticleHtmlForPreview = (data: Partial<ManualArticleFormData>): string => {
-  const takeawaysHtml = (data.keyTakeaways || [])
-    .map(t => (t.value ? `<li>${t.value}</li>` : ''))
-    .join('');
-  
-  const conclusionHtml = data.conclusion ? `<h2>Conclusion</h2>${data.conclusion}` : '';
-  const takeawaysSection = takeawaysHtml ? `<h2>Key Takeaways</h2><ul>${takeawaysHtml}</ul>` : '';
-
-  return `${data.summary || ''}${data.content || ''}${takeawaysSection}${conclusionHtml}`;
+  return `${data.summary || ''}${data.content || ''}`;
 };
 
 
