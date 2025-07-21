@@ -1,65 +1,31 @@
-
-"use client";
-
-import { notFound, useParams } from 'next/navigation';
-import { categorySlugMap } from '@/lib/constants';
-import EditArticleForm from './EditArticleForm';
+import { notFound } from 'next/navigation';
 import { getArticleForEdit } from '@/lib/articles';
-import { useEffect, useState } from 'react';
-import type { Article } from '@/lib/articles';
+import EditArticleForm from './EditArticleForm';
+import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export default function EditArticlePage() {
-    const params = useParams<{ category: string; slug: string }>();
-    const [article, setArticle] = useState<Article | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+// This is now a Server Component
+export default async function EditArticlePage({ params }: { params: { category: string; slug: string } }) {
+    
+    // Fetch data on the server
+    const article = await getArticleForEdit(params.category as string, params.slug as string);
 
-    useEffect(() => {
-        if (!params.category || !params.slug) return;
-        
-        const loadArticle = async () => {
-            setIsLoading(true);
-            try {
-                const fetchedArticle = await getArticleForEdit(params.category as string, params.slug as string);
-                if (fetchedArticle) {
-                    setArticle(fetchedArticle);
-                } else {
-                    setError('Article not found.');
-                }
-            } catch (err) {
-                setError('Failed to load article data.');
-                console.error(err);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        loadArticle();
-    }, [params.category, params.slug]);
-
-    if (isLoading) {
-        return (
-            <main className="flex-grow container mx-auto py-12 px-4 bg-muted/20 min-h-screen">
+    if (!article) {
+        notFound();
+    }
+    
+    return (
+        <main className="flex-grow container mx-auto py-12 px-4 bg-muted/20 min-h-screen">
+           <Suspense fallback={
                 <div className="space-y-4">
                     <Skeleton className="h-10 w-1/4" />
                     <Skeleton className="h-[400px] w-full" />
                     <Skeleton className="h-[200px] w-full" />
                 </div>
-            </main>
-        );
-    }
-    
-    if (error || !article) {
-        notFound();
-    }
-    
-    // Determine the category name from the slug, or use the one from the article data.
-    const categoryName = Object.entries(categorySlugMap).find(([slug]) => slug === params.category)?.[1] || article.category;
-
-
-    return (
-        <main className="flex-grow container mx-auto py-12 px-4 bg-muted/20 min-h-screen">
-           <EditArticleForm article={article} categorySlug={params.category as string} />
+           }>
+                {/* Pass the fetched data as a prop to the Client Component */}
+                <EditArticleForm article={article} categorySlug={params.category as string} />
+           </Suspense>
         </main>
     );
 }

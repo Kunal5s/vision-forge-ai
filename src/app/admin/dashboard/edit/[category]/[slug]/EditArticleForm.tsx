@@ -58,7 +58,7 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
 
   const { toast } = useToast();
   
-  const { register, handleSubmit, formState: { errors, isDirty }, control, getValues, setValue, watch } = useForm<EditFormData>({
+  const form = useForm<EditFormData>({
     resolver: zodResolver(EditSchema),
     defaultValues: {
       title: article.title.replace(/<[^>]*>?/gm, ''),
@@ -72,6 +72,24 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
       originalStatus: article.status || 'published',
     }
   });
+
+  const { register, handleSubmit, formState: { errors, isDirty }, control, getValues, setValue, watch, reset } = form;
+  
+  // Reset form when the article prop changes
+    useEffect(() => {
+        reset({
+            title: article.title.replace(/<[^>]*>?/gm, ''),
+            slug: article.slug,
+            status: article.status || 'published',
+            category: article.category,
+            summary: article.summary || '',
+            content: articleContentToHtml(article.articleContent),
+            image: article.image || '',
+            originalSlug: article.slug,
+            originalStatus: article.status || 'published',
+        });
+    }, [article, reset]);
+
   
   const [debouncedValue] = useDebounce(watch(), 10000); // Watch all fields for debouncing
   
