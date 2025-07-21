@@ -166,7 +166,7 @@ export const CAPTION_STYLES: CaptionStyle[] = [
     { name: 'Minimal White', className: `${baseCaptionClass} font-open-sans` },
     { name: 'Bold Uppercase', className: `${baseCaptionClass} font-oswald uppercase tracking-wider` },
     { name: 'Elegant Script', className: `${baseCaptionClass} font-dancing-script text-3xl` },
-    { name: 'Neon Glow', className: `${baseCaptionClass} text-cyan-300 font-bebas-neue tracking-widest text-shadow-glow-cyan` },
+    { name: 'Neon Glow', className: `${baseCaptionClass} text-cyan-300 font-bebas-neue tracking-widest` },
     { name: 'Simple Lowercase', className: `${baseCaptionClass} font-lato lowercase` },
     { name: 'Subtle Shadow', className: `${baseCaptionClass} font-montserrat` },
     { name: 'Inverted Box', className: `${baseCaptionClass} font-roboto-condensed` },
@@ -184,5 +184,6 @@ export const CAPTION_STYLES: CaptionStyle[] = [
     { name: 'Caveat Brush', className: `${baseCaptionClass} font-caveat text-3xl` },
 ];
     
+
 
 
