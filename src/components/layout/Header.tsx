@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { BrainCircuit, LogIn, LogOut } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Button } from '../ui/button';
-import { logoutAction } from '@/app/admin/login/actions';
+import { logoutAction, verifySession } from '@/app/admin/login/actions';
 import { useRouter } from 'next/navigation';
 import { categorySlugMap } from '@/lib/constants';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -66,49 +66,40 @@ const CategoryNavBar = () => {
 };
 
 
+// This is an async component to correctly handle session verification on the server.
 export function Header() {
-  const [sessionStatus, setSessionStatus] = useState<'loading' | 'authed' | 'unauthed'>('loading');
   const pathname = usePathname();
   const router = useRouter();
   const isAdminRoute = pathname.startsWith('/admin');
   
-  // This effect checks the session only on the client side
-  useEffect(() => {
-    // Only check session if we're on an admin route to avoid unnecessary checks on public pages
+  // This state will be determined on the server and passed to the client component part.
+  const [isClient, setIsClient] = React.useState(false);
+  const [session, setSession] = React.useState<any>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+  
+  React.useEffect(() => {
+    setIsClient(true);
     if (isAdminRoute) {
-      const checkSession = async () => {
-        try {
-          const res = await fetch('/api/auth/session'); // A simple API route to check the session cookie
-          if (res.ok) {
-            setSessionStatus('authed');
-          } else {
-            setSessionStatus('unauthed');
-          }
-        } catch (error) {
-          setSessionStatus('unauthed');
-        }
-      };
-      checkSession();
+      verifySession().then(s => {
+        setSession(s);
+        setIsLoading(false);
+      });
     } else {
-      setSessionStatus('unauthed'); // Default for non-admin routes
+      setIsLoading(false);
     }
   }, [pathname, isAdminRoute]);
 
   const handleLogout = async () => {
     await logoutAction();
-    setSessionStatus('unauthed'); // Update state on logout
     router.push('/admin/login');
+    router.refresh(); // Ensure the header re-renders
   }
   
   const headerHeightClass = isAdminRoute ? "h-16" : "h-[124px]";
   const spacerHeightClass = isAdminRoute ? "pt-16" : "pt-[124px]";
-
-  // Don't render anything until client-side check is done, prevents layout shift
-  if (sessionStatus === 'loading' && isAdminRoute) {
-    return (
-       <header className={cn("fixed top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60", headerHeightClass)} />
-    );
-  }
+  
+  // Only render the logout button logic if we are on an admin route and the client has mounted
+  const showAdminButtons = isClient && isAdminRoute;
 
   return (
     <>
@@ -123,19 +114,30 @@ export function Header() {
                 </Link>
                 
                 <div className="flex items-center gap-4">
-                    {isAdminRoute && sessionStatus === 'authed' ? (
-                        <Button variant="outline" onClick={handleLogout}>
-                            <LogOut className="mr-2 h-4 w-4" />
-                            Logout
+                  {!showAdminButtons ? (
+                     <Link href="/admin/login">
+                        <Button variant="outline">
+                            <LogIn className="mr-2 h-4 w-4" />
+                            Admin
                         </Button>
-                    ) : (
-                        <Link href="/admin/login">
-                            <Button variant="outline">
-                                <LogIn className="mr-2 h-4 w-4" />
-                                Admin
-                            </Button>
-                        </Link>
-                    )}
+                    </Link>
+                  ) : isLoading ? (
+                     <Button variant="outline" disabled>
+                        Loading...
+                    </Button>
+                  ) : session ? (
+                    <Button variant="outline" onClick={handleLogout}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Logout
+                    </Button>
+                  ) : (
+                    <Link href="/admin/login">
+                        <Button variant="outline">
+                            <LogIn className="mr-2 h-4 w-4" />
+                            Admin
+                        </Button>
+                    </Link>
+                  )}
                 </div>
             </div>
         </div>
