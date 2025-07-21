@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 export const ArticleContentBlockSchema = z.object({
@@ -40,10 +41,8 @@ export const articleContentToHtml = (content: Article['articleContent']): string
     if (!content) return '';
     return content.map(block => {
         if (block.type === 'img') {
-             // For images, create a standard img tag wrapped in a div for styling
             return `<div class="my-8"><img src="${block.content}" alt="${block.alt || ''}" class="rounded-lg shadow-md mx-auto" /></div>`;
         }
-        // For all other types (h1-h6, p, ul, ol etc.), the content is already valid HTML
         return block.content;
     }).join(''); 
 };
@@ -78,5 +77,4 @@ export const SubscriptionSchema = z.object({
   }),
 });
 
-// The main type is inferred from the schema
 export type Subscription = z.infer<typeof SubscriptionSchema>;

@@ -2,10 +2,10 @@
 'use server';
 
 import { z } from 'zod';
-import { categorySlugMap } from './constants';
-import { ArticleSchema } from './types';
+import { categorySlugMap } from '@/lib/constants';
+import { ArticleSchema } from '@/lib/types';
+import { Octokit } from 'octokit';
 
-// Direct imports to ensure files are bundled during the build process.
 import featuredArticles from '@/articles/featured.json';
 import inspirationArticles from '@/articles/inspiration.json';
 import nftArticles from '@/articles/nft.json';
@@ -16,14 +16,12 @@ import technologyArticles from '@/articles/technology.json';
 import trendsArticles from '@/articles/trends.json';
 import tutorialsArticles from '@/articles/tutorials.json';
 import usecasesArticles from '@/articles/usecases.json';
-// Import drafts if the file exists, otherwise use an empty array.
 import draftArticles from '@/articles/drafts.json';
 
 export type { Article, ArticleContentBlock } from './types';
 
 const ArticleFileSchema = z.array(ArticleSchema);
 
-// A map to hold all imported article data, connecting slug to the imported JSON.
 const allCategoryData: { [key: string]: any } = {
   featured: featuredArticles,
   inspiration: inspirationArticles,
@@ -43,7 +41,7 @@ async function loadAndValidateArticles(
 ): Promise<z.infer<typeof ArticleSchema>[]> {
   const categorySlug = Object.keys(categorySlugMap).find(
       (key) => categorySlugMap[key] === category
-    ) || category; // Fallback for 'drafts'
+    ) || category; 
 
   if (!categorySlug) {
     console.error(`No slug found for category "${category}"`);
@@ -53,7 +51,6 @@ async function loadAndValidateArticles(
   const articlesData = allCategoryData[categorySlug];
 
   if (!articlesData) {
-    // This is normal for the drafts file if it doesn't exist yet
     if (category === 'drafts') return [];
     console.error(`No article data found for category slug "${categorySlug}"`);
     return [];
@@ -83,7 +80,6 @@ async function loadAndValidateArticles(
   }
 }
 
-// For public-facing pages: gets ONLY published articles.
 export async function getArticles(
   category: string
 ): Promise<z.infer<typeof ArticleSchema>[]> {
@@ -91,14 +87,12 @@ export async function getArticles(
   return allArticles.filter((article) => article.status === 'published');
 }
 
-// For admin pages: gets ALL articles from a specific category, including drafts within that file.
 export async function getAllArticlesAdmin(
   category: string
 ): Promise<z.infer<typeof ArticleSchema>[]> {
   return await loadAndValidateArticles(category);
 }
 
-// For editing page: get a single article, checking drafts first
 export async function getArticleForEdit(
   category: string,
   slug: string
@@ -113,7 +107,6 @@ export async function getArticleForEdit(
 }
 
 
-// Reusable GitHub helper functions
 export async function getShaForFile(
   octokit: Octokit,
   owner: string,

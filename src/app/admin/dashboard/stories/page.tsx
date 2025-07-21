@@ -1,4 +1,5 @@
 
+'use client';
 
 import { getAllStoriesAdmin } from '@/lib/stories';
 import { Button } from '@/components/ui/button';
@@ -6,20 +7,26 @@ import Link from 'next/link';
 import { ArrowLeft, BookImage, PlusCircle } from 'lucide-react';
 import { ManageStoriesClientPage } from './ManageStoriesClientPage';
 import type { Story } from '@/lib/stories';
+import { useState, useEffect } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
-async function getAllStoriesGrouped(): Promise<{ category: string, stories: Story[] }[]> {
-    // Currently, all stories are in the 'featured' category.
-    // This function can be expanded if more categories are added.
-    const stories = await getAllStoriesAdmin('featured');
-    if (stories.length === 0) {
-        return [];
-    }
-    return [{ category: 'All Stories', stories }];
-}
+export default function ManageStoriesPage() {
+    const [storiesByCategory, setStoriesByCategory] = useState<{ category: string, stories: Story[] }[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-
-export default async function ManageStoriesPage() {
-    const storiesByCategory = await getAllStoriesGrouped();
+    useEffect(() => {
+        async function fetchStories() {
+            setIsLoading(true);
+            const stories = await getAllStoriesAdmin('featured');
+            if (stories.length > 0) {
+                setStoriesByCategory([{ category: 'All Stories', stories }]);
+            } else {
+                setStoriesByCategory([]);
+            }
+            setIsLoading(false);
+        }
+        fetchStories();
+    }, []);
 
     return (
         <main className="flex-grow container mx-auto py-12 px-4 bg-muted/20 min-h-screen">
@@ -48,7 +55,21 @@ export default async function ManageStoriesPage() {
                 </div>
             </div>
             
-            <ManageStoriesClientPage allStoriesByCategory={storiesByCategory} />
+            {isLoading ? (
+                 <Card>
+                    <CardHeader>
+                        <Skeleton className="h-8 w-1/3" />
+                        <Skeleton className="h-5 w-2/3" />
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <Skeleton className="h-24 w-full" />
+                        <Skeleton className="h-24 w-full" />
+                        <Skeleton className="h-24 w-full" />
+                    </CardContent>
+                </Card>
+            ) : (
+                <ManageStoriesClientPage allStoriesByCategory={storiesByCategory} />
+            )}
 
         </main>
     );

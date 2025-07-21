@@ -16,7 +16,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getStoryBySlug, updateStoryAction, deleteStoryAction } from './actions';
-import { generateStoryImagesAction } from '../../../stories/create/actions'; // Corrected Path
+import { generateStoryImagesAction } from '../../../stories/create/actions';
 import { categorySlugMap, CAPTION_STYLES } from '@/lib/constants';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { StoryPlayer } from '@/components/vision-forge/StoryPlayer';
@@ -44,7 +44,7 @@ const StoryFormSchema = z.object({
   logo: z.string().optional(),
   websiteUrl: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
   pages: z.array(StoryPageClientSchema).min(5, "A story must have at least 5 pages.").max(50, "A story cannot have more than 50 pages."),
-  originalSlug: z.string(), // To find the story for updating
+  originalSlug: z.string(), 
 });
 
 type StoryFormData = z.infer<typeof StoryFormSchema>;
@@ -65,7 +65,6 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const { toast } = useToast();
 
-    // State for the AI generator form
     const [aiPrompt, setAiPrompt] = useState('');
     const [aiImageCount, setAiImageCount] = useState(10);
     const [globalStyle, setGlobalStyle] = useState('Classic Black');
@@ -98,7 +97,6 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
                     originalSlug: fetchedStory.slug,
                 });
                 
-                // Set the initial global style based on the first page
                 if (clientPages.length > 0 && clientPages[0].styleName) {
                     setGlobalStyle(clientPages[0].styleName);
                 }
@@ -124,7 +122,6 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
     const seoDescriptionValue = watch('seoDescription');
     const categoryValue = watch('category');
 
-    // Effect to apply global style to all pages
     useEffect(() => {
         pagesValue.forEach((_, index) => {
             setValue(`pages.${index}.styleName`, globalStyle, { shouldDirty: true });
@@ -149,7 +146,7 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
                 toast({ title: "Invalid File Type", description: "Please upload a valid image file (PNG, JPG, WebP).", variant: "destructive" });
                 return;
             }
-            if (file.size > 4 * 1024 * 1024) { // 4MB limit
+            if (file.size > 4 * 1024 * 1024) {
                 toast({ title: "File Too Large", description: "Image size cannot exceed 4MB.", variant: "destructive" });
                 return;
             }
@@ -169,7 +166,7 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
                 toast({ title: "Invalid File Type", description: "Please upload an image file.", variant: "destructive" });
                 return;
             }
-             if (file.size > 2 * 1024 * 1024) { // 2MB limit for logo
+             if (file.size > 2 * 1024 * 1024) { 
                 toast({ title: "File Too Large", description: "Logo size cannot exceed 2MB.", variant: "destructive" });
                 return;
             }
@@ -195,11 +192,11 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
         if (result.success && result.images) {
             const newPages = result.images.map(img => ({
                 imageUrl: img.imageUrl,
-                caption: '', // Leave caption empty for manual input
+                caption: '', 
                 imagePrompt: img.imagePrompt,
                 styleName: globalStyle,
             }));
-            replace(newPages); // Replace all pages with newly generated ones
+            replace(newPages); 
             toast({ title: "Images Generated!", description: `Successfully replaced story with ${newPages.length} new pages.` });
         } else {
             toast({ title: "Image Generation Failed", description: result.error || "The AI failed to generate images.", variant: "destructive" });
@@ -226,7 +223,6 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
         const result = await deleteStoryAction({ slug: story.slug, category: story.category });
         if(result.success) {
              toast({ title: 'Story Deleted', description: 'The story has been removed.' });
-             // Redirect handled by server action
         } else {
             toast({ title: 'Error', description: result.error, variant: 'destructive' });
             setIsSaving(false);
@@ -526,5 +522,3 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
         </main>
     );
 }
-
-    

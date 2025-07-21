@@ -65,41 +65,36 @@ const CategoryNavBar = () => {
     );
 };
 
-
-// This is an async component to correctly handle session verification on the server.
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const isAdminRoute = pathname.startsWith('/admin');
-  
-  // This state will be determined on the server and passed to the client component part.
-  const [isClient, setIsClient] = React.useState(false);
   const [session, setSession] = React.useState<any>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   
   React.useEffect(() => {
-    setIsClient(true);
     if (isAdminRoute) {
-      verifySession().then(s => {
+      const checkSession = async () => {
+        const s = await verifySession();
         setSession(s);
         setIsLoading(false);
-      });
+      }
+      checkSession();
     } else {
-      setIsLoading(false);
+        setIsLoading(false);
     }
   }, [pathname, isAdminRoute]);
 
   const handleLogout = async () => {
     await logoutAction();
     router.push('/admin/login');
-    router.refresh(); // Ensure the header re-renders
+    router.refresh(); 
   }
   
   const headerHeightClass = isAdminRoute ? "h-16" : "h-[124px]";
   const spacerHeightClass = isAdminRoute ? "pt-16" : "pt-[124px]";
   
-  // Only render the logout button logic if we are on an admin route and the client has mounted
-  const showAdminButtons = isClient && isAdminRoute;
+  const showAdminButtons = isAdminRoute;
 
   return (
     <>
@@ -143,7 +138,6 @@ export function Header() {
         </div>
         {!isAdminRoute && <CategoryNavBar />}
       </header>
-      {/* This div acts as a spacer to push content below the fixed header */}
       <div className={spacerHeightClass} />
     </>
   );

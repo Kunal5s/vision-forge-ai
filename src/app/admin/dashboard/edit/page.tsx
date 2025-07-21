@@ -7,7 +7,9 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import EditArticlesClientPage from './EditArticlesClientPage';
 
-// This function fetches all articles from all known categories and drafts.
+// This is now a pure Server Component.
+// The client-side logic is in EditArticlesClientPage.tsx.
+
 async function getAllContent(): Promise<{
     published: { category: string, articles: Article[] }[],
     drafts: Article[]

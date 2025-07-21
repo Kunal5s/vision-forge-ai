@@ -25,7 +25,7 @@ import Image from 'next/image';
 import { RichTextEditor } from '@/components/vision-forge/RichTextEditor';
 import { ArticlePreview } from '@/components/vision-forge/ArticlePreview';
 import { ManualArticleSchema, getFullArticleHtmlForPreview } from '@/lib/types';
-import { createManualArticleAction, addImagesToArticleAction, autoSaveArticleDraftAction } from './actions';
+import { createManualArticleAction, addImagesToArticleAction, autoSaveArticleDraftAction } from '@/app/admin/dashboard/manual/actions';
 
 
 type ManualArticleFormData = z.infer<typeof ManualArticleSchema>;
@@ -54,7 +54,6 @@ export default function ManualPublishPage() {
   const [debouncedValue] = useDebounce(watch(), 10000); // Watch all form fields
   
   const autoSaveDraft = useCallback(async () => {
-    // Only autosave if the form has been touched and has the key fields
     if (isDirty && getValues('title') && getValues('slug') && getValues('category')) {
         const result = await autoSaveArticleDraftAction(getValues());
         if (result.success) {
@@ -161,24 +160,21 @@ export default function ManualPublishPage() {
         return;
     }
     
-    const result = await createManualArticleAction(data);
-
-    if (result && 'error' in result && result.error) {
-      toast({
-        title: 'Error Saving Article',
-        description: result.error,
-        variant: 'destructive',
-        duration: 9000,
-      });
-      setIsSubmitting(false);
-    } else {
-        // Redirect is handled by server action, but we can still toast
+    try {
+        await createManualArticleAction(data);
         toast({
             title: status === 'published' ? 'Article Published!' : 'Draft Saved!',
             description: `Your article "${data.title}" has been saved.`,
         });
+    } catch (e: any) {
+      toast({
+        title: 'Error Saving Article',
+        description: e.message,
+        variant: 'destructive',
+        duration: 9000,
+      });
+      setIsSubmitting(false);
     }
-    // No need to set isSubmitting to false, as a redirect will happen
   };
 
   const getFullArticleHtml = useCallback(() => {

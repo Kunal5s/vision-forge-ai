@@ -2,9 +2,8 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { JSDOM } from 'jsdom';
 import { ManualArticleSchema } from '@/lib/types';
-import { saveArticle as saveArticleToRepo, addImagesToArticleAction as addImagesToArticleContent, autoSaveArticleDraftAction as autoSaveDraftToRepo } from '@/app/admin/dashboard/edit/[category]/[slug]/actions';
+import { saveArticle, addImagesToArticleAction as addImagesToArticleContent, autoSaveArticleDraftAction as autoSaveDraftToRepo } from '@/app/admin/dashboard/edit/[category]/[slug]/actions';
 
 // This action creates the article and then redirects
 export async function createManualArticleAction(data: unknown) {
@@ -16,11 +15,11 @@ export async function createManualArticleAction(data: unknown) {
     const { slug, category } = validatedFields.data;
   
     try {
-        await saveArticleToRepo(data, true);
+        await saveArticle(data, true);
         const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
         redirect(`/admin/dashboard/edit/${categorySlug}/${slug}`);
     } catch (e: any) {
-        return { success: false, error: e.message };
+        throw new Error(e.message || "An unknown error occurred while saving the article.");
     }
 }
 

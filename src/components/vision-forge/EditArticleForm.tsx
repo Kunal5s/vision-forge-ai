@@ -75,7 +75,6 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
 
   const { register, handleSubmit, formState: { errors, isDirty }, control, getValues, setValue, watch, reset } = form;
   
-  // Reset form when the article prop changes
     useEffect(() => {
         reset({
             title: article.title.replace(/<[^>]*>?/gm, ''),
@@ -129,7 +128,6 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
       toast({ title: "Error Saving", description: result.error, variant: 'destructive' });
     } else {
       toast({ title: "Article Saved!", description: `"${data.title}" has been updated.` });
-      // Redirect is now handled by the server action
     }
     setIsSaving(false);
   };
@@ -145,7 +143,6 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
       setIsDeleting(false);
     } else {
       toast({ title: "Article Deleted", description: "The article has been successfully removed." });
-       // Redirect is handled by the action
     }
   }
 

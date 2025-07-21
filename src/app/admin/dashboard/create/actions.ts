@@ -1,14 +1,12 @@
 
 'use server';
 
-import { z } from 'zod';
 import { redirect } from 'next/navigation';
 import { generateArticleForTopic } from '@/ai/article-generator';
 import { categorySlugMap } from '@/lib/constants';
 import { saveArticle } from '@/app/admin/dashboard/edit/[category]/[slug]/actions';
+import * as z from 'zod';
 
-// Schema for the form on the create page. It's different from ManualArticleSchema
-// because it includes AI provider details and doesn't have existing content.
 const GenerateArticleFormSchema = z.object({
   topic: z.string().min(1, 'Please enter a topic for the article.'),
   category: z.string().min(1, 'Please select a category.'),
@@ -78,7 +76,6 @@ export async function generateArticleAction(
       );
     }
     
-    // Save the new article, which will handle adding it to the correct file.
     await saveArticle(newArticle, true);
 
     const categorySlug =
@@ -86,7 +83,6 @@ export async function generateArticleAction(
         (key) => categorySlugMap[key] === category
       ) || category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
       
-    // The redirect now points to the new edit page for the article
     redirect(`/admin/dashboard/edit/${categorySlug}/${newArticle.slug}`);
 
   } catch (error) {

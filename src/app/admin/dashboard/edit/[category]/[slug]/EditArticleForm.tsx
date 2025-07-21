@@ -35,12 +35,14 @@ import {
 } from '@/components/ui/select';
 import { IMAGE_COUNTS } from '@/lib/constants';
 import { ManualArticleSchema, articleContentToHtml, getFullArticleHtmlForPreview } from '@/lib/types';
-import { editArticleAction, deleteArticleAction, addImagesToArticleAction, autoSaveArticleDraftAction } from './actions';
+import { editArticleAction, deleteArticleAction, addImagesToArticleAction, autoSaveArticleDraftAction } from '@/app/admin/dashboard/edit/[category]/[slug]/actions';
 import { useDebounce } from 'use-debounce';
 import Image from 'next/image';
 
+// Changed the name of the Zod schema import for clarity
+import { ManualArticleSchema as EditSchema } from '@/lib/types';
 
-type EditFormData = z.infer<typeof ManualArticleSchema>;
+type EditFormData = z.infer<typeof EditSchema>;
 
 interface EditArticleFormProps {
     article: Article;
@@ -59,7 +61,7 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
   const { toast } = useToast();
   
   const form = useForm<EditFormData>({
-    resolver: zodResolver(ManualArticleSchema),
+    resolver: zodResolver(EditSchema),
     defaultValues: {
       title: article.title.replace(/<[^>]*>?/gm, ''),
       slug: article.slug,
@@ -75,7 +77,6 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
 
   const { register, handleSubmit, formState: { errors, isDirty }, control, getValues, setValue, watch, reset } = form;
   
-  // Reset form when the article prop changes
     useEffect(() => {
         reset({
             title: article.title.replace(/<[^>]*>?/gm, ''),
@@ -91,7 +92,7 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
     }, [article, reset]);
 
   
-  const [debouncedValue] = useDebounce(watch(), 10000); // Watch all fields for debouncing
+  const [debouncedValue] = useDebounce(watch(), 10000); 
   
   const watchedImage = watch('image');
   const titleValue = watch('title');
@@ -129,7 +130,6 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
       toast({ title: "Error Saving", description: result.error, variant: 'destructive' });
     } else {
       toast({ title: "Article Saved!", description: `"${data.title}" has been updated.` });
-      // Redirect is now handled by the server action
     }
     setIsSaving(false);
   };
@@ -138,10 +138,14 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
     setIsDeleting(true);
     toast({ title: "Deleting...", description: `Removing article "${article.title}".` });
     
-    await deleteArticleAction(article.category, article.slug, article.status === 'draft');
+    const result = await deleteArticleAction(article.category, article.slug, article.status === 'draft');
     
-    // Redirect is handled by the action, but we can toast success before navigation
-    toast({ title: "Article Deleted", description: "The article has been successfully removed." });
+     if (result?.error) {
+      toast({ title: "Error Deleting", description: result.error, variant: 'destructive' });
+      setIsDeleting(false);
+    } else {
+      toast({ title: "Article Deleted", description: "The article has been successfully removed." });
+    }
   }
 
   const handleAddImages = async () => {

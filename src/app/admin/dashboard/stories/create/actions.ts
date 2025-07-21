@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { z } from 'zod';
@@ -34,7 +33,6 @@ const StoryFormSchema = z.object({
 
 type StoryFormData = z.infer<typeof StoryFormSchema>;
 
-// Server action to generate only the images using Pollinations.ai
 export async function generateStoryImagesAction(data: unknown): Promise<{ success: boolean; images?: { imageUrl: string, imagePrompt: string }[]; error?: string }> {
   const validatedFields = ImageGenerationSchema.safeParse(data);
   if (!validatedFields.success) {
@@ -46,19 +44,17 @@ export async function generateStoryImagesAction(data: unknown): Promise<{ succes
   try {
     const imagePromises = Array.from({ length: imageCount }).map(async (_, index): Promise<{ imageUrl: string, imagePrompt: string } | null> => {
         try {
-            // Add specific instructions to avoid text and get the right aspect ratio.
             const finalPrompt = `${prompt}, 9:16 aspect ratio, vertical, cinematic, watermark-free, no text, no signatures, high detail`;
             const seed = Math.floor(Math.random() * 1_000_000_000);
             const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=1080&height=1920&seed=${seed}&nologo=true`;
 
-            // Directly return the URL and the original user prompt
             return {
                 imageUrl: pollinationsUrl,
-                imagePrompt: prompt, // Save the original user prompt for context
+                imagePrompt: prompt, 
             };
         } catch (e) {
             console.error(`Error generating image ${index + 1}:`, e);
-            return null; // Return null for failed images
+            return null;
         }
     });
 
@@ -80,7 +76,6 @@ export async function generateStoryImagesAction(data: unknown): Promise<{ succes
   }
 }
 
-// This is the server action that handles the final story publication
 export async function createManualStoryAction(data: StoryFormData): Promise<{ success: boolean; error?: string; slug?: string }> {
   const validatedFields = StoryFormSchema.safeParse(data);
 
@@ -102,7 +97,7 @@ export async function createManualStoryAction(data: StoryFormData): Promise<{ su
       dataAiHint: page.imagePrompt || 'manual story upload',
       styleName: page.styleName || 'Classic Black',
       content: {
-        title: page.caption, // Using caption as the main text for each slide
+        title: page.caption, 
       },
     }));
 
@@ -121,7 +116,6 @@ export async function createManualStoryAction(data: StoryFormData): Promise<{ su
       websiteUrl: websiteUrl || undefined,
     };
     
-    // All stories go to the 'featured' category JSON for simplicity
     const categorySlug = 'featured'; 
     
     const existingStories = await getAllStoriesAdmin(categorySlug).catch(() => {
@@ -144,6 +138,5 @@ export async function createManualStoryAction(data: StoryFormData): Promise<{ su
     return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred." };
   }
   
-  // Redirect to the management page instead of the public story page
   redirect(`/admin/dashboard/stories`);
 }

@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { z } from 'zod';
@@ -39,7 +38,6 @@ export async function updateStoryAction(data: UpdateStoryFormData): Promise<{ su
 
   const { title, slug, originalSlug, category, pages, logo, websiteUrl, seoDescription } = validatedFields.data;
   
-  // All stories are currently in the 'featured' category file
   const categorySlug = 'featured';
 
   try {
@@ -73,7 +71,7 @@ export async function updateStoryAction(data: UpdateStoryFormData): Promise<{ su
       cover: storyPages[0].url,
       dataAiHint: storyPages[0].dataAiHint,
       pages: storyPages,
-      publishedDate: new Date().toISOString(), // Update date on every edit
+      publishedDate: new Date().toISOString(), 
     };
 
     stories[storyIndex] = updatedStory;
@@ -106,7 +104,6 @@ export async function deleteStoryAction(data: unknown): Promise<{ success: boole
     }
     const { slug, category } = validatedFields.data;
     
-    // For now, all stories are in 'featured'
     const categorySlug = 'featured';
 
     try {
