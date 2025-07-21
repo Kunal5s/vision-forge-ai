@@ -1,14 +1,19 @@
 
 'use server';
 
-import { generateArticleForTopic } from '@/ai/article-generator';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { Octokit } from 'octokit';
+import { JSDOM } from 'jsdom';
+import { generateArticleForTopic } from '@/ai/article-generator';
 import { categorySlugMap } from '@/lib/constants';
-import { saveArticle } from '@/lib/articles.server';
+import { ArticleSchema, type Article, type ArticleContentBlock } from '@/lib/types';
+import { getAllArticlesAdmin, getPrimaryBranch, getShaForFile, saveArticle } from '@/lib/articles';
 
-const ArticleFormSchema = z.object({
+// Schema for the form on the create page. It's different from ManualArticleSchema
+// because it includes AI provider details and doesn't have existing content.
+const GenerateArticleFormSchema = z.object({
   topic: z.string().min(1, 'Please enter a topic for the article.'),
   category: z.string().min(1, 'Please select a category.'),
   provider: z.enum(['openrouter', 'sambanova', 'huggingface']),
@@ -22,16 +27,27 @@ const ArticleFormSchema = z.object({
   huggingFaceApiKey: z.string().optional(),
 });
 
+
 type GenerateArticleResult = {
   success: boolean;
   title?: string;
   error?: string;
 };
 
+// Revalidate relevant paths after an article is changed
+function revalidateArticlePaths(slug: string, categoryName: string) {
+    const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === categoryName) || categoryName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    revalidatePath('/');
+    revalidatePath(`/${categorySlug}`);
+    revalidatePath(`/${categorySlug}/${slug}`);
+    revalidatePath('/admin/dashboard/edit');
+}
+
+
 export async function generateArticleAction(
   data: unknown
 ): Promise<GenerateArticleResult> {
-  const validatedFields = ArticleFormSchema.safeParse(data);
+  const validatedFields = GenerateArticleFormSchema.safeParse(data);
 
   if (!validatedFields.success) {
     console.error('Validation Errors:', validatedFields.error.flatten());
@@ -84,10 +100,7 @@ export async function generateArticleAction(
         (key) => categorySlugMap[key] === category
       ) || category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
       
-    revalidatePath('/');
-    revalidatePath('/admin/dashboard/edit');
-    revalidatePath(`/${categorySlug}`);
-    revalidatePath(`/${categorySlug}/${newArticle.slug}`);
+    revalidateArticlePaths(newArticle.slug, newArticle.category);
 
     // The redirect now points to the new edit page for the article
     redirect(`/admin/dashboard/edit/${categorySlug}/${newArticle.slug}`);
