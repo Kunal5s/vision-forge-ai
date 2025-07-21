@@ -159,27 +159,30 @@ export interface CaptionStyle {
     className: string;
 }
 
+const baseCaptionClass = 'bg-black/60 text-white p-3 rounded-lg text-shadow-md';
+
 export const CAPTION_STYLES: CaptionStyle[] = [
-    { name: 'Classic Black', className: 'bg-black/60 text-white font-roboto p-3 rounded-lg text-shadow-sm' },
-    { name: 'Minimal White', className: 'bg-white/80 text-black font-open-sans p-3 rounded-lg text-shadow-sm' },
-    { name: 'Bold Uppercase', className: 'bg-black/50 text-white font-oswald uppercase tracking-wider p-2 text-shadow-md' },
-    { name: 'Elegant Script', className: 'bg-black/50 text-white font-dancing-script text-3xl p-3 rounded-lg text-shadow-lg' },
-    { name: 'Neon Glow', className: 'bg-black/50 text-cyan-300 font-bebas-neue text-shadow-glow-cyan tracking-widest p-2' },
-    { name: 'Simple Lowercase', className: 'bg-black/50 text-white font-lato lowercase p-2 rounded' },
-    { name: 'Subtle Shadow', className: 'bg-black/50 text-white font-montserrat p-2 text-shadow-sm' },
-    { name: 'Inverted Box', className: 'bg-white text-black font-roboto-condensed p-2 rounded-md' },
-    { name: 'Yellow Highlight', className: 'bg-yellow-400 text-black font-bold font-anton p-2' },
-    { name: 'Red Outline', className: 'bg-black/50 text-white font-anton uppercase text-shadow-outline-red p-2' },
-    { name: 'Handwritten Note', className: 'bg-black/50 text-white font-indie-flower text-2xl p-2 rounded' },
-    { name: 'Blue Box', className: 'bg-blue-600/70 text-white font-source-sans p-3 rounded' },
-    { name: 'Green Modern', className: 'bg-green-500/80 text-white font-raleway p-3' },
-    { name: 'Playful Type', className: 'bg-pink-500/80 text-white font-pacifico text-2xl p-3 rounded-lg' },
-    { name: 'Formal Serif', className: 'bg-black/50 text-white font-playfair-display p-3 rounded' },
-    { name: 'Muted Gray', className: 'bg-gray-700/60 text-gray-200 font-pt-sans p-2 rounded-sm' },
-    { name: 'Condensed Tall', className: 'bg-black/50 text-white font-oswald tracking-wide p-2 uppercase' },
-    { name: 'Light Shadow', className: 'bg-black/50 text-white font-lato text-shadow-light p-2 rounded' },
-    { name: 'Purple Gradient', className: 'bg-gradient-to-r from-purple-600/70 to-pink-500/70 text-white font-montserrat p-3 rounded-lg' },
-    { name: 'Caveat Brush', className: 'bg-black/50 text-white font-caveat text-3xl p-3 rounded text-shadow-md' },
+    { name: 'Classic Black', className: `${baseCaptionClass} font-roboto` },
+    { name: 'Minimal White', className: `${baseCaptionClass} font-open-sans` },
+    { name: 'Bold Uppercase', className: `${baseCaptionClass} font-oswald uppercase tracking-wider` },
+    { name: 'Elegant Script', className: `${baseCaptionClass} font-dancing-script text-3xl` },
+    { name: 'Neon Glow', className: `${baseCaptionClass} text-cyan-300 font-bebas-neue tracking-widest text-shadow-glow-cyan` },
+    { name: 'Simple Lowercase', className: `${baseCaptionClass} font-lato lowercase` },
+    { name: 'Subtle Shadow', className: `${baseCaptionClass} font-montserrat` },
+    { name: 'Inverted Box', className: `${baseCaptionClass} font-roboto-condensed` },
+    { name: 'Yellow Highlight', className: `${baseCaptionClass} font-anton` },
+    { name: 'Red Outline', className: `${baseCaptionClass} font-anton uppercase` },
+    { name: 'Handwritten Note', className: `${baseCaptionClass} font-indie-flower text-2xl` },
+    { name: 'Blue Box', className: `${baseCaptionClass} font-source-sans` },
+    { name: 'Green Modern', className: `${baseCaptionClass} font-raleway` },
+    { name: 'Playful Type', className: `${baseCaptionClass} font-pacifico text-2xl` },
+    { name: 'Formal Serif', className: `${baseCaptionClass} font-playfair-display` },
+    { name: 'Muted Gray', className: `${baseCaptionClass} font-pt-sans` },
+    { name: 'Condensed Tall', className: `${baseCaptionClass} font-oswald tracking-wide uppercase` },
+    { name: 'Light Shadow', className: `${baseCaptionClass} font-lato` },
+    { name: 'Purple Gradient', className: `${baseCaptionClass} font-montserrat` },
+    { name: 'Caveat Brush', className: `${baseCaptionClass} font-caveat text-3xl` },
 ];
     
+
 
