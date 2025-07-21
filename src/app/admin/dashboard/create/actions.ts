@@ -2,11 +2,10 @@
 'use server';
 
 import { z } from 'zod';
-import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { generateArticleForTopic } from '@/ai/article-generator';
 import { categorySlugMap } from '@/lib/constants';
-import { saveArticle } from '@/lib/articles';
+import { saveArticle } from '@/app/admin/dashboard/edit/[category]/[slug]/actions';
 
 // Schema for the form on the create page. It's different from ManualArticleSchema
 // because it includes AI provider details and doesn't have existing content.
@@ -30,16 +29,6 @@ type GenerateArticleResult = {
   title?: string;
   error?: string;
 };
-
-// Revalidate relevant paths after an article is changed
-function revalidateArticlePaths(slug: string, categoryName: string) {
-    const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === categoryName) || categoryName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    revalidatePath('/');
-    revalidatePath(`/${categorySlug}`);
-    revalidatePath(`/${categorySlug}/${slug}`);
-    revalidatePath('/admin/dashboard/edit');
-}
-
 
 export async function generateArticleAction(
   data: unknown
@@ -97,8 +86,6 @@ export async function generateArticleAction(
         (key) => categorySlugMap[key] === category
       ) || category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
       
-    revalidateArticlePaths(newArticle.slug, newArticle.category);
-
     // The redirect now points to the new edit page for the article
     redirect(`/admin/dashboard/edit/${categorySlug}/${newArticle.slug}`);
 

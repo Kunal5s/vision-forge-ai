@@ -2,12 +2,21 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { createManualArticleAction as createManualArticleInRepo, addImagesToArticle as addImagesToArticleInContent, autoSaveArticleDraft as autoSaveDraftToRepo } from '@/lib/articles.server';
+import { ManualArticleSchema } from '@/lib/types';
+import { saveArticle, addImagesToArticleAction as addImagesToArticleInContent, autoSaveArticleDraftAction as autoSaveDraftToRepo } from '@/app/admin/dashboard/edit/[category]/[slug]/actions';
+
 
 // This action creates the article and then redirects
 export async function createManualArticleAction(data: unknown) {
+    const validatedFields = ManualArticleSchema.safeParse(data);
+    if (!validatedFields.success) {
+      throw new Error('Invalid data.');
+    }
+    
+    const { title, slug, category } = validatedFields.data;
+  
     try {
-        const { slug, category } = await createManualArticleInRepo(data);
+        await saveArticle(data, true);
         const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
         redirect(`/admin/dashboard/edit/${categorySlug}/${slug}`);
     } catch (e: any) {

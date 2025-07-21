@@ -138,15 +138,10 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
     setIsDeleting(true);
     toast({ title: "Deleting...", description: `Removing article "${article.title}".` });
     
-    const result = await deleteArticleAction(article.category, article.slug, article.status === 'draft');
+    await deleteArticleAction(article.category, article.slug, article.status === 'draft');
     
-     if (result?.error) {
-      toast({ title: "Error Deleting", description: result.error, variant: 'destructive' });
-      setIsDeleting(false);
-    } else {
-      toast({ title: "Article Deleted", description: "The article has been successfully removed." });
-       // Redirect is handled by the action
-    }
+    // Redirect is handled by the action, but we can toast success before navigation
+    toast({ title: "Article Deleted", description: "The article has been successfully removed." });
   }
 
   const handleAddImages = async () => {
