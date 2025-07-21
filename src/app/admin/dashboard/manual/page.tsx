@@ -20,13 +20,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ArrowLeft, Loader2, FileSignature, ImageIcon, Wand2, Eye, Save } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { createManualArticleAction, addImagesToArticleAction, autoSaveArticleDraftAction } from './actions';
+import { useRouter } from 'next/navigation';
+import { useDebounce } from 'use-debounce';
 import Image from 'next/image';
 import { RichTextEditor } from '@/components/vision-forge/RichTextEditor';
 import { ArticlePreview } from '@/components/vision-forge/ArticlePreview';
-import { useRouter } from 'next/navigation';
 import { ManualArticleSchema, getFullArticleHtmlForPreview } from '@/lib/types';
-import { useDebounce } from 'use-debounce';
+import { createManualArticleAction, addImagesToArticleAction, autoSaveArticleDraftAction } from './actions';
 
 
 type ManualArticleFormData = z.infer<typeof ManualArticleSchema>;
@@ -165,28 +165,22 @@ export default function ManualPublishPage() {
     
     const result = await createManualArticleAction(data);
 
-    if (result.success) {
-      toast({
-        title: status === 'published' ? 'Article Published!' : 'Draft Saved!',
-        description: `Your article "${result.title}" has been saved.`,
-      });
-      
-       // Redirect to the new edit page on successful save/publish
-       if (result.slug && result.category) {
-            const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === result.category) || result.category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-            router.push(`/admin/dashboard/edit/${categorySlug}/${result.slug}`);
-       } else {
-            router.push('/admin/dashboard/edit');
-       }
-    } else {
+    if (result && 'error' in result && result.error) {
       toast({
         title: 'Error Saving Article',
         description: result.error,
         variant: 'destructive',
         duration: 9000,
       });
+      setIsSubmitting(false);
+    } else {
+        // Redirect is handled by server action, but we can still toast
+        toast({
+            title: status === 'published' ? 'Article Published!' : 'Draft Saved!',
+            description: `Your article "${data.title}" has been saved.`,
+        });
     }
-    setIsSubmitting(false);
+    // No need to set isSubmitting to false, as a redirect will happen
   };
 
   const getFullArticleHtml = useCallback(() => {

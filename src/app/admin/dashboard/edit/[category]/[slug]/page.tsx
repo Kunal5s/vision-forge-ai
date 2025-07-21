@@ -1,10 +1,11 @@
+
 import { notFound } from 'next/navigation';
 import { getArticleForEdit } from '@/lib/articles';
 import EditArticleForm from './EditArticleForm';
 import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// This is now a Server Component
+// This is now a Server Component that fetches data and passes it to the client form
 export default async function EditArticlePage({ params }: { params: { category: string; slug: string } }) {
     
     // Fetch data on the server

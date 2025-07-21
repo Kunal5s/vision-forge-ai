@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, Save, Trash2, Wand2, Eye, Globe, FileText, ImageIcon, Upload } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, Trash2, Wand2, Eye, Globe, Upload } from 'lucide-react';
 import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import type { Article } from '@/lib/articles';
@@ -34,13 +34,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { IMAGE_COUNTS } from '@/lib/constants';
-import { ManualArticleSchema as EditSchema, articleContentToHtml, getFullArticleHtmlForPreview } from '@/lib/types';
+import { ManualArticleSchema, articleContentToHtml, getFullArticleHtmlForPreview } from '@/lib/types';
 import { editArticleAction, deleteArticleAction, addImagesToArticleAction, autoSaveArticleDraftAction } from './actions';
 import { useDebounce } from 'use-debounce';
 import Image from 'next/image';
 
 
-type EditFormData = z.infer<typeof EditSchema>;
+type EditFormData = z.infer<typeof ManualArticleSchema>;
 
 interface EditArticleFormProps {
     article: Article;
@@ -59,7 +59,7 @@ export default function EditArticleForm({ article, categorySlug }: EditArticleFo
   const { toast } = useToast();
   
   const form = useForm<EditFormData>({
-    resolver: zodResolver(EditSchema),
+    resolver: zodResolver(ManualArticleSchema),
     defaultValues: {
       title: article.title.replace(/<[^>]*>?/gm, ''),
       slug: article.slug,

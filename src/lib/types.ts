@@ -42,7 +42,7 @@ export const articleContentToHtml = (content: Article['articleContent']): string
     return content.map(block => {
         if (block.type === 'img') {
              // For images, create a standard img tag wrapped in a div for styling
-            return `<div class="my-8"><img src="${block.content}" alt="${block.alt || ''}" class="rounded-lg shadow-lg mx-auto" /></div>`;
+            return `<div class="my-8"><img src="${block.content}" alt="${block.alt || ''}" class="rounded-lg shadow-md mx-auto" /></div>`;
         }
         // For all other types (h1-h6, p, ul, ol etc.), the content is already valid HTML
         return block.content;

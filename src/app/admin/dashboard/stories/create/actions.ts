@@ -3,7 +3,7 @@
 'use server';
 
 import { z } from 'zod';
-import { type Story, type StoryPage, getAllStoriesAdmin, saveUpdatedStories } from '@/lib/stories';
+import { type Story, type StoryPage, saveUpdatedStories, getAllStoriesAdmin } from '@/lib/stories';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
