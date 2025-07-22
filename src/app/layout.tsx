@@ -1,10 +1,11 @@
-
 import type { Metadata } from 'next';
+import { ClerkProvider } from '@clerk/nextjs';
+import { Geist_Sans } from 'next/font/sans';
+import { Geist_Mono } from 'next/font/mono';
 import './globals.css';
 import { SubscriptionProvider } from '@/hooks/use-subscription';
 import RootLayoutClient from './layout-client';
 import { Suspense } from 'react';
-import { verifySession } from './admin/login/actions';
 
 export const metadata: Metadata = {
   title: {
@@ -28,18 +29,19 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await verifySession();
   return (
-    <html lang="en" className="h-full">
-      <body className="antialiased flex flex-col min-h-full bg-background">
-        <SubscriptionProvider>
-          <Suspense>
-            <RootLayoutClient session={session}>
-              {children}
-            </RootLayoutClient>
-          </Suspense>
-        </SubscriptionProvider>
-      </body>
-    </html>
+    <ClerkProvider>
+        <html lang="en" className={`${Geist_Sans.variable} ${Geist_Mono.variable} h-full`}>
+        <body className="antialiased flex flex-col min-h-full bg-background">
+            <SubscriptionProvider>
+            <Suspense>
+                <RootLayoutClient>
+                {children}
+                </RootLayoutClient>
+            </Suspense>
+            </SubscriptionProvider>
+        </body>
+        </html>
+    </ClerkProvider>
   );
 }

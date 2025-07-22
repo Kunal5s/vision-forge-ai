@@ -2,16 +2,23 @@
 'use client';
 
 import Link from 'next/link';
-import { BrainCircuit, LogIn, LogOut } from 'lucide-react';
+import { BrainCircuit, LogIn, LogOut, User, LayoutDashboard, UserCircle } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import React, { Suspense } from 'react';
 import { Button } from '../ui/button';
-import { logoutAction } from '@/app/admin/login/actions';
-import { useRouter } from 'next/navigation';
 import { categorySlugMap } from '@/lib/constants';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import type { SessionPayload } from 'jose';
+import { useUser, UserButton, useAuth } from "@clerk/nextjs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
 
 const CategoryNavBarContent = () => {
     const pathname = usePathname();
@@ -73,20 +80,11 @@ const CategoryNavBar = () => (
 );
 
 
-interface HeaderProps {
-    session: SessionPayload | null;
-}
-
-export function Header({ session }: HeaderProps) {
+export function Header() {
   const pathname = usePathname();
-  const router = useRouter();
+  const { isSignedIn, user } = useUser();
+  const isAdmin = user?.primaryEmailAddress?.emailAddress === "kunalsonpitre555@gmail.com";
   const isAdminRoute = pathname.startsWith('/admin');
-
-  const handleLogout = async () => {
-    await logoutAction();
-    router.push('/admin/login');
-    router.refresh(); 
-  }
 
   return (
     <header className={cn("sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b")}>
@@ -100,29 +98,48 @@ export function Header({ session }: HeaderProps) {
           </Link>
 
           <div className="flex items-center gap-4">
-            {isAdminRoute ? (
-              <>
-                {session ? (
-                  <Button variant="outline" onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Logout
-                  </Button>
-                ) : (
-                  <Link href="/admin/login">
-                    <Button variant="outline">
-                      <LogIn className="mr-2 h-4 w-4" />
-                      Admin Login
+            {isSignedIn ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                       <UserCircle className="h-8 w-8 text-foreground" />
                     </Button>
-                  </Link>
-                )}
-              </>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{user.fullName}</p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user.primaryEmailAddress?.emailAddress}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {isAdmin && (
+                      <DropdownMenuItem asChild>
+                         <Link href="/admin/dashboard">
+                          <LayoutDashboard className="mr-2 h-4 w-4" />
+                          <span>Admin Dashboard</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem asChild>
+                       <Link href="/user/dashboard">
+                        <User className="mr-2 h-4 w-4" />
+                        <span>My Subscription</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <UserButton afterSignOutUrl="/" />
+                  </DropdownMenuContent>
+                </DropdownMenu>
             ) : (
-              <Link href="/admin/login">
-                <Button variant="outline">
-                  <LogIn className="mr-2 h-4 w-4" />
-                  Admin
-                </Button>
-              </Link>
+                <Link href="/sign-in">
+                  <Button variant="outline">
+                    <LogIn className="mr-2 h-4 w-4" />
+                    Sign In
+                  </Button>
+                </Link>
             )}
           </div>
         </div>

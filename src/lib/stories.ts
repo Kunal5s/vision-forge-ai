@@ -1,13 +1,7 @@
 
-
 'use server';
 
 import { z } from 'zod';
-import { promises as fs } from 'fs';
-import path from 'path';
-import { Octokit } from 'octokit';
-import { getPrimaryBranch, getShaForFile } from '@/lib/articles'; // Reuse GitHub helpers
-
 
 // Direct imports for reliability
 import featuredStories from '@/stories/featured.json';
@@ -50,6 +44,7 @@ const allStoryData: { [key: string]: any } = {
 };
 
 async function loadAndValidateStories(category: string): Promise<Story[]> {
+    // This function will be replaced with Xata client calls.
     const storyData = allStoryData[category.toLowerCase()];
 
     if (!storyData) {
@@ -63,7 +58,6 @@ async function loadAndValidateStories(category: string): Promise<Story[]> {
         if (validatedStories.success) {
             return validatedStories.data.map(story => ({
                 ...story,
-                // Provide default for backward compatibility
                 seoDescription: story.seoDescription || story.pages[0]?.content?.body?.substring(0, 160) || story.title,
                 author: story.author || 'Imagen BrainAi'
             }));
@@ -80,8 +74,8 @@ async function loadAndValidateStories(category: string): Promise<Story[]> {
 
 // Gets only published stories
 export async function getStories(category: string): Promise<Story[]> {
+    // This will be replaced with a Xata query
     const allStories = await loadAndValidateStories(category);
-    // Sort by most recent first
     return allStories
         .filter(story => story.status === 'published')
         .sort((a, b) => new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime());
@@ -89,15 +83,16 @@ export async function getStories(category: string): Promise<Story[]> {
 
 // Gets all stories, including drafts (for admin)
 export async function getAllStoriesAdmin(category: string): Promise<Story[]> {
+     // This will be replaced with a Xata query
      const allStories = await loadAndValidateStories(category);
      return allStories.sort((a, b) => new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime());
 }
 
 // Get a single story by its slug from any category
 export async function getStoryBySlug(slug: string): Promise<Story | undefined> {
+    // This will be a single query to the database
     const allCategories = Object.keys(allStoryData);
     for (const category of allCategories) {
-        // Search in all stories, including drafts, to allow previewing
         const stories = await getAllStoriesAdmin(category);
         const foundStory = stories.find(story => story.slug === slug);
         if (foundStory) {
@@ -105,36 +100,4 @@ export async function getStoryBySlug(slug: string): Promise<Story | undefined> {
         }
     }
     return undefined;
-}
-
-// Universal function to save stories to GitHub
-export async function saveUpdatedStories(categorySlug: string, stories: Story[], commitMessage: string) {
-    const repoPath = `src/stories/${categorySlug}.json`;
-    const fileContent = JSON.stringify(stories, null, 2);
-
-    const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = process.env;
-    if (!GITHUB_TOKEN || !GITHUB_REPO_OWNER || !GITHUB_REPO_NAME) {
-        console.error("GitHub credentials are not configured on the server. Cannot save story.");
-        throw new Error("GitHub credentials not configured. Please check server environment variables.");
-    }
-
-    try {
-        const octokit = new Octokit({ auth: GITHUB_TOKEN });
-        const branch = await getPrimaryBranch(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME);
-        const fileSha = await getShaForFile(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME, repoPath, branch);
-        
-        await octokit.rest.repos.createOrUpdateFileContents({
-            owner: GITHUB_REPO_OWNER,
-            repo: GITHUB_REPO_NAME,
-            path: repoPath,
-            message: commitMessage,
-            content: Buffer.from(fileContent).toString('base64'),
-            sha: fileSha,
-            branch: branch,
-        });
-        console.log(`Successfully committed changes for stories in "${categorySlug}" to GitHub on branch "${branch}".`);
-    } catch (error) {
-        console.error("Failed to commit changes to GitHub.", error);
-        throw new Error("Failed to save story to GitHub. Please check your credentials and repository permissions.");
-    }
 }

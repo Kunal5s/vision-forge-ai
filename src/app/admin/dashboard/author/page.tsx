@@ -13,9 +13,11 @@ import Link from 'next/link';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getAuthorData, saveAuthorData } from './actions';
-import { AuthorSchema, type AuthorData } from '@/lib/author';
+import type { AuthorData } from '@/lib/author';
 import Image from 'next/image';
 import { RichTextEditor } from '@/components/vision-forge/RichTextEditor';
+import { useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 
 // The schema now validates for a standard URL for the photo.
 const AuthorFormSchema = z.object({
@@ -31,6 +33,14 @@ export default function ManageAuthorPage() {
     const [isSaving, setIsSaving] = useState(false);
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const { user } = useUser();
+    const router = useRouter();
+
+    // Admin access check
+    if (user && user.primaryEmailAddress?.emailAddress !== "kunalsonpitre555@gmail.com") {
+        router.push('/');
+        return null;
+    }
 
     const { register, handleSubmit, control, formState: { errors }, setValue, watch, reset } = useForm<AuthorFormData>({
         resolver: zodResolver(AuthorFormSchema),

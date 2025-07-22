@@ -1,11 +1,22 @@
 
+'use client';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlusCircle, Edit, FileSignature, BookImage, UserCircle, History } from 'lucide-react';
 import Link from 'next/link';
+import { useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 
-export default async function AdminDashboardPage() {
+
+export default function AdminDashboardPage() {
+  const { user } = useUser();
+  const router = useRouter();
+
+  if (user && user.primaryEmailAddress?.emailAddress !== "kunalsonpitre555@gmail.com") {
+    router.push('/');
+    return null;
+  }
 
   return (
     <main className="flex-grow container mx-auto py-12 px-4 bg-muted/20 min-h-screen">

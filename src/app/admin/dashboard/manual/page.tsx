@@ -25,7 +25,9 @@ import Image from 'next/image';
 import { RichTextEditor } from '@/components/vision-forge/RichTextEditor';
 import { ArticlePreview } from '@/components/vision-forge/ArticlePreview';
 import { ManualArticleSchema, getFullArticleHtmlForPreview } from '@/lib/types';
-import { createManualArticleAction, addImagesToArticleAction, autoSaveArticleDraftAction } from '@/app/admin/dashboard/manual/actions';
+import { createManualArticleAction, addImagesToArticleAction, autoSaveArticleDraftAction } from './actions';
+import { useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 
 
 type ManualArticleFormData = z.infer<typeof ManualArticleSchema>;
@@ -37,6 +39,14 @@ export default function ManualPublishPage() {
   const [isAddingImagesToArticle, setIsAddingImagesToArticle] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [imageCount, setImageCount] = useState(IMAGE_COUNTS[1].value); 
+  const { user } = useUser();
+  const router = useRouter();
+
+  // Admin access check
+  if (user && user.primaryEmailAddress?.emailAddress !== "kunalsonpitre555@gmail.com") {
+      router.push('/');
+      return null;
+  }
 
   const { toast } = useToast();
   const { register, handleSubmit, control, formState: { errors, isDirty }, watch, setValue, getValues } = useForm<ManualArticleFormData>({
@@ -147,7 +157,7 @@ export default function ManualPublishPage() {
     
     toast({
       title: status === 'published' ? 'Publishing...' : 'Saving Draft...',
-      description: `Saving "${data.title}" to GitHub. Please wait.`,
+      description: `Saving "${data.title}". Please wait.`,
     });
 
     if (!data.image) {

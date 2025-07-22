@@ -1,8 +1,9 @@
-// src/app/admin/page.tsx
-import { redirect } from 'next/navigation';
+import { SignIn } from "@clerk/nextjs";
 
-export default async function AdminPage() {
-    // This page is a gateway that redirects to the dashboard.
-    // In a real app, you might have a login form here.
-    redirect('/admin/dashboard');
+export default function SignInPage() {
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4">
+      <SignIn path="/sign-in" routing="path" signUpUrl="/sign-up" />
+    </main>
+  );
 }

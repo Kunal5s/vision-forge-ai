@@ -2,7 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { type Story, type StoryPage, saveUpdatedStories, getAllStoriesAdmin } from '@/lib/stories';
+import type { Story, StoryPage } from '@/lib/stories';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
@@ -76,6 +76,13 @@ export async function generateStoryImagesAction(data: unknown): Promise<{ succes
   }
 }
 
+// TODO: Replace with Xata create operation
+async function createStoryInDb(story: Story): Promise<void> {
+    console.log("Simulating creation of story in Xata:", story.title);
+    // In a real implementation, you would use the Xata client here:
+    // await xata.db.stories.create(story);
+}
+
 export async function createManualStoryAction(data: StoryFormData): Promise<{ success: boolean; error?: string; slug?: string }> {
   const validatedFields = StoryFormSchema.safeParse(data);
 
@@ -116,18 +123,10 @@ export async function createManualStoryAction(data: StoryFormData): Promise<{ su
       websiteUrl: websiteUrl || undefined,
     };
     
-    const categorySlug = 'featured'; 
+    // This is where you'd call your new database function
+    await createStoryInDb(newStory);
     
-    const existingStories = await getAllStoriesAdmin(categorySlug).catch(() => {
-        console.log(`No existing stories file for category ${categorySlug}, creating new file.`);
-        return [];
-    });
-    
-    const updatedStories = [newStory, ...existingStories];
-
-    await saveUpdatedStories(categorySlug, updatedStories, `feat: ✨ Add new web story "${title}"`);
-    
-    console.log(`Successfully committed new story "${title}" to GitHub.`);
+    console.log(`Successfully prepared new story "${title}" for database insertion.`);
 
     revalidatePath('/admin/dashboard/stories');
     revalidatePath('/stories');

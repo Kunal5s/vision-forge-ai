@@ -4,8 +4,8 @@
 import { redirect } from 'next/navigation';
 import { generateArticleForTopic } from '@/ai/article-generator';
 import { categorySlugMap } from '@/lib/constants';
-import { saveArticle } from '@/app/admin/dashboard/edit/[category]/[slug]/actions';
 import * as z from 'zod';
+import type { Article } from '@/lib/articles';
 
 const GenerateArticleFormSchema = z.object({
   topic: z.string().min(1, 'Please enter a topic for the article.'),
@@ -27,6 +27,13 @@ type GenerateArticleResult = {
   title?: string;
   error?: string;
 };
+
+// TODO: Replace with Xata insert
+async function saveArticle(article: Article, isNew: boolean): Promise<{ success: boolean; error?: string }> {
+    console.log("Simulating save to Xata:", article.title, "New:", isNew);
+    return { success: true };
+}
+
 
 export async function generateArticleAction(
   data: unknown
@@ -76,6 +83,7 @@ export async function generateArticleAction(
       );
     }
     
+    // Save to the new data source (e.g., Xata)
     await saveArticle(newArticle, true);
 
     const categorySlug =

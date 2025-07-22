@@ -9,10 +9,20 @@ import { ManageStoriesClientPage } from './ManageStoriesClientPage';
 import type { Story } from '@/lib/stories';
 import { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 
 export default function ManageStoriesPage() {
     const [storiesByCategory, setStoriesByCategory] = useState<{ category: string, stories: Story[] }[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const { user } = useUser();
+    const router = useRouter();
+
+    // Admin access check
+    if (user && user.primaryEmailAddress?.emailAddress !== "kunalsonpitre555@gmail.com") {
+        router.push('/');
+        return null;
+    }
 
     useEffect(() => {
         async function fetchStories() {

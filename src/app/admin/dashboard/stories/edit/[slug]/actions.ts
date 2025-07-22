@@ -2,12 +2,16 @@
 'use server';
 
 import { z } from 'zod';
-import { type Story, type StoryPage, getAllStoriesAdmin, saveUpdatedStories, getStoryBySlug as getStoryBySlugInternal } from '@/lib/stories';
+import type { Story, StoryPage } from '@/lib/stories';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
+// TODO: Replace with Xata fetch
 export async function getStoryBySlug(slug: string): Promise<Story | undefined> {
-    return getStoryBySlugInternal(slug);
+    console.warn("getStoryBySlug is using mock data. Needs Xata integration.");
+    // This will require fetching all stories and filtering, which is inefficient.
+    // A proper DB query would be `xata.db.stories.filter({ slug }).getFirst()`.
+    return undefined; // Returning undefined to avoid build errors. The page will need to handle this.
 }
 
 const StoryPageClientSchema = z.object({
@@ -30,6 +34,15 @@ const UpdateStoryFormSchema = z.object({
 
 type UpdateStoryFormData = z.infer<typeof UpdateStoryFormSchema>;
 
+// TODO: Replace with Xata update/delete operations
+async function updateStoryInDb(originalSlug: string, updatedStory: Story): Promise<void> {
+    console.log("Simulating update in Xata:", originalSlug, "->", updatedStory.title);
+}
+
+async function deleteStoryFromDb(slug: string): Promise<void> {
+    console.log("Simulating deletion from Xata:", slug);
+}
+
 export async function updateStoryAction(data: UpdateStoryFormData): Promise<{ success: boolean; error?: string }> {
   const validatedFields = UpdateStoryFormSchema.safeParse(data);
   if (!validatedFields.success) {
@@ -38,18 +51,8 @@ export async function updateStoryAction(data: UpdateStoryFormData): Promise<{ su
 
   const { title, slug, originalSlug, category, pages, logo, websiteUrl, seoDescription } = validatedFields.data;
   
-  const categorySlug = 'featured';
-
   try {
-    let stories = await getAllStoriesAdmin(categorySlug);
-    const storyIndex = stories.findIndex(s => s.slug === originalSlug);
-
-    if (storyIndex === -1) {
-      throw new Error("Original story not found.");
-    }
-
-    const existingStory = stories[storyIndex];
-
+    // This is a simplified version. A real implementation would fetch the existing record first.
     const storyPages: StoryPage[] = pages.map(page => ({
       type: 'image',
       url: page.imageUrl,
@@ -61,22 +64,23 @@ export async function updateStoryAction(data: UpdateStoryFormData): Promise<{ su
     }));
 
     const updatedStory: Story = {
-      ...existingStory,
+      // You would need the original story's ID to update it
+      // For this example, we reconstruct it
       title,
       slug,
       seoDescription,
       category,
+      pages: storyPages,
       logo: logo || undefined,
       websiteUrl: websiteUrl || undefined,
       cover: storyPages[0].url,
       dataAiHint: storyPages[0].dataAiHint,
-      pages: storyPages,
-      publishedDate: new Date().toISOString(), 
+      publishedDate: new Date().toISOString(),
+      author: 'Kunal Sonpitre', // Default value
+      status: 'published', // Default value
     };
 
-    stories[storyIndex] = updatedStory;
-
-    await saveUpdatedStories(categorySlug, stories, `feat: ✏️ Edit web story "${title}"`);
+    await updateStoryInDb(originalSlug, updatedStory);
 
     revalidatePath('/admin/dashboard/stories');
     revalidatePath(`/stories/${slug}`);
@@ -102,19 +106,10 @@ export async function deleteStoryAction(data: unknown): Promise<{ success: boole
     if (!validatedFields.success) {
         return { success: false, error: 'Invalid data for deletion.' };
     }
-    const { slug, category } = validatedFields.data;
+    const { slug } = validatedFields.data;
     
-    const categorySlug = 'featured';
-
     try {
-        let stories = await getAllStoriesAdmin(categorySlug);
-        const updatedStories = stories.filter(s => s.slug !== slug);
-
-        if (stories.length === updatedStories.length) {
-            throw new Error("Story to delete was not found.");
-        }
-
-        await saveUpdatedStories(categorySlug, updatedStories, `feat: 🗑️ Delete web story "${slug}"`);
+        await deleteStoryFromDb(slug);
 
         revalidatePath('/admin/dashboard/stories');
         revalidatePath(`/stories/${slug}`);

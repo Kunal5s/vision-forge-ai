@@ -2,30 +2,30 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { useAuth } from "@clerk/nextjs";
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { PreFooterCallToAction } from '@/components/layout/PreFooterCallToAction';
 import { Toaster } from '@/components/ui/toaster';
 import { CookieConsent } from '@/components/layout/CookieConsent';
-import type { SessionPayload } from 'jose';
 
 interface RootLayoutClientProps {
   children: React.ReactNode;
-  session: SessionPayload | null;
 }
 
-export default function RootLayoutClient({ children, session }: RootLayoutClientProps) {
+export default function RootLayoutClient({ children }: RootLayoutClientProps) {
   const pathname = usePathname();
+  const { userId } = useAuth(); // Clerk's hook to check authentication
+  
   const isAdminRoute = pathname.startsWith('/admin');
-  const isLoginPage = pathname === '/admin/login';
-  // A story page will have a path like /stories/[slug], so it will have more than 2 segments.
+  const isAuthRoute = ['/sign-in', '/sign-up'].includes(pathname);
   const isStoryPage = pathname.startsWith('/stories/') && pathname.split('/').length > 2;
 
-  const showHeaderAndFooter = !isLoginPage && !isAdminRoute && !isStoryPage;
+  const showHeaderAndFooter = !isAuthRoute && !isAdminRoute && !isStoryPage;
 
   return (
     <>
-      {showHeaderAndFooter ? <Header session={session} /> : null}
+      {showHeaderAndFooter ? <Header /> : null}
       <div className={isAdminRoute ? "" : "flex-grow"}>
         {children}
       </div>

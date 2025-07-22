@@ -4,9 +4,9 @@
 import { z } from 'zod';
 import { categorySlugMap } from '@/lib/constants';
 import { ArticleSchema } from '@/lib/types';
-import { Octokit } from 'octokit';
 
-// Direct imports for reliability
+// Direct imports for reliability, assuming these are static JSON files.
+// This approach removes the need for `fs` and works in all environments.
 import featuredArticles from '@/articles/featured.json';
 import inspirationArticles from '@/articles/inspiration.json';
 import nftArticles from '@/articles/nft.json';
@@ -88,8 +88,9 @@ async function loadAndValidateArticles(
 export async function getArticles(
   category: string
 ): Promise<z.infer<typeof ArticleSchema>[]> {
+  // In a real application, this would fetch from a database (like Xata)
+  // For now, it continues to read from the local JSON files.
   const allArticles = await loadAndValidateArticles(category);
-  // Filter for published articles and sort by most recent first
   return allArticles
     .filter((article) => article.status === 'published')
     .sort((a, b) => {
@@ -104,6 +105,7 @@ export async function getArticles(
 export async function getAllArticlesAdmin(
   category: string
 ): Promise<z.infer<typeof ArticleSchema>[]> {
+  // In a real application, this would fetch from a database (like Xata)
   const allArticles = await loadAndValidateArticles(category);
   return allArticles.sort((a, b) => {
     if (a.publishedDate && b.publishedDate) {
@@ -118,7 +120,7 @@ export async function getArticleForEdit(
   categorySlug: string,
   slug: string
 ): Promise<z.infer<typeof ArticleSchema> | undefined> {
-  // We need to search all categories, including drafts
+  // In a real application, this would be a single query to the database
   const allCategories = Object.values(categorySlugMap);
   allCategories.push('drafts'); // Add drafts to the search list
   
@@ -129,50 +131,4 @@ export async function getArticleForEdit(
   }
 
   return undefined;
-}
-
-
-// --- GitHub Helper Functions ---
-
-export async function getShaForFile(
-  octokit: Octokit,
-  owner: string,
-  repo: string,
-  path: string,
-  branch: string
-): Promise<string | undefined> {
-  try {
-    const { data } = await octokit.rest.repos.getContent({
-      owner,
-      repo,
-      path,
-      ref: branch,
-    });
-    if (Array.isArray(data) || !('sha' in data)) {
-      return undefined;
-    }
-    return data.sha;
-  } catch (error: any) {
-    if (error.status === 404) {
-      return undefined; // File doesn't exist, so no SHA
-    }
-    throw error;
-  }
-}
-
-export async function getPrimaryBranch(
-  octokit: Octokit,
-  owner: string,
-  repo: string
-): Promise<string> {
-  if (process.env.GITHUB_BRANCH) {
-    return process.env.GITHUB_BRANCH;
-  }
-  try {
-    const { data: repoData } = await octokit.rest.repos.get({ owner, repo });
-    return repoData.default_branch;
-  } catch (error) {
-    console.error('Could not determine primary branch.', error);
-    throw new Error('Could not determine primary branch for the repository.');
-  }
 }

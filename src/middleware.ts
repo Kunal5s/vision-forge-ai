@@ -1,26 +1,37 @@
+import { authMiddleware } from "@clerk/nextjs";
 
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { verifySession } from './app/admin/login/actions';
+// This middleware protects routes based on authentication status.
+// The /admin route is protected, requiring authentication.
+// Public routes are accessible to everyone.
+// API webhooks are ignored by the middleware.
+export default authMiddleware({
+  publicRoutes: [
+    "/",
+    "/about",
+    "/blog",
+    "/contact",
+    "/disclaimer",
+    "/edit",
+    "/inspiration",
+    "/models",
+    "/nft",
+    "/pricing",
+    "/privacy",
+    "/prompts",
+    "/storybook",
+    "/styles",
+    "/technology",
+    "/terms",
+    "/trends",
+    "/tutorials",
+    "/usecases",
+    "/sign-in",
+    "/sign-up",
+    "/api/generate",
+  ],
+  ignoredRoutes: ["/api/webhook"],
+});
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  // Protect all /admin routes except for the login page itself
-  if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
-    const session = await verifySession();
-
-    if (!session) {
-      // If no session, redirect to the login page
-      const loginUrl = new URL('/admin/login', request.url);
-      return NextResponse.redirect(loginUrl);
-    }
-  }
-
-  return NextResponse.next();
-}
-
-// See "Matching Paths" below to learn more
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ["/((?!_next/image|favicon.ico).*)"],
 };

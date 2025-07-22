@@ -1,37 +1,54 @@
 
-import { getAllArticlesAdmin } from '@/lib/articles';
-import { type Article } from '@/lib/types';
+'use client';
+
+import { getAllArticlesAdmin, type Article } from '@/lib/articles';
 import { categorySlugMap } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import EditArticlesClientPage from './EditArticlesClientPage';
+import { useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
-// This is now a pure Server Component.
-// The client-side logic is in EditArticlesClientPage.tsx.
 
-async function getAllContent(): Promise<{
-    published: { category: string, articles: Article[] }[],
-    drafts: Article[]
-}> {
-    const categories = Object.values(categorySlugMap);
-    const publishedArticlesData = await Promise.all(
-        categories.map(async (categoryName) => {
-            const articles = await getAllArticlesAdmin(categoryName);
-            return { category: categoryName, articles: articles.filter(a => a.status === 'published') };
-        })
-    );
-    
-    const draftArticles = await getAllArticlesAdmin('drafts');
+export default function EditArticlesPage() {
+    const { user } = useUser();
+    const router = useRouter();
+    const [content, setContent] = useState<{
+        published: { category: string, articles: Article[] }[],
+        drafts: Article[]
+    } | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    return {
-        published: publishedArticlesData.filter(data => data.articles.length > 0),
-        drafts: draftArticles,
-    };
-}
+    // Admin access check
+    if (user && user.primaryEmailAddress?.emailAddress !== "kunalsonpitre555@gmail.com") {
+        router.push('/');
+        return null;
+    }
 
-export default async function EditArticlesPage() {
-    const { published, drafts } = await getAllContent();
+    useEffect(() => {
+        const fetchContent = async () => {
+            const categories = Object.values(categorySlugMap);
+            const publishedArticlesData = await Promise.all(
+                categories.map(async (categoryName) => {
+                    const articles = await getAllArticlesAdmin(categoryName);
+                    return { category: categoryName, articles: articles.filter(a => a.status === 'published') };
+                })
+            );
+            
+            const draftArticles = await getAllArticlesAdmin('drafts');
+
+            setContent({
+                published: publishedArticlesData.filter(data => data.articles.length > 0),
+                drafts: draftArticles,
+            });
+            setIsLoading(false);
+        };
+        
+        fetchContent();
+    }, []);
 
     return (
         <main className="flex-grow container mx-auto py-12 px-4 bg-muted/20 min-h-screen">
@@ -44,11 +61,17 @@ export default async function EditArticlesPage() {
                 </Button>
             </div>
             
-            <EditArticlesClientPage
-                publishedArticlesByCategory={published}
-                draftArticles={drafts}
-            />
-
+            {isLoading || !content ? (
+                <div className="space-y-4">
+                    <Skeleton className="h-10 w-1/4" />
+                    <Skeleton className="h-[400px] w-full" />
+                </div>
+            ) : (
+                <EditArticlesClientPage
+                    publishedArticlesByCategory={content.published}
+                    draftArticles={content.drafts}
+                />
+            )}
         </main>
     );
 }

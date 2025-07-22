@@ -3,7 +3,14 @@
 
 import { redirect } from 'next/navigation';
 import { ManualArticleSchema } from '@/lib/types';
-import { saveArticle, addImagesToArticleAction as addImagesToArticleContent, autoSaveArticleDraftAction as autoSaveDraftToRepo } from '@/app/admin/dashboard/edit/[category]/[slug]/actions';
+import { addImagesToArticleAction as addImagesToArticleContent, autoSaveArticleDraftAction as autoSaveDraftToRepo } from '@/app/admin/dashboard/edit/[category]/[slug]/actions';
+import { type Article } from '@/lib/articles';
+import { JSDOM } from 'jsdom';
+
+// TODO: Replace with Xata create operation
+async function saveArticle(data: any, isNew: boolean): Promise<void> {
+    console.log("Simulating save to Xata:", data.title, "New:", isNew);
+}
 
 // This action creates the article and then redirects
 export async function createManualArticleAction(data: unknown) {
@@ -15,7 +22,9 @@ export async function createManualArticleAction(data: unknown) {
     const { slug, category } = validatedFields.data;
   
     try {
-        await saveArticle(data, true);
+        // This is where you would call your database function
+        await saveArticle(validatedFields.data, true);
+
         const categorySlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
         redirect(`/admin/dashboard/edit/${categorySlug}/${slug}`);
     } catch (e: any) {
@@ -23,7 +32,7 @@ export async function createManualArticleAction(data: unknown) {
     }
 }
 
-// These actions just pass through to the server lib
+// These actions just pass through to the main edit actions file
 export async function addImagesToArticleAction(content: string, imageCount: number): Promise<{ success: boolean; content?: string; error?: string }> {
     return addImagesToArticleContent(content, imageCount);
 }

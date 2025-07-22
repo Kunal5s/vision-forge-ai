@@ -4,56 +4,23 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { AuthorSchema, type AuthorData } from '@/lib/author';
-import { Octokit } from 'octokit';
-import { getPrimaryBranch, getShaForFile } from '@/lib/articles'; // Reuse helper functions
 
-const authorRepoPath = 'src/lib/author.json'; // Path in the repository
+const defaultData: AuthorData = {
+    name: 'Kunal Sonpitre',
+    title: 'AI & Business Technical Expert',
+    photoUrl: 'https://placehold.co/100x100.png',
+    bio: 'Kunal is an expert in leveraging artificial intelligence to solve complex business challenges. His work focuses on making advanced technology accessible and practical for creators and businesses alike.',
+};
 
-// Action to get the current author data by fetching it directly from GitHub
+// Action to get the current author data
+// TODO: Replace with Xata fetch
 export async function getAuthorData(): Promise<AuthorData> {
-    const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = process.env;
-    const defaultData: AuthorData = {
-        name: 'Kunal Sonpitre',
-        title: 'AI & Business Technical Expert',
-        photoUrl: 'https://placehold.co/100x100.png',
-        bio: 'Kunal is an expert in leveraging artificial intelligence to solve complex business challenges. His work focuses on making advanced technology accessible and practical for creators and businesses alike.',
-    };
-
-    if (!GITHUB_TOKEN || !GITHUB_REPO_OWNER || !GITHUB_REPO_NAME) {
-        console.warn("GitHub credentials are not configured on the server. Returning default author data.");
-        return defaultData;
-    }
-
-    try {
-        const octokit = new Octokit({ auth: GITHUB_TOKEN });
-        const branch = await getPrimaryBranch(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME);
-        
-        const { data } = await octokit.rest.repos.getContent({
-            owner: GITHUB_REPO_OWNER,
-            repo: GITHUB_REPO_NAME,
-            path: authorRepoPath,
-            ref: branch,
-        });
-
-        if ('content' in data) {
-            const fileContent = Buffer.from(data.content, 'base64').toString('utf-8');
-            const jsonData = JSON.parse(fileContent);
-            return AuthorSchema.parse(jsonData);
-        } else {
-             throw new Error('author.json is not a file.');
-        }
-
-    } catch (error: any) {
-        if (error.status === 404) {
-             console.warn("author.json not found in the repository. Returning default data.");
-        } else {
-            console.error('Failed to fetch author data from GitHub:', error);
-        }
-        return defaultData;
-    }
+    console.warn("GitHub fetching is deprecated. Returning default author data.");
+    return defaultData;
 }
 
 // Action to save the updated author data
+// TODO: Replace with Xata update/insert
 export async function saveAuthorData(data: unknown): Promise<{ success: boolean; error?: string }> {
     const validatedFields = AuthorSchema.safeParse(data);
 
@@ -61,42 +28,13 @@ export async function saveAuthorData(data: unknown): Promise<{ success: boolean;
         const errorDetails = validatedFields.error.flatten().fieldErrors;
         return { success: false, error: JSON.stringify(errorDetails) };
     }
+    
+    console.log("Simulating save to Xata:", validatedFields.data);
 
-    const fileContent = JSON.stringify(validatedFields.data, null, 2);
+    // Revalidate paths that use author data
+    revalidatePath('/author/kunal-sonpitre');
+    revalidatePath('/[category]/[slug]');
+    revalidatePath('/admin/dashboard/author');
 
-    const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = process.env;
-    if (!GITHUB_TOKEN || !GITHUB_REPO_OWNER || !GITHUB_REPO_NAME) {
-        console.error("GitHub credentials are not configured on the server. Cannot save author data.");
-        return { success: false, error: "GitHub credentials not configured. Please check server environment variables." };
-    }
-
-    try {
-        const octokit = new Octokit({ auth: GITHUB_TOKEN });
-        const branch = await getPrimaryBranch(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME);
-        const fileSha = await getShaForFile(octokit, GITHUB_REPO_OWNER, GITHUB_REPO_NAME, authorRepoPath, branch);
-        
-        await octokit.rest.repos.createOrUpdateFileContents({
-            owner: GITHUB_REPO_OWNER,
-            repo: GITHUB_REPO_NAME,
-            path: authorRepoPath,
-            message: 'feat: 🧑‍💻 Update author information',
-            content: Buffer.from(fileContent).toString('base64'),
-            sha: fileSha,
-            branch: branch,
-        });
-        
-        console.log(`Successfully committed author data changes to GitHub on branch "${branch}".`);
-        
-        // Revalidate paths that use author data
-        revalidatePath('/author/kunal-sonpitre');
-        revalidatePath('/[category]/[slug]');
-        revalidatePath('/admin/dashboard/author');
-
-
-        return { success: true };
-
-    } catch (error: any) {
-        console.error('Failed to save author data to GitHub:', error);
-        return { success: false, error: `Failed to write data to the server: ${error.message}` };
-    }
+    return { success: true };
 }

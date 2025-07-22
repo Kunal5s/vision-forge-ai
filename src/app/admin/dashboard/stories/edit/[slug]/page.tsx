@@ -26,6 +26,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 
 // Schema for a single page on the client
 const StoryPageClientSchema = z.object({
@@ -64,6 +66,14 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
     const [isDeleting, setIsDeleting] = useState(false);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const { toast } = useToast();
+    const { user } = useUser();
+    const router = useRouter();
+
+    // Admin access check
+    if (user && user.primaryEmailAddress?.emailAddress !== "kunalsonpitre555@gmail.com") {
+        router.push('/');
+        return null;
+    }
 
     const [aiPrompt, setAiPrompt] = useState('');
     const [aiImageCount, setAiImageCount] = useState(10);
@@ -212,7 +222,7 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
         if (result && !result.success) {
             toast({ title: 'Error Updating Story', description: result.error, variant: 'destructive', duration: 9000 });
         } else {
-             toast({ title: 'Story Updated!', description: 'Your changes have been saved to GitHub.' });
+             toast({ title: 'Story Updated!', description: 'Your changes have been saved.' });
         }
         setIsSaving(false);
     };
@@ -405,7 +415,7 @@ export default function EditStoryPage({ params }: EditStoryPageProps) {
                                         <AlertDialogHeader>
                                             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                             <AlertDialogDescription>
-                                                This will permanently delete this web story from GitHub. This action cannot be undone.
+                                                This will permanently delete this web story. This action cannot be undone.
                                             </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
