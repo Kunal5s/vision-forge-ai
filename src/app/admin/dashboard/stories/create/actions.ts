@@ -5,6 +5,7 @@ import { z } from 'zod';
 import type { Story, StoryPage } from '@/lib/stories';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { getFile, saveFile } from '@/lib/github';
 
 // Zod schema for the image generation part (simplified)
 const ImageGenerationSchema = z.object({
@@ -76,11 +77,21 @@ export async function generateStoryImagesAction(data: unknown): Promise<{ succes
   }
 }
 
-// TODO: Replace with Xata create operation
 async function createStoryInDb(story: Story): Promise<void> {
-    console.log("Simulating creation of story in Xata:", story.title);
-    // In a real implementation, you would use the Xata client here:
-    // await xata.db.stories.create(story);
+    const filePath = `src/stories/${story.category.toLowerCase()}.json`;
+    try {
+        let existingStories: Story[] = [];
+        const currentContent = await getFile(filePath);
+        if (currentContent) {
+            existingStories = JSON.parse(currentContent);
+        }
+        
+        // Add new story, prevent duplicates
+        const newStories = [story, ...existingStories.filter(s => s.slug !== story.slug)];
+        await saveFile(filePath, JSON.stringify(newStories, null, 2), `feat: add new web story "${story.title}"`);
+    } catch (e: any) {
+        throw new Error(`Failed to save story to GitHub: ${e.message}`);
+    }
 }
 
 export async function createManualStoryAction(data: StoryFormData): Promise<{ success: boolean; error?: string; slug?: string }> {
@@ -123,10 +134,9 @@ export async function createManualStoryAction(data: StoryFormData): Promise<{ su
       websiteUrl: websiteUrl || undefined,
     };
     
-    // This is where you'd call your new database function
     await createStoryInDb(newStory);
     
-    console.log(`Successfully prepared new story "${title}" for database insertion.`);
+    console.log(`Successfully prepared new story "${title}" for GitHub.`);
 
     revalidatePath('/admin/dashboard/stories');
     revalidatePath('/stories');

@@ -2,9 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-
-// Direct imports for reliability
-import featuredStories from '@/stories/featured.json';
+import { getFile } from './github';
 
 const StoryPageContentSchema = z.object({
   title: z.string().optional(),
@@ -38,21 +36,26 @@ export type Story = z.infer<typeof StorySchema>;
 
 const StoryFileSchema = z.array(StorySchema);
 
-// A map to hold all imported story data
-const allStoryData: { [key: string]: any } = {
-    'featured': featuredStories,
+// A map to hold all story data file paths
+const allStoryData: { [key: string]: string } = {
+    'featured': 'src/stories/featured.json',
 };
 
 async function loadAndValidateStories(category: string): Promise<Story[]> {
-    // This function will be replaced with Xata client calls.
-    const storyData = allStoryData[category.toLowerCase()];
+    const filePath = allStoryData[category.toLowerCase()];
+    if (!filePath) {
+        console.warn(`No story data file path found for category "${category}"`);
+        return [];
+    }
 
-    if (!storyData) {
-        console.warn(`No story data found for category "${category}"`);
+    const fileContent = await getFile(filePath);
+
+    if (!fileContent) {
         return [];
     }
     
     try {
+        const storyData = JSON.parse(fileContent);
         const validatedStories = StoryFileSchema.safeParse(storyData);
 
         if (validatedStories.success) {
@@ -67,14 +70,13 @@ async function loadAndValidateStories(category: string): Promise<Story[]> {
         }
 
     } catch (error: any) {
-        console.error(`Error validating stories for category "${category}":`, error.message);
+        console.error(`Error parsing or validating stories for category "${category}":`, error.message);
         return [];
     }
 }
 
 // Gets only published stories
 export async function getStories(category: string): Promise<Story[]> {
-    // This will be replaced with a Xata query
     const allStories = await loadAndValidateStories(category);
     return allStories
         .filter(story => story.status === 'published')
@@ -83,14 +85,12 @@ export async function getStories(category: string): Promise<Story[]> {
 
 // Gets all stories, including drafts (for admin)
 export async function getAllStoriesAdmin(category: string): Promise<Story[]> {
-     // This will be replaced with a Xata query
      const allStories = await loadAndValidateStories(category);
      return allStories.sort((a, b) => new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime());
 }
 
 // Get a single story by its slug from any category
 export async function getStoryBySlug(slug: string): Promise<Story | undefined> {
-    // This will be a single query to the database
     const allCategories = Object.keys(allStoryData);
     for (const category of allCategories) {
         const stories = await getAllStoriesAdmin(category);

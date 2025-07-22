@@ -4,23 +4,33 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { AuthorSchema, type AuthorData } from '@/lib/author';
+import { getFile, saveFile } from '@/lib/github';
 
-const defaultData: AuthorData = {
-    name: 'Kunal Sonpitre',
-    title: 'AI & Business Technical Expert',
-    photoUrl: 'https://placehold.co/100x100.png',
-    bio: 'Kunal is an expert in leveraging artificial intelligence to solve complex business challenges. His work focuses on making advanced technology accessible and practical for creators and businesses alike.',
-};
+const AUTHOR_FILE_PATH = 'src/lib/author.json';
 
-// Action to get the current author data
-// TODO: Replace with Xata fetch
+// Action to get the current author data from GitHub
 export async function getAuthorData(): Promise<AuthorData> {
-    console.warn("GitHub fetching is deprecated. Returning default author data.");
-    return defaultData;
+    try {
+        const fileContent = await getFile(AUTHOR_FILE_PATH);
+        if (!fileContent) {
+            throw new Error('Author file not found or is empty.');
+        }
+        const data = JSON.parse(fileContent);
+        // Validate with Zod before returning
+        return AuthorSchema.parse(data);
+    } catch (error) {
+        console.error("Failed to fetch or parse author data from GitHub:", error);
+        // Return a default or empty state if fetching fails
+        return {
+            name: 'Enter Name',
+            title: 'Enter Title',
+            photoUrl: 'https://placehold.co/100x100.png',
+            bio: 'Enter a bio of at least 50 characters.',
+        };
+    }
 }
 
-// Action to save the updated author data
-// TODO: Replace with Xata update/insert
+// Action to save the updated author data to GitHub
 export async function saveAuthorData(data: unknown): Promise<{ success: boolean; error?: string }> {
     const validatedFields = AuthorSchema.safeParse(data);
 
@@ -29,12 +39,24 @@ export async function saveAuthorData(data: unknown): Promise<{ success: boolean;
         return { success: false, error: JSON.stringify(errorDetails) };
     }
     
-    console.log("Simulating save to Xata:", validatedFields.data);
+    try {
+        const fileContent = JSON.stringify(validatedFields.data, null, 2);
+        await saveFile(
+            AUTHOR_FILE_PATH, 
+            fileContent, 
+            `docs: update author profile for ${validatedFields.data.name}`
+        );
 
-    // Revalidate paths that use author data
-    revalidatePath('/author/kunal-sonpitre');
-    revalidatePath('/[category]/[slug]');
-    revalidatePath('/admin/dashboard/author');
+        // Revalidate paths that use author data
+        revalidatePath('/author/kunal-sonpitre'); // Or use a dynamic author slug
+        revalidatePath('/[category]/[slug]', 'layout');
+        revalidatePath('/admin/dashboard/author');
+        revalidatePath('/'); // Revalidate home page as well
 
-    return { success: true };
+        return { success: true };
+
+    } catch (error: any) {
+        console.error("Failed to save author data to GitHub:", error);
+        return { success: false, error: error.message || "An unknown error occurred while saving to GitHub." };
+    }
 }

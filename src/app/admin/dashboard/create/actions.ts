@@ -6,6 +6,7 @@ import { generateArticleForTopic } from '@/ai/article-generator';
 import { categorySlugMap } from '@/lib/constants';
 import * as z from 'zod';
 import type { Article } from '@/lib/articles';
+import { getFile, saveFile } from '@/lib/github';
 
 const GenerateArticleFormSchema = z.object({
   topic: z.string().min(1, 'Please enter a topic for the article.'),
@@ -28,10 +29,30 @@ type GenerateArticleResult = {
   error?: string;
 };
 
-// TODO: Replace with Xata insert
-async function saveArticle(article: Article, isNew: boolean): Promise<{ success: boolean; error?: string }> {
-    console.log("Simulating save to Xata:", article.title, "New:", isNew);
-    return { success: true };
+async function saveArticle(article: Article): Promise<{ success: boolean; error?: string }> {
+    const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === article.category) || article.category.toLowerCase();
+    const filePath = `src/articles/${categorySlug}.json`;
+    
+    try {
+        let existingArticles: Article[] = [];
+        const currentContent = await getFile(filePath);
+
+        if (currentContent) {
+            existingArticles = JSON.parse(currentContent);
+        }
+
+        // Add the new article and ensure no duplicates by slug
+        const newArticles = [article, ...existingArticles.filter(a => a.slug !== article.slug)];
+        const newContent = JSON.stringify(newArticles, null, 2);
+
+        await saveFile(filePath, newContent, `feat: add new article "${article.title}"`);
+
+        return { success: true };
+
+    } catch (error: any) {
+        console.error(`Failed to save article to GitHub file: ${filePath}`, error);
+        return { success: false, error: error.message };
+    }
 }
 
 
@@ -83,13 +104,18 @@ export async function generateArticleAction(
       );
     }
     
-    // Save to the new data source (e.g., Xata)
-    await saveArticle(newArticle, true);
+    // Save to GitHub
+    await saveArticle(newArticle);
 
     const categorySlug =
       Object.keys(categorySlugMap).find(
         (key) => categorySlugMap[key] === category
       ) || category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      
+    // Revalidate paths after saving to ensure content is fresh
+    revalidatePath('/admin/dashboard/edit');
+    revalidatePath(`/${categorySlug}`);
+    revalidatePath(`/blog`);
       
     redirect(`/admin/dashboard/edit/${categorySlug}/${newArticle.slug}`);
 

@@ -5,13 +5,20 @@ import { z } from 'zod';
 import type { Story, StoryPage } from '@/lib/stories';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { getFile, saveFile } from '@/lib/github';
+import { allStoryData, getAllStoriesAdmin } from '@/lib/stories';
 
-// TODO: Replace with Xata fetch
+
 export async function getStoryBySlug(slug: string): Promise<Story | undefined> {
-    console.warn("getStoryBySlug is using mock data. Needs Xata integration.");
-    // This will require fetching all stories and filtering, which is inefficient.
-    // A proper DB query would be `xata.db.stories.filter({ slug }).getFirst()`.
-    return undefined; // Returning undefined to avoid build errors. The page will need to handle this.
+    const allCategories = Object.keys(allStoryData);
+    for (const category of allCategories) {
+        const stories = await getAllStoriesAdmin(category);
+        const foundStory = stories.find(story => story.slug === slug);
+        if (foundStory) {
+            return foundStory;
+        }
+    }
+    return undefined;
 }
 
 const StoryPageClientSchema = z.object({
@@ -34,14 +41,60 @@ const UpdateStoryFormSchema = z.object({
 
 type UpdateStoryFormData = z.infer<typeof UpdateStoryFormSchema>;
 
-// TODO: Replace with Xata update/delete operations
-async function updateStoryInDb(originalSlug: string, updatedStory: Story): Promise<void> {
-    console.log("Simulating update in Xata:", originalSlug, "->", updatedStory.title);
+
+async function updateStoryInDb(originalSlug: string, originalCategory: string, updatedStoryData: UpdateStoryFormData): Promise<void> {
+    const { title, slug, seoDescription, category, pages, logo, websiteUrl } = updatedStoryData;
+
+    // Construct the full story object
+    const storyPages: StoryPage[] = pages.map(page => ({
+        type: 'image',
+        url: page.imageUrl,
+        dataAiHint: page.imagePrompt || 'manual story upload',
+        styleName: page.styleName || 'Classic Black',
+        content: { title: page.caption },
+    }));
+
+    const updatedStory: Story = {
+      slug,
+      title,
+      seoDescription,
+      author: "Kunal Sonpitre", // Or fetch dynamically
+      cover: storyPages[0].url,
+      dataAiHint: storyPages[0].dataAiHint,
+      category,
+      logo: logo || undefined,
+      publishedDate: new Date().toISOString(), // Or keep original
+      status: 'published', // Or manage status
+      pages: storyPages,
+      websiteUrl: websiteUrl || undefined,
+    };
+    
+    // If slug or category changed, we need to remove it from the old file
+    if (originalSlug !== slug || originalCategory !== category) {
+        const oldFilePath = `src/stories/${originalCategory.toLowerCase()}.json`;
+        const oldFileContent = await getFile(oldFilePath);
+        if (oldFileContent) {
+            let oldStories: Story[] = JSON.parse(oldFileContent);
+            const filteredStories = oldStories.filter(s => s.slug !== originalSlug);
+            await saveFile(oldFilePath, JSON.stringify(filteredStories, null, 2), `refactor: remove story "${originalSlug}" from ${originalCategory}`);
+        }
+    }
+    
+    // Now save the updated story to the new/correct file
+    const newFilePath = `src/stories/${category.toLowerCase()}.json`;
+    const newFileContent = await getFile(newFilePath);
+    let newStories: Story[] = newFileContent ? JSON.parse(newFileContent) : [];
+
+    const existingIndex = newStories.findIndex(s => s.slug === slug);
+    if (existingIndex > -1) {
+        newStories[existingIndex] = updatedStory; // Update existing
+    } else {
+        newStories.unshift(updatedStory); // Add as new
+    }
+    
+    await saveFile(newFilePath, JSON.stringify(newStories, null, 2), `docs: update story "${title}"`);
 }
 
-async function deleteStoryFromDb(slug: string): Promise<void> {
-    console.log("Simulating deletion from Xata:", slug);
-}
 
 export async function updateStoryAction(data: UpdateStoryFormData): Promise<{ success: boolean; error?: string }> {
   const validatedFields = UpdateStoryFormSchema.safeParse(data);
@@ -49,42 +102,20 @@ export async function updateStoryAction(data: UpdateStoryFormData): Promise<{ su
     return { success: false, error: JSON.stringify(validatedFields.error.flatten()) };
   }
 
-  const { title, slug, originalSlug, category, pages, logo, websiteUrl, seoDescription } = validatedFields.data;
+  const { originalSlug } = validatedFields.data;
   
   try {
-    // This is a simplified version. A real implementation would fetch the existing record first.
-    const storyPages: StoryPage[] = pages.map(page => ({
-      type: 'image',
-      url: page.imageUrl,
-      dataAiHint: page.imagePrompt || 'manual story upload',
-      styleName: page.styleName || 'Classic Black',
-      content: {
-        title: page.caption,
-      },
-    }));
+    const originalStory = await getStoryBySlug(originalSlug);
+    if (!originalStory) {
+      throw new Error("Original story not found.");
+    }
 
-    const updatedStory: Story = {
-      // You would need the original story's ID to update it
-      // For this example, we reconstruct it
-      title,
-      slug,
-      seoDescription,
-      category,
-      pages: storyPages,
-      logo: logo || undefined,
-      websiteUrl: websiteUrl || undefined,
-      cover: storyPages[0].url,
-      dataAiHint: storyPages[0].dataAiHint,
-      publishedDate: new Date().toISOString(),
-      author: 'Kunal Sonpitre', // Default value
-      status: 'published', // Default value
-    };
-
-    await updateStoryInDb(originalSlug, updatedStory);
+    await updateStoryInDb(originalSlug, originalStory.category, validatedFields.data);
 
     revalidatePath('/admin/dashboard/stories');
-    revalidatePath(`/stories/${slug}`);
-    if (slug !== originalSlug) {
+    revalidatePath('/stories');
+    revalidatePath(`/stories/${validatedFields.data.slug}`);
+    if (validatedFields.data.slug !== originalSlug) {
       revalidatePath(`/stories/${originalSlug}`);
     }
 
@@ -106,12 +137,22 @@ export async function deleteStoryAction(data: unknown): Promise<{ success: boole
     if (!validatedFields.success) {
         return { success: false, error: 'Invalid data for deletion.' };
     }
-    const { slug } = validatedFields.data;
+    const { slug, category } = validatedFields.data;
     
     try {
-        await deleteStoryFromDb(slug);
+        const filePath = `src/stories/${category.toLowerCase()}.json`;
+        const fileContent = await getFile(filePath);
+        if (!fileContent) {
+            throw new Error(`Story file not found for category: ${category}`);
+        }
 
+        let stories: Story[] = JSON.parse(fileContent);
+        const updatedStories = stories.filter(s => s.slug !== slug);
+        
+        await saveFile(filePath, JSON.stringify(updatedStories, null, 2), `docs: delete story "${slug}"`);
+        
         revalidatePath('/admin/dashboard/stories');
+        revalidatePath('/stories');
         revalidatePath(`/stories/${slug}`);
 
     } catch (e: any) {

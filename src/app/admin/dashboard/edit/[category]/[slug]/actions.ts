@@ -1,22 +1,14 @@
 
 'use server';
 
-import { revalidatePath } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
 import { type Article, type ArticleContentBlock } from '@/lib/articles';
 import { ManualArticleSchema, type ManualArticleFormData } from '@/lib/types';
+import { categorySlugMap } from '@/lib/constants';
+import { getFile, saveFile } from '@/lib/github';
 import { JSDOM } from 'jsdom';
 import { OpenAI } from 'openai';
 import { OPENROUTER_MODELS } from '@/lib/constants';
-
-// TODO: Replace with Xata functions to save/update/delete articles
-async function saveArticleToDb(article: Article, isNew: boolean): Promise<void> {
-  console.log("Simulating save to Xata:", article.title, "New:", isNew);
-  // This is where you would put your `xata.db.articles.create` or `xata.db.articles.update` call.
-}
-
-async function deleteArticleFromDb(slug: string): Promise<void> {
-    console.log("Simulating delete from Xata:", slug);
-}
 
 // Helper to convert HTML back to structured content
 function htmlToArticleContent(html: string): ArticleContentBlock[] {
@@ -41,13 +33,17 @@ function htmlToArticleContent(html: string): ArticleContentBlock[] {
                     content: img.src,
                     alt: img.alt || '',
                 });
+            } else if (tagName === 'table') {
+                 content.push({
+                    type: 'table',
+                    content: element.outerHTML.trim(),
+                 });
             }
         }
     });
 
     return content;
 }
-
 
 // --- MAIN SERVER ACTIONS ---
 
@@ -58,7 +54,11 @@ export async function editArticleAction(data: unknown) {
   }
 
   const { title, slug, category, status, summary, content, image, originalSlug, originalStatus } = validatedFields.data;
-
+  
+  const wasDraft = originalStatus === 'draft';
+  const isNowPublished = status === 'published';
+  const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category) || category.toLowerCase();
+  
   try {
     const article: Article = {
       title: `<strong>${title}</strong>`,
@@ -72,16 +72,36 @@ export async function editArticleAction(data: unknown) {
       publishedDate: new Date().toISOString(),
     };
 
-    const isNew = !originalSlug;
-    await saveArticleToDb(article, isNew);
+    // If the article was a draft and is now being published, or its category/slug changed, we need to move it.
+    if (wasDraft && isNowPublished || originalSlug !== slug || categorySlug !== Object.keys(categorySlugMap).find(key => categorySlugMap[key] === article.category)?.toLowerCase()) {
+        if (originalSlug) {
+            await deleteArticleAction(originalStatus === 'draft' ? 'drafts' : category, originalSlug, wasDraft);
+        }
+    }
+    
+    // Save to the new/correct file
+    const filePath = status === 'draft' ? `src/articles/drafts.json` : `src/articles/${categorySlug}.json`;
+    const currentFileContent = await getFile(filePath);
+    let allArticles: Article[] = currentFileContent ? JSON.parse(currentFileContent) : [];
+
+    // Update or add the article
+    const articleIndex = allArticles.findIndex(a => a.slug === (originalSlug || slug));
+    if (articleIndex > -1) {
+        allArticles[articleIndex] = article;
+    } else {
+        allArticles.unshift(article);
+    }
+    
+    const newContent = JSON.stringify(allArticles, null, 2);
+    await saveFile(filePath, newContent, `docs: update article "${title}"`);
     
     // Revalidate relevant paths
     revalidatePath('/admin/dashboard/edit');
     revalidatePath(`/blog?category=${category}`);
     if (status === 'published') {
-        revalidatePath(`/${category}/${slug}`);
+        revalidatePath(`/${categorySlug}/${slug}`);
         if(originalSlug && originalSlug !== slug) {
-            revalidatePath(`/${category}/${originalSlug}`);
+            revalidatePath(`/${categorySlug}/${originalSlug}`);
         }
     }
     
@@ -92,12 +112,22 @@ export async function editArticleAction(data: unknown) {
 }
 
 export async function deleteArticleAction(category: string, slug: string, isDraft: boolean) {
+    const categorySlug = isDraft ? 'drafts' : (Object.keys(categorySlugMap).find(key => categorySlugMap[key] === category) || category.toLowerCase());
+    const filePath = `src/articles/${categorySlug}.json`;
+
     try {
-        await deleteArticleFromDb(slug);
+        const fileContent = await getFile(filePath);
+        if (!fileContent) {
+            throw new Error("Article file not found.");
+        }
+        let articles: Article[] = JSON.parse(fileContent);
+        
+        const updatedArticles = articles.filter(a => a.slug !== slug);
+        
+        await saveFile(filePath, JSON.stringify(updatedArticles, null, 2), `docs: delete article "${slug}"`);
 
         revalidatePath('/admin/dashboard/edit');
         if (!isDraft) {
-            const categorySlug = category.toLowerCase().replace(/ /g, '-');
             revalidatePath(`/blog?category=${categorySlug}`);
             revalidatePath(`/${categorySlug}/${slug}`);
         }
@@ -143,7 +173,7 @@ export async function addImagesToArticleAction(content: string, imageCount: numb
 
         for (const imgData of imagePromises) {
             const imgDiv = document.createElement('div');
-            imgDiv.className = 'my-8';
+            // imgDiv.className = 'my-8'; // The editor will handle this class
             const img = document.createElement('img');
             img.src = imgData.url;
             img.alt = imgData.alt;
@@ -170,7 +200,7 @@ export async function autoSaveArticleDraftAction(data: unknown): Promise<{ succe
     validatedFields.data.status = 'draft';
 
     try {
-        const { title, slug, category, status, summary, content, image } = validatedFields.data;
+        const { title, slug, category, status, summary, content, image, originalSlug } = validatedFields.data;
         const article: Article = {
             title: `<strong>${title}</strong>`,
             slug, category, status, summary: summary || '', image,
@@ -179,8 +209,21 @@ export async function autoSaveArticleDraftAction(data: unknown): Promise<{ succe
             publishedDate: new Date().toISOString(),
         };
 
-        const isNew = !validatedFields.data.originalSlug;
-        await saveArticleToDb(article, isNew);
+        const filePath = `src/articles/drafts.json`;
+        const currentFileContent = await getFile(filePath);
+        let allArticles: Article[] = currentFileContent ? JSON.parse(currentFileContent) : [];
+
+        // Update or add the article
+        const articleIndex = allArticles.findIndex(a => a.slug === (originalSlug || slug));
+        if (articleIndex > -1) {
+            allArticles[articleIndex] = article;
+        } else {
+            allArticles.unshift(article);
+        }
+        
+        const newContent = JSON.stringify(allArticles, null, 2);
+        await saveFile(filePath, newContent, `docs: autosave draft for "${title}"`);
+
         revalidatePath('/admin/dashboard/edit');
         return { success: true };
 
