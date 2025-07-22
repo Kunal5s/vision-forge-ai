@@ -31,8 +31,6 @@ import Link from 'next/link';
 import { generateArticleAction } from './actions';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { useUser } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
 
 const ArticleFormSchema = z.object({
   topic: z.string().min(1, 'Please enter a topic for the article.'),
@@ -53,14 +51,6 @@ type ArticleFormData = z.infer<typeof ArticleFormSchema>;
 export default function CreateArticlePage() {
   const [isArticleLoading, setIsArticleLoading] = useState(false);
   const { toast } = useToast();
-  const { user } = useUser();
-  const router = useRouter();
-
-  // Admin access check
-  if (user && user.primaryEmailAddress?.emailAddress !== "kunalsonpitre555@gmail.com") {
-    router.push('/');
-    return null;
-  }
 
   const articleForm = useForm<ArticleFormData>({
     resolver: zodResolver(ArticleFormSchema),

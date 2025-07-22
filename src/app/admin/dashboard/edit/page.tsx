@@ -7,26 +7,15 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import EditArticlesClientPage from './EditArticlesClientPage';
-import { useUser } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
-
 export default function EditArticlesPage() {
-    const { user } = useUser();
-    const router = useRouter();
     const [content, setContent] = useState<{
         published: { category: string, articles: Article[] }[],
         drafts: Article[]
     } | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-
-    // Admin access check
-    if (user && user.primaryEmailAddress?.emailAddress !== "kunalsonpitre555@gmail.com") {
-        router.push('/');
-        return null;
-    }
 
     useEffect(() => {
         const fetchContent = async () => {

@@ -23,9 +23,6 @@ import type { Story } from '@/lib/stories';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useUser } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
-
 
 // Schema for a single page on the client
 const StoryPageClientSchema = z.object({
@@ -55,14 +52,6 @@ export default function CreateManualStoryPage() {
     const [isGenerating, setIsGenerating] = useState(false);
     const { toast } = useToast();
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-    const { user } = useUser();
-    const router = useRouter();
-
-    // Admin access check
-    if (user && user.primaryEmailAddress?.emailAddress !== "kunalsonpitre555@gmail.com") {
-        router.push('/');
-        return null;
-    }
 
     // State for the AI generator form
     const [aiPrompt, setAiPrompt] = useState('');

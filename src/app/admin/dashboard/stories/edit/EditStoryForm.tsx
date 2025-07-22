@@ -26,8 +26,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { useUser } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
 
 // Schema for a single page on the client
 const StoryPageClientSchema = z.object({
@@ -65,13 +63,6 @@ export default function EditStoryForm({ slug }: EditStoryPageProps) {
     const [isDeleting, setIsDeleting] = useState(false);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const { toast } = useToast();
-    const { user } = useUser();
-    const router = useRouter();
-
-    if (user && user.primaryEmailAddress?.emailAddress !== "kunalsonpitre555@gmail.com") {
-        router.push('/');
-        return null;
-    }
 
     const [aiPrompt, setAiPrompt] = useState('');
     const [aiImageCount, setAiImageCount] = useState(10);

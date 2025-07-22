@@ -4,8 +4,6 @@
 import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import EditArticleForm from '@/components/vision-forge/EditArticleForm';
-import { useUser } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
 import { getArticleForEdit, type Article } from '@/lib/articles';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -49,13 +47,6 @@ function EditArticleLoader({ category, slug }: { category: string, slug: string 
 
 // This is the main page component
 export default function EditArticlePage({ params }: { params: { category: string; slug: string } }) {
-    const { user } = useUser();
-    const router = useRouter();
-
-    if (user && user.primaryEmailAddress?.emailAddress !== "kunalsonpitre555@gmail.com") {
-        router.push('/');
-        return null;
-    }
     
     return (
         <main className="flex-grow container mx-auto py-12 px-4 bg-muted/20 min-h-screen">

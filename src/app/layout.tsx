@@ -1,6 +1,5 @@
 
 import type { Metadata } from 'next';
-import { ClerkProvider } from '@clerk/nextjs';
 import { Inter, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import { SubscriptionProvider } from '@/hooks/use-subscription';
@@ -41,18 +40,16 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
-        <html lang="en" className={`${inter.variable} ${ibmPlexMono.variable} h-full`}>
-        <body className="antialiased flex flex-col min-h-full bg-background">
-            <SubscriptionProvider>
-            <Suspense>
-                <RootLayoutClient>
-                {children}
-                </RootLayoutClient>
-            </Suspense>
-            </SubscriptionProvider>
-        </body>
-        </html>
-    </ClerkProvider>
+    <html lang="en" className={`${inter.variable} ${ibmPlexMono.variable} h-full`}>
+      <body className="antialiased flex flex-col min-h-full bg-background">
+        <SubscriptionProvider>
+          <Suspense>
+            <RootLayoutClient>
+              {children}
+            </RootLayoutClient>
+          </Suspense>
+        </SubscriptionProvider>
+      </body>
+    </html>
   );
 }
