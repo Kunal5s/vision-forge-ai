@@ -48,7 +48,7 @@ const createFreePlan = (): Subscription => ({
 
 export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Initialize to true
   const { toast } = useToast();
 
   const saveSubscription = useCallback((sub: Subscription | null) => {
@@ -62,7 +62,9 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    setIsLoading(true); // Always start with loading true
+    // This effect now only runs on the client after hydration.
+    // It will find the stored subscription and update the state, causing a re-render
+    // only on the client, which is safe post-hydration.
     let loadedSub: Subscription | null = null;
     try {
       const storedSub = localStorage.getItem('imagenBrainAiSubscription');
@@ -95,7 +97,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
       loadedSub = createFreePlan();
     }
     setSubscription(loadedSub);
-    setIsLoading(false); // Set loading to false after state is set
+    setIsLoading(false); // Set loading to false only after client-side check
   }, []); // Empty dependency array ensures this runs only ONCE on client mount.
 
   const activateSubscription = useCallback((email: string): boolean => {
