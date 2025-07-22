@@ -1,11 +1,22 @@
+
 import type { Metadata } from 'next';
 import { ClerkProvider } from '@clerk/nextjs';
-import { Geist_Sans } from 'next/font/sans';
-import { Geist_Mono } from 'next/font/mono';
+import { Inter, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import { SubscriptionProvider } from '@/hooks/use-subscription';
 import RootLayoutClient from './layout-client';
 import { Suspense } from 'react';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+});
+
+const ibmPlexMono = IBM_Plex_Mono({
+  weight: ['400', '700'],
+  subsets: ['latin'],
+  variable: '--font-ibm-plex-mono',
+});
 
 export const metadata: Metadata = {
   title: {
@@ -31,7 +42,7 @@ export default async function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-        <html lang="en" className={`${Geist_Sans.variable} ${Geist_Mono.variable} h-full`}>
+        <html lang="en" className={`${inter.variable} ${ibmPlexMono.variable} h-full`}>
         <body className="antialiased flex flex-col min-h-full bg-background">
             <SubscriptionProvider>
             <Suspense>

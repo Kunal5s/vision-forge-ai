@@ -1,7 +1,4 @@
 
-@import url('https://assets.vercel.com/raw/upload/v1587415301/fonts/2/Geist-Regular.woff2');
-@import url('https://assets.vercel.com/raw/upload/v1587415301/fonts/2/Geist-Bold.woff2');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -89,7 +86,7 @@
   }
   
   html {
-    font-family: 'Geist', sans-serif;
+    font-family: var(--font-inter), sans-serif;
   }
 
   .prose {

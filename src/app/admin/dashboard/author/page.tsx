@@ -69,15 +69,27 @@ export default function ManageAuthorPage() {
                 toast({ title: "Invalid File Type", description: "Please upload a valid image file (PNG, JPG).", variant: "destructive" });
                 return;
             }
-            // Set a placeholder URL. The actual image is not stored on the server in this implementation.
-            setValue('photoUrl', 'https://placehold.co/100x100.png', { shouldDirty: true, shouldValidate: true });
-            toast({ title: "Photo Updated", description: "A placeholder has been set for your photo. The actual image is not uploaded to a server in this demo.", variant: 'default' });
+            // Use FileReader to create a temporary URL for preview, but don't save the Data URI to the form state.
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                // This will show a preview of the image, but the actual URL saved to JSON will be a placeholder.
+                // For a full implementation, this should upload to a service like Firebase Storage or Vercel Blob
+                // and then set the returned URL. For now, we'll just show the preview and set a placeholder URL.
+                setValue('photoUrl', e.target?.result as string, { shouldDirty: true, shouldValidate: true });
+            };
+            reader.readAsDataURL(file);
+            toast({ title: "Photo Updated", description: "A preview has been generated. The actual image is not uploaded to a server in this demo.", variant: 'default' });
         }
     }, [setValue, toast]);
 
     const onSubmit = async (data: AuthorFormData) => {
         setIsSaving(true);
         toast({ title: "Saving Author Info...", description: "Your changes are being updated." });
+
+        // If the photoUrl is a data URI, replace it with a placeholder before saving to prevent large JSON files.
+        if (data.photoUrl.startsWith('data:image')) {
+            data.photoUrl = 'https://placehold.co/100x100.png';
+        }
 
         const result = await saveAuthorData(data);
 
