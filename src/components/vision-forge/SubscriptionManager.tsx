@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -19,7 +19,7 @@ import { useSubscription } from '@/hooks/use-subscription';
 import { Sparkles, Loader2 } from 'lucide-react';
 
 export function SubscriptionManager() {
-  const { subscription, activateSubscription, deactivateSubscription, isLoading } = useSubscription();
+  const { subscription, activateSubscription, deactivateSubscription } = useSubscription();
   const [email, setEmail] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
@@ -51,15 +51,6 @@ export function SubscriptionManager() {
   }
 
   const isLoggedIn = subscription && subscription.plan !== 'free';
-
-  if (isLoading) {
-    return (
-        <Button variant="default" className="text-xs h-9 w-full md:w-auto bg-foreground text-background hover:bg-foreground/90" disabled>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Loading Plan...
-        </Button>
-    );
-  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>

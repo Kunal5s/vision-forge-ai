@@ -7,7 +7,6 @@ import { Download, Copy, RefreshCw, AlertTriangle, Image as ImageIcon, Sparkles 
 import { cn } from '@/lib/utils';
 import { FuturisticPanel } from './FuturisticPanel';
 import { useEffect, useState } from 'react';
-import type { Plan } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import JSZip from 'jszip';
 
@@ -20,7 +19,6 @@ interface ImageDisplayProps {
   error: string | null;
   onRegenerate: () => void;
   onCopyPrompt: () => void;
-  userPlan: Plan;
   imageCount: number;
 }
 
@@ -71,7 +69,6 @@ export function ImageDisplay({
   error,
   onRegenerate,
   onCopyPrompt,
-  userPlan,
   imageCount
 }: ImageDisplayProps) {
   

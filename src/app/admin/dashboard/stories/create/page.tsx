@@ -213,9 +213,9 @@ export default function CreateManualStoryPage() {
 
             <div className="mb-8">
                 <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
-                    <Link href="/admin/dashboard">
+                    <Link href="/admin/dashboard/stories">
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to Dashboard
+                        Back to All Stories
                     </Link>
                 </Button>
             </div>

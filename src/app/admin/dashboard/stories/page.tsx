@@ -9,6 +9,7 @@ import { ManageStoriesClientPage } from './ManageStoriesClientPage';
 import type { Story } from '@/lib/stories';
 import { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
 
 export default function ManageStoriesPage() {
     const [storiesByCategory, setStoriesByCategory] = useState<{ category: string, stories: Story[] }[]>([]);

@@ -3,7 +3,6 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { type Subscription, type Plan, type Credits, SubscriptionSchema } from '@/lib/types';
-import { useToast } from './use-toast';
 
 const PLAN_CREDITS: Record<Plan, Credits> = {
   free: { google: 0 },
@@ -32,7 +31,6 @@ interface SubscriptionContextType {
   deactivateSubscription: () => void;
   useCredit: (isPremium: boolean) => boolean;
   canGenerate: (isPremium: boolean) => boolean;
-  isLoading: boolean;
 }
 
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
@@ -48,8 +46,6 @@ const createFreePlan = (): Subscription => ({
 
 export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // Initialize to true
-  const { toast } = useToast();
 
   const saveSubscription = useCallback((sub: Subscription | null) => {
     const subToSave = sub || createFreePlan();
@@ -62,9 +58,6 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    // This effect now only runs on the client after hydration.
-    // It will find the stored subscription and update the state, causing a re-render
-    // only on the client, which is safe post-hydration.
     let loadedSub: Subscription | null = null;
     try {
       const storedSub = localStorage.getItem('imagenBrainAiSubscription');
@@ -97,8 +90,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
       loadedSub = createFreePlan();
     }
     setSubscription(loadedSub);
-    setIsLoading(false); // Set loading to false only after client-side check
-  }, []); // Empty dependency array ensures this runs only ONCE on client mount.
+  }, []);
 
   const activateSubscription = useCallback((email: string): boolean => {
     const purchasedPlan = MOCK_PURCHASED_EMAILS[email.toLowerCase()];
@@ -123,14 +115,12 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   }, [saveSubscription]);
 
   const useCredit = useCallback((isPremium: boolean) => {
-    if (isLoading || !subscription) return false;
+    if (!subscription) return false;
     
-    // Free models do not consume credits
     if (!isPremium) {
       return true;
     }
     
-    // Premium models on a free plan cannot be used
     if (subscription.plan === 'free') {
       return false;
     }
@@ -146,24 +136,22 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
     }
 
     return false;
-  }, [subscription, isLoading, saveSubscription]);
+  }, [subscription, saveSubscription]);
 
   const canGenerate = useCallback((isPremium: boolean) => {
-    if (isLoading || !subscription) return false;
+    if (!subscription) return false;
 
-    // Free models can be used by anyone
     if (!isPremium) {
       return true;
     }
 
-    // Premium models can only be used on paid plans with enough credits
     if (subscription.plan === 'free') return false;
 
     return subscription.credits.google >= PLAN_CREDIT_COST[subscription.plan].google;
-  }, [subscription, isLoading]);
+  }, [subscription]);
 
   return (
-    <SubscriptionContext.Provider value={{ subscription, activateSubscription, deactivateSubscription, useCredit, canGenerate, isLoading }}>
+    <SubscriptionContext.Provider value={{ subscription, activateSubscription, deactivateSubscription, useCredit, canGenerate }}>
       {children}
     </SubscriptionContext.Provider>
   );

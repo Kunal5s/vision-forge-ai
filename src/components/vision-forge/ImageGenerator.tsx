@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -26,8 +26,7 @@ import {
 } from '@/lib/constants';
 import { ImageDisplay } from './ImageDisplay';
 import { FuturisticPanel } from './FuturisticPanel';
-import { Wand2, Sparkles, XCircle } from 'lucide-react';
-import { useSubscription } from '@/hooks/use-subscription';
+import { Wand2, Sparkles, XCircle, Loader2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { SubscriptionManager } from './SubscriptionManager';
 
@@ -40,7 +39,6 @@ type FormData = z.infer<typeof formSchema>;
 // This client component will now safely wrap the SubscriptionManager and other hooks.
 function ImageGeneratorClient() {
   const { toast } = useToast();
-  const { subscription } = useSubscription();
   const [generationCancelled, setGenerationCancelled] = useState(false);
   
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>(ASPECT_RATIOS[0].value);
@@ -197,7 +195,9 @@ function ImageGeneratorClient() {
         <FuturisticPanel>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="flex justify-end">
-              <SubscriptionManager />
+                <Suspense fallback={<Button variant="default" className="text-xs h-9 w-full md:w-auto bg-foreground text-background hover:bg-foreground/90" disabled><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loading Plan...</Button>}>
+                    <SubscriptionManager />
+                </Suspense>
             </div>
             <div>
                 <Label htmlFor="prompt" className="text-lg font-semibold text-foreground/90">
@@ -317,7 +317,6 @@ function ImageGeneratorClient() {
           error={error}
           onRegenerate={handleRegenerate}
           onCopyPrompt={handleCopyPrompt}
-          userPlan={subscription?.plan || 'free'}
           imageCount={numberOfImages}
         />
       </div>
