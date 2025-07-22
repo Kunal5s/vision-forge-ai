@@ -31,13 +31,14 @@ import { useSubscription } from '@/hooks/use-subscription';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { SubscriptionManager } from './SubscriptionManager';
 
-
 const formSchema = z.object({
   prompt: z.string().trim().min(1, 'Prompt cannot be empty. Let your imagination flow!').max(2000, 'Prompt is too long.'),
 });
 type FormData = z.infer<typeof formSchema>;
 
-export function ImageGenerator() {
+
+// This client component will now safely wrap the SubscriptionManager and other hooks.
+function ImageGeneratorClient() {
   const { toast } = useToast();
   const { subscription } = useSubscription();
   const [generationCancelled, setGenerationCancelled] = useState(false);
@@ -191,137 +192,142 @@ export function ImageGenerator() {
   };
 
   return (
-    <>
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-5 space-y-6">
-          <FuturisticPanel>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              <div className="flex justify-end">
-                <SubscriptionManager />
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="lg:col-span-5 space-y-6">
+        <FuturisticPanel>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <div className="flex justify-end">
+              <SubscriptionManager />
+            </div>
+            <div>
+                <Label htmlFor="prompt" className="text-lg font-semibold text-foreground/90">
+                  Enter your prompt
+                </Label>
+                <p className="text-sm text-muted-foreground mb-2">Describe the image you want to create in detail.</p>
+                <div className="relative">
+                  <Textarea
+                    id="prompt"
+                    {...register('prompt')}
+                    placeholder="e.g., A majestic lion wearing a crown, sitting on a throne in a cosmic library..."
+                    rows={4}
+                    className="bg-background focus:border-primary focus:ring-primary text-base resize-none"
+                    disabled={isGenerating}
+                  />
+                </div>
+                {errors.prompt && <p className="text-sm text-destructive mt-1">{errors.prompt.message}</p>}
               </div>
-              <div>
-                  <Label htmlFor="prompt" className="text-lg font-semibold text-foreground/90">
-                    Enter your prompt
-                  </Label>
-                  <p className="text-sm text-muted-foreground mb-2">Describe the image you want to create in detail.</p>
-                  <div className="relative">
-                    <Textarea
-                      id="prompt"
-                      {...register('prompt')}
-                      placeholder="e.g., A majestic lion wearing a crown, sitting on a throne in a cosmic library..."
-                      rows={4}
-                      className="bg-background focus:border-primary focus:ring-primary text-base resize-none"
-                      disabled={isGenerating}
-                    />
-                  </div>
-                  {errors.prompt && <p className="text-sm text-destructive mt-1">{errors.prompt.message}</p>}
-                </div>
-                
-                <Accordion type="single" collapsible defaultValue="item-1" className="w-full border-t pt-4">
-                  <AccordionItem value="item-1" className="border-b-0">
-                    <AccordionTrigger className="text-base font-semibold hover:no-underline pt-0">
-                      <Wand2 className="mr-2 h-5 w-5" /> Creative Tools
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="grid grid-cols-2 gap-4 pt-4">
-                        <div>
-                          <Label htmlFor="artistic-style" className="text-sm font-medium mb-2 block">Artistic Style</Label>
-                          <Select value={artisticStyle} onValueChange={setArtisticStyle} disabled={isGenerating}>
-                            <SelectTrigger id="artistic-style"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {ARTISTIC_STYLES.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label htmlFor="aspect-ratio" className="text-sm font-medium mb-2 block">Aspect Ratio</Label>
-                          <Select value={selectedAspectRatio} onValueChange={setSelectedAspectRatio} disabled={isGenerating}>
-                            <SelectTrigger id="aspect-ratio"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {ASPECT_RATIOS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label htmlFor="mood" className="text-sm font-medium mb-2 block">Mood</Label>
-                          <Select value={mood} onValueChange={setMood} disabled={isGenerating}>
-                            <SelectTrigger id="mood"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {MOODS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label htmlFor="lighting" className="text-sm font-medium mb-2 block">Lighting</Label>
-                          <Select value={lighting} onValueChange={setLighting} disabled={isGenerating}>
-                            <SelectTrigger id="lighting"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {LIGHTING_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label htmlFor="color-palette" className="text-sm font-medium mb-2 block">Color Palette</Label>
-                          <Select value={colorPalette} onValueChange={setColorPalette} disabled={isGenerating}>
-                            <SelectTrigger id="color-palette"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {COLOR_PALETTES.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                         <div>
-                          <Label htmlFor="quality" className="text-sm font-medium mb-2 block">Quality</Label>
-                          <Select value={quality} onValueChange={setQuality} disabled={isGenerating}>
-                            <SelectTrigger id="quality"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {QUALITY_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-              </Accordion>
               
-              <div className="flex w-full items-center gap-2 pt-4">
-                  {isGenerating ? (
-                    <Button
-                      type="button"
-                      onClick={handleStopGeneration}
-                      variant="destructive"
-                      className="w-full text-lg py-3"
-                    >
-                      <XCircle size={20} className="mr-2" /> Stop
-                    </Button>
-                  ) : (
-                    <Button
-                      type="submit"
-                      className="w-full text-base py-3 bg-foreground hover:bg-foreground/80 text-background transition-shadow hover:shadow-xl hover:shadow-primary/20"
-                      disabled={!currentPrompt}
-                    >
-                      <Sparkles size={18} className="mr-2" />
-                      Generate {numberOfImages} Images
-                    </Button>
-                  )}
-                </div>
-            </form>
-          </FuturisticPanel>
-        </div>
-
-        <div className="lg:col-span-7">
-          <ImageDisplay
-            imageUrls={generatedImageUrls}
-            prompt={getConstructedPrompt()}
-            aspectRatio={displayAspectRatio}
-            isLoading={isGenerating}
-            error={error}
-            onRegenerate={handleRegenerate}
-            onCopyPrompt={handleCopyPrompt}
-            userPlan={subscription?.plan || 'free'}
-            imageCount={numberOfImages}
-          />
-        </div>
+              <Accordion type="single" collapsible defaultValue="item-1" className="w-full border-t pt-4">
+                <AccordionItem value="item-1" className="border-b-0">
+                  <AccordionTrigger className="text-base font-semibold hover:no-underline pt-0">
+                    <Wand2 className="mr-2 h-5 w-5" /> Creative Tools
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="grid grid-cols-2 gap-4 pt-4">
+                      <div>
+                        <Label htmlFor="artistic-style" className="text-sm font-medium mb-2 block">Artistic Style</Label>
+                        <Select value={artisticStyle} onValueChange={setArtisticStyle} disabled={isGenerating}>
+                          <SelectTrigger id="artistic-style"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {ARTISTIC_STYLES.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="aspect-ratio" className="text-sm font-medium mb-2 block">Aspect Ratio</Label>
+                        <Select value={selectedAspectRatio} onValueChange={setSelectedAspectRatio} disabled={isGenerating}>
+                          <SelectTrigger id="aspect-ratio"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {ASPECT_RATIOS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="mood" className="text-sm font-medium mb-2 block">Mood</Label>
+                        <Select value={mood} onValueChange={setMood} disabled={isGenerating}>
+                          <SelectTrigger id="mood"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {MOODS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="lighting" className="text-sm font-medium mb-2 block">Lighting</Label>
+                        <Select value={lighting} onValueChange={setLighting} disabled={isGenerating}>
+                          <SelectTrigger id="lighting"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {LIGHTING_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="color-palette" className="text-sm font-medium mb-2 block">Color Palette</Label>
+                        <Select value={colorPalette} onValueChange={setColorPalette} disabled={isGenerating}>
+                          <SelectTrigger id="color-palette"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {COLOR_PALETTES.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                       <div>
+                        <Label htmlFor="quality" className="text-sm font-medium mb-2 block">Quality</Label>
+                        <Select value={quality} onValueChange={setQuality} disabled={isGenerating}>
+                          <SelectTrigger id="quality"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {QUALITY_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+            </Accordion>
+            
+            <div className="flex w-full items-center gap-2 pt-4">
+                {isGenerating ? (
+                  <Button
+                    type="button"
+                    onClick={handleStopGeneration}
+                    variant="destructive"
+                    className="w-full text-lg py-3"
+                  >
+                    <XCircle size={20} className="mr-2" /> Stop
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    className="w-full text-base py-3 bg-foreground hover:bg-foreground/80 text-background transition-shadow hover:shadow-xl hover:shadow-primary/20"
+                    disabled={!currentPrompt}
+                  >
+                    <Sparkles size={18} className="mr-2" />
+                    Generate {numberOfImages} Images
+                  </Button>
+                )}
+              </div>
+          </form>
+        </FuturisticPanel>
       </div>
-    </>
+
+      <div className="lg:col-span-7">
+        <ImageDisplay
+          imageUrls={generatedImageUrls}
+          prompt={getConstructedPrompt()}
+          aspectRatio={displayAspectRatio}
+          isLoading={isGenerating}
+          error={error}
+          onRegenerate={handleRegenerate}
+          onCopyPrompt={handleCopyPrompt}
+          userPlan={subscription?.plan || 'free'}
+          imageCount={numberOfImages}
+        />
+      </div>
+    </div>
   );
+}
+
+
+// The main component remains a server component.
+export function ImageGenerator() {
+  // It now renders the client component which handles all state and effects.
+  return <ImageGeneratorClient />;
 }
