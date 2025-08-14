@@ -15,16 +15,12 @@ interface RootLayoutClientProps {
 export default function RootLayoutClient({ children }: RootLayoutClientProps) {
   const pathname = usePathname();
   
-  const isAdminRoute = pathname.startsWith('/admin');
-  const isAuthRoute = ['/sign-in', '/sign-up'].includes(pathname);
-  const isStoryPage = pathname.startsWith('/stories/') && pathname.split('/').length > 2;
-
-  const showHeaderAndFooter = !isAuthRoute && !isAdminRoute && !isStoryPage;
+  const showHeaderAndFooter = true;
 
   return (
     <>
-      {showHeaderAndFooter ? <Header /> : null}
-      <div className={isAdminRoute ? "" : "flex-grow"}>
+      {showHeaderAndFooter && <Header />}
+      <div className={"flex-grow"}>
         {children}
       </div>
       {showHeaderAndFooter && <PreFooterCallToAction />}

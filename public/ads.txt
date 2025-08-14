@@ -268,7 +268,7 @@ improvedigital.com,907,RESELLER
 lijit.com,215294-eb,RESELLER,fafdf38b16bf6b2b
 lijit.com,215294,RESELLER,fafdf38b16bf6b2b
 loopme.com,11343,RESELLER,6c8d5f95897a5a3b
-onetag.com,38980b46b0,RESELLER
+onetag.com,38980b46b0,RESESELLER
 openx.com,540022851,RESELLER,6a698e2ec38604c6
 pubmatic.com,120391,RESELLER,5d62403b186f2ace
 pubmatic.com,156962,RESELLER,5d62403b186f2ace

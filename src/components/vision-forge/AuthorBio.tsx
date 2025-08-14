@@ -1,10 +1,9 @@
-
 'use client';
 
 import Image from 'next/image';
 import Link from 'next/link';
 import type { AuthorData } from '@/lib/author';
-import { getAuthorData } from '@/app/admin/dashboard/author/actions';
+import { getAuthorData } from '@/lib/author';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import parse from 'html-react-parser';
@@ -45,7 +44,7 @@ export function AuthorBio({ author: initialAuthor }: AuthorBioProps) {
   }
 
   if (!author) {
-    return null; // Or some fallback UI if author data can't be fetched
+    return null; 
   }
 
   return (

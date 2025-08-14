@@ -6,14 +6,12 @@ import { PricingSection } from '@/components/vision-forge/PricingSection';
 import { FaqSection } from '@/components/vision-forge/FaqSection';
 import type { Metadata } from 'next';
 import { getArticles } from '@/lib/articles';
-import { getStories } from '@/lib/stories';
 import { Suspense } from 'react';
 import { ArticlesSkeleton } from '@/components/vision-forge/ArticlesSkeleton';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, BookImage } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { FeaturesHighlightSection } from '@/components/vision-forge/FeaturesHighlightSection';
-import { StoryHighlights } from '@/components/vision-forge/StoryHighlights';
 import { HomePageClient } from './HomePageClient';
 
 export const metadata: Metadata = {
@@ -31,12 +29,6 @@ async function FeaturedArticleList() {
     return <HomePageClient allArticles={articles} />;
 }
 
-async function WebStoriesHighlightList() {
-    const stories = await getStories('featured'); // Assuming one category for now
-    // Show the latest 5 stories
-    const storiesToShow = stories.slice(0, 5);
-    return <StoryHighlights stories={storiesToShow} />;
-}
 
 export default function HomePage() {
   return (
@@ -54,23 +46,6 @@ export default function HomePage() {
 
       <section className="container mx-auto px-4 pt-12 pb-8">
         <ImageGenerator />
-      </section>
-
-      <section className="py-16 bg-background">
-          <div className="container mx-auto px-4">
-              <header className="text-center mb-12">
-                <h2 className="text-4xl font-extrabold tracking-tight text-foreground flex items-center justify-center gap-3">
-                  <BookImage className="h-10 w-10 text-orange-500" />
-                  Explore Web Stories
-                </h2>
-                <p className="text-muted-foreground mt-2 max-w-3xl mx-auto">
-                  Tap through our latest AI-generated visual stories. New content added regularly!
-                </p>
-              </header>
-               <Suspense fallback={<p className="text-center">Loading stories...</p>}>
-                  <WebStoriesHighlightList />
-              </Suspense>
-          </div>
       </section>
       
       <section className="py-16 bg-muted/30">
@@ -100,7 +75,6 @@ export default function HomePage() {
       <FeaturesHighlightSection />
       <PricingSection />
       <FaqSection />
-
     </main>
   );
 }

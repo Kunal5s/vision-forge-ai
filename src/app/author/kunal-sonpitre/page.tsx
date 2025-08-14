@@ -1,13 +1,13 @@
 
-import { AuthorBio } from '@/components/vision-forge/AuthorBio';
 import { ArticlesSection } from '@/components/vision-forge/ArticlesSection';
-import { getAllArticlesAdmin } from '@/lib/articles';
+import { getArticles } from '@/lib/articles';
 import type { Metadata } from 'next';
 import { categorySlugMap } from '@/lib/constants';
 import { Suspense } from 'react';
 import { ArticlesSkeleton } from '@/components/vision-forge/ArticlesSkeleton';
-import { getAuthorData } from '@/app/admin/dashboard/author/actions';
+import { AuthorBio } from '@/components/vision-forge/AuthorBio';
 import { type AuthorData } from '@/lib/author';
+import { getAuthorData } from '@/lib/author';
 
 export async function generateMetadata(): Promise<Metadata> {
     const author: AuthorData = await getAuthorData();
@@ -21,15 +21,12 @@ export async function generateMetadata(): Promise<Metadata> {
 export const dynamic = 'force-dynamic';
 
 async function AllAuthorArticles() {
-    // Fetch all articles from all categories
     const allCategoryNames = Object.values(categorySlugMap);
-    const promises = allCategoryNames.map(category => getAllArticlesAdmin(category));
+    const promises = allCategoryNames.map(category => getArticles(category));
     const articlesByCategory = await Promise.all(promises);
     
-    // Filter for published articles and flatten the array
     let allArticles = articlesByCategory.flat().filter(a => a.status === 'published');
 
-    // Sort all articles by published date, most recent first
     allArticles.sort((a, b) => {
         if (a.publishedDate && b.publishedDate) {
             return new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime();
@@ -37,7 +34,7 @@ async function AllAuthorArticles() {
         return a.title.localeCompare(b.title);
     });
 
-    return <ArticlesSection articles={allArticles} category="All Articles" />;
+    return <ArticlesSection articles={articles} />;
 }
 
 export default async function AuthorPage() {
@@ -57,5 +54,3 @@ export default async function AuthorPage() {
                 </Suspense>
             </section>
         </main>
-    );
-}

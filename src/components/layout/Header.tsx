@@ -2,11 +2,10 @@
 'use client';
 
 import Link from 'next/link';
-import { BrainCircuit, LogIn } from 'lucide-react';
+import { BrainCircuit } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import React, { Suspense } from 'react';
-import { Button } from '../ui/button';
 import { categorySlugMap } from '@/lib/constants';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
@@ -14,7 +13,7 @@ const CategoryNavBarContent = () => {
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
-    const isFilterablePage = ['/blog', '/stories'].includes(pathname);
+    const isFilterablePage = ['/blog'].includes(pathname);
     const currentCategorySlug = searchParams.get('category');
     
     const categoriesToShow = Object.entries(categorySlugMap).filter(([slug]) => slug !== 'featured');
@@ -72,7 +71,6 @@ const CategoryNavBar = () => (
 
 export function Header() {
   const pathname = usePathname();
-  const isAdminRoute = pathname.startsWith('/admin');
 
   return (
     <header className={cn("sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b")}>
@@ -84,18 +82,8 @@ export function Header() {
               Imagen BrainAi
             </span>
           </Link>
-
-          <div className="flex items-center gap-4">
-            <Link href="/admin/dashboard">
-              <Button variant="outline">
-                <LogIn className="mr-2 h-4 w-4" />
-                Admin Dashboard
-              </Button>
-            </Link>
-          </div>
         </div>
       </div>
-      {!isAdminRoute && <CategoryNavBar />}
+      <CategoryNavBar />
     </header>
   );
-}
