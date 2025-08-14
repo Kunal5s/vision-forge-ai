@@ -1,4 +1,5 @@
 
+
 import { z } from 'zod';
 
 export const ArticleContentBlockSchema = z.object({
@@ -15,11 +16,15 @@ export const ArticleSchema = z.object({
   title: z.string().min(1),
   slug: z.string().min(1),
   status: z.enum(['published', 'draft']).default('published'),
-  publishedDate: z.string().optional(), // Making this optional as it might not always be present
+  publishedDate: z.string().optional(), 
   summary: z.string().optional(),
   articleContent: z.array(ArticleContentBlockSchema),
+  // Adding these flexible fields for custom article structures
+  keyTakeaways: z.array(z.string()).optional(),
+  conclusion: z.string().optional(),
 });
 export type Article = z.infer<typeof ArticleSchema>;
+
 
 // Subscription types
 export type Plan = 'free' | 'pro' | 'mega';

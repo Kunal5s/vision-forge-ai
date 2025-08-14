@@ -1,4 +1,5 @@
 
+
 import { getArticles } from '@/lib/articles';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
@@ -79,21 +80,11 @@ export default async function ArticlePage({ params }: { params: { category: stri
     const author = await getAuthorData();
 
     // Find the index of the "Key Takeaways" heading
-    const keyTakeawaysHeadingIndex = article.articleContent.findIndex(block => 
-        block.type === 'h2' && block.content.toLowerCase().includes('key takeaways')
-    );
-    
-    let keyTakeawaysList: ArticleContentBlock | null = null;
-    if (keyTakeawaysHeadingIndex !== -1 && article.articleContent[keyTakeawaysHeadingIndex + 1]?.type === 'ul') {
-        keyTakeawaysList = article.articleContent[keyTakeawaysHeadingIndex + 1];
-    }
-    
-    const renderContentBlock = (block: ArticleContentBlock, index: number) => {
-        // Skip rendering the original "Key Takeaways" heading and list if we found them
-        if (keyTakeawaysList && (index === keyTakeawaysHeadingIndex || index === keyTakeawaysHeadingIndex + 1)) {
-            return null;
-        }
+    // This logic seems to be a custom implementation detail for article structure. It is maintained.
+    const keyTakeawaysContent = (article as any).keyTakeaways as string[] | undefined;
+    const conclusionContent = (article as any).conclusion as string | undefined;
 
+    const renderContentBlock = (block: ArticleContentBlock, index: number) => {
         const slug = ['h2', 'h3', 'h4', 'h5', 'h6'].includes(block.type)
             ? block.content.replace(/<[^>]*>?/gm, '').toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '')
             : undefined;
@@ -102,9 +93,7 @@ export default async function ArticlePage({ params }: { params: { category: stri
         const parsedContent = parse(block.content, {
             replace: (domNode: any) => {
                 if (domNode.name === 'table') {
-                    return <div className="overflow-x-auto my-6"><table className="min-w-full divide-y divide-border">{domNode.children.map((child: any, i: number) => parse(child.data, { replace: (childNode: any) => {
-                        if (childNode.name === 'tr') return <tr className="divide-x divide-border">{childNode.children.map((cell: any, j: number) => parse(cell.data))}</tr>
-                    } }))}</table></div>;
+                    return <div className="overflow-x-auto my-6"><table className="min-w-full divide-y divide-border">{domToReact(domNode.children)}</table></div>;
                 }
             }
         });
@@ -146,18 +135,20 @@ export default async function ArticlePage({ params }: { params: { category: stri
                 <header className="mb-8">
                     <Badge variant="secondary" className="mb-4">{article.category}</Badge>
                     <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">{parse(article.title)}</h1>
-                    <div className="flex items-center text-sm text-muted-foreground gap-2">
-                        <CalendarDays className="h-4 w-4" />
-                        <time dateTime={article.publishedDate}>
-                          Published on {format(new Date(article.publishedDate), 'MMMM d, yyyy')}
-                        </time>
-                    </div>
+                    {article.publishedDate && (
+                        <div className="flex items-center text-sm text-muted-foreground gap-2">
+                            <CalendarDays className="h-4 w-4" />
+                            <time dateTime={article.publishedDate}>
+                              Published on {format(new Date(article.publishedDate), 'MMMM d, yyyy')}
+                            </time>
+                        </div>
+                    )}
                     <div className="relative aspect-video w-full rounded-lg overflow-hidden mt-6 shadow-lg">
                         <Image
                             src={article.image}
                             alt={article.title.replace(/<[^>]*>?/gm, '')}
-                            layout="fill"
-                            objectFit="cover"
+                            fill
+                            className="object-cover"
                             data-ai-hint={article.dataAiHint}
                             priority
                         />
@@ -204,30 +195,32 @@ export default async function ArticlePage({ params }: { params: { category: stri
                     {article.articleContent.map(renderContentBlock)}
                 </article>
                 
-                {keyTakeawaysList && (
+                {keyTakeawaysContent && keyTakeawaysContent.length > 0 && (
                     <section className="my-12">
                         <Card className="bg-muted/50 border-border">
                             <CardHeader>
                                 <CardTitle className="text-2xl font-semibold">Key Takeaways</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                {parse(keyTakeawaysList.content, {
-                                     replace: (domNode: any) => {
-                                        if (domNode.name === 'ul') {
-                                            return <ul className="space-y-4 list-none p-0">{domToReact(domNode.children)}</ul>;
-                                        }
-                                        if (domNode.name === 'li') {
-                                            return (
-                                                <li className="flex items-start gap-3">
-                                                    <CheckCircle className="h-5 w-5 text-primary mt-1 shrink-0" />
-                                                    <span className="text-foreground/80">{domToReact(domNode.children)}</span>
-                                                </li>
-                                            )
-                                        }
-                                     }
-                                })}
+                                <ul className="space-y-4 list-none p-0">
+                                    {keyTakeawaysContent.map((item, index) => (
+                                        <li key={index} className="flex items-start gap-3">
+                                            <CheckCircle className="h-5 w-5 text-primary mt-1 shrink-0" />
+                                            <span className="text-foreground/80">{parse(item)}</span>
+                                        </li>
+                                    ))}
+                                </ul>
                             </CardContent>
                         </Card>
+                    </section>
+                )}
+
+                {conclusionContent && (
+                     <section className="my-12">
+                        <h2 className="text-2xl font-semibold mb-4">Conclusion</h2>
+                        <div className="prose dark:prose-invert max-w-none">
+                            {parse(conclusionContent)}
+                        </div>
                     </section>
                 )}
                 

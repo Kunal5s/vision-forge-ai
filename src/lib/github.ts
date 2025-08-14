@@ -13,8 +13,10 @@ const GITHUB_REPO_NAME = process.env.GITHUB_REPO_NAME;
 
 if (!GITHUB_REPO_OWNER || !GITHUB_REPO_NAME || !process.env.GITHUB_TOKEN) {
   if (process.env.NODE_ENV === 'production') {
+    // In production, we should throw an error if the credentials are not set
     throw new Error('Missing GitHub environment variables for content management.');
   }
+  // In development, it's okay to proceed without them, but content won't be managed via GitHub.
   console.warn('Missing GitHub environment variables. Content management will be disabled.');
 }
 

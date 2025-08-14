@@ -1,8 +1,7 @@
-'use server';
 
 import { z } from 'zod';
 import { categorySlugMap } from '@/lib/constants';
-import { ArticleSchema } from '@/lib/types';
+import { ArticleSchema, type Article } from '@/lib/types';
 import { getFile } from './github';
 
 export type { Article, ArticleContentBlock } from './types';
@@ -55,7 +54,7 @@ async function loadArticlesFromGitHub(
 // Gets only published articles
 export async function getArticles(
   category: string
-): Promise<z.infer<typeof ArticleSchema>[]> {
+): Promise<Article[]> {
   const allArticles = await loadArticlesFromGitHub(category);
   return allArticles
     .filter((article) => article.status === 'published')

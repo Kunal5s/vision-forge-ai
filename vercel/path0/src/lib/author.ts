@@ -1,9 +1,7 @@
 
 'use server';
-
 import { z } from 'zod';
 import { getFile } from '@/lib/github';
-import 'server-only';
 
 // Define the schema for the author data
 export const AuthorSchema = z.object({
@@ -27,7 +25,6 @@ export async function getAuthorData(): Promise<AuthorData> {
         return AuthorSchema.parse(data);
     } catch (error) {
         console.error("Failed to fetch or parse author data from GitHub:", error);
-        // Return a default/fallback object to prevent crashes on the page
         return {
             name: 'Kunal Sonpitre',
             title: 'AI & Business Technical Expert',
