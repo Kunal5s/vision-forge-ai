@@ -1,103 +1,82 @@
-
-'use server';
-
 import { z } from 'zod';
-import { getFile } from './github';
 
-const StoryPageContentSchema = z.object({
-  title: z.string().optional(),
-  body: z.string().optional(),
+export const ArticleContentBlockSchema = z.object({
+  type: z.enum(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'img', 'ul', 'ol', 'blockquote', 'table']),
+  content: z.string(),
+  alt: z.string().optional(),
 });
+export type ArticleContentBlock = z.infer<typeof ArticleContentBlockSchema>;
 
-const StoryPageSchema = z.object({
-  type: z.enum(['image', 'video']),
-  url: z.string().min(1), // Can be a standard URL or a Data URI
-  dataAiHint: z.string(),
-  styleName: z.string().optional(),
-  content: StoryPageContentSchema.optional(),
-});
-export type StoryPage = z.infer<typeof StoryPageSchema>;
-
-const StorySchema = z.object({
-  slug: z.string().min(1),
-  title: z.string().min(1),
-  seoDescription: z.string().optional().default(''),
-  logo: z.string().optional(),
-  websiteUrl: z.string().url().optional(),
-  author: z.string().optional().default('Imagen BrainAi'),
-  cover: z.string().min(1), // Can be a standard URL or a Data URI
+export const ArticleSchema = z.object({
+  image: z.string().url(),
   dataAiHint: z.string(),
   category: z.string(),
-  publishedDate: z.string().datetime(),
+  title: z.string().min(1),
+  slug: z.string().min(1),
   status: z.enum(['published', 'draft']).default('published'),
-  pages: z.array(StoryPageSchema),
+  publishedDate: z.string().datetime().optional(),
+  summary: z.string().optional(),
+  articleContent: z.array(ArticleContentBlockSchema),
 });
-export type Story = z.infer<typeof StorySchema>;
+export type Article = z.infer<typeof ArticleSchema>;
 
-const StoryFileSchema = z.array(StorySchema);
 
-// A map to hold all story data file paths
-const allStoryData: { [key: string]: string } = {
-    'featured': 'src/stories/featured.json',
+// Schema for the manual editor form
+export const ManualArticleSchema = z.object({
+  title: z.string().min(5, 'Title must be at least 5 characters long.'),
+  slug: z.string().min(5, 'Slug must be at least 5 characters long.').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and dashes.'),
+  category: z.string().min(1, 'Please select a category.'),
+  status: z.enum(['published', 'draft']),
+  summary: z.string().optional(),
+  content: z.string().min(50, 'Content must be at least 50 characters long.'),
+  image: z.string().url('A valid image URL is required.'),
+  originalSlug: z.string().optional(), // For identifying article on edit
+  originalStatus: z.enum(['published', 'draft']).optional(),
+});
+export type ManualArticleFormData = z.infer<typeof ManualArticleSchema>;
+
+// Helper function to convert the structured content array back to a single HTML string for the editor
+export const articleContentToHtml = (content: Article['articleContent']): string => {
+    if (!content) return '';
+    return content.map(block => {
+        if (block.type === 'img') {
+            return `<div class="my-8"><img src="${block.content}" alt="${block.alt || ''}" class="rounded-lg shadow-md mx-auto" /></div>`;
+        }
+        if(block.type === 'ul' || block.type === 'ol' || block.type === 'blockquote' || block.type === 'table') {
+            return block.content;
+        }
+        return `<${block.type}>${block.content}</${block.type}>`;
+    }).join(''); 
 };
 
-async function loadAndValidateStories(category: string): Promise<Story[]> {
-    const filePath = allStoryData[category.toLowerCase()];
-    if (!filePath) {
-        console.warn(`No story data file path found for category "${category}"`);
-        return [];
-    }
+// Helper function to generate a full article HTML string for previews
+export const getFullArticleHtmlForPreview = (data: Partial<ManualArticleFormData>): string => {
+  return `${data.summary || ''}${data.content || ''}`;
+};
 
-    const fileContent = await getFile(filePath);
 
-    if (!fileContent) {
-        return [];
-    }
-    
-    try {
-        const storyData = JSON.parse(fileContent);
-        const validatedStories = StoryFileSchema.safeParse(storyData);
 
-        if (validatedStories.success) {
-            return validatedStories.data.map(story => ({
-                ...story,
-                seoDescription: story.seoDescription || story.pages[0]?.content?.body?.substring(0, 160) || story.title,
-                author: story.author || 'Imagen BrainAi'
-            }));
-        } else {
-            console.error(`Zod validation failed for stories in category "${category}".`, validatedStories.error.flatten());
-            return [];
-        }
+// Subscription types
+export type Plan = 'free' | 'pro' | 'mega';
 
-    } catch (error: any) {
-        console.error(`Error parsing or validating stories for category "${category}":`, error.message);
-        return [];
-    }
+export interface Credits {
+  google: number;
 }
 
-// Gets only published stories
-export async function getStories(category: string): Promise<Story[]> {
-    const allStories = await loadAndValidateStories(category);
-    return allStories
-        .filter(story => story.status === 'published')
-        .sort((a, b) => new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime());
-}
+// Zod schema for validation
+export const SubscriptionSchema = z.object({
+  email: z.string(),
+  plan: z.enum(['free', 'pro', 'mega']),
+  status: z.enum(['active', 'inactive']),
+  credits: z.object({
+    google: z.number().nonnegative(),
+  }),
+  purchaseDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Invalid date string",
+  }),
+  lastReset: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Invalid date string",
+  }),
+});
 
-// Gets all stories, including drafts (for admin)
-export async function getAllStoriesAdmin(category: string): Promise<Story[]> {
-     const allStories = await loadAndValidateStories(category);
-     return allStories.sort((a, b) => new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime());
-}
-
-// Get a single story by its slug from any category
-export async function getStoryBySlug(slug: string): Promise<Story | undefined> {
-    const allCategories = Object.keys(allStoryData);
-    for (const category of allCategories) {
-        const stories = await getAllStoriesAdmin(category);
-        const foundStory = stories.find(story => story.slug === slug);
-        if (foundStory) {
-            return foundStory;
-        }
-    }
-    return undefined;
-}
+export type Subscription = z.infer<typeof SubscriptionSchema>;

@@ -1,60 +1,82 @@
+import { z } from 'zod';
 
-'use client';
+export const ArticleContentBlockSchema = z.object({
+  type: z.enum(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'img', 'ul', 'ol', 'blockquote', 'table']),
+  content: z.string(),
+  alt: z.string().optional(),
+});
+export type ArticleContentBlock = z.infer<typeof ArticleContentBlockSchema>;
 
-import { getStories } from '@/lib/stories';
-import type { Story } from '@/lib/stories';
-import { Suspense, useEffect, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Skeleton } from '@/components/ui/skeleton';
-import { StoriesPageClient } from './StoriesPageClient';
+export const ArticleSchema = z.object({
+  image: z.string().url(),
+  dataAiHint: z.string(),
+  category: z.string(),
+  title: z.string().min(1),
+  slug: z.string().min(1),
+  status: z.enum(['published', 'draft']).default('published'),
+  publishedDate: z.string().datetime().optional(),
+  summary: z.string().optional(),
+  articleContent: z.array(ArticleContentBlockSchema),
+});
+export type Article = z.infer<typeof ArticleSchema>;
 
-function AllStoriesList() {
-    const [allStories, setAllStories] = useState<Story[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    
-    useEffect(() => {
-        setIsLoading(true);
-        // Fetch stories from the primary category for now
-        getStories('featured').then(stories => {
-            stories.sort((a, b) => new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime());
-            setAllStories(stories);
-            setIsLoading(false);
-        });
-    }, []);
 
-    if (isLoading) {
-        return (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                {Array.from({ length: 8 }).map((_, i) => (
-                    <Card key={i} className="overflow-hidden h-full aspect-[9/16] relative">
-                         <Skeleton className="w-full h-full" />
-                    </Card>
-                ))}
-            </div>
-        )
-    }
+// Schema for the manual editor form
+export const ManualArticleSchema = z.object({
+  title: z.string().min(5, 'Title must be at least 5 characters long.'),
+  slug: z.string().min(5, 'Slug must be at least 5 characters long.').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and dashes.'),
+  category: z.string().min(1, 'Please select a category.'),
+  status: z.enum(['published', 'draft']),
+  summary: z.string().optional(),
+  content: z.string().min(50, 'Content must be at least 50 characters long.'),
+  image: z.string().url('A valid image URL is required.'),
+  originalSlug: z.string().optional(), // For identifying article on edit
+  originalStatus: z.enum(['published', 'draft']).optional(),
+});
+export type ManualArticleFormData = z.infer<typeof ManualArticleSchema>;
 
-    return <StoriesPageClient allStories={allStories} />;
+// Helper function to convert the structured content array back to a single HTML string for the editor
+export const articleContentToHtml = (content: Article['articleContent']): string => {
+    if (!content) return '';
+    return content.map(block => {
+        if (block.type === 'img') {
+            return `<div class="my-8"><img src="${block.content}" alt="${block.alt || ''}" class="rounded-lg shadow-md mx-auto" /></div>`;
+        }
+        if(block.type === 'ul' || block.type === 'ol' || block.type === 'blockquote' || block.type === 'table') {
+            return block.content;
+        }
+        return `<${block.type}>${block.content}</${block.type}>`;
+    }).join(''); 
+};
+
+// Helper function to generate a full article HTML string for previews
+export const getFullArticleHtmlForPreview = (data: Partial<ManualArticleFormData>): string => {
+  return `${data.summary || ''}${data.content || ''}`;
+};
+
+
+
+// Subscription types
+export type Plan = 'free' | 'pro' | 'mega';
+
+export interface Credits {
+  google: number;
 }
 
-export default function StoriesPage() {
-    return (
-        <main className="py-12">
-            <section className="container mx-auto px-4">
-                <header className="text-center mb-12">
-                    <h1 className="text-5xl font-extrabold tracking-tight text-foreground">
-                        Web Stories
-                    </h1>
-                    <p className="text-muted-foreground mt-2 max-w-3xl mx-auto">
-                        A new, immersive way to experience content. Tap through our AI-generated visual stories.
-                    </p>
-                </header>
-                <Suspense fallback={<div className="text-center">Loading stories...</div>}>
-                    <AllStoriesList />
-                </Suspense>
-            </section>
-        </main>
-    );
-}
+// Zod schema for validation
+export const SubscriptionSchema = z.object({
+  email: z.string(),
+  plan: z.enum(['free', 'pro', 'mega']),
+  status: z.enum(['active', 'inactive']),
+  credits: z.object({
+    google: z.number().nonnegative(),
+  }),
+  purchaseDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Invalid date string",
+  }),
+  lastReset: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Invalid date string",
+  }),
+});
+
+export type Subscription = z.infer<typeof SubscriptionSchema>;

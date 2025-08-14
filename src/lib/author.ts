@@ -29,4 +29,7 @@ export async function getAuthorData(): Promise<AuthorData> {
             name: 'Enter Name',
             title: 'Enter Title',
             photoUrl: 'https://placehold.co/100x100.png',
-            bio: 'Enter a
+            bio: 'Enter a bio here.',
+        };
+    }
+}

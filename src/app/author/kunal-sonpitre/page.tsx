@@ -34,7 +34,7 @@ async function AllAuthorArticles() {
         return a.title.localeCompare(b.title);
     });
 
-    return <ArticlesSection articles={articles} />;
+    return <ArticlesSection articles={allArticles} />;
 }
 
 export default async function AuthorPage() {
@@ -54,3 +54,5 @@ export default async function AuthorPage() {
                 </Suspense>
             </section>
         </main>
+    );
+}

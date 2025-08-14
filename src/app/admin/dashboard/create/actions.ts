@@ -1,129 +1,82 @@
+import { z } from 'zod';
 
-'use server';
-
-import { redirect } from 'next/navigation';
-import { generateArticleForTopic } from '@/ai/article-generator';
-import { categorySlugMap } from '@/lib/constants';
-import * as z from 'zod';
-import type { Article } from '@/lib/articles';
-import { getFile, saveFile } from '@/lib/github';
-
-const GenerateArticleFormSchema = z.object({
-  topic: z.string().min(1, 'Please enter a topic for the article.'),
-  category: z.string().min(1, 'Please select a category.'),
-  provider: z.enum(['openrouter', 'sambanova', 'huggingface']),
-  model: z.string().min(1, 'Please select an AI model.'),
-  style: z.string().min(1, 'Please select a writing style.'),
-  mood: z.string().min(1, 'Please select an article mood.'),
-  wordCount: z.string().min(1, 'Please select a word count.'),
-  imageCount: z.string().min(1, 'Please select the number of images.'),
-  openRouterApiKey: z.string().optional(),
-  sambaNovaApiKey: z.string().optional(),
-  huggingFaceApiKey: z.string().optional(),
+export const ArticleContentBlockSchema = z.object({
+  type: z.enum(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'img', 'ul', 'ol', 'blockquote', 'table']),
+  content: z.string(),
+  alt: z.string().optional(),
 });
+export type ArticleContentBlock = z.infer<typeof ArticleContentBlockSchema>;
+
+export const ArticleSchema = z.object({
+  image: z.string().url(),
+  dataAiHint: z.string(),
+  category: z.string(),
+  title: z.string().min(1),
+  slug: z.string().min(1),
+  status: z.enum(['published', 'draft']).default('published'),
+  publishedDate: z.string().datetime().optional(),
+  summary: z.string().optional(),
+  articleContent: z.array(ArticleContentBlockSchema),
+});
+export type Article = z.infer<typeof ArticleSchema>;
 
 
-type GenerateArticleResult = {
-  success: boolean;
-  title?: string;
-  error?: string;
+// Schema for the manual editor form
+export const ManualArticleSchema = z.object({
+  title: z.string().min(5, 'Title must be at least 5 characters long.'),
+  slug: z.string().min(5, 'Slug must be at least 5 characters long.').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and dashes.'),
+  category: z.string().min(1, 'Please select a category.'),
+  status: z.enum(['published', 'draft']),
+  summary: z.string().optional(),
+  content: z.string().min(50, 'Content must be at least 50 characters long.'),
+  image: z.string().url('A valid image URL is required.'),
+  originalSlug: z.string().optional(), // For identifying article on edit
+  originalStatus: z.enum(['published', 'draft']).optional(),
+});
+export type ManualArticleFormData = z.infer<typeof ManualArticleSchema>;
+
+// Helper function to convert the structured content array back to a single HTML string for the editor
+export const articleContentToHtml = (content: Article['articleContent']): string => {
+    if (!content) return '';
+    return content.map(block => {
+        if (block.type === 'img') {
+            return `<div class="my-8"><img src="${block.content}" alt="${block.alt || ''}" class="rounded-lg shadow-md mx-auto" /></div>`;
+        }
+        if(block.type === 'ul' || block.type === 'ol' || block.type === 'blockquote' || block.type === 'table') {
+            return block.content;
+        }
+        return `<${block.type}>${block.content}</${block.type}>`;
+    }).join(''); 
 };
 
-async function saveArticle(article: Article): Promise<{ success: boolean; error?: string }> {
-    const categorySlug = Object.keys(categorySlugMap).find(key => categorySlugMap[key] === article.category) || article.category.toLowerCase();
-    const filePath = `src/articles/${categorySlug}.json`;
-    
-    try {
-        let existingArticles: Article[] = [];
-        const currentContent = await getFile(filePath);
+// Helper function to generate a full article HTML string for previews
+export const getFullArticleHtmlForPreview = (data: Partial<ManualArticleFormData>): string => {
+  return `${data.summary || ''}${data.content || ''}`;
+};
 
-        if (currentContent) {
-            existingArticles = JSON.parse(currentContent);
-        }
 
-        // Add the new article and ensure no duplicates by slug
-        const newArticles = [article, ...existingArticles.filter(a => a.slug !== article.slug)];
-        const newContent = JSON.stringify(newArticles, null, 2);
 
-        await saveFile(filePath, newContent, `feat: add new article "${article.title}"`);
+// Subscription types
+export type Plan = 'free' | 'pro' | 'mega';
 
-        return { success: true };
-
-    } catch (error: any) {
-        console.error(`Failed to save article to GitHub file: ${filePath}`, error);
-        return { success: false, error: error.message };
-    }
+export interface Credits {
+  google: number;
 }
 
+// Zod schema for validation
+export const SubscriptionSchema = z.object({
+  email: z.string(),
+  plan: z.enum(['free', 'pro', 'mega']),
+  status: z.enum(['active', 'inactive']),
+  credits: z.object({
+    google: z.number().nonnegative(),
+  }),
+  purchaseDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Invalid date string",
+  }),
+  lastReset: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Invalid date string",
+  }),
+});
 
-export async function generateArticleAction(
-  data: unknown
-): Promise<GenerateArticleResult> {
-  const validatedFields = GenerateArticleFormSchema.safeParse(data);
-
-  if (!validatedFields.success) {
-    console.error('Validation Errors:', validatedFields.error.flatten());
-    return {
-      success: false,
-      error: 'Invalid input data for article generation.',
-    };
-  }
-
-  const {
-    topic,
-    category,
-    provider,
-    model,
-    style,
-    mood,
-    wordCount,
-    imageCount,
-    openRouterApiKey,
-    sambaNovaApiKey,
-    huggingFaceApiKey,
-  } = validatedFields.data;
-
-  try {
-    const newArticle = await generateArticleForTopic({
-      topic,
-      category,
-      provider,
-      model,
-      style,
-      mood,
-      wordCount,
-      imageCount,
-      openRouterApiKey,
-      sambaNovaApiKey,
-      huggingFaceApiKey,
-    });
-
-    if (!newArticle) {
-      throw new Error(
-        'AI failed to generate the article. This could be due to model unavailability, a complex topic, or an incorrect response format. Please try again with a different model or topic, or check your API key credits.'
-      );
-    }
-    
-    // Save to GitHub
-    await saveArticle(newArticle);
-
-    const categorySlug =
-      Object.keys(categorySlugMap).find(
-        (key) => categorySlugMap[key] === category
-      ) || category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-      
-    // Revalidate paths after saving to ensure content is fresh
-    revalidatePath('/admin/dashboard/edit');
-    revalidatePath(`/${categorySlug}`);
-    revalidatePath(`/blog`);
-      
-    redirect(`/admin/dashboard/edit/${categorySlug}/${newArticle.slug}`);
-
-  } catch (error) {
-    console.error('Error in generateArticleAction:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'An unknown error occurred.',
-    };
-  }
-}
+export type Subscription = z.infer<typeof SubscriptionSchema>;

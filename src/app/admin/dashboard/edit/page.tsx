@@ -1,66 +1,82 @@
+import { z } from 'zod';
 
-'use client';
+export const ArticleContentBlockSchema = z.object({
+  type: z.enum(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'img', 'ul', 'ol', 'blockquote', 'table']),
+  content: z.string(),
+  alt: z.string().optional(),
+});
+export type ArticleContentBlock = z.infer<typeof ArticleContentBlockSchema>;
 
-import { getAllArticlesAdmin, type Article } from '@/lib/articles';
-import { categorySlugMap } from '@/lib/constants';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
-import EditArticlesClientPage from '@/components/vision-forge/EditArticlesClientPage';
-import { useState, useEffect } from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
+export const ArticleSchema = z.object({
+  image: z.string().url(),
+  dataAiHint: z.string(),
+  category: z.string(),
+  title: z.string().min(1),
+  slug: z.string().min(1),
+  status: z.enum(['published', 'draft']).default('published'),
+  publishedDate: z.string().datetime().optional(),
+  summary: z.string().optional(),
+  articleContent: z.array(ArticleContentBlockSchema),
+});
+export type Article = z.infer<typeof ArticleSchema>;
 
-export default function EditArticlesPage() {
-    const [content, setContent] = useState<{
-        published: { category: string, articles: Article[] }[],
-        drafts: Article[]
-    } | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchContent = async () => {
-            const categories = Object.values(categorySlugMap);
-            const publishedArticlesData = await Promise.all(
-                categories.map(async (categoryName) => {
-                    const articles = await getAllArticlesAdmin(categoryName);
-                    return { category: categoryName, articles: articles.filter(a => a.status === 'published') };
-                })
-            );
-            
-            const draftArticles = await getAllArticlesAdmin('drafts');
+// Schema for the manual editor form
+export const ManualArticleSchema = z.object({
+  title: z.string().min(5, 'Title must be at least 5 characters long.'),
+  slug: z.string().min(5, 'Slug must be at least 5 characters long.').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and dashes.'),
+  category: z.string().min(1, 'Please select a category.'),
+  status: z.enum(['published', 'draft']),
+  summary: z.string().optional(),
+  content: z.string().min(50, 'Content must be at least 50 characters long.'),
+  image: z.string().url('A valid image URL is required.'),
+  originalSlug: z.string().optional(), // For identifying article on edit
+  originalStatus: z.enum(['published', 'draft']).optional(),
+});
+export type ManualArticleFormData = z.infer<typeof ManualArticleSchema>;
 
-            setContent({
-                published: publishedArticlesData.filter(data => data.articles.length > 0),
-                drafts: draftArticles,
-            });
-            setIsLoading(false);
-        };
-        
-        fetchContent();
-    }, []);
+// Helper function to convert the structured content array back to a single HTML string for the editor
+export const articleContentToHtml = (content: Article['articleContent']): string => {
+    if (!content) return '';
+    return content.map(block => {
+        if (block.type === 'img') {
+            return `<div class="my-8"><img src="${block.content}" alt="${block.alt || ''}" class="rounded-lg shadow-md mx-auto" /></div>`;
+        }
+        if(block.type === 'ul' || block.type === 'ol' || block.type === 'blockquote' || block.type === 'table') {
+            return block.content;
+        }
+        return `<${block.type}>${block.content}</${block.type}>`;
+    }).join(''); 
+};
 
-    return (
-        <main className="flex-grow container mx-auto py-12 px-4 bg-muted/20 min-h-screen">
-            <div className="mb-8">
-                <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
-                    <Link href="/admin/dashboard">
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to Dashboard
-                    </Link>
-                </Button>
-            </div>
-            
-            {isLoading || !content ? (
-                <div className="space-y-4">
-                    <Skeleton className="h-10 w-1/4" />
-                    <Skeleton className="h-[400px] w-full" />
-                </div>
-            ) : (
-                <EditArticlesClientPage
-                    publishedArticlesByCategory={content.published}
-                    draftArticles={content.drafts}
-                />
-            )}
-        </main>
-    );
+// Helper function to generate a full article HTML string for previews
+export const getFullArticleHtmlForPreview = (data: Partial<ManualArticleFormData>): string => {
+  return `${data.summary || ''}${data.content || ''}`;
+};
+
+
+
+// Subscription types
+export type Plan = 'free' | 'pro' | 'mega';
+
+export interface Credits {
+  google: number;
 }
+
+// Zod schema for validation
+export const SubscriptionSchema = z.object({
+  email: z.string(),
+  plan: z.enum(['free', 'pro', 'mega']),
+  status: z.enum(['active', 'inactive']),
+  credits: z.object({
+    google: z.number().nonnegative(),
+  }),
+  purchaseDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Invalid date string",
+  }),
+  lastReset: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Invalid date string",
+  }),
+});
+
+export type Subscription = z.infer<typeof SubscriptionSchema>;

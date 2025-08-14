@@ -43,7 +43,10 @@ export const articleContentToHtml = (content: Article['articleContent']): string
         if (block.type === 'img') {
             return `<div class="my-8"><img src="${block.content}" alt="${block.alt || ''}" class="rounded-lg shadow-md mx-auto" /></div>`;
         }
-        return block.content;
+        if(block.type === 'ul' || block.type === 'ol' || block.type === 'blockquote' || block.type === 'table') {
+            return block.content;
+        }
+        return `<${block.type}>${block.content}</${block.type}>`;
     }).join(''); 
 };
 

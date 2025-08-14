@@ -1,132 +1,82 @@
+import { z } from 'zod';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { PlusCircle, Edit, FileSignature, BookImage, UserCircle, History } from 'lucide-react';
-import Link from 'next/link';
+export const ArticleContentBlockSchema = z.object({
+  type: z.enum(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'img', 'ul', 'ol', 'blockquote', 'table']),
+  content: z.string(),
+  alt: z.string().optional(),
+});
+export type ArticleContentBlock = z.infer<typeof ArticleContentBlockSchema>;
 
-export default function AdminDashboardPage() {
+export const ArticleSchema = z.object({
+  image: z.string().url(),
+  dataAiHint: z.string(),
+  category: z.string(),
+  title: z.string().min(1),
+  slug: z.string().min(1),
+  status: z.enum(['published', 'draft']).default('published'),
+  publishedDate: z.string().datetime().optional(),
+  summary: z.string().optional(),
+  articleContent: z.array(ArticleContentBlockSchema),
+});
+export type Article = z.infer<typeof ArticleSchema>;
 
-  return (
-    <main className="flex-grow container mx-auto py-12 px-4 bg-muted/20 min-h-screen">
-      <header className="flex flex-col sm:flex-row justify-between sm:items-center mb-10 gap-4">
-          <div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-                  Admin Dashboard
-              </h1>
-              <p className="text-muted-foreground mt-1">Welcome back, Admin!</p>
-          </div>
-      </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <Link href="/admin/dashboard/create" className="block h-full">
-            <Card className="h-full flex flex-col transition-all hover:shadow-lg hover:-translate-y-1">
-              <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-2xl">
-                      <PlusCircle className="text-primary" /> Create with AI
-                  </CardTitle>
-                  <CardDescription>
-                      Generate a new SEO-friendly article with AI assistance.
-                  </CardDescription>
-              </CardHeader>
-              <CardContent className="mt-auto">
-                  <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                      Generate Article
-                  </Button>
-              </CardContent>
-            </Card>
-          </Link>
+// Schema for the manual editor form
+export const ManualArticleSchema = z.object({
+  title: z.string().min(5, 'Title must be at least 5 characters long.'),
+  slug: z.string().min(5, 'Slug must be at least 5 characters long.').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and dashes.'),
+  category: z.string().min(1, 'Please select a category.'),
+  status: z.enum(['published', 'draft']),
+  summary: z.string().optional(),
+  content: z.string().min(50, 'Content must be at least 50 characters long.'),
+  image: z.string().url('A valid image URL is required.'),
+  originalSlug: z.string().optional(), // For identifying article on edit
+  originalStatus: z.enum(['published', 'draft']).optional(),
+});
+export type ManualArticleFormData = z.infer<typeof ManualArticleSchema>;
 
-          <Link href="/admin/dashboard/manual" className="block h-full">
-            <Card className="h-full flex flex-col transition-all hover:shadow-lg hover:-translate-y-1">
-              <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-2xl">
-                      <FileSignature className="text-green-600" /> Manual Publish
-                  </CardTitle>
-                  <CardDescription>
-                      Write, format, and publish your own articles from scratch.
-                  </CardDescription>
-              </CardHeader>
-              <CardContent className="mt-auto">
-                <Button className="w-full" variant="outline">
-                    Write Manually
-                </Button>
-              </CardContent>
-            </Card>
-          </Link>
+// Helper function to convert the structured content array back to a single HTML string for the editor
+export const articleContentToHtml = (content: Article['articleContent']): string => {
+    if (!content) return '';
+    return content.map(block => {
+        if (block.type === 'img') {
+            return `<div class="my-8"><img src="${block.content}" alt="${block.alt || ''}" class="rounded-lg shadow-md mx-auto" /></div>`;
+        }
+        if(block.type === 'ul' || block.type === 'ol' || block.type === 'blockquote' || block.type === 'table') {
+            return block.content;
+        }
+        return `<${block.type}>${block.content}</${block.type}>`;
+    }).join(''); 
+};
 
-           <Link href="/admin/dashboard/stories/create" className="block h-full">
-            <Card className="h-full flex flex-col transition-all hover:shadow-lg hover:-translate-y-1">
-              <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-2xl">
-                      <BookImage className="text-orange-500" /> Create Web Story
-                  </CardTitle>
-                  <CardDescription>
-                      Build and publish engaging web stories with AI assistance.
-                  </CardDescription>
-              </CardHeader>
-              <CardContent className="mt-auto">
-                <Button className="w-full" variant="secondary">
-                    Build Story
-                </Button>
-              </CardContent>
-            </Card>
-          </Link>
+// Helper function to generate a full article HTML string for previews
+export const getFullArticleHtmlForPreview = (data: Partial<ManualArticleFormData>): string => {
+  return `${data.summary || ''}${data.content || ''}`;
+};
 
-          <Link href="/admin/dashboard/edit" className="block h-full">
-            <Card className="h-full flex flex-col transition-all hover:shadow-lg hover:-translate-y-1">
-              <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-2xl">
-                      <Edit className="text-accent" /> Manage Articles
-                  </CardTitle>
-                  <CardDescription>
-                      Find, modify, and manage all previously published articles.
-                  </CardDescription>
-              </CardHeader>
-              <CardContent className="mt-auto">
-                <Button variant="secondary" className="w-full">
-                    Manage Content
-                </Button>
-              </CardContent>
-            </Card>
-          </Link>
 
-          <Link href="/admin/dashboard/stories" className="block h-full">
-            <Card className="h-full flex flex-col transition-all hover:shadow-lg hover:-translate-y-1">
-              <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-2xl">
-                      <History className="text-cyan-500" /> Manage Web Stories
-                  </CardTitle>
-                  <CardDescription>
-                      Edit, update, and manage all your existing web stories.
-                  </CardDescription>
-              </CardHeader>
-              <CardContent className="mt-auto">
-                <Button variant="secondary" className="w-full">
-                    Manage Stories
-                </Button>
-              </CardContent>
-            </Card>
-          </Link>
 
-          <Link href="/admin/dashboard/author" className="block h-full">
-            <Card className="h-full flex flex-col transition-all hover:shadow-lg hover:-translate-y-1">
-              <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-2xl">
-                      <UserCircle className="text-indigo-500" /> Manage Author
-                  </CardTitle>
-                  <CardDescription>
-                      Update the author's public photo, name, title, and bio.
-                  </CardDescription>
-              </CardHeader>
-              <CardContent className="mt-auto">
-                <Button variant="secondary" className="w-full">
-                    Update Author Info
-                </Button>
-              </CardContent>
-            </Card>
-          </Link>
+// Subscription types
+export type Plan = 'free' | 'pro' | 'mega';
 
-      </div>
-    </main>
-  );
+export interface Credits {
+  google: number;
 }
+
+// Zod schema for validation
+export const SubscriptionSchema = z.object({
+  email: z.string(),
+  plan: z.enum(['free', 'pro', 'mega']),
+  status: z.enum(['active', 'inactive']),
+  credits: z.object({
+    google: z.number().nonnegative(),
+  }),
+  purchaseDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Invalid date string",
+  }),
+  lastReset: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Invalid date string",
+  }),
+});
+
+export type Subscription = z.infer<typeof SubscriptionSchema>;

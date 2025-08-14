@@ -87,3 +87,4 @@ export function Header() {
       <CategoryNavBar />
     </header>
   );
+}
