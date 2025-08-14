@@ -2,22 +2,13 @@
 'use client';
 
 import Link from 'next/link';
-import { BrainCircuit, LogIn, UserCircle, LayoutDashboard } from 'lucide-react';
+import { BrainCircuit, LogIn } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import React, { Suspense } from 'react';
 import { Button } from '../ui/button';
 import { categorySlugMap } from '@/lib/constants';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-
 
 const CategoryNavBarContent = () => {
     const pathname = usePathname();
@@ -98,7 +89,7 @@ export function Header() {
             <Link href="/admin/dashboard">
               <Button variant="outline">
                 <LogIn className="mr-2 h-4 w-4" />
-                Admin Login
+                Admin Dashboard
               </Button>
             </Link>
           </div>

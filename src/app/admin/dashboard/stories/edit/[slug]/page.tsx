@@ -3,7 +3,7 @@
 
 import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import EditStoryForm from './EditStoryForm';
+import EditStoryForm from '@/components/vision-forge/EditStoryForm';
 
 // This is the main page component
 export default function EditStoryPage({ params }: { params: { slug: string } }) {

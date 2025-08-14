@@ -6,7 +6,7 @@ import { categorySlugMap } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import EditArticlesClientPage from './EditArticlesClientPage';
+import EditArticlesClientPage from '@/components/vision-forge/EditArticlesClientPage';
 import { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
