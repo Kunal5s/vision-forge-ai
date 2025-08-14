@@ -3,9 +3,8 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { SubscriptionProvider } from '@/hooks/use-subscription';
-import RootLayoutClient from './layout-client';
+import RootLayoutClient from '@/app/layout-client';
 import { Suspense } from 'react';
-import { verifySession } from './admin/login/actions';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -34,13 +33,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await verifySession();
   return (
     <html lang="en" className="h-full">
       <body className={`${inter.variable} antialiased flex flex-col min-h-full bg-background`}>
         <SubscriptionProvider>
           <Suspense>
-            <RootLayoutClient session={session}>
+            <RootLayoutClient>
               {children}
             </RootLayoutClient>
           </Suspense>

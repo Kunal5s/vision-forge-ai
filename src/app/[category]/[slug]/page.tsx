@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import parse, { domToReact } from 'html-react-parser';
 import { format } from 'date-fns';
 import { AuthorBio } from '@/components/vision-forge/AuthorBio';
-import { getAuthorData } from '@/app/admin/dashboard/author/actions';
+import { getAuthorData } from '@/lib/author';
 
 // Function to find the article
 async function getArticleData(categorySlug: string, articleSlug: string): Promise<Article | undefined> {

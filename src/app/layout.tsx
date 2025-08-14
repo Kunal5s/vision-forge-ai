@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { Inter, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import { SubscriptionProvider } from '@/hooks/use-subscription';
-import RootLayoutClient from './layout-client';
+import RootLayoutClient from '@/app/layout-client';
 import { Suspense } from 'react';
 
 const inter = Inter({
