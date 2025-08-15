@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { HomePageClient } from '@/components/vision-forge/HomePageClient';
+import { FeaturesHighlightSection } from '@/components/vision-forge/FeaturesHighlightSection';
 
 export const metadata: Metadata = {
   title: 'Imagen BrainAi: Your Free AI Image Generator',
